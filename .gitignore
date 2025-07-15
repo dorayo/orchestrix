@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Build output
+build/*.txt
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+CLAUDE.md
+.ai/*
+test-project-install/*
+sample-project/*
+.claude
+.windsurf/
+.trae/
+.orchestrix-core
+.orchestrix-creator-tools
+.gemini
+.orchestrix*/.cursor/
+web-bundles/

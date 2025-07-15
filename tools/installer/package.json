@@ -1,0 +1,42 @@
+{
+  "name": "orchestrix",
+  "version": "1.0.0",
+  "description": "Orchestrix installer - AI-powered Agile development framework",
+  "main": "lib/installer.js",
+  "bin": {
+    "orchestrix": "./bin/orchestrix.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "orchestrix",
+    "agile",
+    "ai",
+    "development",
+    "framework",
+    "installer",
+    "agents"
+  ],
+  "author": "Orchestrix Team",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^12.6.3",
+    "js-yaml": "^4.1.0",
+    "ora": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dorayo/ORCHESTRIX.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dorayo/ORCHESTRIX/issues"
+  },
+  "homepage": "https://github.com/dorayo/ORCHESTRIX#readme"
+}

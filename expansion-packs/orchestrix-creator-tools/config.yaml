@@ -1,0 +1,6 @@
+name: orchestrix-creator-tools
+version: 1.0.0
+short-title: Tools for creating orchestrix framework components
+description: Tools for creating and extending orchestrix framework components.
+author: Orchestrix
+slashPrefix: OrchestrixCreator
