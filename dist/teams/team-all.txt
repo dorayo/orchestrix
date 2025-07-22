@@ -981,7 +981,7 @@ Orchestrix embodies the principle of "Coordination over Control" - transforming 
 
 1. **Strategic Direction**: You provide vision and key decisions; agents execute with domain expertise
 2. **Specialized Excellence**: Each agent masters a specific domain (PM, Developer, Architect, etc.) for superior quality
-3. **Standardized Workflows**: Proven 9-step processes ensure consistent, high-quality delivery
+3. **Standardized Workflows**: Proven 10-step processes ensure consistent, high-quality delivery
 4. **Clean Context Management**: Fresh conversations and clear handoffs maintain agent focus and effectiveness
 
 ### The Two-Phase Approach
