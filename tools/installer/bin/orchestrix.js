@@ -135,8 +135,8 @@ async function promptInstallation() {
  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ 
   `));
   
-  console.log(chalk.bold.magenta('🚀 Universal AI Agent Framework for Any Domain'));
-  console.log(chalk.bold.blue(`✨ Installer v${version}\n`));
+  console.log(chalk.bold.magenta('🚀 万能可扩展的终极 AI Agent 框架'));
+  console.log(chalk.bold.blue(`✨ 安装器 v${version}\n`));
 
   const answers = {};
 

@@ -1,6 +1,6 @@
 {
   "name": "orchestrix",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Orchestrix - Universal AI Agent Framework for Coordinated AI-Driven Development",
   "main": "tools/cli.js",
   "bin": {
