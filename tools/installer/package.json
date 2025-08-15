@@ -1,7 +1,7 @@
 {
-  "name": "orchestrix",
-  "version": "1.0.6",
-  "description": "Orchestrix installer - AI-powered Agile development framework",
+  "name": "orchestrix-installer",
+  "version": "1.1.0",
+  "description": "Installer for the Orchestrix Universal AI Agent Framework",
   "main": "lib/installer.js",
   "bin": {
     "orchestrix": "./bin/orchestrix.js"

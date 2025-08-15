@@ -145,10 +145,10 @@ async function promptInstallation() {
     {
       type: 'input',
       name: 'directory',
-      message: 'Enter the full path to your project directory where Orchestrix should be installed:',
+      message: '请输入Orchestrix的安装项目目录的完整路径:',
       validate: (input) => {
         if (!input.trim()) {
-          return 'Please enter a valid project path';
+          return '请输入有效的项目路径';
         }
         return true;
       }
@@ -239,15 +239,15 @@ async function promptInstallation() {
 
       // Ask sharding questions if installing Orchestrix core
     if (selectedItems.includes('orchestrix-core')) {
-    console.log(chalk.cyan('\n📋 Document Organization Settings'));
-    console.log(chalk.dim('Configure how your project documentation should be organized.\n'));
+    console.log(chalk.cyan('\n📋 文档组织设置'));
+    console.log(chalk.dim('配置您的项目文档应如何组织。\n'));
     
     // Ask about PRD sharding
     const { prdSharded } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'prdSharded',
-        message: 'Will the PRD (Product Requirements Document) be sharded into multiple files?',
+        message: 'PRD (产品需求文档) 是否会分片到多个文件中？',
         default: true
       }
     ]);
@@ -258,7 +258,7 @@ async function promptInstallation() {
       {
         type: 'confirm',
         name: 'architectureSharded',
-        message: 'Will the architecture documentation be sharded into multiple files?',
+        message: '架构文档是否会分片到多个文件中？',
         default: true
       }
     ]);
@@ -266,24 +266,22 @@ async function promptInstallation() {
     
     // Show warning if architecture sharding is disabled
     if (!architectureSharded) {
-      console.log(chalk.yellow.bold('\n⚠️  IMPORTANT: Architecture Sharding Disabled'));
-      console.log(chalk.yellow('With architecture sharding disabled, you should still create the files listed'));
-      console.log(chalk.yellow('in devLoadAlwaysFiles (like coding-standards.md, tech-stack.md, source-tree.md)'));
-      console.log(chalk.yellow('as these are used by the dev agent at runtime.'));
-      console.log(chalk.yellow('\nAlternatively, you can remove these files from the devLoadAlwaysFiles list'));
-      console.log(chalk.yellow('in your core-config.yaml after installation.'));
+      console.log(chalk.yellow.bold('\n⚠️  重要提示：架构分片已禁用'));
+      console.log(chalk.yellow('在禁用架构分片的情况下，您仍应创建 devLoadAlwaysFiles 中列出的文件 (例如 coding-standards.md, tech-stack.md, source-tree.md)'));
+      console.log(chalk.yellow('因为开发代理在运行时会使用这些文件。'));
+      console.log(chalk.yellow('\n或者，您可以在安装后从 core-config.yaml 的 devLoadAlwaysFiles 列表中删除这些文件。'));
       
       const { acknowledge } = await inquirer.prompt([
         {
           type: 'confirm',
           name: 'acknowledge',
-          message: 'Do you acknowledge this requirement and want to proceed?',
+          message: '您是否确认此要求并希望继续？',
           default: false
         }
       ]);
       
       if (!acknowledge) {
-        console.log(chalk.red('Installation cancelled.'));
+        console.log(chalk.red('安装已取消。'));
         process.exit(0);
       }
     }
@@ -294,17 +292,17 @@ async function promptInstallation() {
   let ideSelectionComplete = false;
   
   while (!ideSelectionComplete) {
-    console.log(chalk.cyan('\n🛠️  IDE Configuration'));
-    console.log(chalk.bold.yellow.bgRed(' ⚠️  IMPORTANT: This is a MULTISELECT! Use SPACEBAR to toggle each IDE! '));
-    console.log(chalk.bold.magenta('🔸 Use arrow keys to navigate'));
-    console.log(chalk.bold.magenta('🔸 Use SPACEBAR to select/deselect IDEs'));
-    console.log(chalk.bold.magenta('🔸 Press ENTER when finished selecting\n'));
+    console.log(chalk.cyan('\n🛠️  IDE 配置'));
+    console.log(chalk.bold.yellow.bgRed(' ⚠️  重要提示：这是一个多选列表！请使用空格键来选择/取消选择每个 IDE！ '));
+    console.log(chalk.bold.magenta('🔸 使用方向键导航'));
+    console.log(chalk.bold.magenta('🔸 使用空格键选择/取消选择 IDE'));
+    console.log(chalk.bold.magenta('🔸 选择完成后按 Enter 键\n'));
     
     const ideResponse = await inquirer.prompt([
       {
         type: 'checkbox',
         name: 'ides',
-        message: 'Which IDE(s) do you want to configure? (Select with SPACEBAR, confirm with ENTER):',
+        message: '您希望配置哪个 IDE？ (使用空格键选择，按 Enter 键确认):',
         choices: [
           { name: 'Cursor', value: 'cursor' },
           { name: 'Claude Code', value: 'claude-code' },
@@ -326,13 +324,13 @@ async function promptInstallation() {
         {
           type: 'confirm',
           name: 'confirmNoIde',
-          message: chalk.red('⚠️  You have NOT selected any IDEs. This means NO IDE integration will be set up. Is this correct?'),
+          message: chalk.red('⚠️  您尚未选择任何 IDE。这意味着不会设置 IDE 集成。是否正确？'),
           default: false
         }
       ]);
       
       if (!confirmNoIde) {
-        console.log(chalk.bold.red('\n🔄 Returning to IDE selection. Remember to use SPACEBAR to select IDEs!\n'));
+        console.log(chalk.bold.red('\n🔄 正在返回 IDE 选择。请记得使用空格键选择 IDE！\n'));
         continue; // Go back to IDE selection only
       }
     }
@@ -345,25 +343,25 @@ async function promptInstallation() {
 
   // Configure GitHub Copilot immediately if selected
   if (ides.includes('github-copilot')) {
-    console.log(chalk.cyan('\n🔧 GitHub Copilot Configuration'));
-    console.log(chalk.dim('Orchestrix works best with specific VS Code settings for optimal agent experience.\n'));
+    console.log(chalk.cyan('\n🔧 GitHub Copilot 配置'));
+    console.log(chalk.dim('Orchestrix 需要特定的 VS Code 设置以获得最佳的代理体验。\n'));
     
     const { configChoice } = await inquirer.prompt([
       {
         type: 'list',
         name: 'configChoice',
-        message: chalk.yellow('How would you like to configure GitHub Copilot settings?'),
+        message: chalk.yellow('您希望如何配置 GitHub Copilot 设置？'),
         choices: [
           {
-            name: 'Use recommended defaults (fastest setup)',
+            name: '使用推荐的默认设置 (最快设置)',
             value: 'defaults'
           },
           {
-            name: 'Configure each setting manually (customize to your preferences)',
+            name: '手动配置每个设置 (根据您的偏好自定义)',
             value: 'manual'
           },
           {
-            name: 'Skip settings configuration (I\'ll configure manually later)',
+            name: '跳过设置配置 (我稍后会手动配置)',
             value: 'skip'
           }
         ],
@@ -379,35 +377,35 @@ async function promptInstallation() {
     {
       type: 'confirm',
       name: 'includeWebBundles',
-      message: 'Would you like to include pre-built web bundles? (standalone files for ChatGPT, Claude, Gemini)',
+      message: '您想包含预构建的 Web bundles 吗？ (适用于 ChatGPT, Claude, Gemini 的独立文件)',
       default: false
     }
   ]);
 
   if (includeWebBundles) {
-    console.log(chalk.cyan('\n📦 Web bundles are standalone files perfect for web AI platforms.'));
-    console.log(chalk.dim('   You can choose different teams/agents than your IDE installation.\n'));
+    console.log(chalk.cyan('\n📦 Web bundles 是非常适合 Web AI 平台的独立文件。'));
+    console.log(chalk.dim('   您可以选择与 IDE 安装不同的团队/代理。\n'));
 
     const { webBundleType } = await inquirer.prompt([
       {
         type: 'list',
         name: 'webBundleType',
-        message: 'What web bundles would you like to include?',
+        message: '您想包含哪些 Web bundles？',
         choices: [
           {
-            name: 'All available bundles (agents, teams, expansion packs)',
+            name: '所有可用的 bundles (代理, 团队, 扩展包)',
             value: 'all'
           },
           {
-            name: 'Specific teams only',
+            name: '仅特定团队',
             value: 'teams'
           },
           {
-            name: 'Individual agents only',
+            name: '仅单个代理',
             value: 'agents'
           },
           {
-            name: 'Custom selection',
+            name: '自定义选择',
             value: 'custom'
           }
         ]
@@ -423,7 +421,7 @@ async function promptInstallation() {
         {
           type: 'checkbox',
           name: 'selectedTeams',
-          message: 'Select team bundles to include:',
+          message: '选择要包含的团队 bundles:',
           choices: teams.map(t => ({
             name: `${t.icon || '📋'} ${t.name}: ${t.description}`,
             value: t.id,
@@ -431,7 +429,7 @@ async function promptInstallation() {
           })),
           validate: (answer) => {
             if (answer.length < 1) {
-              return 'You must select at least one team.';
+              return '您必须至少选择一个团队。';
             }
             return true;
           }
@@ -446,7 +444,7 @@ async function promptInstallation() {
         {
           type: 'confirm',
           name: 'includeIndividualAgents',
-          message: 'Also include individual agent bundles?',
+          message: '是否也包含单个代理的 bundles？',
           default: true
         }
       ]);
@@ -457,11 +455,11 @@ async function promptInstallation() {
       {
         type: 'input',
         name: 'webBundlesDirectory',
-        message: 'Enter directory for web bundles:',
+        message: '输入 Web bundles 的目录:',
         default: `${answers.directory}/web-bundles`,
         validate: (input) => {
           if (!input.trim()) {
-            return 'Please enter a valid directory path';
+            return '请输入有效的目录路径';
           }
           return true;
         }
