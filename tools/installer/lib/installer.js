@@ -59,24 +59,24 @@ class Installer {
       // Check if directory exists and handle non-existent directories
       if (!(await fileManager.pathExists(installDir))) {
         spinner.stop();
-        console.log(chalk.yellow(`\nThe directory ${chalk.bold(installDir)} does not exist.`));
+        console.log(chalk.yellow(`\n目录 ${chalk.bold(installDir)} 不存在。`));
         
         const { action } = await inquirer.prompt([
           {
             type: 'list',
             name: 'action',
-            message: 'What would you like to do?',
+            message: '您希望做什么？',
             choices: [
               {
-                name: 'Create the directory and continue',
+                name: '创建目录并继续',
                 value: 'create'
               },
               {
-                name: 'Choose a different directory',
+                name: '选择一个不同的目录',
                 value: 'change'
               },
               {
-                name: 'Cancel installation',
+                name: '取消安装',
                 value: 'cancel'
               }
             ]
@@ -84,17 +84,17 @@ class Installer {
         ]);
 
         if (action === 'cancel') {
-          console.log(chalk.red('Installation cancelled.'));
+          console.log(chalk.red('安装已取消。'));
           process.exit(0);
         } else if (action === 'change') {
           const { newDirectory } = await inquirer.prompt([
             {
               type: 'input',
               name: 'newDirectory',
-              message: 'Enter the new directory path:',
+              message: '请输入新的目录路径:',
               validate: (input) => {
                 if (!input.trim()) {
-                  return 'Please enter a valid directory path';
+                  return '请输入有效的目录路径';
                 }
                 return true;
               }
@@ -106,15 +106,15 @@ class Installer {
         } else if (action === 'create') {
           try {
             await fileManager.ensureDirectory(installDir);
-            console.log(chalk.green(`✓ Created directory: ${installDir}`));
+            console.log(chalk.green(`✓ 已创建目录: ${installDir}`));
           } catch (error) {
-            console.error(chalk.red(`Failed to create directory: ${error.message}`));
-            console.error(chalk.yellow('You may need to check permissions or use a different path.'));
+            console.error(chalk.red(`创建目录失败: ${error.message}`));
+            console.error(chalk.yellow('您可能需要检查权限或使用不同的路径。'));
             process.exit(1);
           }
         }
         
-        spinner.start("Analyzing installation directory...");
+        spinner.start("正在分析安装目录...");
       }
 
       // If this is an update request from early detection, handle it directly
@@ -123,8 +123,8 @@ class Installer {
         if (state.type === 'existing') {
           return await this.performUpdate(config, installDir, state.manifest, spinner);
         } else {
-          spinner.fail('No existing installation found to update');
-          throw new Error('No existing installation found');
+          spinner.fail('未找到要更新的现有安装');
+          throw new Error('未找到现有安装');
         }
       }
 
@@ -408,18 +408,18 @@ class Installer {
     const newVersion = await this.getCoreVersion();
     const versionCompare = this.compareVersions(currentVersion, newVersion);
 
-    console.log(chalk.yellow("\n🔍 Found existing orchestrix installation"));
-    console.log(`   Directory: ${installDir}`);
-    console.log(`   Current version: ${currentVersion}`);
-    console.log(`   Available version: ${newVersion}`);
+    console.log(chalk.yellow("\n🔍 发现现有的 orchestrix 安装"));
+    console.log(`   目录: ${installDir}`);
+    console.log(`   当前版本: ${currentVersion}`);
+    console.log(`   可用版本: ${newVersion}`);
     console.log(
-      `   Installed: ${new Date(
+      `   安装日期: ${new Date(
         state.manifest.installed_at
       ).toLocaleDateString()}`
     );
 
     // Check file integrity
-    spinner.start("Checking installation integrity...");
+    spinner.start("正在检查安装完整性...");
     const integrity = await fileManager.checkFileIntegrity(installDir, state.manifest);
     spinner.stop();
     
@@ -428,15 +428,15 @@ class Installer {
     const hasIntegrityIssues = hasMissingFiles || hasModifiedFiles;
     
     if (hasIntegrityIssues) {
-      console.log(chalk.red("\n⚠️  Installation issues detected:"));
+      console.log(chalk.red("\n⚠️  检测到安装问题:"));
       if (hasMissingFiles) {
-        console.log(chalk.red(`   Missing files: ${integrity.missing.length}`));
+        console.log(chalk.red(`   丢失的文件: ${integrity.missing.length}`));
         if (integrity.missing.length <= 5) {
           integrity.missing.forEach(file => console.log(chalk.dim(`     - ${file}`)));
         }
       }
       if (hasModifiedFiles) {
-        console.log(chalk.yellow(`   Modified files: ${integrity.modified.length}`));
+        console.log(chalk.yellow(`   修改的文件: ${integrity.modified.length}`));
         if (integrity.modified.length <= 5) {
           integrity.modified.forEach(file => console.log(chalk.dim(`     - ${file}`)));
         }
@@ -445,12 +445,12 @@ class Installer {
 
     // Show existing expansion packs
     if (Object.keys(state.expansionPacks).length > 0) {
-      console.log(chalk.cyan("\n📦 Installed expansion packs:"));
+      console.log(chalk.cyan("\n📦 已安装的扩展包:"));
       for (const [packId, packInfo] of Object.entries(state.expansionPacks)) {
         if (packInfo.hasManifest && packInfo.manifest) {
-          console.log(`   - ${packId} (v${packInfo.manifest.version || 'unknown'})`);
+          console.log(`   - ${packId} (v${packInfo.manifest.version || '未知'})`);
         } else {
-          console.log(`   - ${packId} (no manifest)`);
+          console.log(`   - ${packId} (无清单文件)`);
         }
       }
     }
@@ -458,33 +458,33 @@ class Installer {
     let choices = [];
     
     if (versionCompare < 0) {
-      console.log(chalk.cyan("\n⬆️  Upgrade available for orchestrix core"));
-      choices.push({ name: `Upgrade orchestrix core (v${currentVersion} → v${newVersion})`, value: "upgrade" });
+      console.log(chalk.cyan("\n⬆️  orchestrix 核心有可用升级"));
+      choices.push({ name: `升级 orchestrix 核心 (v${currentVersion} → v${newVersion})`, value: "upgrade" });
     } else if (versionCompare === 0) {
       if (hasIntegrityIssues) {
         // Offer repair option when files are missing or modified
         choices.push({ 
-          name: "Repair installation (restore missing/modified files)", 
+          name: "修复安装 (恢复丢失/修改的文件)", 
           value: "repair" 
         });
       }
-      console.log(chalk.yellow("\n⚠️  Same version already installed"));
-      choices.push({ name: `Force reinstall orchestrix core (v${currentVersion} - reinstall)`, value: "reinstall" });
+      console.log(chalk.yellow("\n⚠️  已安装相同版本"));
+      choices.push({ name: `强制重新安装 orchestrix 核心 (v${currentVersion} - 重新安装)`, value: "reinstall" });
     } else {
-      console.log(chalk.yellow("\n⬇️  Installed version is newer than available"));
-      choices.push({ name: `Downgrade orchestrix core (v${currentVersion} → v${newVersion})`, value: "reinstall" });
+      console.log(chalk.yellow("\n⬇️  已安装的版本比可用版本新"));
+      choices.push({ name: `降级 orchestrix 核心 (v${currentVersion} → v${newVersion})`, value: "reinstall" });
     }
     
     choices.push(
-      { name: "Add/update expansion packs only", value: "expansions" },
-      { name: "Cancel", value: "cancel" }
+      { name: "仅添加/更新扩展包", value: "expansions" },
+      { name: "取消", value: "cancel" }
     );
 
     const { action } = await inquirer.prompt([
       {
         type: "list",
         name: "action",
-        message: "What would you like to do?",
+        message: "您希望做什么？",
         choices: choices,
       },
     ]);
@@ -503,7 +503,7 @@ class Installer {
         const availableExpansionPacks = await this.getAvailableExpansionPacks();
         
         if (availableExpansionPacks.length === 0) {
-          console.log(chalk.yellow("No expansion packs available."));
+          console.log(chalk.yellow("没有可用的扩展包。"));
           return;
         }
         
@@ -511,7 +511,7 @@ class Installer {
           {
             type: 'checkbox',
             name: 'selectedPacks',
-            message: 'Select expansion packs to install/update:',
+            message: '选择要安装/更新的扩展包:',
             choices: availableExpansionPacks.map(pack => ({
               name: `${pack.name} v${pack.version} - ${pack.description}`,
               value: pack.id,
@@ -521,22 +521,22 @@ class Installer {
         ]);
         
         if (selectedPacks.length === 0) {
-          console.log(chalk.yellow("No expansion packs selected."));
+          console.log(chalk.yellow("未选择任何扩展包。"));
           return;
         }
         
-        spinner.start("Installing expansion packs...");
+        spinner.start("正在安装扩展包...");
         const expansionFiles = await this.installExpansionPacks(installDir, selectedPacks, spinner, { ides: config.ides || [] });
-        spinner.succeed("Expansion packs installed successfully!");
+        spinner.succeed("扩展包安装成功！");
         
-        console.log(chalk.green("\n✓ Installation complete!"));
-        console.log(chalk.green(`✓ Expansion packs installed/updated:`));
+        console.log(chalk.green("\n✓ 安装完成！"));
+        console.log(chalk.green(`✓ 已安装/更新的扩展包:`));
         for (const packId of selectedPacks) {
           console.log(chalk.green(`  - ${packId} → .${packId}/`));
         }
         return;
       case "cancel":
-        console.log("Installation cancelled.");
+        console.log("安装已取消。");
         return;
     }
   }
@@ -546,25 +546,25 @@ class Installer {
     await initializeModules();
     spinner.stop();
 
-    console.log(chalk.yellow("\n⚠️  Directory contains existing files"));
-    console.log(`   Directory: ${installDir}`);
+    console.log(chalk.yellow("\n⚠️  目录包含现有文件"));
+    console.log(`   目录: ${installDir}`);
 
     if (state.hasorchestrixCore) {
-      console.log("   Found: .orchestrix-core directory (but no manifest)");
+      console.log("   发现: .orchestrix-core 目录 (但没有清单文件)");
     }
     if (state.hasOtherFiles) {
-      console.log("   Found: Other files in directory");
+      console.log("   发现: 目录中有其他文件");
     }
 
     const { action } = await inquirer.prompt([
       {
         type: "list",
         name: "action",
-        message: "What would you like to do?",
+        message: "您希望做什么？",
         choices: [
-          { name: "Install anyway (may overwrite files)", value: "force" },
-          { name: "Choose different directory", value: "different" },
-          { name: "Cancel", value: "cancel" },
+          { name: "仍然安装 (可能会覆盖文件)", value: "force" },
+          { name: "选择不同的目录", value: "different" },
+          { name: "取消", value: "cancel" },
         ],
       },
     ]);
@@ -577,7 +577,7 @@ class Installer {
           {
             type: "input",
             name: "newDir",
-            message: "Enter new installation directory:",
+            message: "输入新的安装目录:",
             default: path.join(path.dirname(installDir), "orchestrix-project"),
           },
         ]);
@@ -585,7 +585,7 @@ class Installer {
         return await this.install(config);
       }
       case "cancel":
-        console.log("Installation cancelled.");
+        console.log("安装已取消。");
         return;
     }
   }
@@ -611,7 +611,7 @@ class Installer {
 
       if (modifiedFiles.length > 0) {
         spinner.warn("Found modified files");
-        console.log(chalk.yellow("\nThe following files have been modified:"));
+        console.log(chalk.yellow("\n以下文件已被修改:"));
         for (const file of modifiedFiles) {
           console.log(`  - ${file}`);
         }
@@ -620,17 +620,17 @@ class Installer {
           {
             type: "list",
             name: "action",
-            message: "How would you like to proceed?",
+            message: "您希望如何继续？",
             choices: [
-              { name: "Backup and overwrite modified files", value: "backup" },
-              { name: "Skip modified files", value: "skip" },
-              { name: "Cancel update", value: "cancel" },
+              { name: "备份并覆盖修改过的文件", value: "backup" },
+              { name: "跳过修改过的文件", value: "skip" },
+              { name: "取消更新", value: "cancel" },
             ],
           },
         ]);
 
         if (action === "cancel") {
-          console.log("Update cancelled.");
+          console.log("更新已取消。");
           return;
         }
 
@@ -658,7 +658,7 @@ class Installer {
       await this.performFreshInstall(config, installDir, spinner, { isUpdate: true });
       
       // Clean up .yml files that now have .yaml counterparts
-      spinner.text = "Cleaning up legacy .yml files...";
+      spinner.text = "正在清理旧的 .yml 文件...";
       await this.cleanupLegacyYmlFiles(installDir, spinner);
     } catch (error) {
       spinner.fail("Update failed");
@@ -730,13 +730,13 @@ class Installer {
       }
       
       // Clean up .yml files that now have .yaml counterparts
-      spinner.text = "Cleaning up legacy .yml files...";
+      spinner.text = "正在清理旧的 .yml 文件...";
       await this.cleanupLegacyYmlFiles(installDir, spinner);
       
       spinner.succeed("Repair completed successfully!");
       
       // Show summary
-      console.log(chalk.green("\n✓ Installation repaired!"));
+      console.log(chalk.green("\n✓ 安装已修复！"));
       if (integrity.missing.length > 0) {
         console.log(chalk.green(`  Restored ${integrity.missing.length} missing files`));
       }
@@ -747,8 +747,8 @@ class Installer {
       // Warning for Cursor custom modes if agents were repaired
       const ides = manifest.ides_setup || [];
       if (ides.includes('cursor')) {
-        console.log(chalk.yellow.bold("\n⚠️  IMPORTANT: Cursor Custom Modes Update Required"));
-        console.log(chalk.yellow("Since agent files have been repaired, you need to update any custom agent modes configured in the Cursor custom agent GUI per the Cursor docs."));
+        console.log(chalk.yellow.bold("\n⚠️  重要提示：需要更新 Cursor 自定义模式"));
+        console.log(chalk.yellow("由于代理文件已修复，您需要根据 Cursor 文档在 Cursor 自定义代理 GUI 中更新任何已配置的自定义代理模式。"));
       }
       
     } catch (error) {
@@ -771,14 +771,14 @@ class Installer {
     const result = await this.performFreshInstall(config, installDir, spinner, { isUpdate: true });
     
     // Clean up .yml files that now have .yaml counterparts
-    spinner.text = "Cleaning up legacy .yml files...";
+    spinner.text = "正在清理旧的 .yml 文件...";
     await this.cleanupLegacyYmlFiles(installDir, spinner);
     
     return result;
   }
 
   showSuccessMessage(config, installDir, options = {}) {
-    console.log(chalk.green("\n✓ Orchestrix installed successfully!\n"));
+    console.log(chalk.green("\n✓ Orchestrix 安装成功！\n"));
 
     const ides = config.ides || (config.ide ? [config.ide] : []);
     if (ides.length > 0) {
@@ -786,27 +786,27 @@ class Installer {
         const ideConfig = configLoader.getIdeConfiguration(ide);
         if (ideConfig?.instructions) {
           console.log(
-            chalk.bold(`To use orchestrix agents in ${ideConfig.name}:`)
+            chalk.bold(`在 ${ideConfig.name} 中使用 orchestrix 代理:`)
           );
           console.log(ideConfig.instructions);
         }
       }
     } else {
-      console.log(chalk.yellow("No IDE configuration was set up."));
+      console.log(chalk.yellow("未设置 IDE 配置。"));
       console.log(
-        "You can manually configure your IDE using the agent files in:",
+        "您可以手动配置您的 IDE，使用以下目录中的代理文件:",
         installDir
       );
     }
 
     // Information about installation components
-    console.log(chalk.bold("\n🎯 Installation Summary:"));
+    console.log(chalk.bold("\n🎯 安装摘要:"));
     if (config.installType !== "expansion-only") {
-      console.log(chalk.green("✓ .orchestrix-core framework installed with all agents and workflows"));
+      console.log(chalk.green("✓ .orchestrix-core 框架及所有代理和工作流程已安装"));
     }
     
     if (config.expansionPacks && config.expansionPacks.length > 0) {
-      console.log(chalk.green(`✓ Expansion packs installed:`));
+      console.log(chalk.green(`✓ 已安装的扩展包:`));
       for (const packId of config.expansionPacks) {
         console.log(chalk.green(`  - ${packId} → .${packId}/`));
       }
@@ -819,7 +819,7 @@ class Installer {
       const resolvedWebBundlesDir = path.isAbsolute(config.webBundlesDirectory) 
         ? config.webBundlesDirectory 
         : path.resolve(originalCwd, config.webBundlesDirectory);
-      console.log(chalk.green(`✓ Web bundles (${bundleInfo}) installed to: ${resolvedWebBundlesDir}`));
+      console.log(chalk.green(`✓ Web bundles (${bundleInfo}) 已安装到: ${resolvedWebBundlesDir}`));
     }
     
     if (ides.length > 0) {
@@ -827,33 +827,33 @@ class Installer {
         const ideConfig = configLoader.getIdeConfiguration(ide);
         return ideConfig?.name || ide;
       }).join(", ");
-      console.log(chalk.green(`✓ IDE rules and configurations set up for: ${ideNames}`));
+      console.log(chalk.green(`✓ 已为以下 IDE 设置规则和配置: ${ideNames}`));
     }
 
     // Information about web bundles
     if (!config.includeWebBundles) {
-      console.log(chalk.bold("\n📦 Web Bundles Available:"));
-      console.log("Pre-built web bundles are available and can be added later:");
-      console.log(chalk.cyan("  Run the installer again to add them to your project"));
-      console.log("These bundles work independently and can be shared, moved, or used");
-      console.log("in other projects as standalone files.");
+      console.log(chalk.bold("\n📦 可用的 Web Bundles:"));
+      console.log("预构建的 Web bundles 可用，并可在以后添加:");
+      console.log(chalk.cyan("  再次运行安装程序以将它们添加到您的项目中"));
+      console.log("这些 bundles 独立工作，可以共享、移动或用作");
+      console.log("其他项目中的独立文件。");
     }
 
     if (config.installType === "single-agent") {
       console.log(
         chalk.dim(
-          "\nNeed other agents? Run: npx orchestrix install --agent=<name>"
+          "\n需要其他代理？运行: npx orchestrix install --agent=<name>"
         )
       );
       console.log(
-        chalk.dim("Need everything? Run: npx orchestrix install --full")
+        chalk.dim("需要所有功能？运行: npx orchestrix install --full")
       );
     }
 
     // Warning for Cursor custom modes if agents were updated
     if (options.isUpdate && ides.includes('cursor')) {
-      console.log(chalk.yellow.bold("\n⚠️  IMPORTANT: Cursor Custom Modes Update Required"));
-      console.log(chalk.yellow("Since agents have been updated, you need to update any custom agent modes configured in the Cursor custom agent GUI per the Cursor docs."));
+      console.log(chalk.yellow.bold("\n⚠️  重要提示：需要更新 Cursor 自定义模式"));
+      console.log(chalk.yellow("由于代理已更新，您需要根据 Cursor 文档在 Cursor 自定义代理 GUI 中更新任何已配置的自定义代理模式。"));
     }
   }
 
@@ -861,9 +861,9 @@ class Installer {
   async update() {
     // Initialize ES modules
     await initializeModules();
-    console.log(chalk.yellow('The "update" command is deprecated.'));
+    console.log(chalk.yellow(' "update" 命令已弃用。'));
     console.log(
-      'Please use "install" instead - it will detect and offer to update existing installations.'
+      '请改用 "install" - 它将检测并提供更新现有安装的选项。'
     );
 
     const installDir = await this.findInstallation();
@@ -875,7 +875,7 @@ class Installer {
       };
       return await this.install(config);
     }
-    console.log(chalk.red("No orchestrix installation found."));
+    console.log(chalk.red("未找到 orchestrix 安装。"));
   }
 
   async listAgents() {
@@ -883,14 +883,14 @@ class Installer {
     await initializeModules();
     const agents = await configLoader.getAvailableAgents();
 
-    console.log(chalk.bold("\nAvailable orchestrix Agents:\n"));
+    console.log(chalk.bold("\n可用的 orchestrix 代理:\n"));
 
     for (const agent of agents) {
       console.log(chalk.cyan(`  ${agent.id.padEnd(20)}`), agent.description);
     }
 
     console.log(
-      chalk.dim("\nInstall with: npx orchestrix install --agent=<id>\n")
+      chalk.dim("\n使用以下命令安装: npx orchestrix install --agent=<id>\n")
     );
   }
 
@@ -899,10 +899,10 @@ class Installer {
     await initializeModules();
     const expansionPacks = await this.getAvailableExpansionPacks();
 
-    console.log(chalk.bold("\nAvailable orchestrix Expansion Packs:\n"));
+    console.log(chalk.bold("\n可用的 orchestrix 扩展包:\n"));
 
     if (expansionPacks.length === 0) {
-      console.log(chalk.yellow("No expansion packs found."));
+      console.log(chalk.yellow("未找到扩展包。"));
       return;
     }
 
@@ -910,14 +910,14 @@ class Installer {
       console.log(chalk.cyan(`  ${pack.id.padEnd(20)}`), 
                   `${pack.name} v${pack.version}`);
       console.log(chalk.dim(`  ${' '.repeat(22)}${pack.description}`));
-      if (pack.author && pack.author !== 'Unknown') {
-        console.log(chalk.dim(`  ${' '.repeat(22)}by ${pack.author}`));
+      if (pack.author && pack.author !== '未知') {
+        console.log(chalk.dim(`  ${' '.repeat(22)}作者 ${pack.author}`));
       }
       console.log();
     }
 
     console.log(
-      chalk.dim("Install with: npx orchestrix install --full --expansion-packs <id>\n")
+      chalk.dim("使用以下命令安装: npx orchestrix install --full --expansion-packs <id>\n")
     );
   }
 
@@ -928,7 +928,7 @@ class Installer {
 
     if (!installDir) {
       console.log(
-        chalk.yellow("No orchestrix installation found in current directory tree")
+        chalk.yellow("在当前目录树中未找到 orchestrix 安装")
       );
       return;
     }
@@ -936,29 +936,29 @@ class Installer {
     const manifest = await fileManager.readManifest(installDir);
 
     if (!manifest) {
-      console.log(chalk.red("Invalid installation - manifest not found"));
+      console.log(chalk.red("无效的安装 - 未找到清单文件"));
       return;
     }
 
-    console.log(chalk.bold("\norchestrix Installation Status:\n"));
-    console.log(`  Directory:      ${installDir}`);
-    console.log(`  Version:        ${manifest.version}`);
+    console.log(chalk.bold("\norchestrix 安装状态:\n"));
+    console.log(`  目录:      ${installDir}`);
+    console.log(`  版本:        ${manifest.version}`);
     console.log(
-      `  Installed:      ${new Date(
+      `  安装日期:      ${new Date(
         manifest.installed_at
       ).toLocaleDateString()}`
     );
-    console.log(`  Type:           ${manifest.install_type}`);
+    console.log(`  类型:           ${manifest.install_type}`);
 
     if (manifest.agent) {
-      console.log(`  Agent:          ${manifest.agent}`);
+      console.log(`  代理:          ${manifest.agent}`);
     }
 
     if (manifest.ides_setup && manifest.ides_setup.length > 0) {
-      console.log(`  IDE Setup:      ${manifest.ides_setup.join(', ')}`);
+      console.log(`  IDE 设置:      ${manifest.ides_setup.join(', ')}`);
     }
 
-    console.log(`  Total Files:    ${manifest.files.length}`);
+    console.log(`  总文件数:    ${manifest.files.length}`);
 
     // Check for modifications
     const modifiedFiles = await fileManager.checkModifiedFiles(
@@ -966,7 +966,7 @@ class Installer {
       manifest
     );
     if (modifiedFiles.length > 0) {
-      console.log(chalk.yellow(`  Modified Files: ${modifiedFiles.length}`));
+      console.log(chalk.yellow(`  修改的文件: ${modifiedFiles.length}`));
     }
 
     console.log("");
@@ -1000,7 +1000,7 @@ class Installer {
         const pack = expansionPacks.find(p => p.id === packId);
         
         if (!pack) {
-          console.warn(`Expansion pack ${packId} not found, skipping...`);
+          console.warn(`未找到扩展包 ${packId}，正在跳过...`);
           continue;
         }
         
@@ -1012,43 +1012,43 @@ class Installer {
           spinner.stop();
           const existingManifest = await fileManager.readExpansionPackManifest(installDir, packId);
           
-          console.log(chalk.yellow(`\n🔍 Found existing ${pack.name} installation`));
-          console.log(`   Current version: ${existingManifest.version || 'unknown'}`);
-          console.log(`   New version: ${pack.version}`);
+          console.log(chalk.yellow(`\n🔍 发现现有的 ${pack.name} 安装`));
+          console.log(`   当前版本: ${existingManifest.version || '未知'}`);
+          console.log(`   新版本: ${pack.version}`);
           
           // Check integrity of existing expansion pack
           const packIntegrity = await fileManager.checkFileIntegrity(installDir, existingManifest);
           const hasPackIntegrityIssues = packIntegrity.missing.length > 0 || packIntegrity.modified.length > 0;
           
           if (hasPackIntegrityIssues) {
-            console.log(chalk.red("   ⚠️  Installation issues detected:"));
+            console.log(chalk.red("   ⚠️  检测到安装问题:"));
             if (packIntegrity.missing.length > 0) {
-              console.log(chalk.red(`     Missing files: ${packIntegrity.missing.length}`));
+              console.log(chalk.red(`     丢失的文件: ${packIntegrity.missing.length}`));
             }
             if (packIntegrity.modified.length > 0) {
-              console.log(chalk.yellow(`     Modified files: ${packIntegrity.modified.length}`));
+              console.log(chalk.yellow(`     修改的文件: ${packIntegrity.modified.length}`));
             }
           }
           
           const versionCompare = this.compareVersions(existingManifest.version || '0.0.0', pack.version);
           
           if (versionCompare === 0) {
-            console.log(chalk.yellow('   ⚠️  Same version already installed'));
+            console.log(chalk.yellow('   ⚠️  已安装相同版本'));
             
             const choices = [];
             if (hasPackIntegrityIssues) {
-              choices.push({ name: 'Repair (restore missing/modified files)', value: 'repair' });
+              choices.push({ name: '修复 (恢复丢失/修改的文件)', value: 'repair' });
             }
             choices.push(
-              { name: 'Force reinstall (overwrite)', value: 'overwrite' },
-              { name: 'Skip this expansion pack', value: 'skip' },
-              { name: 'Cancel installation', value: 'cancel' }
+              { name: '强制重新安装 (覆盖)', value: 'overwrite' },
+              { name: '跳过此扩展包', value: 'skip' },
+              { name: '取消安装', value: 'cancel' }
             );
             
             const { action } = await inquirer.prompt([{
               type: 'list',
               name: 'action',
-              message: `${pack.name} v${pack.version} is already installed. What would you like to do?`,
+              message: `${pack.name} v${pack.version} 已安装。您希望做什么？`,
               choices: choices
             }]);
             
@@ -1056,7 +1056,7 @@ class Installer {
               spinner.start();
               continue;
             } else if (action === 'cancel') {
-              console.log(chalk.red('Installation cancelled.'));
+              console.log(chalk.red('安装已取消。'));
               process.exit(0);
             } else if (action === 'repair') {
               // Repair the expansion pack
@@ -1064,12 +1064,12 @@ class Installer {
               continue;
             }
           } else if (versionCompare < 0) {
-            console.log(chalk.cyan('   ⬆️  Upgrade available'));
+            console.log(chalk.cyan('   ⬆️  有可用升级'));
             
             const { proceed } = await inquirer.prompt([{
               type: 'confirm',
               name: 'proceed',
-              message: `Upgrade ${pack.name} from v${existingManifest.version} to v${pack.version}?`,
+              message: `将 ${pack.name} 从 v${existingManifest.version} 升级到 v${pack.version}？`,
               default: true
             }]);
             
@@ -1078,16 +1078,16 @@ class Installer {
               continue;
             }
           } else {
-            console.log(chalk.yellow('   ⬇️  Installed version is newer than available version'));
+            console.log(chalk.yellow('   ⬇️  已安装的版本比可用版本新'));
             
             const { action } = await inquirer.prompt([{
               type: 'list',
               name: 'action',
-              message: 'What would you like to do?',
+              message: '您希望做什么？',
               choices: [
-                { name: 'Keep current version', value: 'skip' },
-                { name: 'Downgrade to available version', value: 'downgrade' },
-                { name: 'Cancel installation', value: 'cancel' }
+                { name: '保留当前版本', value: 'skip' },
+                { name: '降级到可用版本', value: 'downgrade' },
+                { name: '取消安装', value: 'cancel' }
               ]
             }]);
             
@@ -1095,13 +1095,13 @@ class Installer {
               spinner.start();
               continue;
             } else if (action === 'cancel') {
-              console.log(chalk.red('Installation cancelled.'));
+              console.log(chalk.red('安装已取消。'));
               process.exit(0);
             }
           }
           
           // If we get here, we're proceeding with installation
-          spinner.start(`Removing old ${pack.name} installation...`);
+          spinner.start(`正在移除旧的 ${pack.name} 安装...`);
           await fileManager.removeDirectory(expansionDotFolder);
         }
 
@@ -1203,10 +1203,10 @@ class Installer {
         
         await fileManager.createExpansionPackManifest(installDir, packId, expansionConfig, expansionPackFiles);
 
-        console.log(chalk.green(`✓ Installed expansion pack: ${pack.name} to ${`.${packId}`}`));
+        console.log(chalk.green(`✓ 已安装扩展包: ${pack.name} 到 ${`.${packId}`}`));
       } catch (error) {
-        console.error(chalk.red(`Failed to install expansion pack ${packId}: ${error.message}`));
-        console.error(chalk.red(`Stack trace: ${error.stack}`));
+        console.error(chalk.red(`安装扩展包 ${packId} 失败: ${error.message}`));
+        console.error(chalk.red(`堆栈跟踪: ${error.stack}`));
       }
     }
 
