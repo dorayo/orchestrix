@@ -42,16 +42,16 @@ try {
 
 program
   .version(version)
-  .description('Orchestrix installer - Universal AI agent framework for any domain');
+  .description('Orchestrix 安装器 - 适用于任何领域的通用 AI 代理框架');
 
 program
   .command('install')
-  .description('Install Orchestrix agents and tools')
-.option('-f, --full', 'Install complete Orchestrix')
-.option('-x, --expansion-only', 'Install only expansion packs (no orchestrix-core)')
-  .option('-d, --directory <path>', 'Installation directory')
-  .option('-i, --ide <ide...>', 'Configure for specific IDE(s) - can specify multiple (cursor, claude-code, windsurf, trae, roo, cline, gemini, github-copilot, other)')
-  .option('-e, --expansion-packs <packs...>', 'Install specific expansion packs (can specify multiple)')
+  .description('安装 Orchestrix 代理和工具')
+.option('-f, --full', '安装完整的 Orchestrix')
+.option('-x, --expansion-only', '仅安装扩展包 (不含 orchestrix-core)')
+  .option('-d, --directory <path>', '安装目录')
+  .option('-i, --ide <ide...>', '为指定的 IDE 配置 (可指定多个：cursor, claude-code, windsurf, trae, roo, cline, gemini, github-copilot, other)')
+  .option('-e, --expansion-packs <packs...>', '安装指定的扩展包 (可指定多个)')
   .action(async (options) => {
     try {
       await initializeModules();
@@ -76,48 +76,48 @@ program
       }
     } catch (error) {
       if (!chalk) await initializeModules();
-      console.error(chalk.red('Installation failed:'), error.message);
+      console.error(chalk.red('安装失败:'), error.message);
       process.exit(1);
     }
   });
 
 program
   .command('update')
-  .description('Update existing Orchestrix installation')
-  .option('--force', 'Force update, overwriting modified files')
-  .option('--dry-run', 'Show what would be updated without making changes')
+  .description('更新现有的 Orchestrix 安装')
+  .option('--force', '强制更新，覆盖已修改的文件')
+  .option('--dry-run', '显示将要更新的内容，但不执行实际更改')
   .action(async () => {
     try {
       await installer.update();
     } catch (error) {
       if (!chalk) await initializeModules();
-      console.error(chalk.red('Update failed:'), error.message);
+      console.error(chalk.red('更新失败:'), error.message);
       process.exit(1);
     }
   });
 
 program
   .command('list:expansions')
-  .description('List available expansion packs')
+  .description('列出可用的扩展包')
   .action(async () => {
     try {
       await installer.listExpansionPacks();
     } catch (error) {
       if (!chalk) await initializeModules();
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red('错误:'), error.message);
       process.exit(1);
     }
   });
 
 program
   .command('status')
-  .description('Show installation status')
+  .description('显示安装状态')
   .action(async () => {
     try {
       await installer.showStatus();
     } catch (error) {
       if (!chalk) await initializeModules();
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red('错误:'), error.message);
       process.exit(1);
     }
   });
@@ -172,19 +172,19 @@ async function promptInstallation() {
   // Load core config to get short-title
   const coreConfigPath = path.join(__dirname, '..', '..', '..', 'orchestrix-core', 'core-config.yaml');
   const coreConfig = yaml.load(await fs.readFile(coreConfigPath, 'utf8'));
-  const coreShortTitle = coreConfig['short-title'] || 'Orchestrix Agile Core System';
+  const coreShortTitle = coreConfig['short-title'] || 'Orchestrix 敏捷核心系统';
   
       // Add Orchestrix core option
     let orchestrixOptionText;
   if (state.type === 'existing') {
-    const currentVersion = state.manifest?.version || 'unknown';
-    const newVersion = coreConfig.version || 'unknown'; // Use version from core-config.yaml
+    const currentVersion = state.manifest?.version || '未知';
+    const newVersion = coreConfig.version || '未知'; // Use version from core-config.yaml
     const versionInfo = currentVersion === newVersion 
-      ? `(v${currentVersion} - reinstall)`
+      ? `(v${currentVersion} - 重新安装)`
       : `(v${currentVersion} → v${newVersion})`;
-          orchestrixOptionText = `Update ${coreShortTitle} ${versionInfo} .orchestrix-core`;
+          orchestrixOptionText = `更新 ${coreShortTitle} ${versionInfo} .orchestrix-core`;
     } else {
-      orchestrixOptionText = `Install ${coreShortTitle} (v${coreConfig.version || version}) .orchestrix-core`;
+      orchestrixOptionText = `安装 ${coreShortTitle} (v${coreConfig.version || version}) .orchestrix-core`;
   }
   
   choices.push({
@@ -199,14 +199,14 @@ async function promptInstallation() {
     let packOptionText;
     
     if (existing) {
-      const currentVersion = existing.manifest?.version || 'unknown';
+      const currentVersion = existing.manifest?.version || '未知';
       const newVersion = pack.version;
       const versionInfo = currentVersion === newVersion 
-        ? `(v${currentVersion} - reinstall)`
+        ? `(v${currentVersion} - 重新安装)`
         : `(v${currentVersion} → v${newVersion})`;
-      packOptionText = `Update ${pack.description} ${versionInfo} .${pack.id}`;
+      packOptionText = `更新 ${pack.description} ${versionInfo} .${pack.id}`;
     } else {
-      packOptionText = `Install ${pack.description} (v${pack.version}) .${pack.id}`;
+      packOptionText = `安装 ${pack.description} (v${pack.version}) .${pack.id}`;
     }
     
     choices.push({
