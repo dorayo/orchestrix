@@ -217,20 +217,21 @@ async function promptInstallation() {
   }
   
   // Ask what to install
-  const { selectedItems } = await inquirer.prompt([
-    {
-      type: 'checkbox',
-      name: 'selectedItems',
-      message: 'Select what to install/update (use space to select, enter to continue):',
-      choices: choices,
-      validate: (selected) => {
-        if (selected.length === 0) {
-          return 'Please select at least one item to install';
-        }
-        return true;
-      }
-    }
-  ]);
+  // const { selectedItems } = await inquirer.prompt([
+  //   {
+  //     type: 'checkbox',
+  //     name: 'selectedItems',
+  //     message: 'Select what to install/update (use space to select, enter to continue):',
+  //     choices: choices,
+  //     validate: (selected) => {
+  //       if (selected.length === 0) {
+  //         return 'Please select at least one item to install';
+  //       }
+  //       return true;
+  //     }
+  //   }
+  // ]);
+  const selectedItems = ['orchestrix-core'];
   
   // Process selections
       answers.installType = selectedItems.includes('orchestrix-core') ? 'full' : 'expansion-only';
