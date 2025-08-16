@@ -820,11 +820,7 @@ class Installer {
       console.log(chalk.dim("\n💡 提示: 运行 'npx orchestrix install --full' 安装完整版本"));
     }
 
-    // Warning for Cursor custom modes if agents were updated
-    if (options.isUpdate && ides.includes('cursor')) {
-      console.log(chalk.yellow.bold("\n⚠️  重要提示：需要更新 Cursor 自定义模式"));
-      console.log(chalk.yellow("由于代理已更新，您需要根据 Cursor 文档在 Cursor 自定义代理 GUI 中更新任何已配置的自定义代理模式。"));
-    }
+    // Cursor custom mode warning removed per user request
   }
 
   // Legacy method for backward compatibility

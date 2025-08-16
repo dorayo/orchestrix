@@ -132,13 +132,16 @@ class IdeSetup {
 
   async setupClaudeCode(installDir, selectedAgent) {
     // Setup Claude Code Subagents
-    await this.setupClaudeCodeSubagents(installDir, selectedAgent);
+    const subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
 
     // Setup orchestrix-core commands
     const coreSlashPrefix = await this.getCoreSlashPrefix(installDir);
     const coreAgents = selectedAgent ? [selectedAgent] : await this.getCoreAgentIds(installDir);
     const coreTasks = await this.getCoreTaskIds(installDir);
     await this.setupClaudeCodeForPackage(installDir, "core", coreSlashPrefix, coreAgents, coreTasks, ".orchestrix-core");
+    
+    // Display subagents summary after commands are set up
+    console.log(chalk.green(`✓ 已为 Claude Code 创建 ${subagentsCount} 个子代理`));
 
     // Setup expansion pack commands
     const expansionPacks = await this.getInstalledExpansionPacks(installDir);
@@ -240,7 +243,8 @@ class IdeSetup {
       }
     }
 
-    console.log(chalk.green(`\n✓ 已为 ${packageName} 创建 Claude Code 命令 (代理: ${agentIds.length}个, 任务: ${taskIds.length}个)`));
+    const displayName = packageName === "core" ? "Orchestrix 核心系统" : packageName;
+    console.log(chalk.green(`\n✓ 已为 ${displayName} 创建 Claude Code 命令 (代理: ${agentIds.length}个, 任务: ${taskIds.length}个)`));
   }
 
   async setupWindsurf(installDir, selectedAgent) {
@@ -995,8 +999,8 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       }
     }
 
-    console.log(chalk.green(`\n✓ 已为 Claude Code 创建 ${agents.length} 个子代理`));
-    return true;
+    // Return count instead of displaying message here
+    return agents.length;
   }
 
   async generateSubagentContent(agentId, agentContent, installDir) {
