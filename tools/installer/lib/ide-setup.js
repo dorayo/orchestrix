@@ -977,7 +977,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
   async setupClaudeCodeSubagents(installDir, selectedAgent) {
-    const subagentsDir = path.join(installDir, ".claude-code", "subagents");
+    const subagentsDir = path.join(installDir, ".claude", "agents");
     const agents = selectedAgent ? [selectedAgent] : await this.getAllAgentIds(installDir);
 
     await fileManager.ensureDirectory(subagentsDir);
@@ -988,12 +988,12 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
 
       if (agentPath) {
         const agentContent = await fileManager.readFile(agentPath);
-        const subagentPath = path.join(subagentsDir, `${agentId}-subagent.md`);
+        const subagentPath = path.join(subagentsDir, `${agentId}.md`);
         
         const subagentContent = await this.generateSubagentContent(agentId, agentContent, installDir);
         
         await fileManager.writeFile(subagentPath, subagentContent);
-        console.log(chalk.green(`✓ Created Claude Code subagent: ${agentId}-subagent.md`));
+        console.log(chalk.green(`✓ Created Claude Code subagent: ${agentId}.md`));
       }
     }
 
@@ -1080,25 +1080,22 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
   generateSubagentYaml(agentId, metadata) {
-    const name = `${metadata.name || agentId} Subagent`;
-    const description = metadata.agent?.whenToUse || `An Orchestrix agent specializing in ${metadata.title?.toLowerCase() || 'assistance'}.`;
+    const name = agentId; // Use agent ID as subagent name per Claude Code specs
+    const description = metadata.agent?.whenToUse || `Orchestrix ${metadata.title || agentId} agent specializing in ${metadata.title?.toLowerCase() || 'assistance'}.`;
     
-    // Intelligent model selection based on agent complexity and role
-    const model = this.getOptimalModelForAgent(agentId);
-    const color = this.getAgentColor(agentId);
-    const permissions = this.getAgentPermissions(agentId);
-    const maxTokens = this.getContextWindowSize(model);
-    const costTier = this.getCostTier(model);
+    // Get available tools for this agent
+    const tools = this.getAgentPermissions(agentId);
     
-    return `---
-name: ${name}
-description: ${description}
-model: ${model}
-color: "${color}"
-max_tokens: ${maxTokens}
-cost_tier: "${costTier}"
-permissions:${this.formatPermissions(permissions)}
----`;
+    // Build YAML frontmatter according to official Claude Code format
+    let yaml = `---\nname: ${name}\ndescription: ${description}`;
+    
+    // Add tools if specified (optional field)
+    if (tools && tools.length > 0) {
+      yaml += `\ntools: ${tools.join(', ')}`;
+    }
+    
+    yaml += '\n---';
+    return yaml;
   }
 
   getOptimalModelForAgent(agentId) {
@@ -1154,36 +1151,30 @@ permissions:${this.formatPermissions(permissions)}
   }
 
   getAgentPermissions(agentId) {
-    // Differentiated permissions based on agent responsibilities
+    // Map to Claude Code's built-in tool names
     const permissionMap = {
       // Full access for orchestration and architecture
-      'orchestrix-master': ['search_web', 'read_file', 'write_file', 'run_shell', 'manage_files'],
-      'orchestrix-orchestrator': ['search_web', 'read_file', 'write_file', 'run_shell'],
-      'architect': ['search_web', 'read_file', 'write_file', 'run_shell'],
+      'orchestrix-master': ['read_file', 'write_file', 'run_bash', 'search_web'],
+      'orchestrix-orchestrator': ['read_file', 'write_file', 'run_bash', 'search_web'],
+      'architect': ['read_file', 'write_file', 'run_bash', 'search_web'],
       
       // Development-focused permissions
-      'dev': ['search_web', 'read_file', 'write_file', 'run_shell', 'debug_code'],
-      'qa': ['read_file', 'write_file', 'run_shell', 'run_tests'],
+      'dev': ['read_file', 'write_file', 'run_bash', 'search_web'],
+      'qa': ['read_file', 'write_file', 'run_bash'],
       
       // Research and analysis focused
-      'analyst': ['search_web', 'read_file', 'write_file'],
-      'pm': ['search_web', 'read_file', 'write_file'],
+      'analyst': ['read_file', 'write_file', 'search_web'],
+      'pm': ['read_file', 'write_file', 'search_web'],
       
       // Document-focused permissions
       'po': ['read_file', 'write_file'],
       'sm': ['read_file', 'write_file'],
-      'ux-expert': ['search_web', 'read_file', 'write_file']
+      'ux-expert': ['read_file', 'write_file', 'search_web']
     };
     
-    return permissionMap[agentId] || ['search_web', 'read_file', 'write_file'];
+    return permissionMap[agentId] || ['read_file', 'write_file', 'search_web'];
   }
 
-  formatPermissions(permissions) {
-    return permissions.map(tool => `
-  - run-tool:
-      tool: ${tool}
-      access: full`).join('');
-  }
 
   getContextWindowSize(model) {
     // Context window based on official specifications
@@ -1233,29 +1224,18 @@ permissions:${this.formatPermissions(permissions)}
       content += '\n';
     }
     
-    // Add comprehensive configuration notes
+    // Add Orchestrix-specific activation instructions
+    content += `## Orchestrix Integration\n\n`;
+    content += `This subagent integrates the Orchestrix ${agentId} agent persona. When activated, follow all core principles and maintain the agent's specialized focus area.\n\n`;
+    
+    // Add usage notes
     const model = this.getOptimalModelForAgent(agentId);
-    const modelTier = this.getModelTier(model);
-    const costTier = this.getCostTier(model);
     const permissions = this.getAgentPermissions(agentId);
     
-    content += `**Configuration Details:**\n`;
-    content += `- Model: ${model} (${modelTier})\n`;
-    content += `- Cost Tier: ${costTier.charAt(0).toUpperCase() + costTier.slice(1)}\n`;
-    content += `- Optimized for: ${this.getAgentOptimization(agentId)}\n`;
+    content += `**Configuration Notes:**\n`;
+    content += `- Recommended Model: ${model}\n`;
     content += `- Available Tools: ${permissions.join(', ')}\n`;
-    content += `- Context Window: ${this.getContextWindowSize(model).toLocaleString()} tokens\n\n`;
-    
-    // Add usage recommendations
-    content += `**Usage Recommendations:**\n`;
-    content += this.getUsageRecommendations(agentId);
-    content += '\n';
-    
-    // Add security and best practices note
-    content += `**Security & Best Practices:**\n`;
-    content += `- This agent operates with ${this.getAgentPermissions(agentId).length} tool permissions\n`;
-    content += `- Always review generated content before implementation\n`;
-    content += `- Cost tier: ${this.getCostTier(this.getOptimalModelForAgent(agentId))} - monitor usage accordingly\n\n`;
+    content += `- Specialization: ${this.getAgentOptimization(agentId)}\n\n`;
     
     return content;
   }
