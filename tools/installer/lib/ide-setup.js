@@ -1083,21 +1083,120 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     const name = `${metadata.name || agentId} Subagent`;
     const description = metadata.agent?.whenToUse || `An Orchestrix agent specializing in ${metadata.title?.toLowerCase() || 'assistance'}.`;
     
+    // Intelligent model selection based on agent complexity and role
+    const model = this.getOptimalModelForAgent(agentId);
+    const color = this.getAgentColor(agentId);
+    const permissions = this.getAgentPermissions(agentId);
+    const maxTokens = this.getContextWindowSize(model);
+    const costTier = this.getCostTier(model);
+    
     return `---
 name: ${name}
 description: ${description}
-model: claude-3-5-sonnet
-permissions:
-  - run-tool:
-      tool: search_web
-      access: full
-  - run-tool:
-      tool: read_file
-      access: full
-  - run-tool:
-      tool: write_file
-      access: full
+model: ${model}
+color: "${color}"
+max_tokens: ${maxTokens}
+cost_tier: "${costTier}"
+permissions:${this.formatPermissions(permissions)}
 ---`;
+  }
+
+  getOptimalModelForAgent(agentId) {
+    // Model selection based on complexity and cost-effectiveness
+    const modelMap = {
+      // Tier 1: Highest complexity - Strategic decision making, complex coordination
+      'orchestrix-master': 'claude-3-opus-20240229',      // Master decision maker needs ultimate capability
+      'orchestrix-orchestrator': 'claude-3-opus-20240229', // Complex multi-agent coordination
+      'architect': 'claude-3-5-sonnet-20241022',          // Deep technical architecture
+      
+      // Tier 2: High complexity - Specialized professional tasks  
+      'analyst': 'claude-3-5-sonnet-20241022',            // Strategic analysis and research
+      'dev': 'claude-3-5-sonnet-20241022',               // Code generation and debugging
+      'qa': 'claude-3-5-sonnet-20241022',                // Complex testing and quality analysis
+      'pm': 'claude-3-5-sonnet-20241022',                // Product strategy and planning
+      
+      // Tier 3: Standard complexity - Structured execution tasks
+      'po': 'claude-3-5-haiku-20241022',                 // Requirements management
+      'sm': 'claude-3-5-haiku-20241022',                 // Process facilitation
+      'ux-expert': 'claude-3-5-haiku-20241022'           // Design recommendations
+    };
+    
+    return modelMap[agentId] || 'claude-3-5-sonnet-20241022';
+  }
+
+  getAgentColor(agentId) {
+    // Professional color scheme based on role categories and color psychology
+    const colorMap = {
+      // Management Tier (Purple family) - Authority, wisdom, coordination
+      'orchestrix-master': '#6b21a8',          // Deep Purple - Ultimate authority
+      'orchestrix-orchestrator': '#7c3aed',     // Royal Purple - Orchestration power
+      'pm': '#8b5cf6',                         // Medium Purple - Strategic management
+      
+      // Technical Tier (Blue family) - Trust, reliability, expertise
+      'architect': '#1e40af',                   // Deep Blue - Architectural stability
+      'dev': '#0891b2',                        // Cyan Blue - Development innovation
+      'qa': '#0f766e',                         // Teal Blue - Quality assurance
+      
+      // Analysis Tier (Green family) - Growth, insight, research
+      'analyst': '#059669',                     // Emerald Green - Strategic insights
+      
+      // Product Tier (Warm family) - Energy, creativity, user focus
+      'po': '#ea580c',                         // Orange - Product energy
+      'ux-expert': '#e11d48',                  // Rose - Creative user focus
+      
+      // Process Tier (Neutral family) - Organization, methodology
+      'sm': '#475569'                          // Slate Gray - Process structure
+    };
+    
+    return colorMap[agentId] || '#6366f1';
+  }
+
+  getAgentPermissions(agentId) {
+    // Differentiated permissions based on agent responsibilities
+    const permissionMap = {
+      // Full access for orchestration and architecture
+      'orchestrix-master': ['search_web', 'read_file', 'write_file', 'run_shell', 'manage_files'],
+      'orchestrix-orchestrator': ['search_web', 'read_file', 'write_file', 'run_shell'],
+      'architect': ['search_web', 'read_file', 'write_file', 'run_shell'],
+      
+      // Development-focused permissions
+      'dev': ['search_web', 'read_file', 'write_file', 'run_shell', 'debug_code'],
+      'qa': ['read_file', 'write_file', 'run_shell', 'run_tests'],
+      
+      // Research and analysis focused
+      'analyst': ['search_web', 'read_file', 'write_file'],
+      'pm': ['search_web', 'read_file', 'write_file'],
+      
+      // Document-focused permissions
+      'po': ['read_file', 'write_file'],
+      'sm': ['read_file', 'write_file'],
+      'ux-expert': ['search_web', 'read_file', 'write_file']
+    };
+    
+    return permissionMap[agentId] || ['search_web', 'read_file', 'write_file'];
+  }
+
+  formatPermissions(permissions) {
+    return permissions.map(tool => `
+  - run-tool:
+      tool: ${tool}
+      access: full`).join('');
+  }
+
+  getContextWindowSize(model) {
+    // Context window optimization based on model capabilities
+    if (model.includes('opus')) return 200000;
+    if (model.includes('sonnet')) return 100000;
+    if (model.includes('haiku')) return 50000;
+    return 100000;
+  }
+
+  getCostTier(model) {
+    // Cost awareness for budget management
+    if (model.includes('opus')) return 'premium';
+    if (model.includes('sonnet')) return 'standard';
+    if (model.includes('haiku')) return 'economical';
+    return 'standard';
   }
 
   generateSubagentMarkdown(agentId, metadata) {
@@ -1130,7 +1229,72 @@ permissions:
       content += '\n';
     }
     
+    // Add comprehensive configuration notes
+    const model = this.getOptimalModelForAgent(agentId);
+    const modelTier = this.getModelTier(model);
+    const costTier = this.getCostTier(model);
+    const permissions = this.getAgentPermissions(agentId);
+    
+    content += `**Configuration Details:**\n`;
+    content += `- Model: ${model} (${modelTier})\n`;
+    content += `- Cost Tier: ${costTier.charAt(0).toUpperCase() + costTier.slice(1)}\n`;
+    content += `- Optimized for: ${this.getAgentOptimization(agentId)}\n`;
+    content += `- Available Tools: ${permissions.join(', ')}\n`;
+    content += `- Context Window: ${this.getContextWindowSize(model).toLocaleString()} tokens\n\n`;
+    
+    // Add usage recommendations
+    content += `**Usage Recommendations:**\n`;
+    content += this.getUsageRecommendations(agentId);
+    content += '\n';
+    
+    // Add security and best practices note
+    content += `**Security & Best Practices:**\n`;
+    content += `- This agent operates with ${this.getAgentPermissions(agentId).length} tool permissions\n`;
+    content += `- Always review generated content before implementation\n`;
+    content += `- Cost tier: ${this.getCostTier(this.getOptimalModelForAgent(agentId))} - monitor usage accordingly\n\n`;
+    
     return content;
+  }
+
+  getModelTier(model) {
+    if (model.includes('opus')) return 'Highest Capability';
+    if (model.includes('sonnet')) return 'Balanced Performance';
+    if (model.includes('haiku')) return 'Fast Execution';
+    return 'Standard';
+  }
+
+  getAgentOptimization(agentId) {
+    const optimizationMap = {
+      'orchestrix-master': 'Complex decision-making and universal expertise',
+      'orchestrix-orchestrator': 'Multi-agent coordination and workflow management', 
+      'architect': 'System design and technical architecture',
+      'analyst': 'Strategic research and market analysis',
+      'dev': 'Code generation and debugging',
+      'qa': 'Quality assurance and testing strategy',
+      'pm': 'Product planning and documentation',
+      'po': 'Requirements management and story creation',
+      'sm': 'Agile process facilitation',
+      'ux-expert': 'User experience and interface design'
+    };
+    
+    return optimizationMap[agentId] || 'General assistance tasks';
+  }
+
+  getUsageRecommendations(agentId) {
+    const recommendationsMap = {
+      'orchestrix-master': '- Best for complex, multi-domain tasks requiring ultimate capability\n- Use sparingly due to premium cost\n- Consider for critical decision points',
+      'orchestrix-orchestrator': '- Ideal for coordinating multiple agents or complex workflows\n- Premium tier - use for high-value orchestration tasks\n- Excellent for project planning and resource allocation',
+      'architect': '- Perfect for system design and technical architecture decisions\n- Balanced performance for complex technical tasks\n- Use for infrastructure planning and technology selection',
+      'analyst': '- Optimized for research, analysis, and strategic insights\n- Balanced cost-performance for analytical work\n- Excellent for market research and competitive analysis',
+      'dev': '- Specialized for code generation, debugging, and implementation\n- Balanced performance for development tasks\n- Best for complex coding challenges and refactoring',
+      'qa': '- Focused on testing strategies and quality assurance\n- Balanced performance for quality-related tasks\n- Use for test planning and code review',
+      'pm': '- Designed for product strategy and documentation\n- Balanced cost-performance for product management\n- Ideal for PRD creation and feature planning',
+      'po': '- Economical choice for requirements and story management\n- Fast execution for structured tasks\n- Perfect for backlog management and story refinement',
+      'sm': '- Cost-effective for process facilitation and agile guidance\n- Quick responses for methodology questions\n- Ideal for sprint planning and retrospectives',
+      'ux-expert': '- Economical option for UI/UX design guidance\n- Fast execution for design recommendations\n- Perfect for wireframes and user experience feedback'
+    };
+    
+    return recommendationsMap[agentId] || '- General-purpose assistance with standard capabilities';
   }
 
   async configureVsCodeSettings(installDir, spinner, preConfiguredSettings = null) {
