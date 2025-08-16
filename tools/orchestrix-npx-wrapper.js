@@ -24,11 +24,11 @@ if (isNpxExecution) {
     process.exit(1);
   }
   
-  // Execute with proper working directory
+  // Execute with user's current working directory preserved
   try {
     execSync(`node "${orchestrixScriptPath}" ${process.argv.slice(2).join(' ')}`, {
       stdio: 'inherit',
-      cwd: path.dirname(__dirname)
+      cwd: process.cwd()
     });
   } catch (error) {
     // execSync will throw if the command exits with non-zero
