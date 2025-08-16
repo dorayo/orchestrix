@@ -116,17 +116,15 @@ workflow:
         - Story starts in "Draft" status
         - May require additional context gathering for brownfield
 
-    - agent: analyst/pm
-      action: review_draft_story
+    - agent: architect
+      action: review_story
       updates: story.md
       requires: story.md
-      optional: true
-      condition: user_wants_story_review
+      uses: architect-technical-review-checklist
       notes: |
-        OPTIONAL: Review and approve draft story
-        - NOTE: story-review task coming soon
-        - Review story completeness and alignment
-        - Update story status: Draft → Approved
+        Architect (New Chat): @architect → *review-story <story_id>
+        - Reviews draft story for technical accuracy and alignment with architecture
+        - Updates story status: Draft → Approved or Requires_Revision
 
     - agent: dev
       action: implement_story
@@ -162,7 +160,7 @@ workflow:
     - repeat_development_cycle:
       action: continue_for_all_stories
       notes: |
-        Repeat story cycle (SM → Dev → QA) for all epic stories
+        Repeat story cycle (SM → Architect → Dev → QA) for all epic stories
         Continue until all stories in PRD are complete
 
     - agent: po
@@ -185,7 +183,6 @@ workflow:
         Reference: {root}/data/orchestrix-kb.md#IDE Development Workflow
 
   flow_diagram: |
-    ```mermaid
     graph TD
         A[Start: Brownfield Enhancement] --> B[analyst: classify enhancement scope]
         B --> C{Enhancement Size?}
@@ -217,11 +214,11 @@ workflow:
         Q -->|Sharded PRD| R[create-next-story]
         Q -->|Brownfield Docs| S[create-brownfield-story]
         
-        R --> T{Review draft?}
+        R --> T[architect: review story]
         S --> T
-        T -->|Yes| U[review & approve]
-        T -->|No| V[dev: implement]
-        U --> V
+        T --> U{Architect approves?}
+        U -->|No| P
+        U -->|Yes| V[dev: implement]
         
         V --> W{QA review?}
         W -->|Yes| X[qa: review]
@@ -246,7 +243,7 @@ workflow:
         style O fill:#ADD8E6
         style P fill:#ADD8E6
         style V fill:#ADD8E6
-        style U fill:#F0E68C
+        style T fill:#F0E68C
         style X fill:#F0E68C
         style AC fill:#F0E68C
     ```

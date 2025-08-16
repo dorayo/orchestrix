@@ -62,17 +62,15 @@ workflow:
         - Creates next story from sharded docs
         - Story starts in "Draft" status
 
-    - agent: analyst/pm
-      action: review_draft_story
+    - agent: architect
+      action: review_story
       updates: story.md
       requires: story.md
-      optional: true
-      condition: user_wants_story_review
+      uses: architect-technical-review-checklist
       notes: |
-        OPTIONAL: Review and approve draft story
-        - NOTE: story-review task coming soon
-        - Review story completeness and alignment
-        - Update story status: Draft → Approved
+        Architect (New Chat): @architect → *review-story <story_id>
+        - Reviews draft story for technical accuracy and alignment with architecture
+        - Updates story status: Draft → Approved or Requires_Revision
 
     - agent: dev
       action: implement_story
@@ -108,7 +106,7 @@ workflow:
     - repeat_development_cycle:
       action: continue_for_all_stories
       notes: |
-        Repeat story cycle (SM → Dev → QA) for all epic stories
+        Repeat story cycle (SM → Architect → Dev → QA) for all epic stories
         Continue until all stories in PRD are complete
 
     - agent: po
@@ -143,10 +141,10 @@ workflow:
         G --> E
         
         H --> I[sm: create story]
-        I --> J{Review draft story?}
-        J -->|Yes| K[analyst/pm: review & approve story]
-        J -->|No| L[dev: implement story]
-        K --> L
+        I --> J[architect: review story]
+        J --> K{Architect approves?}
+        K -->|No| I
+        K -->|Yes| L[dev: implement story]
         L --> M{QA review?}
         M -->|Yes| N[qa: review implementation]
         M -->|No| O{More stories?}
@@ -166,7 +164,7 @@ workflow:
         style L fill:#ADD8E6
         style C fill:#FFE4B5
         style D fill:#FFE4B5
-        style K fill:#F0E68C
+        style J fill:#F0E68C
         style N fill:#F0E68C
         style S fill:#F0E68C
     ```
