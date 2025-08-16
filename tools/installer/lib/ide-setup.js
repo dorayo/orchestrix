@@ -1071,14 +1071,29 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         if (identityMatch) metadata.persona.identity = identityMatch[1].trim();
         if (focusMatch) metadata.persona.focus = focusMatch[1].trim();
         
-        // Extract core principles
-        const principlesMatch = personaSection.match(/core_principles:\s*([\s\S]*?)(?=\n\s{0,2}\w|$)/);
+        // Extract core principles from persona section
+        const principlesMatch = personaSection.match(/core_principles:\s*([\s\S]*?)(?=\n\s{0,2}[a-zA-Z]|$)/);
         if (principlesMatch) {
           const principlesText = principlesMatch[1];
           const principles = principlesText.split('\n')
             .map(line => line.trim())
             .filter(line => line.startsWith('- '))
             .map(line => line.substring(2).trim().replace(/^["']|["']$/g, ''));
+          metadata.persona.core_principles = principles;
+        }
+      }
+      
+      // Extract core principles at root level (some agents have it outside persona)
+      const rootPrinciplesMatch = yamlContent.match(/(?:^|\n)core_principles:\s*([\s\S]*?)(?=\n[a-zA-Z]|$)/);
+      if (rootPrinciplesMatch) {
+        const principlesText = rootPrinciplesMatch[1];
+        const principles = principlesText.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.startsWith('- '))
+          .map(line => line.substring(2).trim().replace(/^["']|["']$/g, ''));
+        
+        // If no principles in persona, use root level ones
+        if (!metadata.persona.core_principles || metadata.persona.core_principles.length === 0) {
           metadata.persona.core_principles = principles;
         }
       }
