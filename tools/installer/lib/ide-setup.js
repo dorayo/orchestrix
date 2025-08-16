@@ -1002,14 +1002,26 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
   async generateSubagentContent(agentId, agentContent, installDir) {
-    // Extract agent metadata from YAML block
+    // Extract complete agent metadata including Orchestrix workflow elements
     const agentMetadata = this.extractAgentMetadata(agentContent);
+    
+    // Read core-config.yaml for project configuration
+    const coreConfigPath = path.join(installDir, 'core-config.yaml');
+    let coreConfig = {};
+    try {
+      if (await fileManager.pathExists(coreConfigPath)) {
+        const coreConfigContent = await fileManager.readFile(coreConfigPath);
+        coreConfig = yaml.parse(coreConfigContent);
+      }
+    } catch (error) {
+      console.warn(chalk.yellow(`Warning: Could not read core-config.yaml: ${error.message}`));
+    }
     
     // Generate YAML frontmatter for Claude Code Subagent
     const yamlFrontmatter = this.generateSubagentYaml(agentId, agentMetadata);
     
-    // Generate markdown content with agent persona and principles
-    const markdownContent = this.generateSubagentMarkdown(agentId, agentMetadata);
+    // Generate enhanced markdown content with complete Orchestrix workflow
+    const markdownContent = this.generateEnhancedSubagentMarkdown(agentId, agentMetadata, coreConfig, installDir);
     
     return `${yamlFrontmatter}\n${markdownContent}`;
   }
@@ -1023,7 +1035,10 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       title: 'AI Agent',
       role: 'Assistant',
       style: 'Professional',
-      core_principles: []
+      core_principles: [],
+      activation_instructions: [],
+      commands: [],
+      dependencies: {}
     };
 
     if (yamlMatch) {
@@ -1035,7 +1050,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         const agentSection = agentMatch[1];
         const nameMatch = agentSection.match(/name:\s*(.+)/);
         const titleMatch = agentSection.match(/title:\s*(.+)/);
-        const whenToUseMatch = agentSection.match(/whenToUse:\s*(.+)/);
+        const whenToUseMatch = agentSection.match(/whenToUse:\s*["']?([^\n"']+)["']?/);
         
         if (nameMatch) metadata.agent.name = nameMatch[1].trim();
         if (titleMatch) metadata.agent.title = titleMatch[1].trim();
@@ -1063,9 +1078,62 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           const principles = principlesText.split('\n')
             .map(line => line.trim())
             .filter(line => line.startsWith('- '))
-            .map(line => line.substring(2).trim());
+            .map(line => line.substring(2).trim().replace(/^["']|["']$/g, ''));
           metadata.persona.core_principles = principles;
         }
+      }
+      
+      // Extract activation instructions
+      const activationMatch = yamlContent.match(/activation-instructions:\s*([\s\S]*?)(?=\n\w|$)/);
+      if (activationMatch) {
+        const activationText = activationMatch[1];
+        const instructions = activationText.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.startsWith('- '))
+          .map(line => line.substring(2).trim().replace(/^["']|["']$/g, ''));
+        metadata.activation_instructions = instructions;
+      }
+      
+      // Extract commands
+      const commandsMatch = yamlContent.match(/commands:\s*([\s\S]*?)(?=\ndependencies:|\n\w(?!\s)|$)/);
+      if (commandsMatch) {
+        const commandsText = commandsMatch[1];
+        const commands = [];
+        const commandLines = commandsText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        for (const line of commandLines) {
+          if (line.startsWith('- ')) {
+            const commandText = line.substring(2).trim();
+            const colonIndex = commandText.indexOf(':');
+            if (colonIndex > 0) {
+              const name = commandText.substring(0, colonIndex).trim();
+              const description = commandText.substring(colonIndex + 1).trim();
+              commands.push({ name, description });
+            } else {
+              commands.push({ name: commandText, description: '' });
+            }
+          }
+        }
+        metadata.commands = commands;
+      }
+      
+      // Extract dependencies
+      const dependenciesMatch = yamlContent.match(/dependencies:\s*([\s\S]*?)(?=\n\w(?!\s)|$)/);
+      if (dependenciesMatch) {
+        const dependenciesText = dependenciesMatch[1];
+        const deps = { tasks: [], templates: [], checklists: [], data: [], utils: [] };
+        
+        let currentSection = null;
+        const depLines = dependenciesText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        for (const line of depLines) {
+          if (line.endsWith(':')) {
+            currentSection = line.replace(':', '');
+          } else if (line.startsWith('- ') && currentSection && deps[currentSection]) {
+            deps[currentSection].push(line.substring(2).trim());
+          }
+        }
+        metadata.dependencies = deps;
       }
     }
     
@@ -1236,6 +1304,154 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     content += `- Recommended Model: ${model}\n`;
     content += `- Available Tools: ${permissions.join(', ')}\n`;
     content += `- Specialization: ${this.getAgentOptimization(agentId)}\n\n`;
+    
+    return content;
+  }
+
+  generateEnhancedSubagentMarkdown(agentId, metadata, coreConfig, installDir) {
+    let content = `# Orchestrix ${metadata.title || agentId} Agent\n\n`;
+    
+    // Add complete ACTIVATION NOTICE from original agent
+    content += `**ACTIVATION NOTICE:** This Claude Code subagent contains your complete Orchestrix agent operating guidelines. Follow the activation instructions below to adopt the full agent persona and workflow.\n\n`;
+    
+    content += `**CRITICAL:** Read and follow the complete agent definition below to understand your operating parameters. Adopt the persona and follow the activation instructions exactly to alter your state of being. Stay in this agent mode until told to exit.\n\n`;
+    
+    // Add agent introduction with complete context
+    if (metadata.name && metadata.role) {
+      content += `You are **${metadata.name}**, a specialized AI Agent from the Orchestrix framework. You are ${metadata.role.toLowerCase().startsWith('a ') ? metadata.role.toLowerCase() : 'a ' + metadata.role.toLowerCase()}.`;
+      
+      if (metadata.style) {
+        content += ` Your style is ${metadata.style.toLowerCase()}.`;
+      }
+      content += '\n\n';
+    }
+    
+    if (metadata.persona?.identity) {
+      content += `**Identity:** ${metadata.persona.identity}\n\n`;
+    }
+    
+    if (metadata.persona?.focus) {
+      content += `**Focus:** ${metadata.persona.focus}\n\n`;
+    }
+    
+    // Add ACTIVATION INSTRUCTIONS - Critical for proper Orchestrix workflow
+    if (metadata.activation_instructions && metadata.activation_instructions.length > 0) {
+      content += `## 🚀 ACTIVATION INSTRUCTIONS\n\n`;
+      content += `**MANDATORY STARTUP SEQUENCE:**\n`;
+      for (let i = 0; i < metadata.activation_instructions.length; i++) {
+        const instruction = metadata.activation_instructions[i];
+        content += `**STEP ${i + 1}:** ${instruction}\n\n`;
+      }
+      content += `**IMPORTANT:** Complete all activation steps before responding to user requests.\n\n`;
+    }
+    
+    // Add CORE PRINCIPLES - Essential for agent behavior
+    if (metadata.core_principles && metadata.core_principles.length > 0) {
+      content += `## 🎯 CORE PRINCIPLES\n\n`;
+      content += `**CRITICAL BEHAVIORAL RULES:**\n`;
+      for (const principle of metadata.core_principles) {
+        content += `- ${principle}\n`;
+      }
+      content += '\n';
+    }
+    
+    // Add COMMAND SYSTEM - Essential for Orchestrix workflow
+    if (metadata.commands && metadata.commands.length > 0) {
+      content += `## ⚡ COMMAND SYSTEM\n\n`;
+      content += `**All commands require \`*\` prefix when used (e.g., \`*help\`, \`*draft\`):**\n\n`;
+      for (const command of metadata.commands) {
+        const desc = command.description || '';
+        if (desc) {
+          content += `- **\`*${command.name}\`**: ${desc}\n`;
+        } else {
+          content += `- **\`*${command.name}\`**\n`;
+        }
+      }
+      content += '\n';
+    }
+    
+    // Add PROJECT CONFIGURATION from core-config.yaml
+    if (coreConfig && Object.keys(coreConfig).length > 0) {
+      content += `## 📁 PROJECT CONFIGURATION\n\n`;
+      content += `**Orchestrix Project Setup:**\n`;
+      
+      if (coreConfig.title) {
+        content += `- **Project:** ${coreConfig.title}\n`;
+      }
+      if (coreConfig.version) {
+        content += `- **Version:** ${coreConfig.version}\n`;
+      }
+      
+      // Add file structure information
+      const fileStructure = [];
+      if (coreConfig.devStoryLocation) {
+        fileStructure.push(`Stories: \`${coreConfig.devStoryLocation}\``);
+      }
+      if (coreConfig.prd?.prdFile) {
+        fileStructure.push(`PRD: \`${coreConfig.prd.prdFile}\``);
+      }
+      if (coreConfig.architecture?.architectureFile) {
+        fileStructure.push(`Architecture: \`${coreConfig.architecture.architectureFile}\``);
+      }
+      
+      if (fileStructure.length > 0) {
+        content += `- **Key Locations:** ${fileStructure.join(', ')}\n`;
+      }
+      
+      // Add devLoadAlwaysFiles if available
+      if (coreConfig.devLoadAlwaysFiles && coreConfig.devLoadAlwaysFiles.length > 0) {
+        content += `- **Always Load Files:** ${coreConfig.devLoadAlwaysFiles.join(', ')}\n`;
+      }
+      
+      content += '\n';
+    }
+    
+    // Add DEPENDENCIES SYSTEM - Critical for task execution
+    if (metadata.dependencies && Object.keys(metadata.dependencies).length > 0) {
+      content += `## 📚 DEPENDENCIES & WORKFLOWS\n\n`;
+      content += `**Available Resources for Task Execution:**\n\n`;
+      
+      const depTypes = Object.keys(metadata.dependencies).filter(key => 
+        metadata.dependencies[key] && metadata.dependencies[key].length > 0
+      );
+      
+      for (const depType of depTypes) {
+        const items = metadata.dependencies[depType];
+        content += `**${depType.charAt(0).toUpperCase() + depType.slice(1)}:**\n`;
+        for (const item of items) {
+          content += `- \`${item}\`\n`;
+        }
+        content += '\n';
+      }
+      
+      content += `**Usage:** Load dependency files only when user requests specific command execution or task workflows.\n\n`;
+    }
+    
+    // Add Orchestrix integration notes
+    content += `## 🔗 ORCHESTRIX INTEGRATION\n\n`;
+    content += `This Claude Code subagent provides complete integration with the Orchestrix ${agentId} agent:\n\n`;
+    
+    // Add configuration details
+    const model = this.getOptimalModelForAgent(agentId);
+    const permissions = this.getAgentPermissions(agentId);
+    
+    content += `**Technical Configuration:**\n`;
+    content += `- **Recommended Model:** ${model} (${this.getModelTier(model)})\n`;
+    content += `- **Available Tools:** ${permissions.join(', ')}\n`;
+    content += `- **Specialization:** ${this.getAgentOptimization(agentId)}\n`;
+    content += `- **Integration Level:** Complete Orchestrix workflow preservation\n\n`;
+    
+    content += `**Workflow Compliance:**\n`;
+    content += `- Maintains all original Orchestrix agent behaviors and constraints\n`;
+    content += `- Preserves command system and dependency workflows\n`;
+    content += `- Follows project file structure and conventions from core-config.yaml\n`;
+    content += `- Integrates seamlessly with other Orchestrix agents in Claude Code\n\n`;
+    
+    content += `**Usage Instructions:**\n`;
+    content += `1. Follow activation instructions upon agent selection\n`;
+    content += `2. Use commands with \`*\` prefix (e.g., \`*help\`, \`*draft\`)\n`;
+    content += `3. Load dependency files only when executing specific workflows\n`;
+    content += `4. Maintain agent persona until explicitly told to exit\n\n`;
     
     return content;
   }
