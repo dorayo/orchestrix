@@ -924,15 +924,17 @@ class Installer {
   async showStatus() {
     // Initialize ES modules
     await initializeModules();
-    const installDir = await this.findInstallation();
+    const orchestrixCoreDir = await this.findInstallation();
 
-    if (!installDir) {
+    if (!orchestrixCoreDir) {
       console.log(
         chalk.yellow("在当前目录树中未找到 orchestrix 安装")
       );
       return;
     }
 
+    // Convert .orchestrix-core path to project root path
+    const installDir = path.dirname(orchestrixCoreDir);
     const manifest = await fileManager.readManifest(installDir);
 
     if (!manifest) {
