@@ -1038,7 +1038,8 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       core_principles: [],
       activation_instructions: [],
       commands: [],
-      dependencies: {}
+      dependencies: {},
+      story_file_permissions: []
     };
 
     if (yamlMatch) {
@@ -1098,14 +1099,21 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         }
       }
       
-      // Extract activation instructions
-      const activationMatch = yamlContent.match(/activation-instructions:\s*([\s\S]*?)(?=\n\w|$)/);
+      // Extract activation instructions - now structured with sub-sections
+      const activationMatch = yamlContent.match(/activation-instructions:\s*([\s\S]*?)(?=\nagent:|$)/);
       if (activationMatch) {
         const activationText = activationMatch[1];
-        const instructions = activationText.split('\n')
-          .map(line => line.trim())
-          .filter(line => line.startsWith('- '))
-          .map(line => line.substring(2).trim().replace(/^["']|["']$/g, ''));
+        const instructions = [];
+        
+        // Extract all bullet points from all sub-sections
+        const lines = activationText.split('\n');
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('- ')) {
+            instructions.push(trimmed.substring(2).trim().replace(/^["']|["']$/g, ''));
+          }
+        }
+        
         metadata.activation_instructions = instructions;
       }
       
@@ -1141,6 +1149,17 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           // Skip lines with 4+ spaces (sub-configurations) and other lines
         }
         metadata.commands = commands;
+      }
+      
+      // Extract story-file-permissions (QA agent specific)
+      const storyPermissionsMatch = yamlContent.match(/story-file-permissions:\s*([\s\S]*?)(?=\n\w|$)/);
+      if (storyPermissionsMatch) {
+        const permissionsText = storyPermissionsMatch[1];
+        const permissions = permissionsText.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.startsWith('- '))
+          .map(line => line.substring(2).trim().replace(/^["']|["']$/g, ''));
+        metadata.story_file_permissions = permissions;
       }
       
       // Extract dependencies
@@ -1377,6 +1396,16 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       content += `**CRITICAL BEHAVIORAL RULES:**\n`;
       for (const principle of metadata.core_principles) {
         content += `- ${principle}\n`;
+      }
+      content += '\n';
+    }
+    
+    // Add STORY FILE PERMISSIONS - QA agent specific
+    if (metadata.story_file_permissions && metadata.story_file_permissions.length > 0) {
+      content += `## 📝 STORY FILE PERMISSIONS\n\n`;
+      content += `**CRITICAL FILE ACCESS CONSTRAINTS:**\n`;
+      for (const permission of metadata.story_file_permissions) {
+        content += `- ${permission}\n`;
       }
       content += '\n';
     }
