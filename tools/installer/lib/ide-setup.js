@@ -1039,7 +1039,9 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       activation_instructions: [],
       commands: [],
       dependencies: {},
-      story_file_permissions: []
+      story_file_permissions: [],
+      ideFileResolution: [],
+      requestResolution: ''
     };
 
     if (yamlMatch) {
@@ -1162,6 +1164,24 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         metadata.story_file_permissions = permissions;
       }
       
+      // Extract IDE-FILE-RESOLUTION
+      const ideFileResMatch = yamlContent.match(/IDE-FILE-RESOLUTION:\s*([\s\S]*?)(?=\nREQUEST-RESOLUTION:|\nactivation-instructions:|\nagent:|\n\w(?!\s)|$)/);
+      if (ideFileResMatch) {
+        const ideFileResText = ideFileResMatch[1];
+        const ideFileRes = ideFileResText.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.startsWith('- '))
+          .map(line => line.substring(2).trim());
+        metadata.ideFileResolution = ideFileRes;
+      }
+
+      // Extract REQUEST-RESOLUTION
+      const requestResMatch = yamlContent.match(/REQUEST-RESOLUTION:\s*([\s\S]*?)(?=\nIDE-FILE-RESOLUTION:|\nactivation-instructions:|\nagent:|\n\w(?!\s)|$)/);
+      if (requestResMatch) {
+        const requestResText = requestResMatch[1].trim();
+        metadata.requestResolution = requestResText;
+      }
+
       // Extract dependencies
       const dependenciesMatch = yamlContent.match(/dependencies:\s*([\s\S]*?)(?=\n\w(?!\s)|$)/);
       if (dependenciesMatch) {
@@ -1533,6 +1553,21 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     content += `2. Use commands with \`*\` prefix (e.g., \`*help\`, \`*draft\`)\n`;
     content += `3. Load dependency files only when executing specific workflows\n`;
     content += `4. Maintain agent persona until explicitly told to exit\n\n`;
+    
+    // Add IDE-FILE-RESOLUTION - Critical for Claude Code subagents
+    if (metadata.ideFileResolution && metadata.ideFileResolution.length > 0) {
+      content += `## 🔍 IDE-FILE-RESOLUTION\n\n`;
+      for (const resolution of metadata.ideFileResolution) {
+        content += `- ${resolution}\n`;
+      }
+      content += '\n';
+    }
+    
+    // Add REQUEST-RESOLUTION - Critical for Claude Code subagents
+    if (metadata.requestResolution) {
+      content += `## 🎯 REQUEST-RESOLUTION\n\n`;
+      content += `${metadata.requestResolution}\n\n`;
+    }
     
     return content;
   }
