@@ -1151,28 +1151,28 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
   getAgentPermissions(agentId) {
-    // Map to Claude Code's built-in tool names
+    // Map to actual Claude Code tool names from the official interface
     const permissionMap = {
       // Full access for orchestration and architecture
-      'orchestrix-master': ['read_file', 'write_file', 'run_bash', 'search_web'],
-      'orchestrix-orchestrator': ['read_file', 'write_file', 'run_bash', 'search_web'],
-      'architect': ['read_file', 'write_file', 'run_bash', 'search_web'],
+      'orchestrix-master': ['Read', 'Edit', 'Write', 'Bash', 'WebSearch'],
+      'orchestrix-orchestrator': ['Read', 'Edit', 'Write', 'Bash', 'WebSearch'],
+      'architect': ['Read', 'Edit', 'Write', 'Bash', 'WebSearch'],
       
-      // Development-focused permissions
-      'dev': ['read_file', 'write_file', 'run_bash', 'search_web'],
-      'qa': ['read_file', 'write_file', 'run_bash'],
+      // Development-focused permissions - dev agent needs comprehensive tools
+      'dev': ['Read', 'Edit', 'MultiEdit', 'Write', 'Bash', 'WebSearch'],
+      'qa': ['Read', 'Edit', 'Write', 'Bash'],
       
       // Research and analysis focused
-      'analyst': ['read_file', 'write_file', 'search_web'],
-      'pm': ['read_file', 'write_file', 'search_web'],
+      'analyst': ['Read', 'Write', 'WebSearch'],
+      'pm': ['Read', 'Write', 'WebSearch'],
       
       // Document-focused permissions
-      'po': ['read_file', 'write_file'],
-      'sm': ['read_file', 'write_file'],
-      'ux-expert': ['read_file', 'write_file', 'search_web']
+      'po': ['Read', 'Write'],
+      'sm': ['Read', 'Write'],
+      'ux-expert': ['Read', 'Write', 'WebSearch']
     };
     
-    return permissionMap[agentId] || ['read_file', 'write_file', 'search_web'];
+    return permissionMap[agentId] || ['Read', 'Write', 'WebSearch'];
   }
 
 
