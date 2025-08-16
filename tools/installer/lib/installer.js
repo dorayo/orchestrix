@@ -220,19 +220,19 @@ class Installer {
   async performFreshInstall(config, installDir, spinner, options = {}) {
     // Ensure modules are initialized
     await initializeModules();
-    spinner.text = "Installing Orchestrix...";
+    spinner.text = "正在安装 Orchestrix...";
 
     let files = [];
 
     if (config.installType === "full") {
       // Full installation - copy entire .orchestrix-core folder as a subdirectory
-      spinner.text = "Copying complete .orchestrix-core folder...";
+      spinner.text = "正在复制完整的 .orchestrix-core 文件夹...";
       const sourceDir = configLoader.getOrchestrixCorePath();
       const orchestrixCoreDestDir = path.join(installDir, ".orchestrix-core");
       await fileManager.copyDirectoryWithRootReplacement(sourceDir, orchestrixCoreDestDir, ".orchestrix-core");
       
       // Copy common/ items to .orchestrix-core
-      spinner.text = "Copying common utilities...";
+      spinner.text = "正在复制通用工具...";
       await this.copyCommonItems(installDir, ".orchestrix-core", spinner);
 
       // Get list of all files for manifest
@@ -246,7 +246,7 @@ class Installer {
         .map((file) => path.join(".orchestrix-core", file));
     } else if (config.installType === "single-agent") {
       // Single agent installation
-      spinner.text = `Installing ${config.agent} agent...`;
+      spinner.text = `正在安装 ${config.agent} 代理...`;
 
       // Copy agent file with {root} replacement
       const agentPath = configLoader.getAgentPath(config.agent);
@@ -309,7 +309,7 @@ class Installer {
       files.push(...commonFiles);
     } else if (config.installType === "team") {
       // Team installation
-      spinner.text = `Installing ${config.team} team...`;
+      spinner.text = `正在安装 ${config.team} 团队...`;
       
       // Get team dependencies
       const teamDependencies = await configLoader.getTeamDependencies(config.team);
@@ -355,7 +355,7 @@ class Installer {
     } else if (config.installType === "expansion-only") {
       // Expansion-only installation - DO NOT create .orchestrix-core
       // Only install expansion packs
-      spinner.text = "Installing expansion packs only...";
+      spinner.text = "正在安装扩展包...";
     }
 
     // Install expansion packs if requested
@@ -364,7 +364,7 @@ class Installer {
 
     // Install web bundles if requested
     if (config.includeWebBundles && config.webBundlesDirectory) {
-      spinner.text = "Installing web bundles...";
+      spinner.text = "正在安装 web bundles...";
       // Resolve web bundles directory using the same logic as the main installation directory
       const originalCwd = process.env.INIT_CWD || process.env.PWD || process.cwd();
       let resolvedWebBundlesDir = path.isAbsolute(config.webBundlesDirectory) 
@@ -395,7 +395,7 @@ class Installer {
       await fileManager.createManifest(installDir, config, files);
     }
 
-    spinner.succeed("Installation complete!");
+    spinner.succeed("安装完成！");
     this.showSuccessMessage(config, installDir, options);
   }
 
@@ -993,7 +993,7 @@ class Installer {
     const glob = require('glob');
 
     for (const packId of selectedPacks) {
-      spinner.text = `Installing expansion pack: ${packId}...`;
+      spinner.text = `正在安装扩展包: ${packId}...`;
       
       try {
         const expansionPacks = await this.getAvailableExpansionPacks();

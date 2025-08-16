@@ -97,6 +97,31 @@ program
   });
 
 program
+  .command('list')
+  .description('列出可用的代理和扩展包')
+  .option('-e, --expansions', '仅列出扩展包')
+  .option('-a, --agents', '仅列出代理')
+  .action(async (options) => {
+    try {
+      if (options.expansions) {
+        await installer.listExpansionPacks();
+      } else if (options.agents) {
+        await installer.listAgents();
+      } else {
+        // Show both agents and expansion packs
+        console.log('=== Orchestrix 代理 ===');
+        await installer.listAgents();
+        console.log('\n=== Orchestrix 扩展包 ===');
+        await installer.listExpansionPacks();
+      }
+    } catch (error) {
+      if (!chalk) await initializeModules();
+      console.error(chalk.red('错误:'), error.message);
+      process.exit(1);
+    }
+  });
+
+program
   .command('list:expansions')
   .description('列出可用的扩展包')
   .action(async () => {

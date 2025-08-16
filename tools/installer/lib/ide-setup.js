@@ -121,11 +121,11 @@ class IdeSetup {
         )} persona and follow all instructions defined in the YAML configuration above.\n`;
 
         await fileManager.writeFile(mdcPath, mdcContent);
-        console.log(chalk.green(`✓ Created rule: ${agentId}.mdc`));
+        console.log(chalk.green(`✓ 已创建规则: ${agentId}.mdc`));
       }
     }
 
-    console.log(chalk.green(`\n✓ Created Cursor rules in ${cursorRulesDir}`));
+    console.log(chalk.green(`\n✓ 已在 ${cursorRulesDir} 创建 Cursor 规则`));
 
     return true;
   }
@@ -199,7 +199,7 @@ class IdeSetup {
         commandContent += agentContent;
 
         await fileManager.writeFile(commandPath, commandContent);
-        console.log(chalk.green(`✓ Created agent command: /${agentId}`));
+        console.log(chalk.green(`✓ 已创建代理命令: /${agentId}`));
       }
     }
 
@@ -236,11 +236,11 @@ class IdeSetup {
         commandContent += taskContent;
 
         await fileManager.writeFile(commandPath, commandContent);
-        console.log(chalk.green(`✓ Created task command: /${taskId}`));
+        console.log(chalk.green(`✓ 已创建任务命令: /${taskId}`));
       }
     }
 
-    console.log(chalk.green(`\n✓ Created Claude Code commands for ${packageName} in ${commandsBaseDir}`));
+    console.log(chalk.green(`\n✓ 已为 ${packageName} 在 ${commandsBaseDir} 创建 Claude Code 命令`));
     console.log(chalk.dim(`  - Agents in: ${agentsDir}`));
     console.log(chalk.dim(`  - Tasks in: ${tasksDir}`));
   }
@@ -993,11 +993,11 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         const subagentContent = await this.generateSubagentContent(agentId, agentContent, installDir);
         
         await fileManager.writeFile(subagentPath, subagentContent);
-        console.log(chalk.green(`✓ Created Claude Code subagent: ${agentId}.md`));
+        console.log(chalk.green(`✓ 已创建 Claude Code 子代理: ${agentId}.md`));
       }
     }
 
-    console.log(chalk.green(`\n✓ Created Claude Code subagents in ${subagentsDir}`));
+    console.log(chalk.green(`\n✓ 已在 ${subagentsDir} 创建 Claude Code 子代理`));
     return true;
   }
 
@@ -1240,12 +1240,12 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       'qa': 'claude-opus-4-1-20250805',                     // 质量守门员 - 需要超越Dev的能力发现问题
       
       // Tier 2: High capability - Core workflow drivers
-      'architect': 'claude-sonnet-4-20250514',              // 系统架构决策
+      'architect': 'claude-opus-4-20250514',                // 系统架构决策 - 升级到Opus
       'analyst': 'claude-sonnet-4-20250514',                // 战略分析和研究
       'sm': 'claude-opus-4-20250514',                       // Story质量是开发成功的关键 - 升级到Opus
       
       // Tier 3: Professional execution - Implementation focused
-      'dev': 'claude-3-7-sonnet-20250219',                  // 开发执行 - 基于高质量Story进行实现
+      'dev': 'claude-sonnet-4-20250514',                    // 开发执行 - 升级到Sonnet 4
       'pm': 'claude-sonnet-4-20250514',                     // 产品战略需要高水平思考
       
       // Tier 4: Efficient execution - Structured tasks
