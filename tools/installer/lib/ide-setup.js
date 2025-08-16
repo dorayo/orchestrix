@@ -1102,23 +1102,25 @@ permissions:${this.formatPermissions(permissions)}
   }
 
   getOptimalModelForAgent(agentId) {
-    // Model selection based on official capabilities and cost-effectiveness
+    // Model selection based on workflow quality gates and actual responsibilities
     const modelMap = {
-      // Tier 1: Ultimate capability - Most complex strategic tasks (Opus系列)
-      'orchestrix-master': 'claude-opus-4-1-20250805',      // 最新4.1版本 - 最强能力和智能
-      'orchestrix-orchestrator': 'claude-opus-4-20250514',   // 4.0版本 - 复杂编排协调
+      // Tier 1: Ultimate capability - Critical decision makers and quality gatekeepers
+      'orchestrix-master': 'claude-opus-4-1-20250805',      // 终极决策者 - 最强能力
+      'orchestrix-orchestrator': 'claude-opus-4-20250514',   // 复杂编排协调 
+      'qa': 'claude-opus-4-1-20250805',                     // 质量守门员 - 需要超越Dev的能力发现问题
       
-      // Tier 2: Balanced performance - Professional specialized tasks (Sonnet 4系列)
-      'architect': 'claude-sonnet-4-20250514',              // Sonnet 4 - 高智能模型适合架构设计
-      'analyst': 'claude-sonnet-4-20250514',                // Sonnet 4 - 战略分析需要高智能
-      'dev': 'claude-sonnet-4-20250514',                    // Sonnet 4 - 代码生成和调试
-      'qa': 'claude-sonnet-4-20250514',                     // Sonnet 4 - 复杂质量分析
+      // Tier 2: High capability - Core workflow drivers
+      'architect': 'claude-sonnet-4-20250514',              // 系统架构决策
+      'analyst': 'claude-sonnet-4-20250514',                // 战略分析和研究
+      'sm': 'claude-opus-4-20250514',                       // Story质量是开发成功的关键 - 升级到Opus
       
-      // Tier 3: Fast execution - Structured tasks (Sonnet 3.7系列)
-      'pm': 'claude-3-7-sonnet-20250219',                  // 3.7 - 产品文档和规划
-      'po': 'claude-3-7-sonnet-20250219',                  // 3.7 - 需求管理
-      'sm': 'claude-3-7-sonnet-20250219',                  // 3.7 - 流程引导
-      'ux-expert': 'claude-3-7-sonnet-20250219'            // 3.7 - UI/UX设计建议
+      // Tier 3: Professional execution - Implementation focused
+      'dev': 'claude-3-7-sonnet-20250219',                  // 开发执行 - 基于高质量Story进行实现
+      'pm': 'claude-sonnet-4-20250514',                     // 产品战略需要高水平思考
+      
+      // Tier 4: Efficient execution - Structured tasks
+      'po': 'claude-3-7-sonnet-20250219',                  // 需求整理和管理
+      'ux-expert': 'claude-3-7-sonnet-20250219'            // UI/UX设计建议
     };
     
     return modelMap[agentId] || 'claude-sonnet-4-20250514';
@@ -1193,11 +1195,11 @@ permissions:${this.formatPermissions(permissions)}
   }
 
   getCostTier(model) {
-    // Cost tiers based on model complexity and capabilities
-    if (model.includes('opus-4-1')) return 'ultra-premium';  // 最新4.1 - 最高价格
-    if (model.includes('opus-4')) return 'premium';          // Opus 4 - 高价格
-    if (model.includes('sonnet-4')) return 'high-standard';  // Sonnet 4 - 高性能标准价格
-    if (model.includes('3-7-sonnet')) return 'standard';     // Sonnet 3.7 - 标准价格
+    // Cost tiers based on model complexity and workflow criticality
+    if (model.includes('opus-4-1')) return 'ultra-premium';  // 质量守门员和终极决策者
+    if (model.includes('opus-4')) return 'premium';          // 关键工作流驱动者  
+    if (model.includes('sonnet-4')) return 'high-standard';  // 专业分析和架构
+    if (model.includes('3-7-sonnet')) return 'standard';     // 执行层任务
     return 'standard';
   }
 
@@ -1268,16 +1270,16 @@ permissions:${this.formatPermissions(permissions)}
 
   getAgentOptimization(agentId) {
     const optimizationMap = {
-      'orchestrix-master': 'Complex decision-making and universal expertise',
-      'orchestrix-orchestrator': 'Multi-agent coordination and workflow management', 
-      'architect': 'System design and technical architecture',
-      'analyst': 'Strategic research and market analysis',
-      'dev': 'Code generation and debugging',
-      'qa': 'Quality assurance and testing strategy',
-      'pm': 'Product planning and documentation',
-      'po': 'Requirements management and story creation',
-      'sm': 'Agile process facilitation',
-      'ux-expert': 'User experience and interface design'
+      'orchestrix-master': 'Ultimate decision-making and crisis resolution',
+      'orchestrix-orchestrator': 'Complex multi-agent workflow coordination', 
+      'qa': 'Advanced problem discovery beyond dev capabilities',
+      'sm': 'High-quality story creation as development foundation',
+      'architect': 'System design and technical architecture decisions',
+      'analyst': 'Strategic research and competitive intelligence',
+      'pm': 'Product strategy and complex feature planning',
+      'dev': 'Efficient implementation based on clear requirements',
+      'po': 'Requirements structuring and backlog management',
+      'ux-expert': 'Creative design guidance and user experience'
     };
     
     return optimizationMap[agentId] || 'General assistance tasks';
@@ -1285,16 +1287,16 @@ permissions:${this.formatPermissions(permissions)}
 
   getUsageRecommendations(agentId) {
     const recommendationsMap = {
-      'orchestrix-master': '- 🎯 **终极能力**: 使用最新Opus 4.1，具有最强智能和能力\n- 💰 **Ultra-Premium**: 仅用于最关键的复杂决策\n- ✨ **最佳场景**: 跨域专业知识整合、重大战略决策',
-      'orchestrix-orchestrator': '- 🎭 **旗舰协调**: 使用Opus 4.0进行复杂多智能体编排\n- 💎 **Premium级别**: 高价值工作流协调任务\n- 🚀 **核心优势**: 项目规划和资源分配的专家级能力',
-      'architect': '- 🏗️ **高智能架构**: Sonnet 4.0提供卓越的系统设计能力\n- 💡 **技术深度**: 适合复杂架构决策和技术选型\n- 🎯 **成本效益**: 高性能标准价格，物超所值',
-      'analyst': '- 📊 **战略洞察**: Sonnet 4.0的高智能适合深度分析\n- 🔍 **研究专家**: 市场分析和竞争情报的理想选择\n- 💰 **性价比优**: 高性能分析任务的标准价格',
-      'dev': '- 💻 **智能编码**: Sonnet 4.0提供先进的代码生成和调试\n- 🔧 **复杂任务**: 处理高难度编程挑战和重构\n- ⚡ **开发效率**: 显著提升代码质量和开发速度',
-      'qa': '- 🧪 **质量专家**: Sonnet 4.0支持复杂的测试策略制定\n- 🔍 **深度审查**: 代码审查和质量保证的高级能力\n- 📋 **测试规划**: 全面的测试计划和质量流程设计',
-      'pm': '- 📋 **产品策略**: Sonnet 3.7提供高级思维扩展能力\n- 📝 **文档专家**: PRD创建和功能规划的标准选择\n- 💰 **标准成本**: 平衡性能和成本的产品管理方案',
-      'po': '- 📝 **需求管理**: Sonnet 3.7快速处理结构化任务\n- 📚 **故事精炼**: 待办事项管理和故事细化的专业工具\n- ⚡ **高效执行**: 标准价格下的快速响应能力',
-      'sm': '- 🏃 **敏捷引导**: Sonnet 3.7支持流程促进和方法论指导\n- 📅 **计划专家**: 冲刺规划和回顾的理想助手\n- 💰 **成本控制**: 标准价格提供专业的敏捷实践支持',
-      'ux-expert': '- 🎨 **设计智慧**: Sonnet 3.7的可扩展高智能支持创意设计\n- 🖼️ **用户体验**: 线框图和用户体验反馈的专业建议\n- ⚡ **快速迭代**: 标准成本下的高效设计建议和优化'
+      'orchestrix-master': '- 🎯 **终极决策者**: Opus 4.1最强智能，处理最复杂的跨域决策\n- 💰 **Ultra-Premium**: 仅用于关键战略决策点\n- ✨ **价值场景**: 重大架构决策、危机处理、复杂问题解决',
+      'orchestrix-orchestrator': '- 🎭 **编排专家**: Opus 4.0协调复杂的多Agent工作流\n- 💎 **Premium投资**: 高价值项目的编排和资源优化\n- 🚀 **核心价值**: 确保整个团队高效协作和目标对齐',
+      'qa': '- 🛡️ **质量守门员**: Opus 4.1超强推理，发现Dev遗漏的问题\n- 🔍 **破坏性思维**: 边界测试、安全漏洞、逻辑缺陷发现\n- 💎 **ROI最高**: 早期发现问题成本 << 生产环境故障成本',
+      'sm': '- 📋 **Story质量核心**: Opus 4.0确保需求清晰准确完整\n- 🎯 **开发成功基础**: 高质量Story = 高效开发 + 准确实现\n- 💎 **关键投资**: Story质量直接决定整个开发周期的成功',
+      'architect': '- 🏗️ **系统设计专家**: Sonnet 4.0支撑复杂架构决策\n- 🎯 **技术选型**: 平衡创新与稳定的架构方案\n- 💰 **高价值**: 架构决策影响长期维护成本',
+      'analyst': '- 📊 **战略洞察**: Sonnet 4.0深度分析市场和竞争环境\n- 🔍 **数据驱动**: 为产品和技术决策提供可靠依据\n- 📈 **投资回报**: 准确的分析避免错误的战略方向',
+      'pm': '- 📋 **产品战略**: Sonnet 4.0处理复杂的产品规划\n- 🎯 **需求平衡**: 用户需求、技术可行性、商业价值的综合考量\n- 💡 **决策支持**: 为产品方向提供高质量的策略建议',
+      'dev': '- 💻 **执行专家**: Sonnet 3.7基于优质Story进行高效实现\n- ⚡ **成本优化**: QA强力把关下，Dev可专注实现而非过度验证\n- 🎯 **明确目标**: 配合高质量需求，确保开发方向正确',
+      'po': '- 📝 **需求整理**: Sonnet 3.7结构化处理需求管理任务\n- 📚 **执行层面**: 基于SM的高质量Story进行细化和管理\n- ⚡ **标准效率**: 在明确框架下快速响应变更需求',
+      'ux-expert': '- 🎨 **设计建议**: Sonnet 3.7提供创意和可用性指导\n- 🖼️ **快速原型**: 线框图和交互设计的专业建议\n- 💰 **成本友好**: 标准价格获得专业设计支持'
     };
     
     return recommendationsMap[agentId] || '- 通用协助功能，具备标准性能表现';
