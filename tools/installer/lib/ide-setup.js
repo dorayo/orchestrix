@@ -1094,25 +1094,36 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         metadata.activation_instructions = instructions;
       }
       
-      // Extract commands
+      // Extract commands - only first level are actual commands
       const commandsMatch = yamlContent.match(/commands:\s*([\s\S]*?)(?=\ndependencies:|\n\w(?!\s)|$)/);
       if (commandsMatch) {
         const commandsText = commandsMatch[1];
         const commands = [];
-        const commandLines = commandsText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        const lines = commandsText.split('\n');
         
-        for (const line of commandLines) {
-          if (line.startsWith('- ')) {
-            const commandText = line.substring(2).trim();
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const trimmedLine = line.trim();
+          
+          // Only process first-level commands: 
+          // - Commands can be at root level (no indent) or first level indent (2 spaces)
+          // - Skip lines with more indentation (4+ spaces - sub-configurations)
+          if ((line.startsWith('- ') && !line.startsWith('  ')) || 
+              (line.startsWith('  - ') && !line.startsWith('    '))) {
+            const commandText = trimmedLine.substring(2).trim();
             const colonIndex = commandText.indexOf(':');
+            
             if (colonIndex > 0) {
               const name = commandText.substring(0, colonIndex).trim();
               const description = commandText.substring(colonIndex + 1).trim();
               commands.push({ name, description });
             } else {
-              commands.push({ name: commandText, description: '' });
+              // Command without description (like develop-story:)
+              const commandName = commandText.replace(':', '').trim();
+              commands.push({ name: commandName, description: '' });
             }
           }
+          // Skip lines with 4+ spaces (sub-configurations) and other lines
         }
         metadata.commands = commands;
       }
