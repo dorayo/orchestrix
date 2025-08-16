@@ -1021,7 +1021,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     const yamlFrontmatter = this.generateSubagentYaml(agentId, agentMetadata);
     
     // Generate enhanced markdown content with complete Orchestrix workflow
-    const markdownContent = this.generateEnhancedSubagentMarkdown(agentId, agentMetadata, coreConfig, installDir);
+    const markdownContent = this.generateEnhancedSubagentMarkdown(agentId, agentMetadata, coreConfig, installDir, agentContent);
     
     return `${yamlFrontmatter}\n${markdownContent}`;
   }
@@ -1353,7 +1353,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     return content;
   }
 
-  generateEnhancedSubagentMarkdown(agentId, metadata, coreConfig, installDir) {
+  generateEnhancedSubagentMarkdown(agentId, metadata, coreConfig, installDir, agentContent) {
     let content = `# Orchestrix ${metadata.title || agentId} Agent\n\n`;
     
     // Add complete ACTIVATION NOTICE from original agent
@@ -1382,12 +1382,31 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     // Add ACTIVATION INSTRUCTIONS - Critical for proper Orchestrix workflow
     if (metadata.activation_instructions && metadata.activation_instructions.length > 0) {
       content += `## 🚀 ACTIVATION INSTRUCTIONS\n\n`;
-      content += `**MANDATORY STARTUP SEQUENCE:**\n`;
-      for (let i = 0; i < metadata.activation_instructions.length; i++) {
-        const instruction = metadata.activation_instructions[i];
-        content += `**STEP ${i + 1}:** ${instruction}\n\n`;
+      content += `This section contains your complete startup and operational guidelines. Follow these instructions exactly to ensure proper Orchestrix workflow integration.\n\n`;
+      
+      // Try to extract structured activation instructions from YAML
+      const yamlMatch = agentContent.match(/```ya?ml\r?\n([\s\S]*?)```/);
+      if (yamlMatch) {
+        const yamlContent = yamlMatch[1];
+        const activationMatch = yamlContent.match(/activation-instructions:\s*([\s\S]*?)(?=\nagent:|$)/);
+        
+        if (activationMatch) {
+          const activationText = activationMatch[1];
+          
+          // Parse structured sections
+          const sections = this.parseStructuredActivationInstructions(activationText);
+          
+          for (const section of sections) {
+            content += `### ${section.title}\n\n`;
+            for (const item of section.items) {
+              content += `- ${item}\n`;
+            }
+            content += '\n';
+          }
+        }
       }
-      content += `**IMPORTANT:** Complete all activation steps before responding to user requests.\n\n`;
+      
+      content += `**IMPORTANT:** Complete all activation instructions before responding to user requests.\n\n`;
     }
     
     // Add CORE PRINCIPLES - Essential for agent behavior
@@ -1509,6 +1528,45 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     content += `4. Maintain agent persona until explicitly told to exit\n\n`;
     
     return content;
+  }
+
+  parseStructuredActivationInstructions(activationText) {
+    const sections = [];
+    const lines = activationText.split('\n');
+    
+    let currentSection = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      
+      // Check for section headers (e.g., "Activation Steps:", "File-Loading Rules:")
+      if (trimmed.endsWith(':') && !trimmed.startsWith('-') && trimmed.length > 2) {
+        // Save previous section
+        if (currentSection && currentSection.items.length > 0) {
+          sections.push(currentSection);
+        }
+        
+        // Start new section
+        currentSection = {
+          title: trimmed.replace(':', ''),
+          items: []
+        };
+      }
+      // Check for list items
+      else if (trimmed.startsWith('- ')) {
+        if (currentSection) {
+          currentSection.items.push(trimmed.substring(2).trim());
+        }
+      }
+    }
+    
+    // Add the last section
+    if (currentSection && currentSection.items.length > 0) {
+      sections.push(currentSection);
+    }
+    
+    return sections;
   }
 
   getModelTier(model) {
