@@ -131,6 +131,9 @@ class IdeSetup {
   }
 
   async setupClaudeCode(installDir, selectedAgent) {
+    // Setup Claude Code Subagents
+    await this.setupClaudeCodeSubagents(installDir, selectedAgent);
+
     // Setup orchestrix-core commands
     const coreSlashPrefix = await this.getCoreSlashPrefix(installDir);
     const coreAgents = selectedAgent ? [selectedAgent] : await this.getCoreAgentIds(installDir);
@@ -971,6 +974,163 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     console.log(chalk.dim(`You can now find the orchestrix agents in the Chat view's mode selector.`));
 
     return true;
+  }
+
+  async setupClaudeCodeSubagents(installDir, selectedAgent) {
+    const subagentsDir = path.join(installDir, ".claude-code", "subagents");
+    const agents = selectedAgent ? [selectedAgent] : await this.getAllAgentIds(installDir);
+
+    await fileManager.ensureDirectory(subagentsDir);
+
+    for (const agentId of agents) {
+      // Find the agent file
+      const agentPath = await this.findAgentPath(agentId, installDir);
+
+      if (agentPath) {
+        const agentContent = await fileManager.readFile(agentPath);
+        const subagentPath = path.join(subagentsDir, `${agentId}-subagent.md`);
+        
+        const subagentContent = await this.generateSubagentContent(agentId, agentContent, installDir);
+        
+        await fileManager.writeFile(subagentPath, subagentContent);
+        console.log(chalk.green(`✓ Created Claude Code subagent: ${agentId}-subagent.md`));
+      }
+    }
+
+    console.log(chalk.green(`\n✓ Created Claude Code subagents in ${subagentsDir}`));
+    return true;
+  }
+
+  async generateSubagentContent(agentId, agentContent, installDir) {
+    // Extract agent metadata from YAML block
+    const agentMetadata = this.extractAgentMetadata(agentContent);
+    
+    // Generate YAML frontmatter for Claude Code Subagent
+    const yamlFrontmatter = this.generateSubagentYaml(agentId, agentMetadata);
+    
+    // Generate markdown content with agent persona and principles
+    const markdownContent = this.generateSubagentMarkdown(agentId, agentMetadata);
+    
+    return `${yamlFrontmatter}\n${markdownContent}`;
+  }
+
+  extractAgentMetadata(agentContent) {
+    const yamlMatch = agentContent.match(/```ya?ml\r?\n([\s\S]*?)```/);
+    const metadata = {
+      agent: {},
+      persona: {},
+      name: 'Agent',
+      title: 'AI Agent',
+      role: 'Assistant',
+      style: 'Professional',
+      core_principles: []
+    };
+
+    if (yamlMatch) {
+      const yamlContent = yamlMatch[1];
+      
+      // Extract agent section
+      const agentMatch = yamlContent.match(/agent:\s*([\s\S]*?)(?=\n\w|$)/);
+      if (agentMatch) {
+        const agentSection = agentMatch[1];
+        const nameMatch = agentSection.match(/name:\s*(.+)/);
+        const titleMatch = agentSection.match(/title:\s*(.+)/);
+        const whenToUseMatch = agentSection.match(/whenToUse:\s*(.+)/);
+        
+        if (nameMatch) metadata.agent.name = nameMatch[1].trim();
+        if (titleMatch) metadata.agent.title = titleMatch[1].trim();
+        if (whenToUseMatch) metadata.agent.whenToUse = whenToUseMatch[1].trim();
+      }
+      
+      // Extract persona section
+      const personaMatch = yamlContent.match(/persona:\s*([\s\S]*?)(?=\n\w|$)/);
+      if (personaMatch) {
+        const personaSection = personaMatch[1];
+        const roleMatch = personaSection.match(/role:\s*(.+)/);
+        const styleMatch = personaSection.match(/style:\s*(.+)/);
+        const identityMatch = personaSection.match(/identity:\s*(.+)/);
+        const focusMatch = personaSection.match(/focus:\s*(.+)/);
+        
+        if (roleMatch) metadata.persona.role = roleMatch[1].trim();
+        if (styleMatch) metadata.persona.style = styleMatch[1].trim();
+        if (identityMatch) metadata.persona.identity = identityMatch[1].trim();
+        if (focusMatch) metadata.persona.focus = focusMatch[1].trim();
+        
+        // Extract core principles
+        const principlesMatch = personaSection.match(/core_principles:\s*([\s\S]*?)(?=\n\s{0,2}\w|$)/);
+        if (principlesMatch) {
+          const principlesText = principlesMatch[1];
+          const principles = principlesText.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.startsWith('- '))
+            .map(line => line.substring(2).trim());
+          metadata.persona.core_principles = principles;
+        }
+      }
+    }
+    
+    // Set fallback values
+    metadata.name = metadata.agent.name || 'Agent';
+    metadata.title = metadata.agent.title || 'AI Agent';
+    metadata.role = metadata.persona.role || 'Assistant';
+    metadata.style = metadata.persona.style || 'Professional';
+    metadata.core_principles = metadata.persona.core_principles || [];
+    
+    return metadata;
+  }
+
+  generateSubagentYaml(agentId, metadata) {
+    const name = `${metadata.name || agentId} Subagent`;
+    const description = metadata.agent?.whenToUse || `An Orchestrix agent specializing in ${metadata.title?.toLowerCase() || 'assistance'}.`;
+    
+    return `---
+name: ${name}
+description: ${description}
+model: claude-3-5-sonnet
+permissions:
+  - run-tool:
+      tool: search_web
+      access: full
+  - run-tool:
+      tool: read_file
+      access: full
+  - run-tool:
+      tool: write_file
+      access: full
+---`;
+  }
+
+  generateSubagentMarkdown(agentId, metadata) {
+    let content = `# Orchestrix ${metadata.title || agentId} Agent\n\n`;
+    
+    // Add agent introduction
+    if (metadata.name && metadata.role) {
+      content += `You are ${metadata.name}, a specialized AI Agent from the Orchestrix framework. You are ${metadata.role.toLowerCase().startsWith('a ') ? metadata.role.toLowerCase() : 'a ' + metadata.role.toLowerCase()}.`;
+      
+      if (metadata.style) {
+        content += ` Your style is ${metadata.style.toLowerCase()}.`;
+      }
+      content += '\n\n';
+    }
+    
+    if (metadata.persona?.identity) {
+      content += `**Identity:** ${metadata.persona.identity}\n\n`;
+    }
+    
+    if (metadata.persona?.focus) {
+      content += `**Focus:** ${metadata.persona.focus}\n\n`;
+    }
+    
+    // Add core principles
+    if (metadata.core_principles && metadata.core_principles.length > 0) {
+      content += '**Core Principles:**\n';
+      for (const principle of metadata.core_principles) {
+        content += `- ${principle}\n`;
+      }
+      content += '\n';
+    }
+    
+    return content;
   }
 
   async configureVsCodeSettings(installDir, spinner, preConfiguredSettings = null) {
