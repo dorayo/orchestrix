@@ -781,17 +781,7 @@ class Installer {
     console.log(chalk.green("\n✓ Orchestrix 安装成功！\n"));
 
     const ides = config.ides || (config.ide ? [config.ide] : []);
-    if (ides.length > 0) {
-      for (const ide of ides) {
-        const ideConfig = configLoader.getIdeConfiguration(ide);
-        if (ideConfig?.instructions) {
-          console.log(
-            chalk.bold(`在 ${ideConfig.name} 中使用 orchestrix 代理:`)
-          );
-          console.log(ideConfig.instructions);
-        }
-      }
-    } else {
+    if (ides.length === 0) {
       console.log(chalk.yellow("未设置 IDE 配置。"));
       console.log(
         "您可以手动配置您的 IDE，使用以下目录中的代理文件:",
@@ -802,24 +792,15 @@ class Installer {
     // Information about installation components
     console.log(chalk.bold("\n🎯 安装摘要:"));
     if (config.installType !== "expansion-only") {
-      console.log(chalk.green("✓ .orchestrix-core 框架及所有代理和工作流程已安装"));
+      console.log(chalk.green("✓ 核心框架和代理已安装"));
     }
     
     if (config.expansionPacks && config.expansionPacks.length > 0) {
-      console.log(chalk.green(`✓ 已安装的扩展包:`));
-      for (const packId of config.expansionPacks) {
-        console.log(chalk.green(`  - ${packId} → .${packId}/`));
-      }
+      console.log(chalk.green(`✓ 扩展包: ${config.expansionPacks.join(', ')}`));
     }
     
     if (config.includeWebBundles && config.webBundlesDirectory) {
-      const bundleInfo = this.getWebBundleInfo(config);
-      // Resolve the web bundles directory for display
-      const originalCwd = process.env.INIT_CWD || process.env.PWD || process.cwd();
-      const resolvedWebBundlesDir = path.isAbsolute(config.webBundlesDirectory) 
-        ? config.webBundlesDirectory 
-        : path.resolve(originalCwd, config.webBundlesDirectory);
-      console.log(chalk.green(`✓ Web bundles (${bundleInfo}) 已安装到: ${resolvedWebBundlesDir}`));
+      console.log(chalk.green(`✓ Web bundles 已安装`));
     }
     
     if (ides.length > 0) {
@@ -827,27 +808,16 @@ class Installer {
         const ideConfig = configLoader.getIdeConfiguration(ide);
         return ideConfig?.name || ide;
       }).join(", ");
-      console.log(chalk.green(`✓ 已为以下 IDE 设置规则和配置: ${ideNames}`));
+      console.log(chalk.green(`✓ IDE 集成: ${ideNames}`));
     }
 
-    // Information about web bundles
+    // Simplified web bundles info
     if (!config.includeWebBundles) {
-      console.log(chalk.bold("\n📦 可用的 Web Bundles:"));
-      console.log("预构建的 Web bundles 可用，并可在以后添加:");
-      console.log(chalk.cyan("  再次运行安装程序以将它们添加到您的项目中"));
-      console.log("这些 bundles 独立工作，可以共享、移动或用作");
-      console.log("其他项目中的独立文件。");
+      console.log(chalk.dim("\n💡 提示: 可运行安装程序添加 Web bundles (适用于 ChatGPT, Claude, Gemini)"));
     }
 
     if (config.installType === "single-agent") {
-      console.log(
-        chalk.dim(
-          "\n需要其他代理？运行: npx orchestrix install --agent=<name>"
-        )
-      );
-      console.log(
-        chalk.dim("需要所有功能？运行: npx orchestrix install --full")
-      );
+      console.log(chalk.dim("\n💡 提示: 运行 'npx orchestrix install --full' 安装完整版本"));
     }
 
     // Warning for Cursor custom modes if agents were updated

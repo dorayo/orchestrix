@@ -121,11 +121,11 @@ class IdeSetup {
         )} persona and follow all instructions defined in the YAML configuration above.\n`;
 
         await fileManager.writeFile(mdcPath, mdcContent);
-        console.log(chalk.green(`✓ 已创建规则: ${agentId}.mdc`));
+        // Removed individual file creation messages for cleaner output
       }
     }
 
-    console.log(chalk.green(`\n✓ 已在 ${cursorRulesDir} 创建 Cursor 规则`));
+    console.log(chalk.green(`\n✓ 已为 Cursor 创建 ${agents.length} 个代理规则`));
 
     return true;
   }
@@ -199,7 +199,7 @@ class IdeSetup {
         commandContent += agentContent;
 
         await fileManager.writeFile(commandPath, commandContent);
-        console.log(chalk.green(`✓ 已创建代理命令: /${agentId}`));
+        // Removed individual command creation messages for cleaner output
       }
     }
 
@@ -236,13 +236,11 @@ class IdeSetup {
         commandContent += taskContent;
 
         await fileManager.writeFile(commandPath, commandContent);
-        console.log(chalk.green(`✓ 已创建任务命令: /${taskId}`));
+        // Removed individual task creation messages for cleaner output
       }
     }
 
-    console.log(chalk.green(`\n✓ 已为 ${packageName} 在 ${commandsBaseDir} 创建 Claude Code 命令`));
-    console.log(chalk.dim(`  - Agents in: ${agentsDir}`));
-    console.log(chalk.dim(`  - Tasks in: ${tasksDir}`));
+    console.log(chalk.green(`\n✓ 已为 ${packageName} 创建 Claude Code 命令 (代理: ${agentIds.length}个, 任务: ${taskIds.length}个)`));
   }
 
   async setupWindsurf(installDir, selectedAgent) {
@@ -993,11 +991,11 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         const subagentContent = await this.generateSubagentContent(agentId, agentContent, installDir);
         
         await fileManager.writeFile(subagentPath, subagentContent);
-        console.log(chalk.green(`✓ 已创建 Claude Code 子代理: ${agentId}.md`));
+        // Removed individual subagent creation messages for cleaner output
       }
     }
 
-    console.log(chalk.green(`\n✓ 已在 ${subagentsDir} 创建 Claude Code 子代理`));
+    console.log(chalk.green(`\n✓ 已为 Claude Code 创建 ${agents.length} 个子代理`));
     return true;
   }
 
