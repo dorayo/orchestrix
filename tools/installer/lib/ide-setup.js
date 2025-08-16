@@ -1398,9 +1398,20 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           
           for (const section of sections) {
             content += `### ${section.title}\n\n`;
+            
             for (const item of section.items) {
               content += `- ${item}\n`;
             }
+            
+            // Add core-config.yaml loading requirement for File-Loading Rules section
+            if (section.title === 'File-Loading Rules') {
+              // Only add if not already present (dev agent already has it)
+              const hasCoreCOnfigRule = section.items.some(item => item.includes('core-config.yaml'));
+              if (!hasCoreCOnfigRule) {
+                content += `- **CRITICAL:** Always load \`{root}/core-config.yaml\` during activation to understand project structure, file locations, and conventions.\n`;
+              }
+            }
+            
             content += '\n';
           }
         }
@@ -1447,6 +1458,9 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     // Add PROJECT CONFIGURATION from core-config.yaml
     if (coreConfig && Object.keys(coreConfig).length > 0) {
       content += `## 📁 PROJECT CONFIGURATION\n\n`;
+      content += `**CRITICAL:** All Orchestrix agents must load the project configuration to understand file locations and conventions.\n\n`;
+      content += `**Startup Requirement:** Always load \`{root}/core-config.yaml\` during agent activation to access:\n\n`;
+      
       content += `**Orchestrix Project Setup:**\n`;
       
       if (coreConfig.title) {
