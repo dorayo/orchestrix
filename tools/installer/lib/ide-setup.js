@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs-extra");
 const yaml = require("js-yaml");
+const glob = require("glob");
 const fileManager = require("./file-manager");
 const configLoader = require("./config-loader");
 const { extractYamlFromAgent } = require("../../lib/yaml-utils");
@@ -131,18 +132,18 @@ class IdeSetup {
   }
 
   async setupClaudeCode(installDir, selectedAgent) {
-    // Setup Claude Code Subagents
+    console.log(chalk.blue("\n🔧 设置 Claude Code 双模式集成..."));
+    
+    // Setup Claude Code Subagents (Enhanced Template)
     const subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
+    console.log(chalk.green(`✓ 已创建 ${subagentsCount} 个优化的 Claude Code 子代理`));
 
-    // Setup orchestrix-core commands
+    // Setup orchestrix-core commands (Traditional Command Mode)
     const coreSlashPrefix = await this.getCoreSlashPrefix(installDir);
     const coreAgents = selectedAgent ? [selectedAgent] : await this.getCoreAgentIds(installDir);
     const coreTasks = await this.getCoreTaskIds(installDir);
     await this.setupClaudeCodeForPackage(installDir, "core", coreSlashPrefix, coreAgents, coreTasks, ".orchestrix-core");
     
-    // Display subagents summary after commands are set up
-    console.log(chalk.green(`✓ 已为 Claude Code 创建 ${subagentsCount} 个子代理`));
-
     // Setup expansion pack commands
     const expansionPacks = await this.getInstalledExpansionPacks(installDir);
     for (const packInfo of expansionPacks) {
@@ -156,6 +157,12 @@ class IdeSetup {
         await this.setupClaudeCodeForPackage(installDir, packInfo.name, packSlashPrefix, packAgents, packTasks, rootPath);
       }
     }
+
+    // Summary
+    console.log(chalk.green(`\n✅ Claude Code 双模式集成完成:`));
+    console.log(chalk.dim(`   • Sub Agents: .claude/agents/ (${subagentsCount} 个优化代理)`));
+    console.log(chalk.dim(`   • Commands: .claude/commands/ (${coreAgents.length} 个命令 + ${coreTasks.length} 个任务)`));
+    console.log(chalk.dim(`   • 使用方式: 在 Claude Code 中直接选择 Sub Agent 或使用 /命令`));
 
     return true;
   }
@@ -356,7 +363,6 @@ class IdeSetup {
     ];
     
     // Also check expansion pack directories
-    const glob = require("glob");
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir });
     for (const expDir of expansionDirs) {
       possiblePaths.push(path.join(installDir, expDir, `${agentId}.md`));
@@ -372,7 +378,6 @@ class IdeSetup {
   }
 
   async getAllAgentIds(installDir) {
-    const glob = require("glob");
     const allAgentIds = [];
     
     // Check core agents in .orchestrix-core or root
@@ -408,7 +413,6 @@ class IdeSetup {
     }
     
     if (await fileManager.pathExists(agentsDir)) {
-      const glob = require("glob");
       const agentFiles = glob.sync("*.md", { cwd: agentsDir });
       allAgentIds.push(...agentFiles.map((file) => path.basename(file, ".md")));
     }
@@ -426,7 +430,6 @@ class IdeSetup {
     }
     
     if (await fileManager.pathExists(tasksDir)) {
-      const glob = require("glob");
       const taskFiles = glob.sync("*.md", { cwd: tasksDir });
       allTaskIds.push(...taskFiles.map((file) => path.basename(file, ".md")));
     }
@@ -449,7 +452,6 @@ class IdeSetup {
     ];
     
     // Also check expansion pack directories
-    const glob = require("glob");
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir });
     for (const expDir of expansionDirs) {
       possiblePaths.push(path.join(installDir, expDir, `${agentId}.md`));
@@ -481,7 +483,6 @@ class IdeSetup {
   }
 
   async getAllTaskIds(installDir) {
-    const glob = require("glob");
     const allTaskIds = [];
     
     // Check core tasks in .orchestrix-core or root
@@ -534,7 +535,6 @@ class IdeSetup {
     ];
     
     // Also check expansion pack directories
-    const glob = require("glob");
     
     // Check dot folder expansion packs
     const expansionDirs = glob.sync(".*/tasks", { cwd: installDir });
@@ -587,7 +587,6 @@ class IdeSetup {
     const expansionPacks = [];
     
     // Check for dot-prefixed expansion packs in install directory
-    const glob = require("glob");
     const dotExpansions = glob.sync(".orchestrix-*", { cwd: installDir });
     
     for (const dotExpansion of dotExpansions) {
@@ -643,7 +642,6 @@ class IdeSetup {
     }
     
     try {
-      const glob = require("glob");
       const agentFiles = glob.sync("*.md", { cwd: agentsDir });
       return agentFiles.map(file => path.basename(file, ".md"));
     } catch (error) {
@@ -659,7 +657,6 @@ class IdeSetup {
     }
     
     try {
-      const glob = require("glob");
       const taskFiles = glob.sync("*.md", { cwd: tasksDir });
       return taskFiles.map(file => path.basename(file, ".md"));
     } catch (error) {
@@ -1004,26 +1001,14 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
   async generateSubagentContent(agentId, agentContent, installDir) {
-    // Extract complete agent metadata including Orchestrix workflow elements
+    // Extract agent metadata from original orchestrix-core agent
     const agentMetadata = this.extractAgentMetadata(agentContent);
-    
-    // Read core-config.yaml for project configuration
-    const coreConfigPath = path.join(installDir, 'core-config.yaml');
-    let coreConfig = {};
-    try {
-      if (await fileManager.pathExists(coreConfigPath)) {
-        const coreConfigContent = await fileManager.readFile(coreConfigPath);
-        coreConfig = yaml.parse(coreConfigContent);
-      }
-    } catch (error) {
-      console.warn(chalk.yellow(`Warning: Could not read core-config.yaml: ${error.message}`));
-    }
     
     // Generate YAML frontmatter for Claude Code Subagent
     const yamlFrontmatter = this.generateSubagentYaml(agentId, agentMetadata);
     
-    // Generate enhanced markdown content with complete Orchestrix workflow
-    const markdownContent = this.generateEnhancedSubagentMarkdown(agentId, agentMetadata, coreConfig, installDir, agentContent);
+    // Generate optimized markdown content for LLM consumption
+    const markdownContent = this.generateOptimizedSubagentMarkdown(agentId, agentMetadata, agentContent);
     
     return `${yamlFrontmatter}\n${markdownContent}`;
   }
@@ -1101,6 +1086,8 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         if (!metadata.persona.core_principles || metadata.persona.core_principles.length === 0) {
           metadata.persona.core_principles = principles;
         }
+        // Also set at root level for backward compatibility
+        metadata.core_principles = principles;
       }
       
       // Extract activation instructions - now structured with sub-sections
@@ -1302,7 +1289,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       'pm': ['Read', 'Write', 'WebSearch'],
       
       // Document-focused permissions
-      'po': ['Read', 'Write'],
+      'po': ['Read', 'Edit', 'Write', 'Bash', 'WebSearch'],
       'sm': ['Read', 'Write'],
       'ux-expert': ['Read', 'Write', 'WebSearch']
     };
@@ -1375,11 +1362,166 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     return content;
   }
 
+  generateOptimizedSubagentMarkdown(agentId, metadata, agentContent) {
+    // Generate highly optimized LLM-focused subagent content with clear hierarchical structure
+    let content = `# ${metadata.agent.title || metadata.title || agentId}\n\n`;
+    
+    // Single unified activation protocol (eliminates redundancy)
+    content += `## AGENT ACTIVATION PROTOCOL\n\n`;
+    content += `**CRITICAL INSTRUCTION:** You are now **${metadata.agent.name || agentId}**, ${(metadata.persona.role || 'AI Agent').toLowerCase()} from the Orchestrix framework. Adopt this complete persona immediately and execute all instructions below`;
+    if (metadata.persona.style) {
+      content += ` with ${metadata.persona.style.toLowerCase()} approach`;
+    }
+    content += `. Stay in this mode until explicitly told to exit.\n\n`;
+    
+    // Consolidated core identity block (eliminates scattered info)
+    content += `**CORE IDENTITY:**\n`;
+    if (metadata.persona.identity) {
+      content += `- Role: ${metadata.persona.identity}\n`;
+    }
+    if (metadata.persona.focus) {
+      content += `- Focus: ${metadata.persona.focus}\n`;
+    }
+    if ((metadata.persona.core_principles && metadata.persona.core_principles.length > 0) || 
+        (metadata.core_principles && metadata.core_principles.length > 0)) {
+      const principles = metadata.persona.core_principles || metadata.core_principles;
+      content += `- Behavior: ${principles.slice(0, 2).join('; ')}\n`;
+    }
+    content += '\n';
+    
+    // Hierarchical operational parameters (clear priority structure)
+    content += `## OPERATIONAL PARAMETERS\n\n`;
+    
+    // Startup sequence (prioritized actions)
+    const sections = this.parseStructuredActivationInstructions(this.extractActivationSection(agentContent));
+    if (sections.length > 0) {
+      content += `### Startup Sequence\n`;
+      for (const section of sections) {
+        content += `**${section.title}:**\n`;
+        for (const item of section.items) {
+          content += `- ${item}\n`;
+        }
+        content += '\n';
+      }
+    }
+    
+    // Complete behavioral rules (all principles together)
+    if (metadata.core_principles && metadata.core_principles.length > 0) {
+      content += `### Critical Behavioral Rules\n`;
+      for (const principle of metadata.core_principles) {
+        content += `- ${principle}\n`;
+      }
+      content += '\n';
+    }
+    
+    // Enhanced command interface (complete specifications)
+    if (metadata.commands && metadata.commands.length > 0) {
+      content += `## COMMAND INTERFACE\n\n`;
+      content += `**Command Syntax:** All commands require \`*\` prefix\n\n`;
+      for (const command of metadata.commands) {
+        const desc = this.getCommandDescription(command, agentContent);
+        content += `- **\`*${command.name}\`**: ${desc}\n`;
+      }
+      content += '\n';
+    }
+    
+    // Streamlined workflow dependencies (resource map format)
+    if (metadata.dependencies && Object.keys(metadata.dependencies).length > 0) {
+      content += `## WORKFLOW DEPENDENCIES\n\n`;
+      content += `**Resource Map:**\n`;
+      
+      const depTypes = Object.keys(metadata.dependencies).filter(key => 
+        metadata.dependencies[key] && metadata.dependencies[key].length > 0
+      );
+      
+      for (const depType of depTypes) {
+        const items = metadata.dependencies[depType];
+        content += `- **${depType}**: `;
+        content += items.map(item => `\`${item}\``).join(', ');
+        content += '\n';
+      }
+      content += '\n**Usage Rule:** Load resources only when executing specific workflows.\n\n';
+    }
+    
+    // Simplified resolution rules (consolidated)
+    if (metadata.ideFileResolution && metadata.ideFileResolution.length > 0) {
+      content += `**Resolution Rules:**\n`;
+      // Extract only the essential resolution rules
+      const essentialRules = metadata.ideFileResolution.filter(rule => 
+        !rule.includes('FOR LATER USE ONLY') && !rule.includes('NOT FOR ACTIVATION')
+      );
+      for (const rule of essentialRules) {
+        // Fix redundant .orchestrix-core definition in rules
+        const fixedRule = rule.replace(/where \.orchestrix-core resolves to \.orchestrix-core\//, 'where {root} resolves to .orchestrix-core/');
+        content += `- ${fixedRule}\n`;
+      }
+      content += '\n';
+    }
+    
+    // Consolidated request routing (pattern matching)
+    if (metadata.requestResolution) {
+      content += `## REQUEST ROUTING\n\n`;
+      content += `**Pattern Matching:** ${metadata.requestResolution.replace(/ALWAYS ask for clarification if.*$/i, 'Ask for clarification if ambiguous.')}\n\n`;
+    }
+    
+    return content;
+  }
+
+  extractActivationSection(agentContent) {
+    // Extract the activation-instructions section from YAML
+    const yamlMatch = agentContent.match(/```ya?ml\r?\n([\s\S]*?)```/);
+    if (yamlMatch) {
+      const activationMatch = yamlMatch[1].match(/activation-instructions:\s*([\s\S]*?)(?=\nagent:|$)/);
+      if (activationMatch) {
+        return activationMatch[1];
+      }
+    }
+    return '';
+  }
+
+  getCommandDescription(command, agentContent) {
+    // Enhanced command description extraction with fallback to detailed specs
+    if (command.description) {
+      return command.description;
+    }
+    
+    // Look for detailed command specs in the original agent content
+    const commandRegex = new RegExp(`${command.name}:\\s*\n\\s*-\\s*([^\n]+)`, 'i');
+    const match = agentContent.match(commandRegex);
+    if (match) {
+      return match[1].trim();
+    }
+    
+    // Provide minimal description based on command name
+    const defaults = {
+      'help': 'Show numbered list of available commands',
+      'exit': 'Exit agent mode and return to normal operation',
+      'create': 'Execute creation workflow',
+      'draft': 'Create draft version of requested item',
+      'validate': 'Execute validation procedures'
+    };
+    
+    return defaults[command.name] || 'Execute specialized workflow';
+  }
+
   generateEnhancedSubagentMarkdown(agentId, metadata, coreConfig, installDir, agentContent) {
     let content = `# Orchestrix ${metadata.title || agentId} Agent\n\n`;
     
-    // Add complete ACTIVATION NOTICE from original agent
-    content += `**ACTIVATION NOTICE:** This Claude Code subagent contains your complete Orchestrix agent operating guidelines. Follow the activation instructions below to adopt the full agent persona and workflow.\n\n`;
+    // Add Claude Code Sub Agent specific activation notice
+    content += `**🚀 CLAUDE CODE SUB AGENT ACTIVATION NOTICE**\n\n`;
+    content += `This is an optimized Claude Code subagent that contains your complete Orchestrix agent operating guidelines with full workflow preservation.\n\n`;
+    
+    content += `**⚡ CRITICAL ACTIVATION SEQUENCE:**\n`;
+    content += `1. **Auto-Persona Adoption**: This subagent automatically adopts the agent persona when selected\n`;
+    content += `2. **Full Context Loading**: Complete Orchestrix workflow context is embedded below\n`;
+    content += `3. **Command System Active**: All \`*\` prefixed commands are fully operational\n`;
+    content += `4. **Quality Gates Preserved**: All validation checkpoints and workflows maintained\n\n`;
+    
+    content += `**🔧 ENHANCED FOR CLAUDE CODE:**\n`;
+    content += `- **Intelligent Model Selection**: Optimized model recommendations for each agent role\n`;
+    content += `- **Smart Tool Permissions**: Precisely scoped tool access based on agent responsibilities\n`;
+    content += `- **Seamless Integration**: Works alongside command mode for flexible usage patterns\n`;
+    content += `- **Complete Workflow Preservation**: 100% compatibility with original Orchestrix workflows\n\n`;
     
     content += `**CRITICAL:** Read and follow the complete agent definition below to understand your operating parameters. Adopt the persona and follow the activation instructions exactly to alter your state of being. Stay in this agent mode until told to exit.\n\n`;
     
@@ -1530,6 +1672,24 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       content += `**Usage:** Load dependency files only when user requests specific command execution or task workflows.\n\n`;
     }
     
+    // Add Special Claude Code Integration optimizations
+    if (agentId === 'orchestrix-orchestrator') {
+      content += `## 🎭 ORCHESTRATOR ENHANCED CAPABILITIES\n\n`;
+      content += `**CLAUDE CODE AUTOMATION FEATURES:**\n`;
+      content += `As the master orchestrator in Claude Code environment, this subagent can:\n\n`;
+      content += `- **Auto-Dispatch Tasks**: Intelligently route tasks to appropriate agents\n`;
+      content += `- **Workflow Automation**: Execute multi-step workflows with minimal user intervention\n`;
+      content += `- **Quality Gate Management**: Automatically enforce validation checkpoints\n`;
+      content += `- **Agent Coordination**: Seamlessly transition between different specialist agents\n`;
+      content += `- **Progress Tracking**: Monitor and report on overall project progress\n`;
+      content += `- **Document Generation**: Auto-generate and organize project documentation\n\n`;
+      content += `**INTELLIGENT ORCHESTRATION COMMANDS:**\n`;
+      content += `- \`*autopilot <requirement>\`: End-to-end automated workflow execution\n`;
+      content += `- \`*dispatch <task> <agent>\`: Smart task routing to appropriate specialists\n`;
+      content += `- \`*status\`: Comprehensive project progress and quality gate status\n`;
+      content += `- \`*coordinate\`: Multi-agent collaboration management\n\n`;
+    }
+    
     // Add Orchestrix integration notes
     content += `## 🔗 ORCHESTRIX INTEGRATION\n\n`;
     content += `This Claude Code subagent provides complete integration with the Orchestrix ${agentId} agent:\n\n`;
@@ -1550,17 +1710,22 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     content += `- Follows project file structure and conventions from core-config.yaml\n`;
     content += `- Integrates seamlessly with other Orchestrix agents in Claude Code\n\n`;
     
-    content += `**Usage Instructions:**\n`;
-    content += `1. Follow activation instructions upon agent selection\n`;
-    content += `2. Use commands with \`*\` prefix (e.g., \`*help\`, \`*draft\`)\n`;
-    content += `3. Load dependency files only when executing specific workflows\n`;
-    content += `4. Maintain agent persona until explicitly told to exit\n\n`;
+    content += `**Claude Code Sub Agent Usage Instructions:**\n`;
+    content += `1. **Agent Selection**: Choose this subagent from the Claude Code agent selector\n`;
+    content += `2. **Auto-Activation**: Persona automatically activates with full Orchestrix context\n`;
+    content += `3. **Command Usage**: Use commands with \`*\` prefix (e.g., \`*help\`, \`*create\`, \`*draft\`)\n`;
+    content += `4. **File Management**: Auto-load dependency files when executing specific workflows\n`;
+    content += `5. **Quality Compliance**: Follow all validation checkpoints and workflow gates\n`;
+    content += `6. **Dual Mode Support**: Can work alongside traditional /command mode if needed\n`;
+    content += `7. **Persistence**: Maintain agent persona until explicitly told to exit or switch agents\n\n`;
     
     // Add IDE-FILE-RESOLUTION - Critical for Claude Code subagents
     if (metadata.ideFileResolution && metadata.ideFileResolution.length > 0) {
       content += `## 🔍 IDE-FILE-RESOLUTION\n\n`;
       for (const resolution of metadata.ideFileResolution) {
-        content += `- ${resolution}\n`;
+        // Fix redundant .orchestrix-core definition in rules
+        const fixedResolution = resolution.replace(/where \.orchestrix-core resolves to \.orchestrix-core\//, 'where {root} resolves to .orchestrix-core/');
+        content += `- ${fixedResolution}\n`;
       }
       content += '\n';
     }

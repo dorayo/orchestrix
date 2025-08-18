@@ -26,5 +26,6 @@ sample-project/*
 .orchestrix-core
 .orchestrix-creator-tools
 .gemini
-.orchestrix*/.cursor/
+.orchestrix*/
+.cursor/
 web-bundles/
