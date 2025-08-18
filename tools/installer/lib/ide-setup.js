@@ -1247,7 +1247,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       'sm': 'claude-opus-4-20250514',                       // Story质量是开发成功的关键 - 升级到Opus
       
       // Tier 3: Professional execution - Implementation focused
-      'dev': 'claude-sonnet-4-20250514',                    // 开发执行 - 升级到Sonnet 4
+      'dev': 'claude-opus-4-1-20250805',                    // 开发执行 
       'pm': 'claude-sonnet-4-20250514',                     // 产品战略需要高水平思考
       
       // Tier 4: Efficient execution - Structured tasks
