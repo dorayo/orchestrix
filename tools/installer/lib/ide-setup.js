@@ -1238,7 +1238,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     const modelMap = {
       // Tier 1: Ultimate capability - Critical decision makers and quality gatekeepers
       'orchestrix-master': 'claude-opus-4-1-20250805',      // 终极决策者 - 最强能力
-      'orchestrix-orchestrator': 'claude-opus-4-20250514',   // 复杂编排协调 
+      'orchestrix-orchestrator': 'claude-sonnet-4-20250514',   // 复杂编排协调 
       'qa': 'claude-opus-4-1-20250805',                     // 质量守门员 - 需要超越Dev的能力发现问题
       
       // Tier 2: High capability - Core workflow drivers
@@ -1251,7 +1251,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       'pm': 'claude-sonnet-4-20250514',                     // 产品战略需要高水平思考
       
       // Tier 4: Efficient execution - Structured tasks
-      'po': 'claude-3-7-sonnet-20250219',                  // 需求整理和管理
+      'po': 'claude-opus-4-1-20250805',                  // 需求整理和管理
       'ux-expert': 'claude-3-7-sonnet-20250219'            // UI/UX设计建议
     };
     
