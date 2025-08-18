@@ -7,7 +7,7 @@ logs
 npm-debug.log*
 
 # Build output
-build/*.txt
+dist/*
 
 # System files
 .DS_Store
