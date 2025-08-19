@@ -711,12 +711,23 @@ class IdeSetup {
           // Extract agent info from YAML
           const titleMatch = yaml.match(/title:\s*(.+)/);
           const iconMatch = yaml.match(/icon:\s*(.+)/);
-          const whenToUseMatch = yaml.match(/whenToUse:\s*"(.+)"/);
+          const whenToUseMatch = yaml.match(/whenToUse:\s*(?:"([^"]+)"|'([^']+)'|([^\n\r]+))/);
           const roleDefinitionMatch = yaml.match(/roleDefinition:\s*"(.+)"/);
 
           const title = titleMatch ? titleMatch[1].trim() : await this.getAgentTitle(agentId, installDir);
           const icon = iconMatch ? iconMatch[1].trim() : "🤖";
-          const whenToUse = whenToUseMatch ? whenToUseMatch[1].trim() : `Use for ${title} tasks`;
+          
+          let whenToUse = `Use for ${title} tasks`;
+          if (whenToUseMatch) {
+            // Handle quoted strings (with " or ')
+            const whenToUseValue = whenToUseMatch[1] || whenToUseMatch[2];
+            // Handle unquoted strings (but trim trailing whitespace)
+            if (whenToUseValue) {
+              whenToUse = whenToUseValue.trim();
+            } else if (whenToUseMatch[3]) {
+              whenToUse = whenToUseMatch[3].trim();
+            }
+          }
           const roleDefinition = roleDefinitionMatch
             ? roleDefinitionMatch[1].trim()
             : `You are a ${title} specializing in ${title.toLowerCase()} tasks and responsibilities.`;
@@ -950,9 +961,16 @@ class IdeSetup {
         const yamlMatch = agentContent.match(/```ya?ml\r?\n([\s\S]*?)```/);
         let description = `Activates the ${agentTitle} agent persona.`;
         if (yamlMatch) {
-          const whenToUseMatch = yamlMatch[1].match(/whenToUse:\s*"(.*?)"/);
-          if (whenToUseMatch && whenToUseMatch[1]) {
-            description = whenToUseMatch[1];
+          const whenToUseMatch = yamlMatch[1].match(/whenToUse:\s*(?:"([^"]+)"|'([^']+)'|([^\n\r]+))/);
+          if (whenToUseMatch) {
+            // Handle quoted strings (with " or ')
+            const whenToUseValue = whenToUseMatch[1] || whenToUseMatch[2];
+            // Handle unquoted strings (but trim trailing whitespace)
+            if (whenToUseValue) {
+              description = whenToUseValue.trim();
+            } else if (whenToUseMatch[3]) {
+              description = whenToUseMatch[3].trim();
+            }
           }
         }
         
@@ -1934,11 +1952,21 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         const agentSection = agentMatch[1];
         const nameMatch = agentSection.match(/name:\s*(.+)/);
         const titleMatch = agentSection.match(/title:\s*(.+)/);
-        const whenToUseMatch = agentSection.match(/whenToUse:\s*["']?([^\n"']+)["']?/);
+        const whenToUseMatch = agentSection.match(/whenToUse:\s*(?:"([^"]+)"|'([^']+)'|([^\n\r]+))/);
+        
+        let whenToUseValue = null;
+        if (whenToUseMatch) {
+          // Handle quoted strings (with " or ')
+          whenToUseValue = whenToUseMatch[1] || whenToUseMatch[2];
+          // Handle unquoted strings (but trim trailing whitespace)
+          if (!whenToUseValue) {
+            whenToUseValue = whenToUseMatch[3]?.trim();
+          }
+        }
         
         if (nameMatch) metadata.agent.name = nameMatch[1].trim();
         if (titleMatch) metadata.agent.title = titleMatch[1].trim();
-        if (whenToUseMatch) metadata.agent.whenToUse = whenToUseMatch[1].trim();
+        if (whenToUseValue) metadata.agent.whenToUse = whenToUseValue;
       }
       
       // Extract persona section
