@@ -71,6 +71,7 @@ commands:
 
 dependencies:
   tasks:
+    - implement-story-auto.md
     - execute-checklist.md
     - validate-next-story.md
   checklists:

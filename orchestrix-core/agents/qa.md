@@ -64,6 +64,7 @@ commands:
 
 dependencies:
   tasks:
+    - review-code-auto.md
     - review-story.md
   data:
     - technical-preferences.md

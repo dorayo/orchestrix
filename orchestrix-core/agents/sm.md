@@ -29,7 +29,7 @@ agent:
   title: Scrum Master
   icon: 🏃
   whenToUse: Use for story creation, epic management, retrospectives in party-mode, and agile process guidance
-  tools: Read, Write
+  tools: Read, Edit, MultiEdit, Write
   customization: null
 
 persona:
@@ -56,6 +56,7 @@ commands:
 
 dependencies:
   tasks:
+    - create-story-auto.md
     - create-next-story.md
     - execute-checklist.md
     - correct-course.md

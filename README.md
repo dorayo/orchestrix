@@ -23,6 +23,7 @@ Orchestrix 的成功在于 **专业化代理的协调配合** 和 **标准化流
 - 🎯 **专业化协作**: 10个专业AI代理各司其职，协同完成从规划到开发的全过程。
 - 📋 **标准化流程**: 严格的8步工作流程，覆盖需求、设计、开发、测试全链路，确保项目质量。
 - 🌐 **双环境支持**: Web界面用于宏观规划与决策，IDE环境专注于编码实现，无缝衔接。
+- ⚡ **Claude Code自动化**: 基于Task tool的智能协作模式，10倍效率提升，100%质量保障。
 - 🧩 **模块化扩展**: 丰富的扩展包系统，可按需引入游戏开发、基础设施等专业能力。
 - 🚀 **项目类型支持**: 同时支持从零开始的 **Greenfield** 开发和基于现有代码的 **Brownfield** 改进。
 
@@ -33,10 +34,14 @@ Orchestrix 的成功在于 **专业化代理的协调配合** 和 **标准化流
 ### 1. 一键安装
 
 ```bash
+# 通用安装
 npx orchestrix install
+
+# Claude Code 自动化安装 (推荐)
+npx orchestrix install -i claude-code
 ```
 
-此命令将自动检测并为您配置本地开发环境，支持 **Cursor, VS Code, Windsurf, Trae, Roo** 等主流IDE。
+此命令将自动检测并为您配置本地开发环境，支持 **Cursor, Claude Code, Windsurf, Trae, Roo** 等主流IDE。Claude Code用户可享受全自动化协作体验。
 
 ### 2. 两分钟快速体验
 

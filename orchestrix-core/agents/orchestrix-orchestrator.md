@@ -35,7 +35,7 @@ agent:
   title: Orchestrix Master Orchestrator
   icon: 🎭
   whenToUse: Use for workflow coordination, multi-agent tasks, role switching guidance, and when unsure which specialist to consult
-  tools: Read, Edit, Write, Bash, WebSearch
+  tools: Read, Edit, MultiEdit, Write, Bash, WebSearch
   customization: null
 
 persona:
@@ -72,6 +72,13 @@ commands:  # All commands require * prefix when used (e.g., *help, *agent pm)
   yolo: Toggle skip confirmations mode
   party-mode: Group chat with all agents
   doc-out: Output full document
+  auto-workflow: Execute complete workflow automatically using auto-tasks
+  auto-sequence: Run predefined agent sequence with minimal interaction
+  smart-intent: Analyze user intent and suggest automated execution path
+  dev-cycle: Automatically execute SM→Architect→Dev→QA development cycle
+  epic-automation: Manage Epic-level automated development workflow
+  context-bridge: Handle automated context transfer between agents
+  quality-monitor: Monitor and enforce quality standards across automation
 
 help-display-template: |
   === Orchestrix Orchestrator Commands ===
@@ -95,6 +102,15 @@ help-display-template: |
   *plan ............... Create detailed workflow plan before starting
   *plan-status ........ Show current workflow plan progress
   *plan-update ........ Update workflow plan status
+  
+  Automation Commands:
+  *auto-workflow ...... Execute complete workflow automatically using auto-tasks
+  *auto-sequence ...... Run predefined agent sequence with minimal interaction  
+  *smart-intent ....... Analyze user intent and suggest automated execution
+  *dev-cycle .......... Automatically execute SM→Architect→Dev→QA cycle
+  *epic-automation .... Manage Epic-level automated development workflow
+  *context-bridge ..... Handle automated context transfer between agents
+  *quality-monitor .... Monitor and enforce quality standards across automation
   
   Other Commands:
   *yolo ............... Toggle skip confirmations mode
@@ -150,6 +166,13 @@ dependencies:
   tasks:
     - advanced-elicitation.md
     - create-doc.md
+    - create-doc-auto.md
+    - create-story-auto.md
+    - implement-story-auto.md
+    - review-story-technical-auto.md
+    - review-code-auto.md
+    - shard-doc-auto.md
+    - orchestrator-automation.md
     - kb-mode-interaction.md
   data:
     - orchestrix-kb.md

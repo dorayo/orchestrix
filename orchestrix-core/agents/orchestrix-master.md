@@ -30,7 +30,7 @@ agent:
   title: Orchestrix Master Task Executor
   icon: 🧙
   whenToUse: Use when you need comprehensive expertise across all domains, running 1-off tasks that do not require a persona, or want to use the same agent for many things.
-  tools: Read, Edit, Write, Bash, WebSearch
+  tools: Read, Edit, MultiEdit, Write, Bash, WebSearch
   customization: null
 
 persona:

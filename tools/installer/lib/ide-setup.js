@@ -1001,6 +1001,21 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
   async generateSubagentContent(agentId, agentContent, installDir) {
+    // Check if automation template should be used
+    const ideAgentConfig = await this.loadIdeAgentConfig();
+    const hasAutomation = ideAgentConfig['claude-code-automation'] && 
+                         ideAgentConfig['claude-code-automation'][agentId];
+    
+    if (hasAutomation) {
+      // Use automation-optimized template
+      return this.generateAutomationSubagentContent(agentId, agentContent, installDir);
+    } else {
+      // Use standard optimized template
+      return this.generateStandardSubagentContent(agentId, agentContent, installDir);
+    }
+  }
+
+  async generateStandardSubagentContent(agentId, agentContent, installDir) {
     // Extract agent metadata from original orchestrix-core agent
     const agentMetadata = this.extractAgentMetadata(agentContent);
     
@@ -1011,6 +1026,186 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     const markdownContent = this.generateOptimizedSubagentMarkdown(agentId, agentMetadata, agentContent);
     
     return `${yamlFrontmatter}\n${markdownContent}`;
+  }
+
+  async generateAutomationSubagentContent(agentId, agentContent, installDir) {
+    // Load automation-optimized template
+    const templatePath = path.join(__dirname, '..', 'templates', 'claude-code-auto-template.md');
+    
+    if (!await fileManager.pathExists(templatePath)) {
+      console.warn(`Automation template not found, using standard template for ${agentId}`);
+      return this.generateStandardSubagentContent(agentId, agentContent, installDir);
+    }
+
+    let template = await fileManager.readFile(templatePath);
+    const agentMetadata = this.extractAgentMetadata(agentContent);
+    const ideAgentConfig = await this.loadIdeAgentConfig();
+    const automationConfig = ideAgentConfig['claude-code-automation'][agentId];
+
+    // Get agent permissions and tools
+    const tools = this.getAgentPermissions(agentId);
+    
+    // Prepare template variables
+    const variables = {
+      AGENT_ID: agentId,
+      AGENT_NAME: agentMetadata.agent.name || agentId,
+      AGENT_TITLE: agentMetadata.agent.title || 'AI Agent',
+      PERSONA_ROLE: agentMetadata.persona.role || 'AI Assistant',
+      PERSONA_IDENTITY: agentMetadata.persona.identity || agentMetadata.persona.role || 'AI Assistant',
+      PERSONA_FOCUS: agentMetadata.persona.focus || 'Task execution and quality assurance',
+      WHEN_TO_USE: agentMetadata.agent.whenToUse || automationConfig.description || 'General assistance',
+      TOOL_PERMISSIONS: tools.join(', '),
+      CORE_PRINCIPLES_SUMMARY: this.summarizeCoreValues(agentMetadata.persona.core_principles || []),
+      PREFERRED_TASKS_LIST: this.formatTasksList(automationConfig['preferred-tasks'] || []),
+      MANUAL_TASKS_LIST: this.formatTasksList(agentMetadata.dependencies.tasks || []),
+      AUTO_COMMANDS_WITH_SPECS: this.formatAutoCommands(automationConfig, agentMetadata),
+      MANUAL_COMMANDS_WITH_SPECS: this.formatManualCommands(agentMetadata.commands || []),
+      AUTO_TASK_DEPENDENCIES: this.formatDependencies(automationConfig['preferred-tasks'] || []),
+      MANUAL_TASK_DEPENDENCIES: this.formatDependencies(agentMetadata.dependencies.tasks || []),
+      TEMPLATE_DEPENDENCIES: this.formatDependencies(agentMetadata.dependencies.templates || []),
+      CHECKLIST_DEPENDENCIES: this.formatDependencies(agentMetadata.dependencies.checklists || []),
+      PRIMARY_AUTO_CAPABILITY: this.getAutomationCapability(agentId, automationConfig),
+      QUALITY_FOCUS_AREAS: this.getQualityFocusAreas(agentId),
+      KEY_INTEGRATION_POINTS: this.getIntegrationPoints(agentId),
+      AGENT_SPECIFIC_SUCCESS_CRITERIA: this.getSuccessCriteria(agentId)
+    };
+
+    // Replace template variables
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`\\{${key}\\}`, 'g');
+      template = template.replace(regex, value);
+    }
+
+    // Generate YAML frontmatter
+    const yamlFrontmatter = this.generateSubagentYaml(agentId, agentMetadata);
+    
+    return `${yamlFrontmatter}\n${template}`;
+  }
+
+  // Helper methods for automation template generation
+  summarizeCoreValues(coreValues) {
+    if (!coreValues || coreValues.length === 0) return "Professional excellence and quality focus";
+    const summary = coreValues.slice(0, 3).join(', ');
+    return summary.length > 80 ? summary.substring(0, 77) + "..." : summary;
+  }
+
+  formatTasksList(tasks) {
+    if (!tasks || tasks.length === 0) return "  - No specific tasks configured";
+    return tasks.map(task => `  - "${task}"`).join('\n');
+  }
+
+  formatAutoCommands(automationConfig, agentMetadata) {
+    let commands = [];
+    
+    // Add automation-specific commands
+    if (automationConfig['preferred-tasks']) {
+      commands.push(`- \`*auto-execute\`: Execute preferred automation tasks with context loading`);
+      commands.push(`- \`*quick-start\`: Fast initialization with auto-context detection`);
+    }
+    
+    // Add agent-specific commands from metadata
+    if (agentMetadata.commands && agentMetadata.commands.length > 0) {
+      agentMetadata.commands.slice(0, 3).forEach(cmd => {
+        if (typeof cmd === 'string') {
+          commands.push(`- \`*${cmd}\`: ${this.getCommandDescription(cmd)}`);
+        }
+      });
+    }
+    
+    return commands.length > 0 ? commands.join('\n') : "- `*help`: Display available automation commands";
+  }
+
+  formatManualCommands(commands) {
+    if (!commands || commands.length === 0) return "- `*help`: Display available manual commands";
+    
+    const formatted = commands.slice(0, 5).map(cmd => {
+      if (typeof cmd === 'string') {
+        return `- \`*${cmd}\`: ${this.getCommandDescription(cmd)}`;
+      }
+      return `- \`*${cmd}\`: Manual execution mode`;
+    });
+    
+    return formatted.join('\n');
+  }
+
+  formatDependencies(dependencies) {
+    if (!dependencies || dependencies.length === 0) return "[]";
+    const formatted = dependencies.map(dep => `"${dep}"`).join(', ');
+    return `[${formatted}]`;
+  }
+
+  getCommandDescription(command) {
+    const descriptions = {
+      'help': 'Show available commands and usage',
+      'create-doc': 'Generate documentation using templates',
+      'execute-checklist': 'Run quality assurance checklist',
+      'shard-doc': 'Break down documents for development',
+      'create-story': 'Generate user stories from requirements',
+      'implement-story': 'Execute story implementation with quality checks',
+      'review-code': 'Perform comprehensive code review',
+      'review-story': 'Validate story technical accuracy'
+    };
+    return descriptions[command] || 'Execute specialized task';
+  }
+
+  getAutomationCapability(agentId, automationConfig) {
+    const capabilities = {
+      'sm': 'Automated story creation with context assembly and template compliance',
+      'architect': 'Technical architecture automation with quality scoring and validation',
+      'dev': 'Story implementation automation with test integrity and DoD compliance',
+      'qa': 'Code review automation with direct refactoring capabilities',
+      'po': 'Document sharding automation for development phase transitions',
+      'analyst': 'Research and analysis document generation with market intelligence',
+      'pm': 'Product requirements automation with stakeholder alignment',
+      'orchestrix-orchestrator': 'Intelligent workflow coordination and multi-agent orchestration'
+    };
+    
+    return capabilities[agentId] || automationConfig.description || 'Automated task execution with quality preservation';
+  }
+
+  getQualityFocusAreas(agentId) {
+    const focusAreas = {
+      'sm': 'Story completeness, technical feasibility, acceptance criteria clarity',
+      'architect': 'Technical accuracy, architecture compliance, scalability considerations',  
+      'dev': 'Code quality, test coverage, implementation standards, DoD compliance',
+      'qa': 'Code review standards, refactoring quality, testing completeness',
+      'po': 'Cross-document consistency, planning integrity, quality gate enforcement',
+      'analyst': 'Research accuracy, market analysis depth, competitive intelligence quality',
+      'pm': 'Requirements completeness, stakeholder alignment, product strategy clarity',
+      'orchestrix-orchestrator': 'Workflow integrity, agent coordination quality, process compliance'
+    };
+    
+    return focusAreas[agentId] || 'Task accuracy, documentation quality, standard compliance';
+  }
+
+  getIntegrationPoints(agentId) {
+    const integrations = {
+      'sm': 'Epic files, architecture documents, story templates, team workflows',
+      'architect': 'Technical specifications, coding standards, architecture templates, review processes',
+      'dev': 'Story files, test suites, code standards, implementation templates, quality checklists',
+      'qa': 'Code repositories, test frameworks, quality standards, review templates',
+      'po': 'Planning documents, development artifacts, quality gates, workflow transitions',
+      'analyst': 'Market research, competitive analysis, business requirements, stakeholder feedback',
+      'pm': 'Business strategy, requirements documentation, feature prioritization, stakeholder communication',
+      'orchestrix-orchestrator': 'All agent outputs, workflow states, quality metrics, coordination protocols'
+    };
+    
+    return integrations[agentId] || 'Project files, templates, checklists, workflow dependencies';
+  }
+
+  getSuccessCriteria(agentId) {
+    const criteria = {
+      'sm': 'Story completeness ≥90%, technical accuracy ≥8/10, clear acceptance criteria',
+      'architect': 'Technical accuracy ≥7/10, zero critical issues, architecture compliance',
+      'dev': 'All tests pass, DoD checklist complete, code standards compliant',
+      'qa': 'Quality score ≥8/10, all issues addressed, refactoring improvements applied',
+      'po': 'Document consistency 100%, quality gates passed, smooth workflow transitions',
+      'analyst': 'Research depth ≥80%, competitive analysis complete, actionable insights provided',
+      'pm': 'Requirements clarity 100%, stakeholder alignment achieved, feature prioritization complete',
+      'orchestrix-orchestrator': 'Workflow completion ≥95%, agent coordination seamless, quality preserved'
+    };
+    
+    return criteria[agentId] || 'Task completion 100%, quality standards met, documentation complete';
   }
 
   extractAgentMetadata(agentContent) {

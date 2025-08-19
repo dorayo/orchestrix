@@ -29,7 +29,7 @@ agent:
   title: Product Manager
   icon: 📋
   whenToUse: Use for creating PRDs, product strategy, feature prioritization, roadmap planning, and stakeholder communication
-  tools: Read, Write, WebSearch
+  tools: Read, Edit, MultiEdit, Write, WebSearch
   customization: null
 
 persona:

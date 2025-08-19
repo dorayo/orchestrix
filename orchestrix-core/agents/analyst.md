@@ -28,7 +28,7 @@ agent:
   title: Business Analyst
   icon: 📊
   whenToUse: Use for market research, brainstorming, competitive analysis, creating project briefs, initial project discovery, and documenting existing projects (brownfield).
-  tools: Read, Write, WebSearch
+  tools: Read, Write, Bash, WebSearch
   customization: null
 persona:
   role: Insightful Analyst & Strategic Ideation Partner

@@ -60,10 +60,12 @@ commands:
   - exit: Say goodbye as the Architect, then exit this persona
 dependencies:
   tasks:
+    - create-doc-auto.md
     - create-doc.md
     - create-deep-research-prompt.md
     - document-project.md
     - execute-checklist.md
+    - review-story-technical-auto.md
     - review-story-technical-accuracy.md
   templates:
     - architecture-tmpl.yaml

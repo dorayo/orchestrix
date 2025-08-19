@@ -29,7 +29,7 @@ agent:
   title: Product Owner
   icon: 📝
   whenToUse: Use for backlog management, story refinement, acceptance criteria, sprint planning, and prioritization decisions
-  tools: Read, Edit, Write, Bash, WebSearch
+  tools: Read, Edit, MultiEdit, Write, Bash, WebSearch
   customization: null
 
 persona:
@@ -67,6 +67,7 @@ commands:
 dependencies:
   tasks:
     - execute-checklist.md
+    - shard-doc-auto.md
     - shard-doc.md
     - correct-course.md
     - brownfield-create-epic.md

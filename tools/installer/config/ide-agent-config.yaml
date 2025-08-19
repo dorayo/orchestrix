@@ -1,6 +1,47 @@
 # IDE-specific agent configurations
 # This file defines agent-specific settings for different IDEs
 
+# Claude Code automation preferences
+# Agents with auto-task capabilities for enhanced automation
+claude-code-automation:
+  # Core development cycle agents (priority auto-tasks)
+  sm:
+    preferred-tasks: ["create-story-auto.md", "create-next-story.md"]
+    automation-level: "high"
+    description: "Story creation with automatic context assembly"
+  architect:
+    preferred-tasks: ["create-doc-auto.md", "review-story-technical-auto.md", "create-doc.md", "review-story-technical-accuracy.md"]  
+    automation-level: "high"
+    description: "Architecture docs and technical review automation"
+  dev:
+    preferred-tasks: ["implement-story-auto.md"]
+    automation-level: "high"
+    description: "Story implementation with automated quality checks"
+  qa:
+    preferred-tasks: ["review-code-auto.md", "review-story.md"]
+    automation-level: "high" 
+    description: "Code review with direct refactoring capabilities"
+  po:
+    preferred-tasks: ["shard-doc-auto.md", "shard-doc.md"]
+    automation-level: "medium"
+    description: "Document sharding for development phase transition"
+  
+  # Planning phase agents (selective automation)
+  analyst:
+    preferred-tasks: ["create-doc-auto.md", "create-doc.md"]
+    automation-level: "medium"
+    description: "Project brief and research document generation"
+  pm:
+    preferred-tasks: ["create-doc-auto.md", "create-doc.md"]
+    automation-level: "medium"
+    description: "PRD and requirement document automation"
+    
+  # Orchestration agent (full automation capabilities)
+  orchestrix-orchestrator:
+    preferred-tasks: ["orchestrator-automation.md"]
+    automation-level: "maximum"
+    description: "Intelligent workflow coordination and agent orchestration"
+
 # Roo Code file permissions
 # Each agent can have restricted file access based on regex patterns
 # If an agent is not listed here, it gets full edit access
@@ -39,16 +80,16 @@ roo-permissions:
 # Lower numbers appear first in the list
 # Agents not listed get order 99
 cline-order:
-  # Core agents
-  orchestrix-master: 1
-  orchestrix-orchestrator: 2
-  pm: 3
-  analyst: 4
-  architect: 5
-  po: 6
-  sm: 7
-  dev: 8
-  qa: 9
+  # Core agents - automation-first ordering
+  orchestrix-orchestrator: 1  # Primary automation coordinator
+  orchestrix-master: 2
+  sm: 3                        # Core development cycle start
+  architect: 4                 # Technical review
+  dev: 5                       # Implementation 
+  qa: 6                        # Code review
+  po: 7                        # Quality control and phase transition
+  analyst: 8                   # Planning phase
+  pm: 9                        # Planning phase
   ux-expert: 10
   # Expansion pack agents
   orchestrix-the-creator: 11
