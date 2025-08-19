@@ -1002,9 +1002,11 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     // Deterministic workflow placeholders
     const placeholders = {
       '{AGENT_ID}': agentId,
+      '{ AGENT_ID }': agentId,  // With spaces version
       '{DESCRIPTION}': this.generateDescription(metadata),
       '{WHEN_TO_USE}': this.generateWhenToUse(metadata),
       '{TOOLS}': this.getAgentPermissions(agentId).join(', '),
+      '{ TOOLS }': this.getAgentPermissions(agentId).join(', '),  // With spaces version
       '{AGENT_NAME}': metadata.agent.name || agentId,
       '{ROLE}': metadata.persona.role || 'AI Assistant',
       '{FOCUS}': metadata.persona.focus || 'Execute tasks efficiently and follow Orchestrix workflows.',
