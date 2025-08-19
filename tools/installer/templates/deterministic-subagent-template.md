@@ -1,8 +1,6 @@
 ---
 name: { AGENT_ID }
-description: |
-  {DESCRIPTION}.
-  Use PROACTIVELY for {WHEN_TO_USE}.
+description: "{DESCRIPTION}. Use PROACTIVELY for {WHEN_TO_USE}."
 tools: { TOOLS }
 ---
 
