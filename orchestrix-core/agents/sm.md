@@ -60,6 +60,7 @@ dependencies:
     - create-next-story.md
     - execute-checklist.md
     - correct-course.md
+    - frontend-user-confirmation.md
   templates:
     - story-tmpl.yaml
   checklists:

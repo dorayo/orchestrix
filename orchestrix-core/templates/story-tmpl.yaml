@@ -25,7 +25,7 @@ sections:
   - id: status
     title: Status
     type: choice
-    choices: [Draft, Approved, InProgress, Review, Done]
+    choices: [Draft, Approved, InProgress, FrontendReview, BackendInProgress, Review, Done]
     instruction: Select the current status of the story
     owner: scrum-master
     editors: [scrum-master, dev-agent]
@@ -55,14 +55,45 @@ sections:
     type: bullet-list
     instruction: |
       Break down the story into specific tasks and subtasks needed for implementation.
-      Reference applicable acceptance criteria numbers where relevant.
+      
+      **For Frontend-First Strategy (when frontendFirstStrategy: true):**
+      - Structure tasks in phases: Frontend → User Confirmation → Backend → Integration
+      - Include specific user confirmation checkpoint after frontend completion
+      - Reference applicable acceptance criteria numbers where relevant.
+      
+      **For Traditional Stories:**
+      - Use standard task breakdown approach
     template: |
-      - [ ] Task 1 (AC: # if applicable)
-        - [ ] Subtask1.1...
-      - [ ] Task 2 (AC: # if applicable)
-        - [ ] Subtask 2.1...
-      - [ ] Task 3 (AC: # if applicable)
-        - [ ] Subtask 3.1...
+      **Phase 1: Frontend Implementation**
+      - [ ] Task 1: Build UI components (AC: # if applicable)
+        - [ ] Create component structure
+        - [ ] Implement responsive design
+        - [ ] Add mock data integration
+      - [ ] Task 2: Implement user interactions (AC: # if applicable)
+        - [ ] Handle user input
+        - [ ] Add form validation
+        - [ ] Implement navigation flows
+      
+      **Phase 1 Checkpoint: User Confirmation Required**
+      - [ ] **USER REVIEW**: Present frontend to user for confirmation
+        - [ ] Verify UI/UX matches requirements
+        - [ ] Confirm user flows work as expected
+        - [ ] Get approval before proceeding to backend
+      
+      **Phase 2: Backend Implementation (After User Approval)**
+      - [ ] Task 3: Implement API endpoints (AC: # if applicable)
+        - [ ] Create data models
+        - [ ] Build REST/GraphQL APIs
+        - [ ] Add authentication/authorization
+      
+      **Phase 3: Integration & Testing**
+      - [ ] Task 4: Connect frontend to real APIs (AC: # if applicable)
+        - [ ] Replace mock data with real API calls
+        - [ ] Handle error states
+        - [ ] Add loading states
+      - [ ] Task 5: End-to-end testing (AC: # if applicable)
+        - [ ] Test complete user workflows
+        - [ ] Verify all acceptance criteria
     elicit: true
     owner: scrum-master
     editors: [scrum-master, dev-agent]

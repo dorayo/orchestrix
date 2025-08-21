@@ -711,12 +711,23 @@ class IdeSetup {
           // Extract agent info from YAML
           const titleMatch = yaml.match(/title:\s*(.+)/);
           const iconMatch = yaml.match(/icon:\s*(.+)/);
-          const whenToUseMatch = yaml.match(/whenToUse:\s*"(.+)"/);
+          const whenToUseMatch = yaml.match(/whenToUse:\s*(?:"([^"]+)"|'([^']+)'|([^\n\r]+))/);
           const roleDefinitionMatch = yaml.match(/roleDefinition:\s*"(.+)"/);
 
           const title = titleMatch ? titleMatch[1].trim() : await this.getAgentTitle(agentId, installDir);
           const icon = iconMatch ? iconMatch[1].trim() : "🤖";
-          const whenToUse = whenToUseMatch ? whenToUseMatch[1].trim() : `Use for ${title} tasks`;
+          
+          let whenToUse = `Use for ${title} tasks`;
+          if (whenToUseMatch) {
+            // Handle quoted strings (with " or ')
+            const whenToUseValue = whenToUseMatch[1] || whenToUseMatch[2];
+            // Handle unquoted strings (but trim trailing whitespace)
+            if (whenToUseValue) {
+              whenToUse = whenToUseValue.trim();
+            } else if (whenToUseMatch[3]) {
+              whenToUse = whenToUseMatch[3].trim();
+            }
+          }
           const roleDefinition = roleDefinitionMatch
             ? roleDefinitionMatch[1].trim()
             : `You are a ${title} specializing in ${title.toLowerCase()} tasks and responsibilities.`;
@@ -950,9 +961,16 @@ class IdeSetup {
         const yamlMatch = agentContent.match(/```ya?ml\r?\n([\s\S]*?)```/);
         let description = `Activates the ${agentTitle} agent persona.`;
         if (yamlMatch) {
-          const whenToUseMatch = yamlMatch[1].match(/whenToUse:\s*"(.*?)"/);
-          if (whenToUseMatch && whenToUseMatch[1]) {
-            description = whenToUseMatch[1];
+          const whenToUseMatch = yamlMatch[1].match(/whenToUse:\s*(?:"([^"]+)"|'([^']+)'|([^\n\r]+))/);
+          if (whenToUseMatch) {
+            // Handle quoted strings (with " or ')
+            const whenToUseValue = whenToUseMatch[1] || whenToUseMatch[2];
+            // Handle unquoted strings (but trim trailing whitespace)
+            if (whenToUseValue) {
+              description = whenToUseValue.trim();
+            } else if (whenToUseMatch[3]) {
+              description = whenToUseMatch[3].trim();
+            }
           }
         }
         
@@ -973,6 +991,889 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     console.log(chalk.dim(`You can now find the orchestrix agents in the Chat view's mode selector.`));
 
     return true;
+  }
+
+  async loadSubagentTemplate() {
+    const templatePath = path.join(__dirname, '..', 'templates', 'deterministic-subagent-template.md');
+    try {
+      return await fileManager.readFile(templatePath);
+    } catch (error) {
+      // Fallback to simple template if deterministic template not found
+      const fallbackPath = path.join(__dirname, '..', 'templates', 'simple-subagent-template.md');
+      try {
+        return await fileManager.readFile(fallbackPath);
+      } catch (fallbackError) {
+        console.warn(`Could not load subagent templates: ${error.message}`);
+        return null;
+      }
+    }
+  }
+
+  async generateSubagentFromTemplate(agentId, agentContent, installDir) {
+    const template = await this.loadSubagentTemplate();
+    if (!template) {
+      return null;
+    }
+
+    const metadata = this.extractAgentMetadata(agentContent);
+    
+    // Deterministic workflow placeholders
+    const placeholders = {
+      '{AGENT_ID}': agentId,
+      '{ AGENT_ID }': agentId,  // With spaces version
+      '{DESCRIPTION}': this.generateDescription(metadata),
+      '{WHEN_TO_USE}': this.generateWhenToUse(metadata),
+      '{TOOLS}': this.getAgentPermissions(agentId).join(', '),
+      '{ TOOLS }': this.getAgentPermissions(agentId).join(', '),  // With spaces version
+      '{AGENT_NAME}': metadata.agent.name || agentId,
+      '{ROLE}': metadata.persona.role || 'AI Assistant',
+      '{FOCUS}': metadata.persona.focus || 'Execute tasks efficiently and follow Orchestrix workflows.',
+      '{INTENT_PATTERNS}': this.generateIntentPatterns(metadata, agentContent, agentId),
+      '{WORKFLOW_DEFINITIONS}': this.generateWorkflowDefinitions(metadata, agentContent, agentId),
+      '{DEPENDENCIES}': this.generateDependencies(metadata),
+      '{SPECIAL_INSTRUCTIONS}': this.generateSpecialInstructions(metadata, agentId)
+    };
+    
+    // Replace all placeholders in the template
+    let content = template;
+    for (const [placeholder, value] of Object.entries(placeholders)) {
+      const regex = new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g');
+      content = content.replace(regex, value);
+    }
+    
+    // Finally replace {root} with .orchestrix-core (this should be the LAST step)
+    content = content.replace(/\{root\}/g, '.orchestrix-core');
+    
+    return content;
+  }
+
+  generateDescription(metadata) {
+    const title = metadata.agent.title || metadata.agent.name || 'AI Assistant';
+    const role = metadata.persona.role || 'Assistant';
+    return `${title} - ${role} specialized in Orchestrix workflows`;
+  }
+
+  generateWhenToUse(metadata) {
+    const whenToUse = metadata.agent.whenToUse || 'general assistance and task execution';
+    // Clean up the description to avoid redundancy
+    return whenToUse.replace(/^use for /i, '').replace(/^Use for /i, '');
+  }
+
+  generateCorePrinciples(metadata) {
+    const principles = metadata.core_principles || [];
+    if (principles.length === 0) {
+      return '- Follow Orchestrix workflows and maintain quality standards\n- Execute commands with precision and provide clear feedback';
+    }
+    
+    // Take top 3-4 most important principles and format them
+    return principles.slice(0, 4).map(p => `- ${p}`).join('\n');
+  }
+
+  generateCommands(metadata, agentContent) {
+    const commands = metadata.commands || [];
+    if (commands.length === 0) {
+      return '- `*help`: Show available commands\n- `*exit`: Exit agent mode';
+    }
+    
+    return commands.map(cmd => {
+      const description = this.getCommandDescription(cmd, agentContent);
+      return `- \`*${cmd.name}\`: ${description}`;
+    }).join('\n');
+  }
+
+  generateDependencies(metadata) {
+    const deps = metadata.dependencies || {};
+    const depTypes = Object.keys(deps).filter(key => deps[key] && deps[key].length > 0);
+    
+    if (depTypes.length === 0) {
+      return 'Standard Orchestrix resources (tasks, templates, checklists)';
+    }
+    
+    return depTypes.map(type => 
+      `**${type}**: ${deps[type].join(', ')}`
+    ).join('\n');
+  }
+
+  generateIntentPatterns(metadata, agentContent, agentId) {
+    // Extract REQUEST-RESOLUTION patterns and convert to intent patterns
+    const requestResolution = this.extractRequestResolution(agentContent);
+    const commands = metadata.commands || [];
+    
+    // Agent-specific intent patterns based on commands and REQUEST-RESOLUTION
+    const agentPatterns = {
+      'dev': {
+        'story_implementation': [
+          'implement this story', 'develop the feature', 'code this requirement',
+          'build this functionality', 'create the implementation'
+        ],
+        'testing_validation': [
+          'run tests', 'validate the code', 'check for bugs',
+          'execute linting', 'verify implementation'
+        ],
+        'code_explanation': [
+          'explain what you did', 'teach me about the code', 'how does this work',
+          'walk me through the implementation'
+        ]
+      },
+      'architect': {
+        'architecture_design': [
+          'design system architecture', 'create architecture document', 'architectural guidance',
+          'system design help', 'technical architecture planning'
+        ],
+        'technology_research': [
+          'research technology options', 'investigate solutions', 'technology recommendations',
+          'evaluate technical approaches'
+        ],
+        'technical_review': [
+          'review story for technical accuracy', 'validate technical approach',
+          'assess technical feasibility'
+        ],
+        'project_documentation': [
+          'document existing project', 'analyze current system', 'understand codebase',
+          'create project overview'
+        ]
+      },
+      'qa': {
+        'story_review': [
+          'review story', 'validate story implementation', 'check story completion',
+          'quality assurance review', 'story qa validation'
+        ],
+        'document_creation': [
+          'create documentation', 'document test results', 'generate qa report',
+          'create test documentation'
+        ],
+        'quality_validation': [
+          'review code quality', 'check for issues', 'validate requirements',
+          'test the implementation', 'quality assurance'
+        ]
+      },
+      'sm': {
+        'story_creation': [
+          'create next story', 'draft new story', 'prepare story',
+          'generate user story', 'story development'
+        ],
+        'story_validation': [
+          'validate story quality', 'review story completeness',
+          'check story criteria'
+        ],
+        'project_adjustment': [
+          'correct course', 'adjust project direction', 'handle project deviation',
+          'course correction', 'fix project issues', 'pivot strategy',
+          'resolve project conflicts', 'navigate project changes'
+        ]
+      },
+      'analyst': {
+        'document_creation': [
+          'create document', 'draft documentation', 'generate report',
+          'create analysis document'
+        ],
+        'research_analysis': [
+          'research market trends', 'analyze competition', 'market analysis',
+          'business intelligence', 'data analysis'
+        ],
+        'project_documentation': [
+          'document current project', 'analyze existing system',
+          'project discovery', 'system analysis'
+        ],
+        'brainstorming': [
+          'facilitate brainstorming', 'brainstorm ideas', 'ideation session',
+          'generate ideas', 'creative session'
+        ],
+        'elicitation': [
+          'elicit requirements', 'gather requirements', 'requirement discovery',
+          'advanced elicitation'
+        ]
+      },
+      'pm': {
+        'document_creation': [
+          'create PRD', 'draft product document', 'generate requirements',
+          'create product specification'
+        ],
+        'product_planning': [
+          'create product requirements', 'draft PRD', 'product strategy',
+          'requirements documentation', 'feature planning'
+        ],
+        'brownfield_management': [
+          'create epic for existing project', 'brownfield epic creation',
+          'manage existing system', 'legacy project planning'
+        ],
+        'document_processing': [
+          'shard document', 'split document', 'organize documentation',
+          'document sharding'
+        ]
+      },
+      'po': {
+        'document_creation': [
+          'create document', 'draft specification', 'generate requirements',
+          'create product document'
+        ],
+        'backlog_management': [
+          'manage product backlog', 'prioritize features', 'backlog refinement',
+          'requirements organization'
+        ],
+        'story_management': [
+          'create epic', 'create story', 'validate story draft',
+          'story validation', 'epic creation'
+        ],
+        'document_processing': [
+          'shard document', 'split document', 'organize documentation',
+          'document sharding'
+        ],
+        'checklist_execution': [
+          'run checklist', 'execute checklist', 'validate with checklist',
+          'quality validation'
+        ]
+      },
+      'ux-expert': {
+        'document_creation': [
+          'create frontend spec', 'design documentation', 'UI specification',
+          'create design document'
+        ],
+        'ui_generation': [
+          'generate UI prompt', 'create AI prompt for UI', 'UI generation prompt',
+          'craft frontend prompt'
+        ],
+        'design_planning': [
+          'create UI design', 'design user interface', 'user experience design',
+          'frontend specifications', 'design wireframes'
+        ],
+        'design_research': [
+          'research design patterns', 'UX research', 'design investigation',
+          'user experience research'
+        ]
+      },
+      'orchestrix-master': {
+        'knowledge_base': [
+          'knowledge base mode', 'KB mode', 'orchestrix knowledge',
+          'framework documentation'
+        ],
+        'task_execution': [
+          'execute task', 'run task', 'task execution',
+          'specific task'
+        ],
+        'document_creation': [
+          'create document', 'generate documentation', 'create doc',
+          'document generation'
+        ],
+        'checklist_validation': [
+          'run checklist', 'execute checklist', 'checklist validation',
+          'quality gate'
+        ],
+        'document_processing': [
+          'shard document', 'split document', 'document sharding',
+          'organize documentation'
+        ]
+      },
+      'orchestrix-orchestrator': {
+        'agent_coordination': [
+          'coordinate agents', 'switch agent', 'agent transformation',
+          'multi-agent workflow'
+        ],
+        'workflow_management': [
+          'start workflow', 'manage workflow', 'workflow execution',
+          'process orchestration'
+        ],
+        'status_tracking': [
+          'check status', 'show progress', 'workflow status',
+          'current state'
+        ],
+        'planning': [
+          'create plan', 'workflow planning', 'detailed planning',
+          'plan workflow'
+        ],
+        'chat_mode': [
+          'chat mode', 'conversational assistance', 'detailed help',
+          'interactive guidance'
+        ]
+      }
+    };
+
+    const patterns = agentPatterns[agentId] || {};
+    
+    // Filter out inappropriate intents for subagent mode
+    const filteredPatterns = { ...patterns };
+    
+    // Remove document_output from all agents except dev, qa, sm
+    if (!['dev', 'qa', 'sm'].includes(agentId)) {
+      delete filteredPatterns.document_output;
+    }
+    
+    // Agent-specific intent removal
+    if (agentId === 'architect') {
+      delete filteredPatterns.document_output;
+    }
+    
+    if (agentId === 'dev') {
+      delete filteredPatterns.story_validation;
+    }
+    
+    if (agentId === 'sm') {
+      delete filteredPatterns.checklist_execution;
+    }
+    
+    if (agentId === 'pm') {
+      delete filteredPatterns.document_processing;
+      delete filteredPatterns.document_output;
+    }
+    
+    if (agentId === 'po') {
+      delete filteredPatterns.document_processing;
+      delete filteredPatterns.document_output;
+    }
+    
+    if (agentId === 'orchestrix-master') {
+      delete filteredPatterns.knowledge_base;
+      delete filteredPatterns.document_processing;
+      delete filteredPatterns.document_output;
+    }
+    
+    if (agentId === 'orchestrix-orchestrator') {
+      delete filteredPatterns.chat_mode;
+      delete filteredPatterns.document_output;
+    }
+    
+    if (agentId === 'analyst') {
+      delete filteredPatterns.document_output;
+    }
+    
+    if (agentId === 'ux-expert') {
+      delete filteredPatterns.document_output;
+    }
+    
+    let result = [];
+    
+    for (const [intentName, triggers] of Object.entries(filteredPatterns)) {
+      result.push(`**${intentName.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:**`);
+      result.push(triggers.map(t => `- "${t}"`).join('\n'));
+      result.push('');
+    }
+    
+    return result.join('\n').trim();
+  }
+
+  generateWorkflowDefinitions(metadata, agentContent, agentId) {
+    const commands = metadata.commands || [];
+    const deps = metadata.dependencies || {};
+    
+    // Convert commands to workflow sequences
+    const workflowMappings = {
+      'dev': {
+        'story_implementation': {
+          sequence: [
+            'Load story file and analyze requirements',
+            'Execute develop-story workflow: Read task → Implement → Test → Validate → Update progress',
+            'Run execute-checklist with story-dod-checklist.md',
+            'Update story status to "Ready for Review"'
+          ],
+          dependencies: ['execute-checklist.md', 'validate-next-story.md'],
+          checklist: 'story-dod-checklist.md'
+        },
+        'testing_validation': {
+          sequence: [
+            'Execute linting and test suite',
+            'Analyze test results and coverage',
+            'Report findings and recommendations'
+          ],
+          dependencies: ['validate-next-story.md']
+        },
+        'story_validation': {
+          sequence: [
+            'Execute validate-next-story.md task',
+            'Analyze story completeness and quality',
+            'Provide validation results and recommendations'
+          ],
+          dependencies: ['validate-next-story.md']
+        }
+      },
+      'architect': {
+        'architecture_design': {
+          sequence: [
+            'Load technical-preferences.md and project context',
+            'Execute create-doc.md task with architecture template',
+            'Generate comprehensive architecture document',
+            'Run execute-checklist with architect-checklist.md'
+          ],
+          dependencies: ['create-doc.md', 'execute-checklist.md'],
+          templates: ['architecture-tmpl.yaml', 'fullstack-architecture-tmpl.yaml'],
+          checklist: 'architect-checklist.md'
+        },
+        'technology_research': {
+          sequence: [
+            'Execute create-deep-research-prompt.md task',
+            'Analyze technology options and trade-offs',
+            'Provide recommendations with rationale'
+          ],
+          dependencies: ['create-deep-research-prompt.md']
+        },
+        'technical_review': {
+          sequence: [
+            'Load story and analyze technical accuracy',
+            'Execute review-story-technical-accuracy.md task',
+            'Run execute-checklist with architect-technical-review-checklist.md'
+          ],
+          dependencies: ['review-story-technical-accuracy.md', 'execute-checklist.md'],
+          checklist: 'architect-technical-review-checklist.md'
+        },
+        'project_documentation': {
+          sequence: [
+            'Execute document-project.md task',
+            'Analyze existing codebase and documentation',
+            'Generate comprehensive project overview'
+          ],
+          dependencies: ['document-project.md']
+        },
+        'document_output': {
+          sequence: [
+            'Generate final document output',
+            'Export document to specified location',
+            'Ensure document format and completeness'
+          ]
+        }
+      },
+      'sm': {
+        'story_creation': {
+          sequence: [
+            'Execute create-next-story.md task',
+            'Generate comprehensive story with acceptance criteria',
+            'Run execute-checklist with story-draft-checklist.md'
+          ],
+          dependencies: ['create-next-story.md', 'execute-checklist.md'],
+          checklist: 'story-draft-checklist.md'
+        },
+        'story_validation': {
+          sequence: [
+            'Execute validate-story-quality task',
+            'Analyze story completeness and technical accuracy',
+            'Provide improvement recommendations'
+          ]
+        },
+        'project_adjustment': {
+          sequence: [
+            'Execute correct-course.md task',
+            'Analyze project direction and issues using change-checklist.md',
+            'Generate Sprint Change Proposal with specific edits',
+            'Provide corrective action plan for project realignment'
+          ],
+          dependencies: ['correct-course.md'],
+          checklist: 'change-checklist.md'
+        },
+        'checklist_execution': {
+          sequence: [
+            'Execute execute-checklist.md task',
+            'Validate against specified checklist',
+            'Report validation results'
+          ],
+          dependencies: ['execute-checklist.md']
+        }
+      },
+      'qa': {
+        'story_review': {
+          sequence: [
+            'Load story file and implementation',
+            'Execute review-story.md task',
+            'Update QA Results section only',
+            'Provide detailed quality feedback'
+          ],
+          dependencies: ['review-story.md']
+        },
+        'document_creation': {
+          sequence: [
+            'Execute create-doc.md task',
+            'Generate QA documentation',
+            'Ensure quality standards compliance'
+          ],
+          dependencies: ['create-doc.md']
+        }
+      },
+      'pm': {
+        'document_creation': {
+          sequence: [
+            'Execute create-doc.md task with PRD template',
+            'Generate comprehensive product requirements',
+            'Run execute-checklist with pm-checklist.md'
+          ],
+          dependencies: ['create-doc.md', 'execute-checklist.md'],
+          templates: ['prd-tmpl.yaml'],
+          checklist: 'pm-checklist.md'
+        },
+        'brownfield_management': {
+          sequence: [
+            'Execute brownfield-create-epic.md or brownfield-create-story.md',
+            'Analyze existing system requirements',
+            'Generate appropriate documentation for legacy system'
+          ],
+          dependencies: ['brownfield-create-epic.md', 'brownfield-create-story.md']
+        },
+        'document_processing': {
+          sequence: [
+            'Execute shard-doc.md task',
+            'Split large documents into manageable sections',
+            'Organize documentation structure'
+          ],
+          dependencies: ['shard-doc.md']
+        }
+      },
+      'analyst': {
+        'document_creation': {
+          sequence: [
+            'Execute create-doc.md task',
+            'Generate analytical documentation',
+            'Run execute-checklist for validation'
+          ],
+          dependencies: ['create-doc.md', 'execute-checklist.md']
+        },
+        'project_documentation': {
+          sequence: [
+            'Execute document-project.md task',
+            'Analyze existing codebase and documentation',
+            'Generate comprehensive project overview'
+          ],
+          dependencies: ['document-project.md']
+        },
+        'brainstorming': {
+          sequence: [
+            'Execute facilitate-brainstorming-session.md task',
+            'Guide structured ideation process',
+            'Document and organize generated ideas'
+          ],
+          dependencies: ['facilitate-brainstorming-session.md']
+        },
+        'elicitation': {
+          sequence: [
+            'Execute advanced-elicitation.md task',
+            'Gather detailed requirements through structured questioning',
+            'Document elicited requirements'
+          ],
+          dependencies: ['advanced-elicitation.md']
+        },
+        'research_analysis': {
+          sequence: [
+            'Execute create-deep-research-prompt.md task',
+            'Conduct comprehensive market and competitive analysis',
+            'Generate research report with findings'
+          ],
+          dependencies: ['create-deep-research-prompt.md']
+        }
+      },
+      'po': {
+        'document_creation': {
+          sequence: [
+            'Execute create-doc.md task',
+            'Generate product documentation',
+            'Validate document completeness'
+          ],
+          dependencies: ['create-doc.md']
+        },
+        'story_management': {
+          sequence: [
+            'Execute brownfield-create-epic.md or brownfield-create-story.md',
+            'Create and organize user stories',
+            'Validate story readiness'
+          ],
+          dependencies: ['brownfield-create-epic.md', 'brownfield-create-story.md']
+        },
+        'document_processing': {
+          sequence: [
+            'Execute shard-doc.md task',
+            'Split and organize large documents',
+            'Ensure document accessibility'
+          ],
+          dependencies: ['shard-doc.md']
+        },
+        'checklist_execution': {
+          sequence: [
+            'Execute execute-checklist.md task',
+            'Run comprehensive quality validation',
+            'Report validation results'
+          ],
+          dependencies: ['execute-checklist.md'],
+          checklist: 'po-master-checklist.md'
+        }
+      },
+      'ux-expert': {
+        'document_creation': {
+          sequence: [
+            'Execute create-doc.md task with frontend template',
+            'Generate UI/UX specifications',
+            'Validate design documentation'
+          ],
+          dependencies: ['create-doc.md'],
+          templates: ['front-end-spec-tmpl.yaml']
+        },
+        'ui_generation': {
+          sequence: [
+            'Execute generate-ai-frontend-prompt.md task',
+            'Craft optimized AI prompts for UI generation',
+            'Provide implementation guidance'
+          ],
+          dependencies: ['generate-ai-frontend-prompt.md']
+        },
+        'design_research': {
+          sequence: [
+            'Execute create-deep-research-prompt.md task',
+            'Research UX patterns and design trends',
+            'Provide research-based recommendations'
+          ],
+          dependencies: ['create-deep-research-prompt.md']
+        }
+      },
+      'orchestrix-master': {
+        'knowledge_base': {
+          sequence: [
+            'Load orchestrix-kb.md knowledge base',
+            'Activate KB mode for framework guidance',
+            'Provide comprehensive Orchestrix assistance'
+          ]
+        },
+        'task_execution': {
+          sequence: [
+            'Load and execute specified task',
+            'Apply task instructions precisely',
+            'Report task completion status'
+          ]
+        },
+        'document_creation': {
+          sequence: [
+            'Execute create-doc.md task',
+            'Select appropriate template',
+            'Generate comprehensive documentation'
+          ],
+          dependencies: ['create-doc.md']
+        },
+        'checklist_validation': {
+          sequence: [
+            'Execute execute-checklist.md task',
+            'Select appropriate checklist',
+            'Perform thorough validation'
+          ],
+          dependencies: ['execute-checklist.md']
+        },
+        'document_processing': {
+          sequence: [
+            'Execute shard-doc.md task',
+            'Process and organize documentation',
+            'Ensure document structure integrity'
+          ],
+          dependencies: ['shard-doc.md']
+        }
+      },
+      'orchestrix-orchestrator': {
+        'agent_coordination': {
+          sequence: [
+            'Assess user needs and recommend appropriate agent',
+            'Transform into specified agent persona',
+            'Coordinate multi-agent workflows'
+          ]
+        },
+        'workflow_management': {
+          sequence: [
+            'Identify optimal workflow for user requirements',
+            'Initialize workflow execution',
+            'Track and manage workflow progress'
+          ]
+        },
+        'status_tracking': {
+          sequence: [
+            'Assess current project context',
+            'Report active agent and workflow status',
+            'Provide next-step recommendations'
+          ]
+        },
+        'planning': {
+          sequence: [
+            'Analyze project requirements',
+            'Create detailed workflow plan',
+            'Organize task sequences and dependencies'
+          ]
+        },
+        'chat_mode': {
+          sequence: [
+            'Activate conversational assistance mode',
+            'Provide detailed interactive guidance',
+            'Adapt responses to user expertise level'
+          ]
+        }
+      }
+    };
+
+    const agentWorkflows = workflowMappings[agentId] || {};
+    
+    // Filter out inappropriate workflows for subagent mode
+    const filteredWorkflows = { ...agentWorkflows };
+    
+    // Remove document_output workflows from all agents except dev, qa, sm
+    if (!['dev', 'qa', 'sm'].includes(agentId)) {
+      delete filteredWorkflows.document_output;
+    }
+    
+    // Agent-specific workflow removal
+    if (agentId === 'architect') {
+      delete filteredWorkflows.document_output;
+    }
+    
+    if (agentId === 'dev') {
+      delete filteredWorkflows.story_validation;
+    }
+    
+    if (agentId === 'sm') {
+      delete filteredWorkflows.checklist_execution;
+    }
+    
+    if (agentId === 'pm') {
+      delete filteredWorkflows.document_processing;
+      delete filteredWorkflows.document_output;
+    }
+    
+    if (agentId === 'po') {
+      delete filteredWorkflows.document_processing;
+      delete filteredWorkflows.document_output;
+    }
+    
+    if (agentId === 'orchestrix-master') {
+      delete filteredWorkflows.knowledge_base;
+      delete filteredWorkflows.document_processing;
+      delete filteredWorkflows.document_output;
+    }
+    
+    if (agentId === 'orchestrix-orchestrator') {
+      delete filteredWorkflows.chat_mode;
+      delete filteredWorkflows.document_output;
+    }
+    
+    if (agentId === 'analyst') {
+      delete filteredWorkflows.document_output;
+    }
+    
+    if (agentId === 'ux-expert') {
+      delete filteredWorkflows.document_output;
+    }
+    
+    let result = [];
+
+    for (const [workflowName, workflow] of Object.entries(filteredWorkflows)) {
+      result.push(`**${workflowName.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Flow:**`);
+      result.push('```');
+      workflow.sequence.forEach((step, index) => {
+        result.push(`${index + 1}. ${step}`);
+      });
+      if (workflow.checklist) {
+        result.push(`Final: Validate with ${workflow.checklist}`);
+      }
+      result.push('```');
+      result.push('');
+    }
+
+    return result.join('\n').trim();
+  }
+
+  extractRequestResolution(agentContent) {
+    // Extract REQUEST-RESOLUTION section from agent content
+    const match = agentContent.match(/REQUEST-RESOLUTION:\s*(.*?)(?=\n[A-Z-]+:|```|\n$)/s);
+    return match ? match[1].trim() : '';
+  }
+
+  generateSpecialInstructions(metadata, agentId) {
+    // Agent-specific critical instructions
+    const specialInstructions = {
+      'dev': 'Only update story file Dev Agent Record sections. Never modify tests to make them pass.',
+      'qa': 'Focus on finding issues Dev might miss. Test boundary conditions and edge cases.',
+      'architect': 'Think holistically about system design. Consider scalability, maintainability, and user experience.',
+      'sm': 'Create clear, complete stories with proper acceptance criteria and technical details.',
+      'po': 'Maintain product vision alignment while managing backlog priorities.',
+      'analyst': 'Provide data-driven insights and thorough market research.',
+      'pm': 'Balance user needs, technical constraints, and business objectives.',
+      'ux-expert': 'Focus on user experience and accessibility in all design decisions.',
+      'orchestrix-master': 'Coordinate across all domains and provide strategic guidance.',
+      'orchestrix-orchestrator': 'Manage workflow coordination and ensure quality gates are met.'
+    };
+    
+    return specialInstructions[agentId] || 'Follow standard Orchestrix workflow patterns';
+  }
+
+  generateActivationStepsStructured(metadata, agentContent) {
+    const sections = this.parseStructuredActivationInstructions(this.extractActivationSection(agentContent));
+    if (sections.length === 0) {
+      return `**Startup Protocol:**
+- Adopt the ${metadata.persona.role || 'agent'} persona immediately
+- Load any devLoadAlwaysFiles from core-config.yaml
+- Announce readiness and available commands
+- Await user instructions`;
+    }
+    
+    return sections.map(section => 
+      `**${section.title}:**\n${section.items.map(item => `- ${item}`).join('\n')}`
+    ).join('\n\n');
+  }
+
+  generateFileLoadingRulesSimplified(metadata) {
+    return `**Auto-Load:** devLoadAlwaysFiles from core-config.yaml at startup
+**On-Demand:** Load dependency files only when executing specific commands
+**Restriction:** Never load external documentation unless explicitly requested in story or user command`;
+  }
+
+  generateExecutionRulesHierarchical(metadata) {
+    return `**Priority 1:** Execute activation instructions in sequence
+**Priority 2:** Process user commands with * prefix (e.g., *help, *create)
+**Priority 3:** Apply core behavioral principles to all actions
+**Priority 4:** Load workflow dependencies only when specific tasks require them`;
+  }
+
+  generateBehavioralConstraintsActionable(metadata) {
+    const principles = metadata.core_principles || [];
+    if (principles.length === 0) {
+      return `**Quality Control:**
+- Verify all work meets project standards
+- Ask for clarification when requirements are ambiguous
+- Document all significant decisions and changes`;
+    }
+    
+    return `**Quality Control:**\n${principles.slice(0, 3).map(p => `- ${p}`).join('\n')}`;
+  }
+
+  generateCommandsWithCompleteSpecs(metadata, agentContent) {
+    const commands = metadata.commands || [];
+    if (commands.length === 0) {
+      return `**\`*help\`**: Display all available commands with descriptions
+**\`*exit\`**: Exit agent mode and return to normal operation`;
+    }
+    
+    return commands.map(cmd => {
+      const description = this.getCommandDescription(cmd, agentContent);
+      return `**\`*${cmd.name}\`**: ${description}`;
+    }).join('\n');
+  }
+
+  generateDependenciesStructured(metadata) {
+    const deps = metadata.dependencies || {};
+    const depTypes = Object.keys(deps).filter(key => deps[key] && deps[key].length > 0);
+    
+    if (depTypes.length === 0) {
+      return `**Resource Types:** tasks, templates, checklists, data
+**Loading Rule:** Access resources only when executing specific workflows`;
+    }
+    
+    const resourceList = depTypes.map(type => 
+      `**${type}**: ${deps[type].map(item => `\`${item}\``).join(', ')}`
+    ).join('\n');
+    
+    return `${resourceList}\n\n**Loading Rule:** Access resources only when executing specific workflows`;
+  }
+
+  generateFileResolutionSimplified(metadata) {
+    return `Dependencies map to .orchestrix-core/{type}/{name} where {type} is the folder (tasks, templates, checklists, etc.) and {name} is the filename
+**Example:** create-doc.md → .orchestrix-core/tasks/create-doc.md
+**Rule:** Load files only when executing specific commands that require them`;
+  }
+
+  generateRequestResolutionExamples(metadata, agentContent) {
+    const agentId = metadata.agent.id || metadata.name || 'agent';
+    return `**Pattern Matching:** Map user requests to available commands and dependencies
+**Examples:**
+- "help me get started" → *help command
+- "create something" → *create command + relevant task dependencies
+- "validate this" → *validate command + checklist dependencies
+
+**Clarification Rule:** Ask for specific details when user requests are ambiguous or could match multiple workflows`;
   }
 
   async setupClaudeCodeSubagents(installDir, selectedAgent) {
@@ -1001,21 +1902,17 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
   async generateSubagentContent(agentId, agentContent, installDir) {
-    // Check if automation template should be used
-    const ideAgentConfig = await this.loadIdeAgentConfig();
-    const hasAutomation = ideAgentConfig['claude-code-automation'] && 
-                         ideAgentConfig['claude-code-automation'][agentId];
-    
-    if (hasAutomation) {
-      // Use automation-optimized template
-      return this.generateAutomationSubagentContent(agentId, agentContent, installDir);
-    } else {
-      // Use standard optimized template
-      return this.generateStandardSubagentContent(agentId, agentContent, installDir);
+    try {
+      // Try to use the template system first
+      const templateContent = await this.generateSubagentFromTemplate(agentId, agentContent, installDir);
+      if (templateContent) {
+        return templateContent;
+      }
+    } catch (error) {
+      console.warn(`Template system failed for ${agentId}, falling back to direct generation: ${error.message}`);
     }
-  }
 
-  async generateStandardSubagentContent(agentId, agentContent, installDir) {
+    // Fallback to direct generation if template fails
     // Extract agent metadata from original orchestrix-core agent
     const agentMetadata = this.extractAgentMetadata(agentContent);
     
@@ -1026,186 +1923,6 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     const markdownContent = this.generateOptimizedSubagentMarkdown(agentId, agentMetadata, agentContent);
     
     return `${yamlFrontmatter}\n${markdownContent}`;
-  }
-
-  async generateAutomationSubagentContent(agentId, agentContent, installDir) {
-    // Load automation-optimized template
-    const templatePath = path.join(__dirname, '..', 'templates', 'claude-code-auto-template.md');
-    
-    if (!await fileManager.pathExists(templatePath)) {
-      console.warn(`Automation template not found, using standard template for ${agentId}`);
-      return this.generateStandardSubagentContent(agentId, agentContent, installDir);
-    }
-
-    let template = await fileManager.readFile(templatePath);
-    const agentMetadata = this.extractAgentMetadata(agentContent);
-    const ideAgentConfig = await this.loadIdeAgentConfig();
-    const automationConfig = ideAgentConfig['claude-code-automation'][agentId];
-
-    // Get agent permissions and tools
-    const tools = this.getAgentPermissions(agentId);
-    
-    // Prepare template variables
-    const variables = {
-      AGENT_ID: agentId,
-      AGENT_NAME: agentMetadata.agent.name || agentId,
-      AGENT_TITLE: agentMetadata.agent.title || 'AI Agent',
-      PERSONA_ROLE: agentMetadata.persona.role || 'AI Assistant',
-      PERSONA_IDENTITY: agentMetadata.persona.identity || agentMetadata.persona.role || 'AI Assistant',
-      PERSONA_FOCUS: agentMetadata.persona.focus || 'Task execution and quality assurance',
-      WHEN_TO_USE: agentMetadata.agent.whenToUse || automationConfig.description || 'General assistance',
-      TOOL_PERMISSIONS: tools.join(', '),
-      CORE_PRINCIPLES_SUMMARY: this.summarizeCoreValues(agentMetadata.persona.core_principles || []),
-      PREFERRED_TASKS_LIST: this.formatTasksList(automationConfig['preferred-tasks'] || []),
-      MANUAL_TASKS_LIST: this.formatTasksList(agentMetadata.dependencies.tasks || []),
-      AUTO_COMMANDS_WITH_SPECS: this.formatAutoCommands(automationConfig, agentMetadata),
-      MANUAL_COMMANDS_WITH_SPECS: this.formatManualCommands(agentMetadata.commands || []),
-      AUTO_TASK_DEPENDENCIES: this.formatDependencies(automationConfig['preferred-tasks'] || []),
-      MANUAL_TASK_DEPENDENCIES: this.formatDependencies(agentMetadata.dependencies.tasks || []),
-      TEMPLATE_DEPENDENCIES: this.formatDependencies(agentMetadata.dependencies.templates || []),
-      CHECKLIST_DEPENDENCIES: this.formatDependencies(agentMetadata.dependencies.checklists || []),
-      PRIMARY_AUTO_CAPABILITY: this.getAutomationCapability(agentId, automationConfig),
-      QUALITY_FOCUS_AREAS: this.getQualityFocusAreas(agentId),
-      KEY_INTEGRATION_POINTS: this.getIntegrationPoints(agentId),
-      AGENT_SPECIFIC_SUCCESS_CRITERIA: this.getSuccessCriteria(agentId)
-    };
-
-    // Replace template variables
-    for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`\\{${key}\\}`, 'g');
-      template = template.replace(regex, value);
-    }
-
-    // Generate YAML frontmatter
-    const yamlFrontmatter = this.generateSubagentYaml(agentId, agentMetadata);
-    
-    return `${yamlFrontmatter}\n${template}`;
-  }
-
-  // Helper methods for automation template generation
-  summarizeCoreValues(coreValues) {
-    if (!coreValues || coreValues.length === 0) return "Professional excellence and quality focus";
-    const summary = coreValues.slice(0, 3).join(', ');
-    return summary.length > 80 ? summary.substring(0, 77) + "..." : summary;
-  }
-
-  formatTasksList(tasks) {
-    if (!tasks || tasks.length === 0) return "  - No specific tasks configured";
-    return tasks.map(task => `  - "${task}"`).join('\n');
-  }
-
-  formatAutoCommands(automationConfig, agentMetadata) {
-    let commands = [];
-    
-    // Add automation-specific commands
-    if (automationConfig['preferred-tasks']) {
-      commands.push(`- \`*auto-execute\`: Execute preferred automation tasks with context loading`);
-      commands.push(`- \`*quick-start\`: Fast initialization with auto-context detection`);
-    }
-    
-    // Add agent-specific commands from metadata
-    if (agentMetadata.commands && agentMetadata.commands.length > 0) {
-      agentMetadata.commands.slice(0, 3).forEach(cmd => {
-        if (typeof cmd === 'string') {
-          commands.push(`- \`*${cmd}\`: ${this.getCommandDescription(cmd)}`);
-        }
-      });
-    }
-    
-    return commands.length > 0 ? commands.join('\n') : "- `*help`: Display available automation commands";
-  }
-
-  formatManualCommands(commands) {
-    if (!commands || commands.length === 0) return "- `*help`: Display available manual commands";
-    
-    const formatted = commands.slice(0, 5).map(cmd => {
-      if (typeof cmd === 'string') {
-        return `- \`*${cmd}\`: ${this.getCommandDescription(cmd)}`;
-      }
-      return `- \`*${cmd}\`: Manual execution mode`;
-    });
-    
-    return formatted.join('\n');
-  }
-
-  formatDependencies(dependencies) {
-    if (!dependencies || dependencies.length === 0) return "[]";
-    const formatted = dependencies.map(dep => `"${dep}"`).join(', ');
-    return `[${formatted}]`;
-  }
-
-  getCommandDescription(command) {
-    const descriptions = {
-      'help': 'Show available commands and usage',
-      'create-doc': 'Generate documentation using templates',
-      'execute-checklist': 'Run quality assurance checklist',
-      'shard-doc': 'Break down documents for development',
-      'create-story': 'Generate user stories from requirements',
-      'implement-story': 'Execute story implementation with quality checks',
-      'review-code': 'Perform comprehensive code review',
-      'review-story': 'Validate story technical accuracy'
-    };
-    return descriptions[command] || 'Execute specialized task';
-  }
-
-  getAutomationCapability(agentId, automationConfig) {
-    const capabilities = {
-      'sm': 'Automated story creation with context assembly and template compliance',
-      'architect': 'Technical architecture automation with quality scoring and validation',
-      'dev': 'Story implementation automation with test integrity and DoD compliance',
-      'qa': 'Code review automation with direct refactoring capabilities',
-      'po': 'Document sharding automation for development phase transitions',
-      'analyst': 'Research and analysis document generation with market intelligence',
-      'pm': 'Product requirements automation with stakeholder alignment',
-      'orchestrix-orchestrator': 'Intelligent workflow coordination and multi-agent orchestration'
-    };
-    
-    return capabilities[agentId] || automationConfig.description || 'Automated task execution with quality preservation';
-  }
-
-  getQualityFocusAreas(agentId) {
-    const focusAreas = {
-      'sm': 'Story completeness, technical feasibility, acceptance criteria clarity',
-      'architect': 'Technical accuracy, architecture compliance, scalability considerations',  
-      'dev': 'Code quality, test coverage, implementation standards, DoD compliance',
-      'qa': 'Code review standards, refactoring quality, testing completeness',
-      'po': 'Cross-document consistency, planning integrity, quality gate enforcement',
-      'analyst': 'Research accuracy, market analysis depth, competitive intelligence quality',
-      'pm': 'Requirements completeness, stakeholder alignment, product strategy clarity',
-      'orchestrix-orchestrator': 'Workflow integrity, agent coordination quality, process compliance'
-    };
-    
-    return focusAreas[agentId] || 'Task accuracy, documentation quality, standard compliance';
-  }
-
-  getIntegrationPoints(agentId) {
-    const integrations = {
-      'sm': 'Epic files, architecture documents, story templates, team workflows',
-      'architect': 'Technical specifications, coding standards, architecture templates, review processes',
-      'dev': 'Story files, test suites, code standards, implementation templates, quality checklists',
-      'qa': 'Code repositories, test frameworks, quality standards, review templates',
-      'po': 'Planning documents, development artifacts, quality gates, workflow transitions',
-      'analyst': 'Market research, competitive analysis, business requirements, stakeholder feedback',
-      'pm': 'Business strategy, requirements documentation, feature prioritization, stakeholder communication',
-      'orchestrix-orchestrator': 'All agent outputs, workflow states, quality metrics, coordination protocols'
-    };
-    
-    return integrations[agentId] || 'Project files, templates, checklists, workflow dependencies';
-  }
-
-  getSuccessCriteria(agentId) {
-    const criteria = {
-      'sm': 'Story completeness ≥90%, technical accuracy ≥8/10, clear acceptance criteria',
-      'architect': 'Technical accuracy ≥7/10, zero critical issues, architecture compliance',
-      'dev': 'All tests pass, DoD checklist complete, code standards compliant',
-      'qa': 'Quality score ≥8/10, all issues addressed, refactoring improvements applied',
-      'po': 'Document consistency 100%, quality gates passed, smooth workflow transitions',
-      'analyst': 'Research depth ≥80%, competitive analysis complete, actionable insights provided',
-      'pm': 'Requirements clarity 100%, stakeholder alignment achieved, feature prioritization complete',
-      'orchestrix-orchestrator': 'Workflow completion ≥95%, agent coordination seamless, quality preserved'
-    };
-    
-    return criteria[agentId] || 'Task completion 100%, quality standards met, documentation complete';
   }
 
   extractAgentMetadata(agentContent) {
@@ -1235,11 +1952,21 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         const agentSection = agentMatch[1];
         const nameMatch = agentSection.match(/name:\s*(.+)/);
         const titleMatch = agentSection.match(/title:\s*(.+)/);
-        const whenToUseMatch = agentSection.match(/whenToUse:\s*["']?([^\n"']+)["']?/);
+        const whenToUseMatch = agentSection.match(/whenToUse:\s*(?:"([^"]+)"|'([^']+)'|([^\n\r]+))/);
+        
+        let whenToUseValue = null;
+        if (whenToUseMatch) {
+          // Handle quoted strings (with " or ')
+          whenToUseValue = whenToUseMatch[1] || whenToUseMatch[2];
+          // Handle unquoted strings (but trim trailing whitespace)
+          if (!whenToUseValue) {
+            whenToUseValue = whenToUseMatch[3]?.trim();
+          }
+        }
         
         if (nameMatch) metadata.agent.name = nameMatch[1].trim();
         if (titleMatch) metadata.agent.title = titleMatch[1].trim();
-        if (whenToUseMatch) metadata.agent.whenToUse = whenToUseMatch[1].trim();
+        if (whenToUseValue) metadata.agent.whenToUse = whenToUseValue;
       }
       
       // Extract persona section
@@ -1646,8 +2373,8 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         !rule.includes('FOR LATER USE ONLY') && !rule.includes('NOT FOR ACTIVATION')
       );
       for (const rule of essentialRules) {
-        // Fix redundant .orchestrix-core definition in rules
-        const fixedRule = rule.replace(/where \.orchestrix-core resolves to \.orchestrix-core\//, 'where {root} resolves to .orchestrix-core/');
+        // Fix redundant .orchestrix-core definition in rules (preserve {root} for proper template processing)
+        const fixedRule = rule.replace(/where \.orchestrix-core resolves to \.orchestrix-core\//, 'where {root} resolves to {root}/');
         content += `- ${fixedRule}\n`;
       }
       content += '\n';
@@ -1918,8 +2645,8 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     if (metadata.ideFileResolution && metadata.ideFileResolution.length > 0) {
       content += `## 🔍 IDE-FILE-RESOLUTION\n\n`;
       for (const resolution of metadata.ideFileResolution) {
-        // Fix redundant .orchestrix-core definition in rules
-        const fixedResolution = resolution.replace(/where \.orchestrix-core resolves to \.orchestrix-core\//, 'where {root} resolves to .orchestrix-core/');
+        // Fix redundant .orchestrix-core definition in rules (preserve {root} for proper template processing)
+        const fixedResolution = resolution.replace(/where \.orchestrix-core resolves to \.orchestrix-core\//, 'where {root} resolves to {root}/');
         content += `- ${fixedResolution}\n`;
       }
       content += '\n';
