@@ -1,3 +1,15 @@
+# [4.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v3.1.0...v4.0.0) (2025-08-21)
+
+
+### Features
+
+* redesign version management and docs structure ([4736504](https://github.com/dorayo/ORCHESTRIX/commit/47365046c3d80acba6271d688a3c3e674421c27e))
+
+
+### BREAKING CHANGES
+
+* Manual version management scripts removed, now use semantic-release
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
