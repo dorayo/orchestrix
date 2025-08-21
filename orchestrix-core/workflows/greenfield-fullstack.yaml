@@ -71,7 +71,22 @@ workflow:
 
     - development_order_guidance:
       action: guide_development_sequence
-      notes: "Based on PRD stories: If stories are frontend-heavy, start with frontend project/directory first. If backend-heavy or API-first, start with backend. For tightly coupled features, follow story sequence in monorepo setup. Reference sharded PRD epics for development order."
+      notes: |
+        **RECOMMENDED: Frontend-First Development Strategy**
+        
+        For fullstack applications, we recommend frontend-first development for better UX outcomes:
+        
+        1. **Start with Frontend Stories**: Implement UI components, user flows, and interactions first
+        2. **Mock Backend APIs**: Use mock data/APIs during frontend development
+        3. **Define API Contracts**: Frontend development reveals actual API requirements
+        4. **Implement Backend**: Build APIs based on frontend's real needs, not assumptions
+        
+        **Development Order:**
+        - Phase 1: Frontend features with mocked APIs
+        - Phase 2: Backend implementation matching frontend contracts
+        - Phase 3: Integration and refinement
+        
+        **Alternative (Legacy)**: If stories are explicitly backend-heavy or API-first, start with backend. Reference sharded PRD epics for specific development order."
 
     - agent: po
       action: shard_documents

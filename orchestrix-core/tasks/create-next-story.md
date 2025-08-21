@@ -52,6 +52,17 @@ To identify the next logical story based on project progress and epic definition
 
 **For Full-Stack Stories:** Read both Backend and Frontend sections above
 
+#### 3.2.1 Frontend-First Strategy Implementation
+
+**If `frontendFirstStrategy: true` in core-config.yaml**, apply the following story decomposition logic for Full-Stack stories:
+
+**Phase-Based Task Structure:**
+- **Phase 1 Tasks**: Frontend implementation with mocked data/APIs
+- **Phase 2 Tasks**: Backend implementation to match frontend contracts
+- **Phase 3 Tasks**: Integration and end-to-end testing
+
+**CRITICAL**: For Full-Stack stories, automatically decompose into frontend-first phases unless story is explicitly backend-only (e.g., data migration, background jobs, pure API endpoints).
+
 #### 3.3 Extract Story-Specific Technical Details
 
 Extract ONLY information directly relevant to implementing the current story. Do NOT invent new libraries, patterns, or standards not in the source documents.

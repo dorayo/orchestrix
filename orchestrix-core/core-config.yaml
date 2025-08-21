@@ -19,6 +19,10 @@ devLoadAlwaysFiles:
   - docs/architecture/coding-standards.md
   - docs/architecture/tech-stack.md
   - docs/architecture/source-tree.md
+  - docs/front-end-spec.md
+  - docs/ui-architecture.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
+frontendFirstStrategy: true
+userConfirmationRequired: true
 slashPrefix: Orchestrix
