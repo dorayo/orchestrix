@@ -10,7 +10,7 @@ const program = new Command();
 program
   .name('orchestrix-build')
   .description('Orchestrix build tool for creating web bundles')
-  .version('1.0.0');
+  .version(require('../package.json').version);
 
 program
   .command('build')

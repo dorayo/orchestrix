@@ -28,29 +28,13 @@ function bumpVersion(currentVersion, type) {
   }
 }
 
-async function bumpAllVersions() {
+async function bumpAllExpansionVersions() {
   const updatedItems = [];
   
-  // First, bump the core version
-  const coreConfigPath = path.join(__dirname, '..', 'orchestrix-core', 'core-config.yaml');
-  try {
-    const coreConfigContent = fs.readFileSync(coreConfigPath, 'utf8');
-    const coreConfig = yaml.load(coreConfigContent);
-    const oldCoreVersion = coreConfig.version || '1.0.0';
-    const newCoreVersion = bumpVersion(oldCoreVersion, bumpType);
-    
-    coreConfig.version = newCoreVersion;
-    
-    const updatedCoreYaml = yaml.dump(coreConfig, { indent: 2 });
-    fs.writeFileSync(coreConfigPath, updatedCoreYaml);
-    
-    updatedItems.push({ type: 'core', name: 'orchestrix Core', oldVersion: oldCoreVersion, newVersion: newCoreVersion });
-    console.log(`✓ orchestrix Core: ${oldCoreVersion} → ${newCoreVersion}`);
-  } catch (error) {
-    console.error(`✗ Failed to update orchestrix Core: ${error.message}`);
-  }
+  console.log(`🚀 Bumping all expansion pack versions with ${bumpType} version bump`);
+  console.log(`📝 Note: Core version is now managed by semantic-release\n`);
   
-  // Then, bump all expansion packs
+  // Bump all expansion packs
   const expansionPacksDir = path.join(__dirname, '..', 'expansion-packs');
   
   try {
@@ -84,18 +68,16 @@ async function bumpAllVersions() {
     }
     
     if (updatedItems.length > 0) {
-      const coreCount = updatedItems.filter(i => i.type === 'core').length;
       const expansionCount = updatedItems.filter(i => i.type === 'expansion').length;
       
-      console.log(`\n✓ Successfully bumped ${updatedItems.length} item(s) with ${bumpType} version bump`);
-      if (coreCount > 0) console.log(`  - ${coreCount} core`);
-      if (expansionCount > 0) console.log(`  - ${expansionCount} expansion pack(s)`);
+      console.log(`\n✓ Successfully bumped ${expansionCount} expansion pack(s) with ${bumpType} version bump`);
       
       console.log('\nNext steps:');
       console.log('1. Test the changes');
-      console.log('2. Commit: git add -A && git commit -m "chore: bump all versions (' + bumpType + ')"');
+      console.log('2. Commit: git add -A && git commit -m "chore: bump expansion pack versions (' + bumpType + ')"');
+      console.log('3. For core version, use: npm run release (semantic-release)');
     } else {
-      console.log('No items found to update');
+      console.log('No expansion packs found to update');
     }
     
   } catch (error) {
@@ -104,4 +86,4 @@ async function bumpAllVersions() {
   }
 }
 
-bumpAllVersions();
+bumpAllExpansionVersions();

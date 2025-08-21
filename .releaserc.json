@@ -5,11 +5,18 @@
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     "@semantic-release/npm",
-    "./tools/semantic-release-sync-installer.js",
+    "./tools/semantic-release-sync-all.js",
     [
       "@semantic-release/git",
       {
-        "assets": ["package.json", "package-lock.json", "tools/installer/package.json", "CHANGELOG.md"],
+        "assets": [
+          "package.json", 
+          "package-lock.json", 
+          "tools/installer/package.json",
+          "orchestrix-core/core-config.yaml",
+          "tools/cli.js",
+          "CHANGELOG.md"
+        ],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
