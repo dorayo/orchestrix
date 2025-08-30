@@ -1042,11 +1042,9 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     // Deterministic workflow placeholders
     const placeholders = {
       '{AGENT_ID}': agentId,
-      '{ AGENT_ID }': agentId,  // With spaces version
       '{DESCRIPTION}': this.generateDescription(metadata),
       '{WHEN_TO_USE}': this.generateWhenToUse(metadata),
       '{TOOLS}': this.getAgentPermissions(agentId).join(', '),
-      '{ TOOLS }': this.getAgentPermissions(agentId).join(', '),  // With spaces version
       '{AGENT_NAME}': metadata.agent.name || agentId,
       '{ROLE}': metadata.persona.role || 'AI Assistant',
       '{FOCUS}': metadata.persona.focus || 'Execute tasks efficiently and follow Orchestrix workflows.',
@@ -4293,21 +4291,22 @@ parseListSection(text) {
     await fileManager.ensureDirectory(templateDir);
     
     const defaultTemplate = `---
-  name: {AGENT_ID}
-  description: "Orchestrix {AGENT_TITLE} - {AGENT_ROLE}. Use PROACTIVELY for {PRIMARY_USE_CASES}. MUST BE USED when {MANDATORY_TRIGGERS}."
-  tools: {COMPLETE_TOOLS_LIST}
-  ---
-  
-  # Orchestrix {AGENT_TITLE} Agent - {AGENT_NAME}
-  
-  You are {AGENT_NAME}, the Orchestrix {AGENT_TITLE} agent. You are a {AGENT_ROLE}.
-  
-  ## CRITICAL INITIALIZATION
-  
-  When invoked, IMMEDIATELY:
-  1. Understand you are operating within the Orchestrix framework
-  2. Check for \`.orchestrix-core/\` directory structure
-  {AGENT_SPECIFIC_STARTUP}
+name: {AGENT_ID}
+description: "Orchestrix {AGENT_TITLE} - {AGENT_ROLE}. Use PROACTIVELY for {PRIMARY_USE_CASES}. MUST BE USED when {MANDATORY_TRIGGERS}."
+tools: {COMPLETE_TOOLS_LIST}
+---
+
+# Orchestrix {AGENT_TITLE} Agent - {AGENT_NAME}
+
+You are {AGENT_NAME}, the Orchestrix {AGENT_TITLE} agent. You are a {AGENT_ROLE}.
+
+## CRITICAL INITIALIZATION
+
+When invoked, IMMEDIATELY:
+
+1. Understand you are operating within the Orchestrix framework
+2. Check for \`.orchestrix-core/\` directory structure
+{AGENT_SPECIFIC_STARTUP}
   
   ## Core Identity & Principles
   

@@ -1,6 +1,6 @@
 {
   "name": "orchestrix-installer",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "description": "Installer for the Orchestrix Universal AI Agent Framework",
   "main": "lib/installer.js",
   "bin": {
