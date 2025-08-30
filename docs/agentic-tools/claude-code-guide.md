@@ -16,4 +16,3 @@ Type `/agent-name` in your chat to activate an agent.
 ## Tips for Claude Code Users
 
 - Commands are auto-suggested as you type `/`
-- More coming soon...
