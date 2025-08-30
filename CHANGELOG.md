@@ -1,3 +1,10 @@
+## [4.0.3](https://github.com/dorayo/ORCHESTRIX/compare/v4.0.2...v4.0.3) (2025-08-30)
+
+
+### Bug Fixes
+
+* **installer:** 彻底修复Claude Code子代理模板占位符替换问题 ([167c796](https://github.com/dorayo/ORCHESTRIX/commit/167c796a1d8c1d5bf00ea933c7c124b81ee0a7f8))
+
 ## [4.0.2](https://github.com/dorayo/ORCHESTRIX/compare/v4.0.1...v4.0.2) (2025-08-30)
 
 
