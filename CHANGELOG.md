@@ -1,3 +1,10 @@
+## [4.0.5](https://github.com/dorayo/ORCHESTRIX/compare/v4.0.4...v4.0.5) (2025-08-30)
+
+
+### Bug Fixes
+
+* 修复安装程序占位符替换和缩进问题 ([c33a156](https://github.com/dorayo/ORCHESTRIX/commit/c33a156057ca8f1b678b99c8b2bcc94cc5460920))
+
 ## [4.0.4](https://github.com/dorayo/ORCHESTRIX/compare/v4.0.3...v4.0.4) (2025-08-30)
 
 
