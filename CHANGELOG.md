@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v4.0.0...v4.0.1) (2025-08-30)
+
+
+### Bug Fixes
+
+* **installer:** 修复Claude Code子代理增强功能时生成格式问题 ([b238578](https://github.com/dorayo/ORCHESTRIX/commit/b23857886e0efda1ee0cf416adf83120459eb6a5))
+
 # [4.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v3.1.0...v4.0.0) (2025-08-21)
 
 
