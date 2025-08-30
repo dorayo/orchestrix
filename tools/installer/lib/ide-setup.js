@@ -131,41 +131,63 @@ class IdeSetup {
     return true;
   }
 
-  async setupClaudeCode(installDir, selectedAgent) {
-    console.log(chalk.blue("\n🔧 设置 Claude Code 双模式集成..."));
+  // 修改 setupClaudeCode 方法，添加测试选项
+ async setupClaudeCode(installDir, selectedAgent, runTests = false) {
+  console.log(chalk.blue("\n🔧 设置 Claude Code 双模式集成..."));
+  
+  // 使用增强的Sub Agent生成
+  const useEnhancedTemplate = true;
+  
+  let subagentsCount;
+  if (useEnhancedTemplate) {
+    // 先检查模板是否存在
+    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-template.md');
+    const templateExists = await fileManager.fileExists(templatePath);
     
-    // Setup Claude Code Subagents (Enhanced Template)
-    const subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
-    console.log(chalk.green(`✓ 已创建 ${subagentsCount} 个优化的 Claude Code 子代理`));
-
-    // Setup orchestrix-core commands (Traditional Command Mode)
-    const coreSlashPrefix = await this.getCoreSlashPrefix(installDir);
-    const coreAgents = selectedAgent ? [selectedAgent] : await this.getCoreAgentIds(installDir);
-    const coreTasks = await this.getCoreTaskIds(installDir);
-    await this.setupClaudeCodeForPackage(installDir, "core", coreSlashPrefix, coreAgents, coreTasks, ".orchestrix-core");
-    
-    // Setup expansion pack commands
-    const expansionPacks = await this.getInstalledExpansionPacks(installDir);
-    for (const packInfo of expansionPacks) {
-      const packSlashPrefix = await this.getExpansionPackSlashPrefix(packInfo.path);
-      const packAgents = await this.getExpansionPackAgents(packInfo.path);
-      const packTasks = await this.getExpansionPackTasks(packInfo.path);
-      
-      if (packAgents.length > 0 || packTasks.length > 0) {
-        // Use the actual directory name where the expansion pack is installed
-        const rootPath = path.relative(installDir, packInfo.path);
-        await this.setupClaudeCodeForPackage(installDir, packInfo.name, packSlashPrefix, packAgents, packTasks, rootPath);
-      }
+    if (!templateExists) {
+      console.log(chalk.yellow('⚠️  Enhanced template not found, creating default template...'));
+      await this.createDefaultSubagentTemplate();
     }
-
-    // Summary
-    console.log(chalk.green(`\n✅ Claude Code 双模式集成完成:`));
-    console.log(chalk.dim(`   • Sub Agents: .claude/agents/ (${subagentsCount} 个优化代理)`));
-    console.log(chalk.dim(`   • Commands: .claude/commands/ (${coreAgents.length} 个命令 + ${coreTasks.length} 个任务)`));
-    console.log(chalk.dim(`   • 使用方式: 在 Claude Code 中直接选择 Sub Agent 或使用 /命令`));
-
-    return true;
+    
+    subagentsCount = await this.setupClaudeCodeSubagentsEnhanced(installDir, selectedAgent);
+  } else {
+    subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
   }
+  
+  console.log(chalk.green(`✔ 已创建 ${subagentsCount} 个优化的 Claude Code 子代理`));
+  
+  // 运行测试（如果启用）
+  if (runTests) {
+    await this.testSubagentGeneration(installDir);
+  }
+  
+  // 继续设置传统的Commands模式
+  const coreSlashPrefix = await this.getCoreSlashPrefix(installDir);
+  const coreAgents = selectedAgent ? [selectedAgent] : await this.getCoreAgentIds(installDir);
+  const coreTasks = await this.getCoreTaskIds(installDir);
+  await this.setupClaudeCodeForPackage(installDir, "core", coreSlashPrefix, coreAgents, coreTasks, ".orchestrix-core");
+  
+  // Setup expansion pack commands
+  const expansionPacks = await this.getInstalledExpansionPacks(installDir);
+  for (const packInfo of expansionPacks) {
+    const packSlashPrefix = await this.getExpansionPackSlashPrefix(packInfo.path);
+    const packAgents = await this.getExpansionPackAgents(packInfo.path);
+    const packTasks = await this.getExpansionPackTasks(packInfo.path);
+    
+    if (packAgents.length > 0 || packTasks.length > 0) {
+      const rootPath = path.relative(installDir, packInfo.path);
+      await this.setupClaudeCodeForPackage(installDir, packInfo.name, packSlashPrefix, packAgents, packTasks, rootPath);
+    }
+  }
+  
+  // Summary
+  console.log(chalk.green(`\n✅ Claude Code 双模式集成完成:`));
+  console.log(chalk.dim(`   • Sub Agents: .claude/agents/ (${subagentsCount} 个优化代理)`));
+  console.log(chalk.dim(`   • Commands: .claude/commands/ (${coreAgents.length} 个命令 + ${coreTasks.length} 个任务)`));
+  console.log(chalk.dim(`   • 使用方式: 在 Claude Code 中直接选择 Sub Agent 或使用 /命令`));
+  
+  return true;
+ }
 
   async setupClaudeCodeForPackage(installDir, packageName, slashPrefix, agentIds, taskIds, rootPath) {
     const commandsBaseDir = path.join(installDir, ".claude", "commands", slashPrefix);
@@ -1901,6 +1923,1361 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     return agents.length;
   }
 
+  // 在 ide-setup.js 中添加新方法
+
+  async setupClaudeCodeSubagentsEnhanced(installDir, selectedAgent) {
+    const subagentsDir = path.join(installDir, ".claude", "agents");
+    const agents = selectedAgent ? [selectedAgent] : await this.getAllAgentIds(installDir);
+    
+    await fileManager.ensureDirectory(subagentsDir);
+    
+    for (const agentId of agents) {
+      const agentPath = await this.findAgentPath(agentId, installDir);
+      
+      if (agentPath) {
+        const agentContent = await fileManager.readFile(agentPath);
+        const subagentPath = path.join(subagentsDir, `${agentId}.md`);
+        
+        // 使用增强的模板系统
+        const subagentContent = await this.generateEnhancedSubagentContent(agentId, agentContent, installDir);
+        
+        await fileManager.writeFile(subagentPath, subagentContent);
+      }
+    }
+    
+    return agents.length;
+  }
+
+  async generateEnhancedSubagentContent(agentId, agentContent, installDir) {
+    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-template.md');
+    
+    try {
+      const template = await fileManager.readFile(templatePath);
+      const metadata = this.extractCompleteAgentMetadata(agentContent, agentId);
+      
+      // 生成所有占位符的值
+      const replacements = await this.generateAllReplacements(agentId, metadata, agentContent);
+      
+      // 替换模板中的占位符
+      let content = template;
+      for (const [placeholder, value] of Object.entries(replacements)) {
+        const regex = new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g');
+        content = content.replace(regex, value || '');
+      }
+      
+      return content;
+      
+    } catch (error) {
+      console.warn(`Failed to use enhanced template for ${agentId}, falling back to original method`);
+      return this.generateSubagentContent(agentId, agentContent, installDir);
+    }
+  }
+
+  // 增强的metadata提取，确保捕获所有信息
+  extractCompleteAgentMetadata(agentContent, agentId) {
+    const metadata = this.extractAgentMetadata(agentContent); // 使用现有方法
+    
+    // 增强提取额外的关键信息
+    const yamlMatch = agentContent.match(/```ya?ml\r?\n([\s\S]*?)```/);
+    if (yamlMatch) {
+      const yamlContent = yamlMatch[1];
+      
+      // 提取 customization 字段
+      const customizationMatch = yamlContent.match(/customization:\s*(.+)/);
+      if (customizationMatch) {
+        metadata.customization = customizationMatch[1].trim();
+      }
+      
+      // 提取完整的 tools 列表
+      const toolsMatch = yamlContent.match(/tools:\s*(.+)/);
+      if (toolsMatch) {
+        metadata.tools = toolsMatch[1].split(',').map(t => t.trim());
+      }
+      
+      // 提取特定agent的约束（如dev的test integrity rules）
+      if (agentId === 'dev') {
+        const testRulesMatch = yamlContent.match(/test-integrity-rules:\s*([\s\S]*?)(?=\n\s{4}\w|$)/);
+        if (testRulesMatch) {
+          metadata.testIntegrityRules = this.parseListSection(testRulesMatch[1]);
+        }
+      }
+      
+      // 提取特定agent的权限（如QA的story-file-permissions）
+      if (agentId === 'qa') {
+        const storyPermMatch = yamlContent.match(/story-file-permissions:\s*([\s\S]*?)(?=\ncommands:|$)/);
+        if (storyPermMatch) {
+          metadata.storyFilePermissions = this.parseListSection(storyPermMatch[1]);
+        }
+      }
+    }
+    
+    return metadata;
+  }
+
+// ============= 辅助方法集合 =============
+
+// 提取主要使用场景
+extractPrimaryUseCases(metadata) {
+  const whenToUse = metadata.agent?.whenToUse || '';
+  // 移除开头的 "Use for" 避免重复
+  return whenToUse.replace(/^Use for /i, '').trim();
+}
+
+// 提取强制触发条件
+extractMandatoryTriggers(metadata, agentId) {
+  const triggers = {
+    'dev': 'implementing any approved story or development task',
+    'sm': 'creating new stories from sharded PRD/architecture docs',
+    'qa': 'reviewing code quality and performing testing',
+    'architect': 'technical review of stories or architecture design',
+    'pm': 'creating or updating product requirements documentation',
+    'po': 'validating project artifacts and managing backlog',
+    'analyst': 'market research, analysis, or documenting existing projects',
+    'ux-expert': 'UI/UX design, specifications, or prototyping',
+    'orchestrix-master': 'comprehensive project work requiring all capabilities',
+    'orchestrix-orchestrator': 'coordinating multiple agents for complex workflows'
+  };
+  return triggers[agentId] || 'executing specialized workflows';
+}
+
+// 获取完整的工具列表
+getCompleteToolsList(metadata, agentId) {
+  // 先尝试从metadata中获取
+  if (metadata.agent?.tools) {
+    return metadata.agent.tools;
+  }
+  
+  // 如果metadata中有tools数组
+  if (metadata.tools && Array.isArray(metadata.tools)) {
+    return metadata.tools.join(', ');
+  }
+  
+  // 使用预定义的工具映射
+  const toolsMap = {
+    'dev': 'Read, Edit, MultiEdit, Write, Bash, WebSearch',
+    'qa': 'Read, Edit, MultiEdit, Write, Bash',
+    'sm': 'Read, Edit, MultiEdit, Write',
+    'po': 'Read, Edit, Write, Bash, WebSearch',
+    'architect': 'Read, Edit, Write, Bash, WebSearch',
+    'analyst': 'Read, Write, WebSearch',
+    'pm': 'Read, Write, WebSearch',
+    'ux-expert': 'Read, Write, WebSearch',
+    'orchestrix-master': 'Read, Edit, MultiEdit, Write, Bash, WebSearch',
+    'orchestrix-orchestrator': 'Read, Edit, MultiEdit, Write, Bash, WebSearch'
+  };
+  
+  return toolsMap[agentId] || 'Read, Write';
+}
+
+// 格式化启动步骤
+formatStartupSteps(metadata, agentId) {
+  const agentSpecificSteps = {
+    'dev': `3. Load any active story in \`docs/stories/\` directory (check status != "Done")
+4. Check \`.orchestrix-core/core-config.yaml\` for \`devLoadAlwaysFiles\` if present
+5. Verify project structure matches Orchestrix standards`,
+    
+    'sm': `3. Look for sharded docs in \`docs/prd/\` and \`docs/architecture/\`
+4. Check \`docs/stories/\` for existing stories to understand naming/numbering
+5. Identify the next story to create based on epic files`,
+    
+    'qa': `3. Check for stories in review status in \`docs/stories/\`
+4. Load technical preferences if available
+5. Prepare for code quality review and refactoring`,
+    
+    'architect': `3. Check for architecture documentation in \`docs/architecture/\`
+4. Load technical standards and patterns
+5. Prepare for technical review or design work`,
+    
+    'pm': `3. Check for existing PRD in \`docs/prd.md\` or sharded in \`docs/prd/\`
+4. Load project brief if available
+5. Prepare for requirements documentation`,
+    
+    'analyst': `3. Check for existing project documentation
+4. Prepare for analysis or research tasks
+5. Load any existing project brief`,
+    
+    'po': `3. Check for all project artifacts (PRD, architecture, stories)
+4. Load validation checklists
+5. Prepare for cross-document validation`,
+    
+    'ux-expert': `3. Check for UI/UX specifications in docs
+4. Load design system if available
+5. Prepare for design work`,
+    
+    'orchestrix-master': `3. Load comprehensive project context
+4. Check all available resources
+5. Prepare for multi-domain work`,
+    
+    'orchestrix-orchestrator': `3. Identify available agents and their states
+4. Load project workflow definitions
+5. Prepare for multi-agent coordination`
+  };
+  
+  return agentSpecificSteps[agentId] || '3. Load relevant project context\n4. Prepare for task execution';
+}
+
+// 格式化核心原则
+formatCorePrinciples(metadata) {
+  const principles = metadata.core_principles || metadata.persona?.core_principles || [];
+  
+  if (principles.length === 0) {
+    return '- Follow Orchestrix workflows precisely\n- Maintain quality standards\n- Execute commands with precision';
+  }
+  
+  // 格式化原则，确保每个都是列表项
+  return principles.map(p => {
+    // 清理原则文本
+    let cleaned = p.trim();
+    // 移除已有的列表标记
+    cleaned = cleaned.replace(/^-\s*/, '');
+    // 移除引号
+    cleaned = cleaned.replace(/^["']|["']$/g, '');
+    return `- ${cleaned}`;
+  }).join('\n');
+}
+
+// 生成约束部分
+generateConstraintsSection(metadata, agentId) {
+  // 从核心原则中提取约束
+  const principles = metadata.core_principles || metadata.persona?.core_principles || [];
+  const constraints = principles.filter(p => 
+    p.includes('NOT') || p.includes('NEVER') || p.includes('ONLY') || 
+    p.includes('MUST') || p.includes('MANDATORY') || p.includes('CRITICAL')
+  );
+  
+  // Agent特定的约束
+  const agentSpecificConstraints = {
+    'dev': [
+      'NEVER modify test expectations to make tests pass - fix implementation instead',
+      'ONLY update authorized sections of story files',
+      'Do NOT begin development until story is approved and you are told to proceed'
+    ],
+    'sm': [
+      'You are NOT allowed to implement stories or modify code EVER!',
+      'Stories MUST achieve >80% technical extraction completion rate',
+      'MANDATORY: Execute sm-technical-extraction-checklist during story creation'
+    ],
+    'qa': [
+      'ONLY update QA Results section of story files',
+      'NEVER modify other story sections',
+      'Focus on code quality and refactoring, not just finding issues'
+    ],
+    'architect': [
+      'MUST maintain architectural consistency across all designs',
+      'NEVER approve stories that violate established patterns',
+      'CRITICAL: All technical reviews must be thorough'
+    ],
+    'pm': [
+      'MUST align all requirements with business objectives',
+      'NEVER include implementation details in requirements',
+      'CRITICAL: All user stories must be testable'
+    ],
+    'po': [
+      'MUST validate cross-document consistency',
+      'NEVER approve incomplete artifacts',
+      'CRITICAL: Quality gates must be enforced'
+    ]
+  };
+  
+  const specificConstraints = agentSpecificConstraints[agentId] || [];
+  const allConstraints = [...new Set([...constraints, ...specificConstraints])]; // 去重
+  
+  if (allConstraints.length === 0) return '';
+  
+  return `\n**CRITICAL CONSTRAINTS**:\n${allConstraints.map(c => `- ${c}`).join('\n')}`;
+}
+
+// 格式化命令及描述
+formatCommandsWithDescriptions(metadata, agentContent) {
+  const commands = metadata.commands || [];
+  
+  if (commands.length === 0) {
+    return '- `help` → Show available commands\n- `exit` → Exit agent mode';
+  }
+  
+  return commands.map(cmd => {
+    let description = cmd.description;
+    
+    // 如果没有描述，尝试从agent内容中提取更详细的描述
+    if (!description || description.trim() === '') {
+      description = this.getCommandDescription(cmd, agentContent);
+    }
+    
+    return `- \`${cmd.name}\` → ${description}`;
+  }).join('\n');
+}
+
+// 生成复杂命令部分
+generateComplexCommandsSection(metadata, agentId, agentContent) {
+  let section = '';
+  
+  // Dev agent 的 develop-story 命令
+  if (agentId === 'dev') {
+    const developStoryMatch = agentContent.match(/develop-story:[\s\S]*?(?=\n\s{0,2}\w|\ndependencies:|$)/);
+    if (developStoryMatch) {
+      section += '\n### Detailed Command Specifications\n\n';
+      section += '**develop-story command**:\n';
+      section += this.formatDevelopStoryCommand(developStoryMatch[0]);
+    }
+  }
+  
+  // SM agent 的 draft 命令细节
+  if (agentId === 'sm') {
+    if (metadata.commands?.find(c => c.name === 'draft')) {
+      section += '\n### Story Creation Command Details\n\n';
+      section += '**draft command**: Executes create-next-story task with mandatory technical extraction\n';
+      section += '- Loads epic and architecture documents\n';
+      section += '- Generates comprehensive story with all technical details\n';
+      section += '- Validates with sm-technical-extraction-checklist (must achieve >80%)\n';
+    }
+  }
+  
+  return section;
+}
+
+// 格式化 develop-story 命令
+formatDevelopStoryCommand(commandText) {
+  const lines = commandText.split('\n');
+  let formatted = '';
+  let inSubSection = false;
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    if (trimmed.startsWith('- ') && line.indexOf('-') < 4) { // 主要项
+      const content = trimmed.substring(2);
+      
+      if (content.includes(':')) {
+        const [key, value] = content.split(':').map(s => s.trim());
+        
+        // 特殊处理某些关键部分
+        if (key === 'order-of-execution') {
+          formatted += '\n**Order of Execution**:\n```\n' + value + '\n```\n';
+        } else if (key === 'story-file-updates-ONLY') {
+          formatted += '\n**Story File Update Rules**:\n';
+          inSubSection = true;
+        } else if (key === 'test-integrity-rules') {
+          formatted += '\n**Test Integrity Rules**:\n';
+          inSubSection = true;
+        } else if (key === 'blocking') {
+          formatted += '\n**Blocking Conditions**: ' + value + '\n';
+        } else if (key === 'ready-for-review') {
+          formatted += '\n**Ready for Review Criteria**: ' + value + '\n';
+        } else if (key === 'completion') {
+          formatted += '\n**Completion Sequence**: ' + value + '\n';
+        } else {
+          formatted += `- **${key}**: ${value}\n`;
+        }
+      } else {
+        formatted += `- ${content}\n`;
+      }
+    } else if (inSubSection && trimmed.startsWith('- ')) {
+      // 子项
+      formatted += `  ${trimmed}\n`;
+    }
+  }
+  
+  return formatted;
+}
+
+// 生成工作流部分
+generateWorkflowSections(metadata, agentId, agentContent) {
+  const sections = [];
+  
+  // 基于agent ID生成特定的工作流
+  const workflowGenerators = {
+    'dev': () => this.generateDevWorkflow(metadata),
+    'sm': () => this.generateSmWorkflow(metadata),
+    'qa': () => this.generateQaWorkflow(metadata),
+    'architect': () => this.generateArchitectWorkflow(metadata),
+    'pm': () => this.generatePmWorkflow(metadata),
+    'po': () => this.generatePoWorkflow(metadata),
+    'analyst': () => this.generateAnalystWorkflow(metadata),
+    'ux-expert': () => this.generateUxWorkflow(metadata),
+    'orchestrix-master': () => this.generateMasterWorkflow(metadata),
+    'orchestrix-orchestrator': () => this.generateOrchestratorWorkflow(metadata)
+  };
+  
+  const generator = workflowGenerators[agentId];
+  if (generator) {
+    sections.push(generator());
+  }
+  
+  // 添加通用工作流（如果有create-doc命令）
+  if (metadata.commands?.find(c => c.name === 'create-doc')) {
+    sections.push(this.generateCreateDocWorkflow(metadata));
+  }
+  
+  return sections.filter(s => s).join('\n\n');
+}
+
+// 各种工作流生成方法
+generateDevWorkflow(metadata) {
+  return `### Story Implementation Workflow
+
+**Trigger Patterns**:
+- "implement this story"
+- "develop the story"
+- "*develop-story"
+- "start implementation"
+- "code this requirement"
+
+**Execution Sequence**:
+\`\`\`
+1. Read first/next task from story
+2. Implement task and all subtasks
+3. Write comprehensive tests
+4. Execute validations (lint + test)
+5. If ALL pass → Update task checkbox [x]
+6. Update story File List with changes
+7. Repeat for all tasks
+8. Run execute-checklist with story-dod-checklist.md
+9. Set status to "Ready for Review"
+10. HALT - implementation complete
+\`\`\`
+
+**Quality Gates**:
+- All validations must pass before marking task complete
+- story-dod-checklist must pass before Ready for Review
+- File List must be complete and accurate
+- No test modifications without business justification
+
+**Blocking Conditions**:
+- Unapproved dependencies needed
+- Ambiguous requirements after checking story
+- 3+ failures on same implementation
+- Missing critical configuration
+- Failing regression tests
+- Need to modify test requirements`;
+}
+
+generateSmWorkflow(metadata) {
+  return `### Story Creation Workflow
+
+**Trigger Patterns**:
+- "create next story"
+- "draft new story"
+- "*create"
+- "*draft"
+- "generate user story"
+
+**Execution Sequence**:
+\`\`\`
+1. Load next epic from docs/prd/epic-*.md
+2. Load relevant architecture sections
+3. Execute create-next-story.md task
+4. Generate story using story-tmpl.yaml
+5. Extract ALL technical details from architecture
+6. Run sm-technical-extraction-checklist
+7. Verify >80% completion rate
+8. If pass → Save to docs/stories/
+9. If fail → Enhance technical details and retry
+\`\`\`
+
+**Quality Gates**:
+- Technical extraction completion ≥80%
+- All required sections populated
+- Acceptance criteria clear and testable
+- Dev Notes comprehensive with technical details
+
+**Blocking Conditions**:
+- Missing epic files
+- Cannot find architecture docs
+- Technical extraction <80%
+- Ambiguous requirements`;
+}
+
+generateQaWorkflow(metadata) {
+  return `### Code Review Workflow
+
+**Trigger Patterns**:
+- "review this story"
+- "check code quality"
+- "*review"
+- "qa review"
+
+**Execution Sequence**:
+\`\`\`
+1. Load story file to review
+2. Check implementation against requirements
+3. Review code quality and patterns
+4. Execute tests and validations
+5. Perform refactoring if needed
+6. Update QA Results section
+7. Update story status
+8. Provide recommendations
+\`\`\`
+
+**Review Focus**:
+- Code quality and maintainability
+- Test coverage and effectiveness
+- Performance implications
+- Security considerations
+- Architecture compliance`;
+}
+
+generateArchitectWorkflow(metadata) {
+  return `### Technical Review Workflow
+
+**Trigger Patterns**:
+- "review story technical accuracy"
+- "validate architecture"
+- "*review-story"
+- "technical review"
+
+**Execution Sequence**:
+\`\`\`
+1. Load story and architecture docs
+2. Verify technical accuracy
+3. Check architectural alignment
+4. Assess implementation feasibility
+5. Validate dependencies
+6. Provide approval or feedback
+\`\`\`
+
+**Review Criteria**:
+- Technical accuracy score ≥7/10
+- Zero critical technical issues
+- Complete architecture alignment`;
+}
+
+generatePmWorkflow(metadata) {
+  return `### PRD Creation Workflow
+
+**Trigger Patterns**:
+- "create PRD"
+- "*create-doc prd"
+- "document requirements"
+
+**Execution Sequence**:
+\`\`\`
+1. Load project brief if available
+2. Execute create-doc with prd-tmpl
+3. Gather requirements through elicitation
+4. Define epics and user stories
+5. Specify acceptance criteria
+6. Save to docs/prd.md
+\`\`\``;
+}
+
+generatePoWorkflow(metadata) {
+  return `### Validation Workflow
+
+**Trigger Patterns**:
+- "validate artifacts"
+- "check consistency"
+- "*execute-checklist po-master-checklist"
+
+**Execution Sequence**:
+\`\`\`
+1. Load all project artifacts
+2. Execute po-master-checklist
+3. Verify cross-document consistency
+4. Check quality gates
+5. Provide validation report
+\`\`\``;
+}
+
+generateAnalystWorkflow(metadata) {
+  return `### Analysis Workflow
+
+**Trigger Patterns**:
+- "analyze project"
+- "document existing system"
+- "*document-project"
+
+**Execution Sequence**:
+\`\`\`
+1. Analyze project structure
+2. Document architecture
+3. Extract technical details
+4. Generate comprehensive documentation
+\`\`\``;
+}
+
+generateUxWorkflow(metadata) {
+  return `### Design Workflow
+
+**Trigger Patterns**:
+- "create UI spec"
+- "design interface"
+- "*create-doc front-end-spec"
+
+**Execution Sequence**:
+\`\`\`
+1. Review requirements
+2. Create UI/UX specifications
+3. Design components
+4. Document patterns
+5. Save specifications
+\`\`\``;
+}
+
+generateMasterWorkflow(metadata) {
+  return `### Comprehensive Project Workflow
+
+**Trigger Patterns**:
+- "complete project setup"
+- "full project implementation"
+- "*orchestrate-project"
+
+**Execution Sequence**:
+\`\`\`
+1. Analyze project requirements
+2. Coordinate all agent activities
+3. Execute comprehensive workflows
+4. Ensure quality across all deliverables
+5. Validate project completion
+\`\`\``;
+}
+
+generateOrchestratorWorkflow(metadata) {
+  return `### Multi-Agent Coordination Workflow
+
+**Trigger Patterns**:
+- "coordinate agents"
+- "orchestrate workflow"
+- "*coordinate-team"
+
+**Execution Sequence**:
+\`\`\`
+1. Assess project scope
+2. Assign tasks to appropriate agents
+3. Monitor progress across agents
+4. Coordinate handoffs between agents
+5. Ensure workflow completion
+\`\`\``;
+}
+
+generateCreateDocWorkflow(metadata) {
+  return `### Document Creation Workflow
+
+**Trigger**: \`*create-doc [template]\`
+
+**Process**:
+1. Show available templates if none specified
+2. Load selected template
+3. Execute advanced elicitation if needed
+4. Generate document progressively
+5. Save to appropriate location`;
+}
+
+// 格式化依赖映射
+formatDependencyMapping(metadata) {
+  const deps = metadata.dependencies || {};
+  const sections = [];
+  
+  if (deps.tasks && deps.tasks.length > 0) {
+    sections.push(`**Tasks**:\n${deps.tasks.map(t => `- \`${t}\` → \`.orchestrix-core/tasks/${t}\``).join('\n')}`);
+  }
+  
+  if (deps.templates && deps.templates.length > 0) {
+    sections.push(`**Templates**:\n${deps.templates.map(t => `- \`${t}\` → \`.orchestrix-core/templates/${t}\``).join('\n')}`);
+  }
+  
+  if (deps.checklists && deps.checklists.length > 0) {
+    sections.push(`**Checklists**:\n${deps.checklists.map(c => `- \`${c}\` → \`.orchestrix-core/checklists/${c}\``).join('\n')}`);
+  }
+  
+  if (deps.data && deps.data.length > 0) {
+    sections.push(`**Data**:\n${deps.data.map(d => `- \`${d}\` → \`.orchestrix-core/data/${d}\``).join('\n')}`);
+  }
+  
+  if (sections.length === 0) {
+    return '- Load dependencies as needed from `.orchestrix-core/` structure';
+  }
+  
+  return sections.join('\n\n');
+}
+
+// 生成权限部分
+generatePermissionsSection(metadata, agentId) {
+  // 这个方法在之前的代码中已经定义了，这里保持原样
+  let section = '\n## Permissions & Constraints\n\n';
+  
+  const allowedActions = {
+    'dev': [
+      'Read any project file',
+      'Create/modify/delete source code files',
+      'Execute bash commands for testing/validation',
+      'Update specific story file sections (Dev Agent Record)',
+      'Web search for technical solutions'
+    ],
+    'sm': [
+      'Create new story files in docs/stories/',
+      'Read from docs/prd/ and docs/architecture/',
+      'Execute tasks and checklists',
+      'Update story status fields'
+    ],
+    'qa': [
+      'Read all project files',
+      'Modify code for refactoring',
+      'Execute tests and validations',
+      'Update QA Results section in stories'
+    ],
+    'architect': [
+      'Read all project documentation',
+      'Create/update architecture documents',
+      'Review story technical accuracy',
+      'Execute validation checklists'
+    ],
+    'pm': [
+      'Create/update PRD documents',
+      'Read project documentation',
+      'Execute document creation tasks',
+      'Web search for market research'
+    ],
+    'po': [
+      'Read all project artifacts',
+      'Execute validation checklists',
+      'Update story priorities',
+      'Manage backlog'
+    ],
+    'analyst': [
+      'Read project files',
+      'Create analysis documents',
+      'Web search for research',
+      'Document existing systems'
+    ],
+    'ux-expert': [
+      'Create UI/UX specifications',
+      'Read requirements documents',
+      'Web search for design patterns',
+      'Create design artifacts'
+    ]
+  };
+  
+  const forbiddenActions = {
+    'dev': [
+      'Modifying test expectations to make them pass',
+      'Changing story requirements or acceptance criteria',
+      'Starting work on Draft stories without approval',
+      'Loading PRD/architecture unless explicitly directed'
+    ],
+    'sm': [
+      'Writing or modifying code files',
+      'Implementing story functionality',
+      'Modifying PRD or architecture docs',
+      'Changing acceptance criteria after approval'
+    ],
+    'qa': [
+      'Modifying story sections outside QA Results',
+      'Changing acceptance criteria',
+      'Approving own code changes'
+    ],
+    'architect': [
+      'Implementing code directly',
+      'Modifying stories without review process',
+      'Changing business requirements'
+    ],
+    'pm': [
+      'Writing implementation code',
+      'Making technical architecture decisions',
+      'Modifying existing code'
+    ],
+    'po': [
+      'Direct code implementation',
+      'Modifying technical specifications',
+      'Changing architectural decisions'
+    ]
+  };
+  
+  const allowed = allowedActions[agentId] || ['Execute assigned tasks'];
+  const forbidden = forbiddenActions[agentId] || ['Actions outside assigned role'];
+  
+  section += `**ALLOWED ACTIONS**:\n${allowed.map(a => `- ${a}`).join('\n')}\n\n`;
+  section += `**FORBIDDEN ACTIONS**:\n${forbidden.map(f => `- ${f}`).join('\n')}`;
+  
+  // 添加文件修改权限（特定agent）
+  if (agentId === 'dev' || agentId === 'qa' || agentId === 'sm') {
+    section += '\n\n**File Modification Rights**:\n';
+    
+    if (agentId === 'dev') {
+      section += `Story file sections you MAY update:
+- Tasks/Subtasks checkboxes \`[ ]\` → \`[x]\`
+- Dev Agent Record section (all subsections)
+- Status field (only when complete)
+
+Sections you may NEVER modify:
+- Story description
+- Acceptance Criteria
+- Dev Notes
+- Testing requirements`;
+    } else if (agentId === 'qa') {
+      section += `- ONLY update QA Results section
+- Append review findings and recommendations
+- Never modify other story sections`;
+    } else if (agentId === 'sm') {
+      section += `- Create new story files in docs/stories/
+- Set story status to "Draft"
+- Update story metadata
+- Never modify stories after approval`;
+    }
+  }
+  
+  return section;
+}
+
+// 生成质量标准部分（已在之前定义，这里完善）
+generateQualitySection(metadata, agentId) {
+  const qualitySections = {
+    'dev': `\n## Quality Standards & Validation
+
+**Test Integrity Rules**:
+1. Tests represent business requirements - they are AUTHORITATIVE
+2. NEVER modify existing test expectations/assertions
+3. If tests fail → fix the IMPLEMENTATION, not the tests
+4. Test modifications require explicit business justification and user approval
+5. Document any test changes in Completion Notes
+
+**Mandatory Validations**:
+- All tests must pass before marking task complete
+- Full regression test before Ready for Review
+- story-dod-checklist validation required
+- Linting checks must pass
+
+**Success Criteria**:
+- All tasks marked [x]
+- All validations passing
+- Code matches requirements
+- File List complete and accurate
+- Story status: "Ready for Review"`,
+
+    'sm': `\n## Quality Standards & Validation
+
+**Mandatory Validations**:
+- sm-technical-extraction-checklist for EVERY story
+- story-draft-checklist before marking as Draft
+- Minimum 80% technical extraction score
+- Quality score ≥7/10 for approval
+
+**Success Criteria**:
+- Story saved to docs/stories/
+- Status set to "Draft"
+- All technical details extracted from architecture
+- Clear, testable acceptance criteria
+- Comprehensive Dev Notes with implementation guidance`,
+
+    'qa': `\n## Quality Standards & Validation
+
+**Review Standards**:
+- Code quality and maintainability
+- Test coverage and effectiveness
+- Performance implications
+- Security considerations
+- Architecture compliance
+
+**Success Criteria**:
+- Comprehensive review completed
+- QA Results section updated with findings
+- Refactoring implemented where needed
+- Story status updated appropriately
+- Clear recommendations provided`,
+
+    'architect': `\n## Quality Standards & Validation
+
+**Review Standards**:
+- Technical accuracy score ≥7/10
+- Zero critical technical issues
+- Complete architecture alignment
+- Dependency validation
+- Implementation feasibility
+
+**Success Criteria**:
+- Technical review completed
+- Clear pass/fail decision
+- Actionable feedback provided
+- Architecture consistency maintained`,
+
+    'pm': `\n## Quality Standards & Validation
+
+**Document Standards**:
+- Complete requirements coverage
+- Clear acceptance criteria
+- Testable user stories
+- Business value articulated
+- Stakeholder needs addressed
+
+**Success Criteria**:
+- PRD complete and validated
+- All epics and stories defined
+- Acceptance criteria measurable
+- Document saved to docs/prd.md`,
+
+    'po': `\n## Quality Standards & Validation
+
+**Validation Standards**:
+- Cross-document consistency
+- Quality gate enforcement
+- Complete artifact coverage
+- Requirement traceability
+- Risk assessment
+
+**Success Criteria**:
+- All artifacts validated
+- po-master-checklist passed
+- Consistency issues resolved
+- Quality gates enforced`
+  };
+  
+  return qualitySections[agentId] || '';
+}
+
+// 格式化上下文发现步骤
+formatContextDiscoverySteps(metadata, agentId) {
+  const contextSteps = {
+    'dev': `1. Check \`docs/stories/\` for active stories (status != "Done")
+2. Load specific story file user references
+3. Check \`.orchestrix-core/core-config.yaml\` for project standards
+4. Identify relevant source files from story context
+5. Use grep/find for patterns rather than loading entire directories`,
+
+    'sm': `1. Check \`docs/prd/\` for next epic to process
+2. Identify last created story number in \`docs/stories/\`
+3. Load relevant architecture sections based on epic
+4. Verify all dependencies are accessible
+5. Understand project technical standards from architecture`,
+
+    'qa': `1. Check \`docs/stories/\` for stories in review status
+2. Load the specific story to review
+3. Identify implementation files from story's File List
+4. Check test coverage and existing tests
+5. Prepare for comprehensive code review`,
+
+    'architect': `1. Check \`docs/architecture/\` for existing documentation
+2. Load technical standards and patterns
+3. Identify stories needing technical review
+4. Understand project technology stack
+5. Prepare for design or review work`,
+
+    'pm': `1. Check for existing PRD in \`docs/\`
+2. Load project brief if available
+3. Review any existing requirements
+4. Understand project scope and objectives
+5. Prepare for requirements documentation`,
+
+    'po': `1. Check all project artifacts (PRD, architecture, stories)
+2. Load validation checklists
+3. Identify any inconsistencies
+4. Review quality gates
+5. Prepare for validation work`,
+
+    'analyst': `1. Analyze project structure
+2. Check for existing documentation
+3. Identify areas needing analysis
+4. Load relevant project files
+5. Prepare for research or documentation`,
+
+    'ux-expert': `1. Check for existing UI/UX specifications
+2. Load PRD for requirements
+3. Review any design system docs
+4. Understand user personas
+5. Prepare for design work`
+  };
+  
+  return contextSteps[agentId] || `1. Load relevant project context
+2. Identify current task requirements
+3. Check for existing artifacts
+4. Verify dependencies available
+5. Prepare for task execution`;
+}
+
+// 生成性能指南
+generatePerformanceGuidelines(metadata) {
+  return `- Load only files explicitly needed for current task
+- Use specific search patterns vs reading entire directories
+- Complete workflows before returning control
+- Maintain efficiency to preserve main thread context
+- Cache frequently accessed information in memory`;
+}
+
+// 生成结束提醒
+generateClosingReminder(metadata, agentId) {
+  const reminders = {
+    'dev': 'You are an expert implementer. Follow story requirements exactly, maintain code quality, never compromise test integrity, and ensure all validations pass before marking complete.',
+    'sm': 'You are the gatekeeper of story quality. Never compromise on technical extraction standards. The Dev agent depends on your thoroughness.',
+    'qa': 'You are a senior developer conducting code review. Focus on quality, refactoring, and mentoring through your reviews.',
+    'architect': 'You maintain technical excellence. Ensure all designs align with established patterns and all reviews maintain architectural integrity.',
+    'pm': 'You bridge business and technology. Ensure all requirements are clear, testable, and aligned with business objectives.',
+    'po': 'You ensure project coherence. Validate thoroughly and maintain quality gates without compromise.',
+    'analyst': 'You provide insight through analysis. Be thorough, objective, and data-driven in all your work.',
+    'ux-expert': 'You champion user experience. Create designs that are both beautiful and functional.',
+    'orchestrix-master': 'You embody all Orchestrix capabilities. Use your comprehensive knowledge wisely.',
+    'orchestrix-orchestrator': 'You coordinate the team. Ensure smooth handoffs and maintain workflow efficiency.'
+  };
+  
+  return reminders[agentId] || 'Follow Orchestrix principles and maintain quality in all work.';
+}
+
+// 解析列表部分（辅助方法）
+parseListSection(text) {
+  if (!text) return [];
+  
+  return text.split('\n')
+    .map(line => line.trim())
+    .filter(line => line.startsWith('- '))
+    .map(line => line.substring(2).trim())
+    .filter(line => line.length > 0);
+}
+
+  // 生成所有占位符替换值
+  async generateAllReplacements(agentId, metadata, agentContent) {
+    return {
+      '{AGENT_ID}': agentId,
+      '{AGENT_TITLE}': metadata.agent?.title || agentId,
+      '{AGENT_NAME}': metadata.agent?.name || agentId,
+      '{AGENT_ROLE}': metadata.persona?.role || 'AI Assistant',
+      '{PRIMARY_USE_CASES}': this.extractPrimaryUseCases(metadata),
+      '{MANDATORY_TRIGGERS}': this.extractMandatoryTriggers(metadata, agentId),
+      '{COMPLETE_TOOLS_LIST}': this.getCompleteToolsList(metadata, agentId),
+      '{AGENT_SPECIFIC_STARTUP}': this.formatStartupSteps(metadata, agentId),
+      '{AGENT_STYLE}': metadata.persona?.style || 'Professional',
+      '{AGENT_IDENTITY}': metadata.persona?.identity || '',
+      '{AGENT_FOCUS}': metadata.persona?.focus || '',
+      '{CORE_PRINCIPLES_LIST}': this.formatCorePrinciples(metadata),
+      '{CRITICAL_CONSTRAINTS_SECTION}': this.generateConstraintsSection(metadata, agentId),
+      '{COMMANDS_WITH_DESCRIPTIONS}': this.formatCommandsWithDescriptions(metadata, agentContent),
+      '{COMPLEX_COMMANDS_SECTION}': this.generateComplexCommandsSection(metadata, agentId, agentContent),
+      '{WORKFLOW_SECTIONS}': this.generateWorkflowSections(metadata, agentId, agentContent),
+      '{DEPENDENCY_MAPPING}': this.formatDependencyMapping(metadata),
+      '{PERMISSIONS_SECTION}': this.generatePermissionsSection(metadata, agentId),
+      '{QUALITY_SECTION}': this.generateQualitySection(metadata, agentId),
+      '{CONTEXT_DISCOVERY_STEPS}': this.formatContextDiscoverySteps(metadata, agentId),
+      '{PERFORMANCE_GUIDELINES}': this.generatePerformanceGuidelines(metadata),
+      '{AGENT_CLOSING_REMINDER}': this.generateClosingReminder(metadata, agentId)
+    };
+  }
+
+  // 格式化启动步骤
+  formatStartupSteps(metadata, agentId) {
+    const agentSpecificSteps = {
+      'dev': `3. Load any active story in \`docs/stories/\` directory (check status != "Done")
+4. Check \`.orchestrix-core/core-config.yaml\` for \`devLoadAlwaysFiles\` if present
+5. Verify project structure matches Orchestrix standards`,
+      
+      'sm': `3. Look for sharded docs in \`docs/prd/\` and \`docs/architecture/\`
+4. Check \`docs/stories/\` for existing stories to understand naming/numbering
+5. Identify the next story to create based on epic files`,
+      
+      'qa': `3. Check for stories in review status in \`docs/stories/\`
+4. Load technical preferences if available
+5. Prepare for code quality review`,
+      
+      'architect': `3. Check for architecture documentation in \`docs/architecture/\`
+4. Load technical standards and patterns
+5. Prepare for technical review or design work`,
+      
+      'pm': `3. Check for existing PRD in \`docs/prd.md\` or sharded in \`docs/prd/\`
+4. Load project brief if available
+5. Prepare for requirements documentation`,
+      
+      'analyst': `3. Check for existing project documentation
+4. Prepare for analysis or research tasks
+5. Load any existing project brief`,
+      
+      'po': `3. Check for all project artifacts (PRD, architecture, stories)
+4. Load validation checklists
+5. Prepare for cross-document validation`,
+      
+      'ux-expert': `3. Check for UI/UX specifications in docs
+4. Load design system if available
+5. Prepare for design work`
+    };
+    
+    return agentSpecificSteps[agentId] || '3. Load relevant project context';
+  }
+
+  // 生成约束部分
+  generateConstraintsSection(metadata, agentId) {
+    const constraints = metadata.core_principles?.filter(p => 
+      p.includes('NOT') || p.includes('NEVER') || p.includes('ONLY') || p.includes('MUST')
+    ) || [];
+    
+    // 添加agent特定的约束
+    const agentSpecificConstraints = {
+      'dev': [
+        'NEVER modify test expectations to make tests pass - fix implementation instead',
+        'ONLY update authorized sections of story files',
+        'Do NOT begin development until story is approved'
+      ],
+      'sm': [
+        'You are NOT allowed to implement stories or modify code EVER!',
+        'Stories MUST achieve >80% technical extraction completion rate',
+        'MANDATORY: Execute sm-technical-extraction-checklist during story creation'
+      ],
+      'qa': [
+        'ONLY update QA Results section of story files',
+        'NEVER modify other story sections',
+        'Focus on code quality and refactoring, not just finding issues'
+      ]
+    };
+    
+    const specificConstraints = agentSpecificConstraints[agentId] || [];
+    const allConstraints = [...constraints, ...specificConstraints];
+    
+    if (allConstraints.length === 0) return '';
+    
+    return `\n**CRITICAL CONSTRAINTS**:\n${allConstraints.map(c => `- ${c}`).join('\n')}`;
+  }
+
+  // 生成复杂命令部分（如dev的develop-story）
+  generateComplexCommandsSection(metadata, agentId, agentContent) {
+    if (agentId === 'dev') {
+      // 提取develop-story的详细规范
+      const developStoryMatch = agentContent.match(/develop-story:[\s\S]*?(?=\n\s{2}\w|\ndependencies:|$)/);
+      if (developStoryMatch) {
+        return `\n### Detailed Command Specifications\n\n**develop-story command**:\n${this.formatDevelopStoryCommand(developStoryMatch[0])}`;
+      }
+    }
+    
+    return '';
+  }
+
+  // 格式化develop-story命令
+  formatDevelopStoryCommand(commandText) {
+    const lines = commandText.split('\n').slice(1); // 跳过第一行
+    let formatted = '';
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('- ')) {
+        const content = trimmed.substring(2);
+        if (content.includes(':')) {
+          const [key, value] = content.split(':').map(s => s.trim());
+          formatted += `\n**${key}**:\n${value}\n`;
+        } else {
+          formatted += `- ${content}\n`;
+        }
+      }
+    }
+    
+    return formatted;
+  }
+
+  // 生成工作流部分
+
+
+  // Dev agent工作流
+  generateDevWorkflow(metadata) {
+    return `### Story Implementation Workflow
+
+**Trigger Patterns**:
+- "implement this story"
+- "develop the story"
+- "*develop-story"
+- "start implementation"
+
+**Execution Sequence**:
+\`\`\`
+1. Read first/next task from story
+2. Implement task and all subtasks
+3. Write comprehensive tests
+4. Execute validations (lint + test)
+5. If ALL pass → Update task checkbox [x]
+6. Update story File List with changes
+7. Repeat for all tasks
+8. Run execute-checklist with story-dod-checklist.md
+9. Set status to "Ready for Review"
+10. HALT - implementation complete
+\`\`\`
+
+**Quality Gates**:
+- All validations must pass before marking task complete
+- story-dod-checklist must pass before Ready for Review
+- File List must be complete and accurate
+
+**Blocking Conditions**:
+- Unapproved dependencies needed
+- Ambiguous requirements
+- 3+ failures on same implementation
+- Missing critical configuration
+- Failing regression tests`;
+  }
+
+  // SM agent工作流
+  generateSmWorkflow(metadata) {
+    return `### Story Creation Workflow
+
+**Trigger Patterns**:
+- "create next story"
+- "draft new story"
+- "*create"
+- "*draft"
+
+**Execution Sequence**:
+\`\`\`
+1. Load next epic from docs/prd/epic-*.md
+2. Load relevant architecture sections
+3. Execute create-next-story.md task
+4. Generate story using story-tmpl.yaml
+5. Extract ALL technical details
+6. Run sm-technical-extraction-checklist
+7. Verify >80% completion rate
+8. If pass → Save to docs/stories/
+9. If fail → Enhance and retry
+\`\`\`
+
+**Quality Gates**:
+- Technical extraction ≥80%
+- All sections populated
+- Acceptance criteria testable
+- Dev Notes comprehensive
+
+**Blocking Conditions**:
+- Missing epic files
+- Cannot find architecture docs
+- Technical extraction <80%
+- Ambiguous requirements`;
+  }
+
+  // 生成权限部分
+  generatePermissionsSection(metadata, agentId) {
+    let section = '\n## Permissions & Constraints\n\n';
+    
+    // 允许的操作
+    const allowedActions = {
+      'dev': [
+        'Read any project file',
+        'Create/modify/delete source code files',
+        'Execute bash commands for testing',
+        'Update specific story file sections',
+        'Web search for technical solutions'
+      ],
+      'sm': [
+        'Create new story files in docs/stories/',
+        'Read from docs/prd/ and docs/architecture/',
+        'Execute tasks and checklists',
+        'Update story status fields'
+      ],
+      'qa': [
+        'Read all project files',
+        'Modify code for refactoring',
+        'Execute tests and validations',
+        'Update QA Results section in stories'
+      ]
+    };
+    
+    // 禁止的操作
+    const forbiddenActions = {
+      'dev': [
+        'Modifying test expectations to pass',
+        'Changing story requirements',
+        'Starting work on Draft stories without approval',
+        'Loading PRD/architecture unless directed'
+      ],
+      'sm': [
+        'Writing or modifying code files',
+        'Implementing story functionality',
+        'Modifying PRD or architecture docs',
+        'Changing acceptance criteria after approval'
+      ],
+      'qa': [
+        'Modifying story sections outside QA Results',
+        'Changing acceptance criteria',
+        'Approving own code changes'
+      ]
+    };
+    
+    const allowed = allowedActions[agentId] || ['Execute assigned tasks'];
+    const forbidden = forbiddenActions[agentId] || ['Actions outside assigned role'];
+    
+    section += `**ALLOWED ACTIONS**:\n${allowed.map(a => `- ${a}`).join('\n')}\n\n`;
+    section += `**FORBIDDEN ACTIONS**:\n${forbidden.map(f => `- ${f}`).join('\n')}`;
+    
+    // 添加文件修改权限（如果适用）
+    if (agentId === 'dev' || agentId === 'qa') {
+      section += '\n\n**File Modification Rights**:\n';
+      if (agentId === 'dev') {
+        section += `Story file sections you MAY update:
+  - Tasks/Subtasks checkboxes
+  - Dev Agent Record section
+  - Status field (when complete)
+
+  Sections you may NEVER modify:
+  - Story description
+  - Acceptance Criteria
+  - Testing requirements`;
+      } else if (agentId === 'qa') {
+        section += `- ONLY update QA Results section
+  - Append review findings and recommendations
+  - Never modify other story sections`;
+      }
+    }
+    
+    return section;
+  }
+
+  // 生成质量标准部分
+  generateQualitySection(metadata, agentId) {
+    if (agentId === 'dev') {
+      return `\n## Quality Standards & Validation
+
+  **Test Integrity Rules**:
+  1. Tests represent requirements - they are AUTHORITATIVE
+  2. NEVER modify existing test expectations
+  3. If tests fail → fix the IMPLEMENTATION
+  4. Test modifications require explicit justification
+  5. Document any test changes in Completion Notes
+
+  **Mandatory Validations**:
+  - All tests must pass before marking task complete
+  - Full regression test before Ready for Review
+  - story-dod-checklist validation required
+  - Linting checks must pass
+
+  **Success Criteria**:
+  - All tasks marked [x]
+  - All validations passing
+  - Code matches requirements
+  - File List complete
+  - Story status: "Ready for Review"`;
+    }
+    
+    if (agentId === 'sm') {
+      return `\n## Quality Standards & Validation
+
+  **Mandatory Validations**:
+  - sm-technical-extraction-checklist for EVERY story
+  - story-draft-checklist before marking as Draft
+  - Minimum 80% technical extraction score
+  - Quality score ≥7/10 for approval
+
+  **Success Criteria**:
+  - Story saved to docs/stories/
+  - Status set to "Draft"
+  - All technical details extracted
+  - Clear acceptance criteria
+  - Comprehensive Dev Notes`;
+    }
+    
+    if (agentId === 'qa') {
+      return `\n## Quality Standards & Validation
+
+  **Review Standards**:
+  - Code quality and maintainability
+  - Test coverage and effectiveness
+  - Performance implications
+  - Security considerations
+  - Architecture compliance
+
+  **Success Criteria**:
+  - Comprehensive review completed
+  - QA Results section updated
+  - Refactoring implemented where needed
+  - Story status updated appropriately`;
+    }
+    
+    return '';
+  }
+
+  // 解析列表部分
+  parseListSection(text) {
+    return text.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.startsWith('- '))
+      .map(line => line.substring(2).trim());
+  }
+  
   async generateSubagentContent(agentId, agentContent, installDir) {
     try {
       // Try to use the template system first
@@ -2906,6 +4283,181 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     console.log(chalk.dim(""));
     console.log(chalk.dim("You can modify these settings anytime in .vscode/settings.json"));
   }
+
+  // 创建默认的 sub agent 模板
+  async createDefaultSubagentTemplate() {
+    const templateDir = path.join(__dirname, '..', 'templates');
+    const templatePath = path.join(templateDir, 'orchestrix-subagent-template.md');
+    
+    // 确保模板目录存在
+    await fileManager.ensureDirectory(templateDir);
+    
+    const defaultTemplate = `---
+  name: {AGENT_ID}
+  description: "Orchestrix {AGENT_TITLE} - {AGENT_ROLE}. Use PROACTIVELY for {PRIMARY_USE_CASES}. MUST BE USED when {MANDATORY_TRIGGERS}."
+  tools: {COMPLETE_TOOLS_LIST}
+  ---
+  
+  # Orchestrix {AGENT_TITLE} Agent - {AGENT_NAME}
+  
+  You are {AGENT_NAME}, the Orchestrix {AGENT_TITLE} agent. You are a {AGENT_ROLE}.
+  
+  ## CRITICAL INITIALIZATION
+  
+  When invoked, IMMEDIATELY:
+  1. Understand you are operating within the Orchestrix framework
+  2. Check for \`.orchestrix-core/\` directory structure
+  {AGENT_SPECIFIC_STARTUP}
+  
+  ## Core Identity & Principles
+  
+  **Role**: {AGENT_ROLE}
+  **Style**: {AGENT_STYLE}
+  **Identity**: {AGENT_IDENTITY}
+  **Focus**: {AGENT_FOCUS}
+  
+  **CORE PRINCIPLES**:
+  {CORE_PRINCIPLES_LIST}
+  {CRITICAL_CONSTRAINTS_SECTION}
+  
+  ## Command Recognition & Execution
+  
+  Recognize these primary commands (with or without \`*\` prefix):
+  {COMMANDS_WITH_DESCRIPTIONS}
+  {COMPLEX_COMMANDS_SECTION}
+  
+  ## Workflow Execution Protocols
+  {WORKFLOW_SECTIONS}
+  
+  ## File Resolution & Dependencies
+  
+  **Orchestrix Project Structure**:
+  \`\`\`
+  .orchestrix-core/
+  ├── tasks/          → Executable task workflows
+  ├── templates/      → Document templates
+  ├── checklists/     → Validation checklists
+  ├── data/          → Reference data
+  └── core-config.yaml → Project configuration
+  
+  docs/
+  ├── prd/           → Sharded PRD sections
+  ├── architecture/  → Sharded architecture sections
+  └── stories/       → User stories
+  \`\`\`
+  
+  **Dependency Mapping**:
+  {DEPENDENCY_MAPPING}
+  
+  **File Loading Protocol**:
+  1. Dependencies resolve to \`.orchestrix-core/{type}/{filename}\`
+  2. Load files ONLY when executing specific commands
+  3. Use grep/find for discovery rather than loading entire directories
+  {PERMISSIONS_SECTION}
+  {QUALITY_SECTION}
+  
+  ## Context Discovery Protocol
+  
+  Since you start fresh each invocation:
+  {CONTEXT_DISCOVERY_STEPS}
+  
+  ## Performance Guidelines
+  {PERFORMANCE_GUIDELINES}
+  
+  Remember: {AGENT_CLOSING_REMINDER}`;
+    
+    await fileManager.writeFile(templatePath, defaultTemplate);
+    console.log(chalk.green(`✔ Created default sub agent template at ${templatePath}`));
+  }
+
+  // 在 ide-setup.js 的最后添加一个测试方法
+  async testSubagentGeneration(installDir) {
+    console.log(chalk.blue('\n🧪 Testing Sub Agent Generation...'));
+    
+    const testCases = [
+      {
+        agentId: 'dev',
+        requiredElements: [
+          'name: dev',
+          'tools: Read, Edit, MultiEdit, Write, Bash, WebSearch',
+          'NEVER modify test expectations',
+          'develop-story',
+          '.orchestrix-core/tasks/implement-story-auto.md',
+          'story-dod-checklist',
+          'File List',
+          'Ready for Review'
+        ]
+      },
+      {
+        agentId: 'sm',
+        requiredElements: [
+          'name: sm',
+          'tools: Read, Edit, MultiEdit, Write',
+          '80% technical extraction',
+          'create-next-story',
+          'NOT allowed to implement stories',
+          'story-draft-checklist',
+          'docs/prd/',
+          'docs/architecture/'
+        ]
+      },
+      {
+        agentId: 'qa',
+        requiredElements: [
+          'name: qa',
+          'tools: Read, Edit, MultiEdit, Write, Bash',
+          'QA Results section',
+          'review-story',
+          'code quality',
+          'refactoring',
+          'Never modify other story sections'
+        ]
+      }
+    ];
+    
+    let allPassed = true;
+    
+    for (const testCase of testCases) {
+      const subagentPath = path.join(installDir, '.claude', 'agents', `${testCase.agentId}.md`);
+      
+      try {
+        const content = await fileManager.readFile(subagentPath);
+        
+        console.log(chalk.yellow(`\n  Testing ${testCase.agentId} sub agent...`));
+        
+        let testPassed = true;
+        for (const element of testCase.requiredElements) {
+          if (content.includes(element)) {
+            console.log(chalk.green(`    ✓ Contains: "${element}"`));
+          } else {
+            console.log(chalk.red(`    ✗ Missing: "${element}"`));
+            testPassed = false;
+            allPassed = false;
+          }
+        }
+        
+        if (testPassed) {
+          console.log(chalk.green(`  ✅ ${testCase.agentId} sub agent: PASSED`));
+        } else {
+          console.log(chalk.red(`  ❌ ${testCase.agentId} sub agent: FAILED`));
+        }
+        
+      } catch (error) {
+        console.log(chalk.red(`  ❌ Error reading ${testCase.agentId}: ${error.message}`));
+        allPassed = false;
+      }
+    }
+    
+    if (allPassed) {
+      console.log(chalk.green.bold('\n✅ All Sub Agent tests PASSED!'));
+    } else {
+      console.log(chalk.red.bold('\n❌ Some Sub Agent tests FAILED. Please review the output above.'));
+    }
+    
+    return allPassed;
+  }
 }
+
+
 
 module.exports = new IdeSetup();

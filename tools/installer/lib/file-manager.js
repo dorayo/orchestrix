@@ -20,6 +20,15 @@ class FileManager {
     this.manifestFile = "install-manifest.yaml";
   }
 
+  async fileExists(filePath) {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async copyFile(source, destination) {
     try {
       await fs.ensureDir(path.dirname(destination));
