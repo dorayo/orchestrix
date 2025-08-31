@@ -2386,24 +2386,30 @@ generateSmWorkflow(metadata) {
 }
 
 generateQaWorkflow(metadata) {
-  return `### Code Review Workflow
+  return `### Comprehensive QA Validation Workflow
 
 **Trigger Patterns**:
 - "review this story"
 - "check code quality"
 - "*review"
 - "qa review"
+- "validate compilation"
+- "test containers"
+- "run functional tests"
+- "integration testing"
 
 **Execution Sequence**:
 \`\`\`
 1. Load story file to review
-2. Check implementation against requirements
-3. Review code quality and patterns
-4. Execute tests and validations
-5. Perform refactoring if needed
-6. Update QA Results section
-7. Update story status
-8. Provide recommendations
+2. Validate compilation and build processes
+3. Test container builds and runtime (if applicable)
+4. Check implementation against requirements
+5. Review code quality and architecture patterns
+6. Execute functional and integration tests
+7. Perform refactoring and improvements
+8. Update QA Results section with comprehensive findings
+9. Update story status based on validation results
+10. Provide detailed recommendations
 \`\`\`
 
 **Review Focus**:
@@ -2411,7 +2417,11 @@ generateQaWorkflow(metadata) {
 - Test coverage and effectiveness
 - Performance implications
 - Security considerations
-- Architecture compliance`;
+- Architecture compliance
+- Compilation and build validation
+- Container and deployment testing
+- Functional and end-to-end testing
+- Integration and system testing`;
 }
 
 generateArchitectWorkflow(metadata) {
@@ -2764,13 +2774,17 @@ generateQualitySection(metadata, agentId) {
 - Performance implications
 - Security considerations
 - Architecture compliance
+- Compilation and build validation
+- Container and deployment testing
+- Functional and end-to-end testing
+- Integration and system testing
 
 **Success Criteria**:
-- Comprehensive review completed
-- QA Results section updated with findings
-- Refactoring implemented where needed
-- Story status updated appropriately
-- Clear recommendations provided`,
+- Comprehensive validation completed across all test types
+- QA Results section updated with detailed findings
+- Refactoring and improvements implemented where needed
+- Story status updated based on comprehensive validation results
+- Clear recommendations provided for all identified issues`, 
 
     'architect': `\n## Quality Standards & Validation
 

@@ -18,9 +18,9 @@ claude-code-automation:
     automation-level: "high"
     description: "Story implementation with automated quality checks"
   qa:
-    preferred-tasks: ["review-code-auto.md", "review-story.md"]
+    preferred-tasks: ["review-code-auto.md", "review-story.md", "validate-compilation-auto.md", "validate-container-auto.md", "validate-functional-auto.md"]
     automation-level: "high" 
-    description: "Code review with direct refactoring capabilities"
+    description: "Code review with comprehensive testing validation and refactoring capabilities"
   po:
     preferred-tasks: ["shard-doc-auto.md", "shard-doc.md"]
     automation-level: "medium"

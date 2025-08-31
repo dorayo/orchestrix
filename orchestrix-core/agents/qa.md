@@ -66,6 +66,9 @@ dependencies:
   tasks:
     - review-code-auto.md
     - review-story.md
+    - validate-compilation-auto.md
+    - validate-container-auto.md
+    - validate-functional-auto.md
   data:
     - technical-preferences.md
   templates:

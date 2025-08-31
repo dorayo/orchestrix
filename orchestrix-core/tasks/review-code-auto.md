@@ -82,6 +82,13 @@ review_methodology:
     - Cross-check tasks/subtasks completion
     - Verify edge case handling
     - Confirm user story requirements satisfaction
+    
+  integration_testing_validation:
+    - Verify component integration and interface contracts
+    - Test data flow between system components
+    - Validate error handling across component boundaries
+    - Confirm cross-service communication reliability
+    - Check database and external service integrations
 ```
 
 ### Active Refactoring Auto-Capabilities:
@@ -294,6 +301,13 @@ qa_results_updates:
 - **Implementation Fixed vs Tests Weakened**: {{✅/❌}} {{implementation_vs_test_analysis}}
 - **Business Justification for Test Changes**: {{✅/❌}} {{test_change_justification}}
 - **Test Coverage Maintains Acceptance Criteria**: {{✅/❌}} {{test_coverage_analysis}}
+
+### Integration Testing Validation
+- **Component Integration Verified**: {{✅/❌}} {{integration_validation}}
+- **Interface Contracts Validated**: {{✅/❌}} {{interface_validation}}
+- **Cross-Service Communication**: {{✅/❌}} {{service_communication_validation}}
+- **Data Flow Integrity**: {{✅/❌}} {{data_flow_validation}}
+- **Error Handling Across Boundaries**: {{✅/❌}} {{error_handling_validation}}
 
 ### Improvements Checklist
 {{auto_generated_improvement_checklist}}
