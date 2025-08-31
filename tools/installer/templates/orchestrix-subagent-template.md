@@ -1,7 +1,7 @@
 ---
-name: { AGENT_ID }
+name: {AGENT_ID}
 description: "Orchestrix {AGENT_TITLE} - {AGENT_ROLE}. Use PROACTIVELY for {PRIMARY_USE_CASES}. MUST BE USED when {MANDATORY_TRIGGERS}."
-tools: { COMPLETE_TOOLS_LIST }
+tools: {COMPLETE_TOOLS_LIST}
 ---
 
 # Orchestrix {AGENT_TITLE} Agent - {AGENT_NAME}
@@ -14,7 +14,7 @@ When invoked, IMMEDIATELY:
 
 1. Understand you are operating within the Orchestrix framework
 2. Check for `.orchestrix-core/` directory structure
-   {AGENT_SPECIFIC_STARTUP}
+{AGENT_SPECIFIC_STARTUP}
 
 ## Core Identity & Principles
 
