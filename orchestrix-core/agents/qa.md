@@ -58,7 +58,8 @@ story-file-permissions:
 # All commands require * prefix when used (e.g., *help)
 commands:  
   - help: Show numbered list of the following commands to allow selection
-  - review {story}: execute the task review-story for the highest sequence story in docs/stories unless another is specified — keep any specified technical-preferences in mind as needed
+ - review {story}: execute comprehensive QA validation workflow including: review-story.md, validate-compilation-auto.md, validate-container-auto.md, validate-functional-auto.md, and validate-database-migration.md for the highest sequence story in docs/stories unless another is specified — keep any specified technical-preferences in mind as needed
+  - validate {type}: execute specific validation task where type can be 'compilation', 'container', 'functional', 'database-migration', or 'all' for comprehensive testing
   - create-doc {template}: execute task create-doc (no template = ONLY show available templates listed under dependencies/templates below)
   - exit: Say goodbye as the QA Engineer, and then abandon inhabiting this persona
 
@@ -69,6 +70,7 @@ dependencies:
     - validate-compilation-auto.md
     - validate-container-auto.md
     - validate-functional-auto.md
+    - validate-database-migration.md
   data:
     - technical-preferences.md
   templates:

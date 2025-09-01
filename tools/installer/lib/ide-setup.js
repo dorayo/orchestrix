@@ -4,7 +4,7 @@ const yaml = require("js-yaml");
 const glob = require("glob");
 const fileManager = require("./file-manager");
 const configLoader = require("./config-loader");
-const { extractYamlFromAgent } = require("../../lib/yaml-utils");
+const { extractYamlFromAgent, extractAgentDependencies } = require("../../lib/yaml-utils");
 
 // Dynamic import for ES module
 let chalk;
@@ -103,14 +103,23 @@ class IdeSetup {
         mdcContent +=
           "CRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:\n\n";
         mdcContent += "```yaml\n";
-        // Extract just the YAML content from the agent file
+        
+        // Extract the complete YAML content from the agent file
         const yamlContent = extractYamlFromAgent(agentContent);
         if (yamlContent) {
           mdcContent += yamlContent;
         } else {
-          // If no YAML found, include the whole content minus the header
-          mdcContent += agentContent.replace(/^#.*$/m, "").trim();
+          // Fallback: include the whole content minus the header
+          const contentWithoutHeader = agentContent.replace(/^#.*$/m, "").trim();
+          // Ensure we capture the YAML block properly
+          const yamlMatch = agentContent.match(/```yaml([\s\S]*?)```/);
+          if (yamlMatch) {
+            mdcContent += yamlMatch[1].trim();
+          } else {
+            mdcContent += contentWithoutHeader;
+          }
         }
+        
         mdcContent += "\n```\n\n";
         mdcContent += "## File Reference\n\n";
         const relativePath = path.relative(installDir, agentPath).replace(/\\/g, '/');
@@ -122,7 +131,6 @@ class IdeSetup {
         )} persona and follow all instructions defined in the YAML configuration above.\n`;
 
         await fileManager.writeFile(mdcPath, mdcContent);
-        // Removed individual file creation messages for cleaner output
       }
     }
 

@@ -174,6 +174,36 @@ program
     }
   });
 
+program
+  .command('sync')
+  .description('同步代理配置和版本更新')
+  .option('--dry-run', '显示将要同步的内容，但不执行实际更改')
+  .option('--ide <ide...>', '指定要同步的 IDE (cursor, claude-code, windsurf, trae, roo, cline)')
+  .action(async (options) => {
+    try {
+      await initializeModules();
+      const VersionSyncManager = require('../../../tools/lib/version-sync');
+      const syncManager = new VersionSyncManager();
+      
+      const installDir = process.cwd();
+      const ides = options.ide || ['cursor', 'claude-code', 'windsurf', 'trae', 'roo', 'cline'];
+      
+      if (options.dryRun) {
+        console.log(chalk.cyan('🔍 干运行模式 - 显示将要同步的内容:'));
+        const manifest = await syncManager.generateVersionManifest(installDir);
+        console.log('版本清单:', JSON.stringify(manifest, null, 2));
+      } else {
+        console.log(chalk.cyan('🔄 同步代理配置...'));
+        const updated = await syncManager.autoUpdateIDEConfigurations(installDir, ides);
+        console.log(chalk.green(`✅ 同步完成！更新了 ${updated.length} 个配置`));
+      }
+    } catch (error) {
+      if (!chalk) await initializeModules();
+      console.error(chalk.red('同步失败:'), error.message);
+      process.exit(1);
+    }
+  });
+
 async function promptInstallation() {
   await initializeModules();
   

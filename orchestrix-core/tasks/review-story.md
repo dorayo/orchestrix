@@ -173,3 +173,13 @@ After review:
 1. If all items are checked and approved: Update story status to "Done"
 2. If unchecked items remain: Keep status as "Review" for dev to address
 3. Always provide constructive feedback and explanations for learning
+
+## Automated Validation Integration
+
+During the review process, automatically execute:
+1. **validate-database-migration.md** - Check database migration scripts and execution status for schema changes (foundational validation)
+2. **validate-compilation-auto.md** - Ensure code compiles without errors (with correct database schema)
+3. **validate-container-auto.md** - Verify container build and deployment (with migrated database)
+4. **validate-functional-auto.md** - Run comprehensive functional tests (on properly migrated database)
+
+These validations are integrated into the *review command and will be executed automatically when reviewing stories.
