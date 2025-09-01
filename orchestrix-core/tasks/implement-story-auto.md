@@ -55,6 +55,9 @@ story_loading:
     - Testing Standards and integrity rules
     - Previous story completion notes (if referenced)
     - File locations and naming conventions
+    
+  enhanced_validation:
+    - dev-database-migration.md - Handle schema changes with safety
 ```
 
 ### Implementation Auto-Sequence:
@@ -139,6 +142,7 @@ task_execution:
   validation_phase:
     - Execute all tests (unit, integration, regression)
     - Run linting and code quality checks
+    - Auto-detect and execute database migrations (dev-database-migration.md)
     - Verify acceptance criteria fulfillment
     - Confirm no test requirements were weakened
 ```
@@ -344,6 +348,8 @@ recovery_strategies:
 ### Quality Assurance Gates:
 - **Functional Completeness**: All acceptance criteria satisfied
 - **Code Quality**: Follows all coding standards and architecture patterns
+- **Context Validation**: No hallucinations, all references validated
+- **Database Migration**: Schema changes handled with safety and rollback
 - **Test Integrity**: Tests preserved and enhanced, never weakened
 - **Documentation**: File List complete, Completion Notes comprehensive
 - **Standards Compliance**: Adheres to all technical preferences and constraints
