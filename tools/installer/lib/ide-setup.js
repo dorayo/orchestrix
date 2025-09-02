@@ -5123,7 +5123,18 @@ parseListSection(text) {
     
     // Replace all {{...}} patterns
     content = content.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-      return this.resolveTemplatePath(path.trim(), agentData, agentId) || match;
+      const trimmedPath = path.trim();
+      
+      // Special handling for specific fields
+      if (trimmedPath === 'state-machine.transitions[]') {
+        return this.formatStateTransitions(agentData);
+      } else if (trimmedPath === 'elicitation.generic-form[]') {
+        return this.formatElicitationForm(agentData);
+      } else if (trimmedPath.includes('commands.') && trimmedPath.includes('[].')) {
+        return this.formatCommandSpecs(trimmedPath, agentData);
+      }
+      
+      return this.resolveTemplatePath(trimmedPath, agentData, agentId) || match;
     });
     
     return content;
@@ -5137,7 +5148,14 @@ parseListSection(text) {
         const arrayPath = path.slice(0, -2);
         const arrayValue = this.getNestedValue(data, arrayPath);
         if (Array.isArray(arrayValue)) {
-          return arrayValue.join(', ');
+          // Format as bullet list for better readability
+          return arrayValue.map(item => {
+            if (typeof item === 'object' && item !== null) {
+              // For objects, try to get a meaningful string representation
+              return item.name || item.title || item.id || JSON.stringify(item);
+            }
+            return String(item);
+          }).join('\n- ');
         }
         return '';
       }
@@ -5202,6 +5220,50 @@ parseListSection(text) {
       }
       return '';
     }, obj);
+  }
+
+  // Special formatters for complex structures
+  formatStateTransitions(agentData) {
+    const transitions = this.getNestedValue(agentData, 'state-machine.transitions');
+    if (!Array.isArray(transitions)) return '';
+    
+    return transitions.map(t => {
+      let line = `From: ${t.from || ''}  To: ${t.to || ''}`;
+      if (t.on) line += `  On: ${t.on}`;
+      if (t.when) line += `  When: ${t.when}`;
+      return `- ${line}`;
+    }).join('\n');
+  }
+  
+  formatElicitationForm(agentData) {
+    const form = this.getNestedValue(agentData, 'elicitation.generic-form');
+    if (!Array.isArray(form)) return '';
+    
+    return form.map(item => {
+      if (typeof item === 'object' && item !== null) {
+        // Handle key-value pairs
+        return Object.entries(item).map(([key, value]) => `${key}: "${value}"`).join(', ');
+      }
+      return String(item);
+    }).join('\n- ');
+  }
+  
+  formatCommandSpecs(path, agentData) {
+    // Handle command specification formatting
+    const parts = path.split('[].'); 
+    const arrayPath = parts[0];
+    const itemPath = parts[1];
+    
+    const arrayValue = this.getNestedValue(agentData, arrayPath);
+    if (!Array.isArray(arrayValue)) return '';
+    
+    return arrayValue.map(item => {
+      const value = this.getNestedValue(item, itemPath);
+      if (Array.isArray(value)) {
+        return value.join(', ');
+      }
+      return String(value || '');
+    }).filter(v => v).join('\n- ');
   }
 }
 

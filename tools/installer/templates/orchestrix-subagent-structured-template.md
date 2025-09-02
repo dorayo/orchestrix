@@ -57,9 +57,9 @@ Invariants:
 ## State Machine
 
 States: {{state-machine.states[]}}
-Transitions:
 
-- From: {{state-machine.transitions[].from}} To: {{state-machine.transitions[].to}} On: {{state-machine.transitions[].on}} When: {{state-machine.transitions[].when}}
+Transitions:
+{{state-machine.transitions[]}}
 
 ## Output Invariants
 
