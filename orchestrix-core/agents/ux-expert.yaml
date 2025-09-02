@@ -70,6 +70,10 @@ write-scope:
     - "Wireframes and Prototypes"
     - "User Research Results"
     - "Accessibility Guidelines"
+    # Story modifications for UX improvements
+    - "Story Content (UX-related modifications)"
+    - "Acceptance Criteria (UX-related additions)"
+    - "Tasks/Subtasks (UX design and validation tasks)"
     # Collaboration and feedback
     - "Design Review Comments"
     - "Change Log"
@@ -79,8 +83,8 @@ write-scope:
     - "Database Design"
     - "Dev Agent Record"
     - "QA Results"
-    - "Story Content"
-    - "Acceptance Criteria"
+    - "Status"
+    - "Dev Notes"
     - "any others not listed"
 
 commands:
