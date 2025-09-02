@@ -5303,10 +5303,14 @@ parseListSection(text) {
           value = cmd[section.fallback];
         }
         
-        if (value) {
+        // Only include sections with meaningful content
+        if (value && value !== '' && !(Array.isArray(value) && value.length === 0)) {
           spec += `${section.title}:\n\n`;
           if (Array.isArray(value)) {
-            spec += value.map(item => `- ${item}`).join('\n') + '\n';
+            const filteredItems = value.filter(item => item && item !== '');
+            if (filteredItems.length > 0) {
+              spec += filteredItems.map(item => `- ${item}`).join('\n') + '\n';
+            }
           } else {
             spec += `- ${value}\n`;
           }
