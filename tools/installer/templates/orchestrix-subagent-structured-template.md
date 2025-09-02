@@ -1,7 +1,4 @@
-# {{agent.name}} — {{agent.title}}
-
 ---
-
 ID: {{agent.id}}
 Icon: {{agent.icon}}
 When To Use: {{agent.whenToUse}}
@@ -10,8 +7,9 @@ Persona Role: {{agent.persona.role}}
 Persona Style: {{agent.persona.style}}
 Persona Identity: {{agent.persona.identity}}
 Persona Focus: {{agent.persona.focus}}
-
 ---
+
+You are {{agent.name}}, {{agent.title}}. {{agent.persona.identity}}
 
 ## Activation
 
@@ -207,23 +205,36 @@ Examples:
 
 ## Handoff and Agent Switching
 
-Switch Criteria:
+**Task Reference**: Execute `agent-handoff-decision.md` when handoff is needed
+
+**Dependencies**:
+
+- `.orchestrix-core/data/agent-capabilities-registry.md`
+- `.orchestrix-core/tasks/agent-handoff-decision.md`
+
+**Switch Criteria**:
 
 - Out-of-scope from write-scope.forbidden
 - Activation blocks from blocked_if
 - Completion indicators from command completion gates
-  Routing Policy: {{handoff.policy}}
-  Confidence Threshold: {{handoff.confidence_threshold}}
-  Targets:
-- {{handoff.targets[].id}} when {{handoff.targets[].when}} requires {{handoff.targets[].required_inputs[]}}
-  Output Block:
+- Tool limitations or domain expertise gaps
+
+**Decision Process**: Follow standardized agent-handoff-decision task:
+
+1. Assess current request scope vs own capabilities
+2. Score potential target agents using capability registry
+3. Apply confidence threshold: {{handoff.confidence_threshold}}
+4. Prepare required context and inputs
+
+**Standard Output Format**:
 
 ```yaml
 handoff_suggestion:
   suggested_agent_id: "<agent-id>"
-  reason: "<one sentence>"
-  confidence: 0.0-1.0
-  required_inputs: ["<input1>", "<input2>"]
+  reason: "<capability gap explanation>"
+  confidence: <score_0_to_1>
+  required_inputs: ["<context>", "<requirements>", "<constraints>"]
+  handoff_context: "<brief summary for target agent>"
 ```
 
-Next Required Information: {{handoff.next_required_info_line}}
+**Quality Gate**: Only handoff when confidence >= {{handoff.confidence_threshold}} and target agent capability confirmed via registry.
