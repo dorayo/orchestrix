@@ -171,8 +171,7 @@ Load Policy: {{ide-file-resolution.load_policy}}
 Policy: {{request-resolution.policy}}
 Examples:
 
-- User: {{request-resolution.examples[].user}}
-  Action: {{request-resolution.examples[].action}}
+{{request-resolution.examples[].example_line}}
 
 ## Handoff and Agent Switching
 

@@ -5143,6 +5143,8 @@ parseListSection(text) {
         return this.formatCommandLines(agentData, 'commands.common');
       } else if (trimmedPath === 'commands.role-specific[].command_line') {
         return this.formatCommandLines(agentData, 'commands.role-specific');
+      } else if (trimmedPath === 'request-resolution.examples[].example_line') {
+        return this.formatRequestResolutionExamples(agentData);
       } else if (trimmedPath.includes('commands.') && trimmedPath.includes('[].')) {
         return this.formatCommandSpecs(trimmedPath, agentData);
       }
@@ -5379,6 +5381,18 @@ parseListSection(text) {
       const name = cmd.name || '';
       const desc = cmd.desc || '';
       return `- ${name} — ${desc}`;
+    }).join('\n');
+  }
+
+  // Format request resolution examples (user -> action pairs)
+  formatRequestResolutionExamples(agentData) {
+    const examples = this.getNestedValue(agentData, 'request-resolution.examples');
+    if (!Array.isArray(examples) || examples.length === 0) return '';
+    
+    return examples.map(example => {
+      const user = example.user || '';
+      const action = example.action || '';
+      return `- User: ${user}\n  Action: ${action}`;
     }).join('\n');
   }
 
