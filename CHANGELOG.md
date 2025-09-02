@@ -1,3 +1,10 @@
+## [4.2.1](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.0...v4.2.1) (2025-09-02)
+
+
+### Bug Fixes
+
+* Update agent file detection for YAML format ([639c5a3](https://github.com/dorayo/ORCHESTRIX/commit/639c5a3d4d68b9122f42b70ccf7ec4af4af8ee04))
+
 ## [4.0.5](https://github.com/dorayo/ORCHESTRIX/compare/v4.0.4...v4.0.5) (2025-08-30)
 
 
