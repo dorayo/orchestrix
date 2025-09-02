@@ -2052,7 +2052,15 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
 
   // 使用 js-yaml 进行健壮的 YAML 解析
   extractAgentMetadataRobust(agentContent, agentId) {
-    const yamlContent = extractYamlFromAgent(agentContent);
+    // Handle both YAML files and MD files with YAML blocks
+    let yamlContent;
+    if (agentContent.trim().startsWith('agent:')) {
+      // Pure YAML file - use content directly
+      yamlContent = agentContent;
+    } else {
+      // MD file with YAML block - extract it
+      yamlContent = extractYamlFromAgent(agentContent);
+    }
     if (!yamlContent) return this.getDefaultMetadata(agentId);
     
     try {
@@ -2122,24 +2130,28 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     // 使用健壮的 YAML 解析
     const metadata = this.extractAgentMetadataRobust(agentContent, agentId);
     
+    // Handle both YAML files and MD files with YAML blocks
+    let yamlContent;
+    if (agentContent.trim().startsWith('agent:')) {
+      // Pure YAML file - use content directly
+      yamlContent = agentContent;
+    } else {
+      // MD file with YAML block - extract it
+      yamlContent = extractYamlFromAgent(agentContent);
+    }
+    
     // 特定 agent 的额外信息提取 (如果需要特殊处理)
-    if (agentId === 'dev' && metadata.testIntegrityRules === undefined) {
-      const yamlContent = extractYamlFromAgent(agentContent);
-      if (yamlContent) {
-        const testRulesMatch = yamlContent.match(/test-integrity-rules:\s*([\s\S]*?)(?=\n\s{4}\w|$)/);
-        if (testRulesMatch) {
-          metadata.testIntegrityRules = this.parseListSection(testRulesMatch[1]);
-        }
+    if (agentId === 'dev' && metadata.testIntegrityRules === undefined && yamlContent) {
+      const testRulesMatch = yamlContent.match(/test-integrity-rules:\s*([\s\S]*?)(?=\n\s{4}\w|$)/);
+      if (testRulesMatch) {
+        metadata.testIntegrityRules = this.parseListSection(testRulesMatch[1]);
       }
     }
     
-    if (agentId === 'qa' && metadata.storyFilePermissions === undefined) {
-      const yamlContent = extractYamlFromAgent(agentContent);
-      if (yamlContent) {
-        const storyPermMatch = yamlContent.match(/story-file-permissions:\s*([\s\S]*?)(?=\ncommands:|$)/);
-        if (storyPermMatch) {
-          metadata.storyFilePermissions = this.parseListSection(storyPermMatch[1]);
-        }
+    if (agentId === 'qa' && metadata.storyFilePermissions === undefined && yamlContent) {
+      const storyPermMatch = yamlContent.match(/story-file-permissions:\s*([\s\S]*?)(?=\ncommands:|$)/);
+      if (storyPermMatch) {
+        metadata.storyFilePermissions = this.parseListSection(storyPermMatch[1]);
       }
     }
     
@@ -2147,6 +2159,18 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   }
 
 // ============= 辅助方法集合 =============
+
+  // Helper method to get YAML content from both pure YAML files and MD files with YAML blocks
+  getYamlContent(agentContent) {
+    if (agentContent.trim().startsWith('agent:')) {
+      // Pure YAML file - use content directly
+      return agentContent;
+    } else {
+      // MD file with YAML block - extract it
+      const { extractYamlFromAgent } = require('../../lib/yaml-utils');
+      return extractYamlFromAgent(agentContent);
+    }
+  }
 
 // 提取主要使用场景
 extractPrimaryUseCases(metadata) {
@@ -3285,16 +3309,28 @@ parseListSection(text) {
   // 生成增强模板的占位符替换值（保持原始YAML结构）
   async generateSimpleReplacements(agentId, metadata, agentContent) {
     const { extractYamlFromAgent } = require('../../lib/yaml-utils');
-    const yamlContent = extractYamlFromAgent(agentContent);
+    
+    // Handle both YAML files and MD files with YAML blocks
+    let yamlContent;
+    if (agentContent.trim().startsWith('agent:')) {
+      // Pure YAML file - use content directly
+      yamlContent = agentContent;
+    } else {
+      // MD file with YAML block - extract it
+      yamlContent = extractYamlFromAgent(agentContent);
+    }
     
     return {
       '{AGENT_ID}': agentId,
+      '{ AGENT_ID }': agentId, // Template uses spaces
       '{AGENT_TITLE}': metadata.agent?.title || agentId,
       '{AGENT_NAME}': metadata.agent?.name || agentId,
       '{AGENT_ROLE_DESCRIPTION}': this.generateRoleDescription(metadata, agentId),
       '{AGENT_DESCRIPTION}': metadata.agent?.whenToUse || `Use for ${agentId} related tasks`,
       '{AGENT_TOOLS}': this.getCompleteToolsList(metadata, agentId),
+      '{ AGENT_TOOLS }': this.getCompleteToolsList(metadata, agentId), // Template uses spaces
       '{ORIGINAL_YAML_CONTENT}': yamlContent || '',
+      '{ ORIGINAL_YAML_CONTENT }': yamlContent || '', // Template uses spaces
       '{COMMANDS_SUMMARY}': this.generateCommandsSummary(metadata),
       '{DEPENDENCIES_SUMMARY}': this.generateDependenciesSummary(metadata),
       '{CORE_PRINCIPLES_LIST}': this.formatCorePrinciplesList(metadata),
@@ -3304,7 +3340,16 @@ parseListSection(text) {
 
   async generateOptimizedReplacements(agentId, metadata, agentContent) {
     const { extractYamlFromAgent } = require('../../lib/yaml-utils');
-    const yamlContent = extractYamlFromAgent(agentContent);
+    
+    // Handle both YAML files and MD files with YAML blocks
+    let yamlContent;
+    if (agentContent.trim().startsWith('agent:')) {
+      // Pure YAML file - use content directly
+      yamlContent = agentContent;
+    } else {
+      // MD file with YAML block - extract it
+      yamlContent = extractYamlFromAgent(agentContent);
+    }
     
     return {
       '{AGENT_ID}': agentId,
@@ -4006,8 +4051,16 @@ parseListSection(text) {
 
 
   extractAgentMetadata(agentContent) {
-    // Use the unified YAML extraction function
-    const yamlContent = extractYamlFromAgent(agentContent);
+    // Handle both YAML files and MD files with YAML blocks
+    let yamlContent;
+    if (agentContent.trim().startsWith('agent:')) {
+      // Pure YAML file - use content directly
+      yamlContent = agentContent;
+    } else {
+      // MD file with YAML block - extract it
+      yamlContent = extractYamlFromAgent(agentContent);
+    }
+    
     const metadata = {
       agent: {},
       persona: {},
