@@ -488,16 +488,33 @@ class IdeSetup {
     }
     
     if (await fileManager.pathExists(agentsDir)) {
-      const agentFiles = glob.sync("*.md", { cwd: agentsDir });
-      allAgentIds.push(...agentFiles.map((file) => path.basename(file, ".md")));
+      // Support both YAML and MD files, prioritize YAML
+      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir });
+      const mdFiles = glob.sync("*.md", { cwd: agentsDir });
+      
+      // Extract IDs from YAML files first
+      const yamlIds = yamlFiles.map((file) => path.basename(file, ".yaml"));
+      // Extract IDs from MD files, but exclude those already found in YAML
+      const mdIds = mdFiles.map((file) => path.basename(file, ".md")).filter(id => !yamlIds.includes(id));
+      
+      allAgentIds.push(...yamlIds, ...mdIds);
     }
     
     // Also check for expansion pack agents in dot folders
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir });
     for (const expDir of expansionDirs) {
       const fullExpDir = path.join(installDir, expDir);
-      const expAgentFiles = glob.sync("*.md", { cwd: fullExpDir });
-      allAgentIds.push(...expAgentFiles.map((file) => path.basename(file, ".md")));
+      
+      // Support both YAML and MD files for expansion packs too
+      const expYamlFiles = glob.sync("*.yaml", { cwd: fullExpDir });
+      const expMdFiles = glob.sync("*.md", { cwd: fullExpDir });
+      
+      // Extract IDs from YAML files first
+      const expYamlIds = expYamlFiles.map((file) => path.basename(file, ".yaml"));
+      // Extract IDs from MD files, but exclude those already found in YAML
+      const expMdIds = expMdFiles.map((file) => path.basename(file, ".md")).filter(id => !expYamlIds.includes(id));
+      
+      allAgentIds.push(...expYamlIds, ...expMdIds);
     }
     
     // Remove duplicates
