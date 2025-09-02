@@ -144,15 +144,6 @@ class IdeSetup {
  async setupClaudeCode(installDir, selectedAgent, runTests = false) {
   console.log(chalk.blue("\n🔧 设置 Claude Code 双模式集成..."));
   
-  // 使用增强的Sub Agent生成系统
-  // 先检查模板是否存在
-  const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-enhanced-template.md');
-  const templateExists = await fileManager.fileExists(templatePath);
-  
-  if (!templateExists) {
-    throw new Error('Enhanced template not found. Please ensure orchestrix-subagent-enhanced-template.md exists in templates directory.');
-  }
-  
   const subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
   
   console.log(chalk.green(`✔ 已创建 ${subagentsCount} 个优化的 Claude Code 子代理`));
@@ -1987,8 +1978,8 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
 
 
   async generateEnhancedSubagentContent(agentId, agentContent, installDir) {
-    // 使用简化版模板
-    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-simple-template.md');
+    // 使用结构化模板
+    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-structured-template.md');
     
     // 确保增强模板存在
     if (!await fileManager.fileExists(templatePath)) {
@@ -1997,20 +1988,18 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     
     try {
       const template = await fileManager.readFile(templatePath);
-      const metadata = this.extractCompleteAgentMetadata(agentContent, agentId);
       
-      // 使用简化版占位符生成器
-      const replacements = await this.generateSimpleReplacements(agentId, metadata, agentContent);
-      
-      // 替换模板中的占位符，提供有意义的默认值
-      const placeholderDefaults = this.getPlaceholderDefaults(agentId);
-      let content = template;
-      
-      for (const [placeholder, value] of Object.entries(replacements)) {
-        const finalValue = value || placeholderDefaults[placeholder] || `[${placeholder} not configured]`;
-        const regex = new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g');
-        content = content.replace(regex, finalValue);
+      // Parse the YAML content to get structured data
+      const yamlContent = this.getYamlContent(agentContent);
+      if (!yamlContent) {
+        throw new Error(`No YAML content found for agent ${agentId}`);
       }
+      
+      const yaml = require('js-yaml');
+      const agentData = yaml.load(yamlContent);
+      
+      // Use the new structured template processor
+      const content = this.processStructuredTemplate(template, agentData, agentId);
       
       return content;
       
@@ -5127,8 +5116,93 @@ parseListSection(text) {
     
     return allPassed;
   }
+
+  // Process structured template with {{field}} syntax
+  processStructuredTemplate(template, agentData, agentId) {
+    let content = template;
+    
+    // Replace all {{...}} patterns
+    content = content.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+      return this.resolveTemplatePath(path.trim(), agentData, agentId) || match;
+    });
+    
+    return content;
+  }
+  
+  // Resolve template path like "agent.name" or "commands.common[].name"
+  resolveTemplatePath(path, data, agentId) {
+    try {
+      // Handle array notation like "agent.tools[]"
+      if (path.endsWith('[]')) {
+        const arrayPath = path.slice(0, -2);
+        const arrayValue = this.getNestedValue(data, arrayPath);
+        if (Array.isArray(arrayValue)) {
+          return arrayValue.join(', ');
+        }
+        return '';
+      }
+      
+      // Handle array index notation like "commands.common[].name"
+      if (path.includes('[].')) {
+        return this.resolveArrayTemplate(path, data);
+      }
+      
+      // Handle conditional paths with | separator
+      if (path.includes(' | ')) {
+        const paths = path.split(' | ').map(p => p.trim());
+        for (const p of paths) {
+          const value = this.resolveTemplatePath(p, data, agentId);
+          if (value && value !== '') {
+            return value;
+          }
+        }
+        return '';
+      }
+      
+      // Simple path resolution
+      return this.getNestedValue(data, path) || '';
+      
+    } catch (error) {
+      console.warn(`Template path resolution failed for "${path}": ${error.message}`);
+      return `[${path}]`;
+    }
+  }
+  
+  // Resolve array template patterns
+  resolveArrayTemplate(path, data) {
+    const parts = path.split('[].'); 
+    const arrayPath = parts[0];
+    const itemPath = parts[1];
+    
+    const arrayValue = this.getNestedValue(data, arrayPath);
+    if (!Array.isArray(arrayValue)) {
+      return '';
+    }
+    
+    return arrayValue.map(item => {
+      return this.getNestedValue(item, itemPath) || '';
+    }).filter(v => v).join('\n- ');
+  }
+  
+  // Get nested value from object using dot notation
+  getNestedValue(obj, path) {
+    if (!obj || !path) return '';
+    
+    return path.split('.').reduce((current, key) => {
+      if (current && typeof current === 'object' && key in current) {
+        const value = current[key];
+        // Handle different value types
+        if (Array.isArray(value)) {
+          return value;
+        } else if (typeof value === 'object' && value !== null) {
+          return value;
+        } else {
+          return String(value);
+        }
+      }
+      return '';
+    }, obj);
+  }
 }
-
-
 
 module.exports = new IdeSetup();
