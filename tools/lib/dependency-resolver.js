@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('js-yaml');
-const { extractYamlFromAgent } = require('./yaml-utils');
+const { extractYamlFromAgent, loadAgentYaml, findAgentPath } = require('./yaml-utils');
 
 class DependencyResolver {
   constructor(rootDir) {
@@ -12,16 +12,32 @@ class DependencyResolver {
   }
 
   async resolveAgentDependencies(agentId) {
-    const agentPath = path.join(this.orchestrixCore, 'agents', `${agentId}.md`);
-    const agentContent = await fs.readFile(agentPath, 'utf8');
-    
-    // Extract YAML from markdown content with command cleaning
-    const yamlContent = extractYamlFromAgent(agentContent, true);
-    if (!yamlContent) {
-      throw new Error(`No YAML configuration found in agent ${agentId}`);
+    // Use findAgentPath to support both .yaml and .md files
+    const agentPath = await findAgentPath(agentId, this.rootDir);
+    if (!agentPath) {
+      throw new Error(`Agent file not found for ${agentId}`);
     }
     
-    const agentConfig = yaml.load(yamlContent);
+    let agentConfig;
+    let agentContent;
+    
+    if (agentPath.endsWith('.yaml')) {
+      // Direct YAML file loading
+      agentConfig = await loadAgentYaml(agentPath);
+      if (!agentConfig) {
+        throw new Error(`Failed to load YAML configuration from agent ${agentId}`);
+      }
+      // For backward compatibility, also read raw content
+      agentContent = await fs.readFile(agentPath, 'utf8');
+    } else {
+      // Legacy MD file support
+      agentContent = await fs.readFile(agentPath, 'utf8');
+      const yamlContent = extractYamlFromAgent(agentContent, true);
+      if (!yamlContent) {
+        throw new Error(`No YAML configuration found in agent ${agentId}`);
+      }
+      agentConfig = yaml.load(yamlContent);
+    }
     
     const dependencies = {
       agent: {

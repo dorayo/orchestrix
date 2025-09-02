@@ -2,7 +2,7 @@ const path = require("node:path");
 const fileManager = require("./file-manager");
 const configLoader = require("./config-loader");
 const ideSetup = require("./ide-setup");
-const { extractYamlFromAgent } = require("../../lib/yaml-utils");
+const { extractYamlFromAgent, loadAgentYaml, findAgentPath } = require("../../lib/yaml-utils");
 
 // Dynamic imports for ES modules
 let chalk, ora, inquirer;
@@ -1274,26 +1274,33 @@ class Installer {
         for (const agentId of agents) {
           if (!existingAgents.has(agentId)) {
             // Agent not in expansion pack, try to get from core
-            const coreAgentPath = path.join(configLoader.getOrchestrixCorePath(), 'agents', `${agentId}.md`);
+            const coreAgentPath = await findAgentPath(agentId, configLoader.getOrchestrixCorePath());
             
-            if (await fileManager.pathExists(coreAgentPath)) {
+            if (coreAgentPath && await fileManager.pathExists(coreAgentPath)) {
               spinner.text = `Copying core agent ${agentId} for ${packId}...`;
               
               // Copy agent file with {root} replacement
-              const destPath = path.join(expansionDotFolder, 'agents', `${agentId}.md`);
+              const fileExt = path.extname(coreAgentPath);
+              const destPath = path.join(expansionDotFolder, 'agents', `${agentId}${fileExt}`);
               await fileManager.copyFileWithRootReplacement(coreAgentPath, destPath, `.${packId}`);
               existingAgents.add(agentId);
               
               console.log(chalk.dim(`  Added core agent: ${agentId}`));
               
               // Now resolve this agent's dependencies too
-              const agentContent = await fs.readFile(coreAgentPath, 'utf8');
-              const yamlContent = extractYamlFromAgent(agentContent, true);
+              let agentConfig;
+              if (coreAgentPath.endsWith('.yaml')) {
+                agentConfig = await loadAgentYaml(coreAgentPath);
+              } else {
+                const agentContent = await fs.readFile(coreAgentPath, 'utf8');
+                const yamlContent = extractYamlFromAgent(agentContent, true);
+                if (yamlContent) {
+                  agentConfig = yaml.load(yamlContent);
+                }
+              }
               
-              if (yamlContent) {
+              if (agentConfig) {
                 try {
-                  
-                  const agentConfig = yaml.load(yamlContent);
                   const dependencies = agentConfig.dependencies || {};
                   
                   // Copy all dependencies for this agent

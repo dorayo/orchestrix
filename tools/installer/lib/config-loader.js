@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const yaml = require('js-yaml');
-const { extractYamlFromAgent } = require('../../lib/yaml-utils');
+const { extractYamlFromAgent, loadAgentYaml, getAgentMetadata } = require('../../lib/yaml-utils');
 
 class ConfigLoader {
   constructor() {
@@ -34,19 +34,36 @@ class ConfigLoader {
       const agents = [];
       
       for (const entry of entries) {
-        if (entry.isFile() && entry.name.endsWith('.md')) {
+        // Support both .yaml and .md files (for backward compatibility)
+        if (entry.isFile() && (entry.name.endsWith('.yaml') || entry.name.endsWith('.md'))) {
           const agentPath = path.join(agentsDir, entry.name);
-          const agentId = path.basename(entry.name, '.md');
+          const agentId = path.basename(entry.name, entry.name.endsWith('.yaml') ? '.yaml' : '.md');
           
           try {
-            const agentContent = await fs.readFile(agentPath, 'utf8');
+            let agentConfig = null;
             
-            // Extract YAML block from agent file
-            const yamlContentText = extractYamlFromAgent(agentContent);
-            if (yamlContentText) {
-              const yamlContent = yaml.load(yamlContentText);
-              const agentConfig = yamlContent.agent || {};
-              
+            if (entry.name.endsWith('.yaml')) {
+              // Direct YAML file loading
+              const config = await loadAgentYaml(agentPath);
+              if (config) {
+                const metadata = getAgentMetadata(config);
+                agentConfig = {
+                  title: metadata.title,
+                  name: metadata.name,
+                  whenToUse: metadata.description
+                };
+              }
+            } else {
+              // Legacy MD file support
+              const agentContent = await fs.readFile(agentPath, 'utf8');
+              const yamlContentText = extractYamlFromAgent(agentContent);
+              if (yamlContentText) {
+                const yamlContent = yaml.load(yamlContentText);
+                agentConfig = yamlContent.agent || {};
+              }
+            }
+            
+            if (agentConfig) {
               agents.push({
                 id: agentId,
                 name: agentConfig.title || agentConfig.name || agentId,
