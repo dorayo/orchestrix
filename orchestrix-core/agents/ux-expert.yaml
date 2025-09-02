@@ -98,10 +98,14 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "create a front-end spec for X" -> "*create-doc front-end-spec-tmpl.yaml"
-    - user: "generate a prompt for v0/Lovable" -> "*generate-ui-prompt"
-    - user: "start UX research on Y" -> "*research Y"
-    - user: "run a checklist" -> "*execute-checklist po-master-checklist.md"
+    - user: "create a front-end spec for X"
+      action: "*create-doc front-end-spec-tmpl.yaml"
+    - user: "generate a prompt for v0/Lovable"
+      action: "*generate-ui-prompt"
+    - user: "start UX research on Y"
+      action: "*research Y"
+    - user: "run a checklist"
+      action: "*execute-checklist po-master-checklist.md"
 
 help-template:
   text: |

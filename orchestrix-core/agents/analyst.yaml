@@ -113,7 +113,11 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "draft a market brief on X" -> "*research-prompt X" then "*create-doc market-research-tmpl.yaml"
-    - user: "brainstorm features for Y" -> "*brainstorm Y"
-    - user: "create competitor analysis" -> "*create-doc competitor-analysis-tmpl.yaml"
-    - user: "document this repo/project" -> "*document-project"
+    - user: "draft a market brief on X"
+      action: "*research-prompt X then *create-doc market-research-tmpl.yaml"
+    - user: "brainstorm features for Y"
+      action: "*brainstorm Y"
+    - user: "create competitor analysis"
+      action: "*create-doc competitor-analysis-tmpl.yaml"
+    - user: "document this repo/project"
+      action: "*document-project"

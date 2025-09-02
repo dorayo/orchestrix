@@ -104,6 +104,9 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "create a PRD for X" -> "*create-doc prd-tmpl.yaml"
-    - user: "brownfield PRD for Y" -> "*create-doc brownfield-prd-tmpl.yaml"
-    - user: "export the document" -> "*doc-out"
+    - user: "create a PRD for X"
+      action: "*create-doc prd-tmpl.yaml"
+    - user: "brownfield PRD for Y"
+      action: "*create-doc brownfield-prd-tmpl.yaml"
+    - user: "export the document"
+      action: "*doc-out"

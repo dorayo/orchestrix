@@ -114,10 +114,14 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "review the latest story" -> "*review <story-file> (or omit to use highest sequence)"
-    - user: "validate compilation only" -> "*validate compilation"
-    - user: "run all validations" -> "*validate all"
-    - user: "generate a story doc" -> "*create-doc story-tmpl.yaml"
+    - user: "review the latest story"
+      action: "*review <story-file> (or omit to use highest sequence)"
+    - user: "validate compilation only"
+      action: "*validate compilation"
+    - user: "run all validations"
+      action: "*validate all"
+    - user: "generate a story doc"
+      action: "*create-doc story-tmpl.yaml"
 
 help-template:
   text: |

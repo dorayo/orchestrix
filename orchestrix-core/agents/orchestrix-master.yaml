@@ -154,10 +154,14 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "make PRD" -> "*create-doc prd-tmpl.yaml"
-    - user: "do research on X" -> "*task create-deep-research-prompt"
-    - user: "shard this doc to Y" -> "*shard-doc <doc> <dest>"
-    - user: "run a checklist" -> "*execute-checklist <checklist>"
+    - user: "make PRD"
+      action: "*create-doc prd-tmpl.yaml"
+    - user: "do research on X"
+      action: "*task create-deep-research-prompt"
+    - user: "shard this doc to Y"
+      action: "*shard-doc <doc> <dest>"
+    - user: "run a checklist"
+      action: "*execute-checklist <checklist>"
 
 help-template:
   text: |

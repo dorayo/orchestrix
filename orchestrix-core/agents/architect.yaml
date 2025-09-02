@@ -124,7 +124,11 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "design a system for X" -> "*create-doc architecture-tmpl.yaml"
-    - user: "evaluate tech options for Y" -> "*research Y"
-    - user: "review this story's tech accuracy" -> "*review-story <id>"
-    - user: "document this repo/project" -> "*document-project"
+    - user: "design a system for X"
+      action: "*create-doc architecture-tmpl.yaml"
+    - user: "evaluate tech options for Y"
+      action: "*research Y"
+    - user: "review this story's tech accuracy"
+      action: "*review-story <id>"
+    - user: "document this repo/project"
+      action: "*document-project"

@@ -1,19 +1,71 @@
 /**
- * Utility functions for YAML extraction from agent files
+ * Utility functions for YAML processing from agent files
+ * Updated to work with pure YAML agent files instead of markdown-embedded YAML
  */
 
+const fs = require('fs-extra');
+const path = require('path');
+const yaml = require('js-yaml');
+
 /**
- * Extract YAML content from agent markdown files
- * @param {string} agentContent - The full content of the agent file
+ * Load and parse YAML agent file
+ * @param {string} agentPath - The path to the YAML agent file
+ * @param {boolean} cleanCommands - Whether to clean command descriptions (default: false) - kept for backward compatibility
+ * @returns {Promise<Object|null>} - The parsed YAML content or null if not found/invalid
+ */
+async function loadAgentYaml(agentPath, cleanCommands = false) {
+  try {
+    if (!await fs.pathExists(agentPath)) {
+      return null;
+    }
+    
+    const yamlContent = await fs.readFile(agentPath, 'utf8');
+    const config = yaml.load(yamlContent);
+    
+    // Validate basic agent structure
+    if (!config || typeof config !== 'object') {
+      throw new Error('Invalid YAML structure: not an object');
+    }
+    
+    if (!config.agent || !config.agent.id) {
+      throw new Error('Invalid agent configuration: missing agent.id');
+    }
+    
+    return config;
+  } catch (error) {
+    console.warn(`Failed to load agent YAML from ${agentPath}:`, error.message);
+    return null;
+  }
+}
+
+/**
+ * Extract YAML content from agent files - updated for backward compatibility
+ * Now works with both pure YAML files and legacy markdown files
+ * @param {string} agentContent - The full content of the agent file (or file path for YAML files)
  * @param {boolean} cleanCommands - Whether to clean command descriptions (default: false)
- * @returns {string|null} - The extracted YAML content or null if not found
+ * @returns {string|null} - The YAML content as string or null if not found
  */
 function extractYamlFromAgent(agentContent, cleanCommands = false) {
-  // Standardize line endings for consistent processing
+  // If agentContent looks like a file path ending in .yaml, load it
+  if (typeof agentContent === 'string' && agentContent.endsWith('.yaml') && !agentContent.includes('\n')) {
+    try {
+      const content = fs.readFileSync(agentContent, 'utf8');
+      return content;
+    } catch (error) {
+      console.warn(`Failed to read YAML file ${agentContent}:`, error.message);
+      return null;
+    }
+  }
+  
+  // If it's already YAML content (starts with agent: or similar YAML indicators)
+  if (agentContent.trim().startsWith('agent:') || agentContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_]*:/)) {
+    return agentContent.trim();
+  }
+  
+  // Legacy: Extract from markdown format
   const normalizedContent = agentContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   
   // More robust regex pattern to handle various YAML block formats
-  // Supports: ```yaml, ```yml, with optional whitespace
   const yamlMatch = normalizedContent.match(/```ya?ml\s*\n([\s\S]*?)\n\s*```/);
   if (!yamlMatch) {
     // Fallback: try without the closing newline requirement
@@ -26,7 +78,6 @@ function extractYamlFromAgent(agentContent, cleanCommands = false) {
   let yamlContent = yamlMatch[1].trim();
   
   // Clean up command descriptions if requested
-  // Converts "- command - description" to just "- command"
   if (cleanCommands) {
     yamlContent = yamlContent.replace(/^(\s*-)(\s*"[^"]+")(\s*-\s*.*)$/gm, '$1$2');
   }
@@ -35,50 +86,48 @@ function extractYamlFromAgent(agentContent, cleanCommands = false) {
 }
 
 /**
- * Extract agent dependencies from YAML content
- * @param {string} yamlContent - The YAML content to parse
- * @returns {Object} - Object containing tasks, data, templates arrays
+ * Extract agent dependencies from YAML content or config object
+ * @param {string|Object} yamlContentOrConfig - The YAML content string or parsed config object
+ * @returns {Object} - Object containing tasks, data, templates, checklists, utils arrays
  */
-function extractAgentDependencies(yamlContent) {
+function extractAgentDependencies(yamlContentOrConfig) {
   try {
-    // Simple YAML parsing for dependencies section
-    const dependenciesMatch = yamlContent.match(/dependencies:\s*\n([\s\S]*?)(?=\n\w+:|$)/);
-    if (!dependenciesMatch) return { tasks: [], data: [], templates: [] };
+    let config;
     
-    const depsSection = dependenciesMatch[1];
-    const result = { tasks: [], data: [], templates: [] };
-    
-    // Extract tasks
-    const tasksMatch = depsSection.match(/tasks:\s*\n([\s\S]*?)(?=\n\s*\w+:|$)/);
-    if (tasksMatch) {
-      const tasks = tasksMatch[1].match(/-\s*([^\n\r]+)/g) || [];
-      result.tasks = tasks.map(task => 
-        task.replace(/^-\s*/, '').trim().replace(/^"|"$/g, '').replace(/\.md$/, '.md').trim()
-      ).filter(task => task && !task.includes('FILE-RESOLUTION'));
+    // If it's already a parsed object, use it directly
+    if (typeof yamlContentOrConfig === 'object' && yamlContentOrConfig !== null) {
+      config = yamlContentOrConfig;
+    } else {
+      // Parse YAML string
+      config = yaml.load(yamlContentOrConfig);
     }
     
-    // Extract data
-    const dataMatch = depsSection.match(/data:\s*\n([\s\S]*?)(?=\n\s*\w+:|$)/);
-    if (dataMatch) {
-      const data = dataMatch[1].match(/-\s*([^\n\r]+)/g) || [];
-      result.data = data.map(item => 
-        item.replace(/^-\s*/, '').trim().replace(/^"|"$/g, '').replace(/\.md$/, '.md').trim()
-      ).filter(item => item && !item.includes('FILE-RESOLUTION'));
+    if (!config || !config.dependencies) {
+      return { tasks: [], data: [], templates: [], checklists: [], utils: [] };
     }
     
-    // Extract templates
-    const templatesMatch = depsSection.match(/templates:\s*\n([\s\S]*?)(?=\n\s*\w+:|$)/);
-    if (templatesMatch) {
-      const templates = templatesMatch[1].match(/-\s*([^\n\r]+)/g) || [];
-      result.templates = templates.map(template => 
-        template.replace(/^-\s*/, '').trim().replace(/^"|"$/g, '').replace(/\.yaml$/, '.yaml').trim()
-      ).filter(template => template && !template.includes('FILE-RESOLUTION'));
+    const deps = config.dependencies;
+    const result = {
+      tasks: [],
+      data: [],
+      templates: [],
+      checklists: [],
+      utils: []
+    };
+    
+    // Extract each dependency type
+    for (const [type, items] of Object.entries(deps)) {
+      if (Array.isArray(items) && result.hasOwnProperty(type)) {
+        result[type] = items
+          .map(item => typeof item === 'string' ? item.trim() : String(item).trim())
+          .filter(item => item && !item.includes('FILE-RESOLUTION'));
+      }
     }
     
     return result;
   } catch (error) {
     console.warn('Failed to parse agent dependencies:', error.message);
-    return { tasks: [], data: [], templates: [] };
+    return { tasks: [], data: [], templates: [], checklists: [], utils: [] };
   }
 }
 
@@ -90,54 +139,164 @@ function extractAgentDependencies(yamlContent) {
  */
 async function validateAgentDependencies(agentId, installDir) {
   const agentPath = await findAgentPath(agentId, installDir);
-  if (!agentPath) return { valid: false, missing: [] };
+  if (!agentPath) return { valid: false, missing: [], error: 'Agent file not found' };
   
-  const agentContent = require('./file-manager').readFile(agentPath);
-  const yamlContent = extractYamlFromAgent(agentContent);
-  if (!yamlContent) return { valid: false, missing: [] };
-  
-  const dependencies = extractAgentDependencies(yamlContent);
-  const missing = [];
-  
-  // Check if all task dependencies exist
-  const tasksDir = path.join(installDir, '.orchestrix-core', 'tasks');
-  for (const task of dependencies.tasks) {
-    const taskPath = path.join(tasksDir, task);
-    if (!require('./file-manager').fileExists(taskPath)) {
-      missing.push(`task: ${task}`);
+  try {
+    // Load agent config
+    const config = await loadAgentYaml(agentPath);
+    if (!config) return { valid: false, missing: [], error: 'Failed to load agent config' };
+    
+    const dependencies = extractAgentDependencies(config);
+    const missing = [];
+    
+    // Check if all dependencies exist
+    const depTypes = ['tasks', 'data', 'templates', 'checklists', 'utils'];
+    
+    for (const depType of depTypes) {
+      if (dependencies[depType] && dependencies[depType].length > 0) {
+        const depDir = path.join(installDir, '.orchestrix-core', depType);
+        
+        for (const depItem of dependencies[depType]) {
+          // Ensure proper file extension
+          let fileName = depItem;
+          if (depType === 'templates' && !fileName.endsWith('.yaml')) {
+            fileName += '.yaml';
+          } else if (depType !== 'templates' && !fileName.endsWith('.md')) {
+            fileName += '.md';
+          }
+          
+          const depPath = path.join(depDir, fileName);
+          if (!await fs.pathExists(depPath)) {
+            missing.push(`${depType}: ${fileName}`);
+          }
+        }
+      }
     }
+    
+    return {
+      valid: missing.length === 0,
+      missing,
+      dependencies,
+      config
+    };
+  } catch (error) {
+    return { 
+      valid: false, 
+      missing: [], 
+      error: `Validation failed: ${error.message}` 
+    };
   }
-  
-  return {
-    valid: missing.length === 0,
-    missing,
-    dependencies
-  };
 }
 
 /**
- * Find agent file path
+ * Find agent file path - updated to look for .yaml files
  * @param {string} agentId - The agent ID
  * @param {string} installDir - The installation directory
  * @returns {Promise<string|null>} - The agent file path or null
  */
 async function findAgentPath(agentId, installDir) {
-  const agentsDir = path.join(installDir, '.orchestrix-core', 'agents');
-  const agentFile = path.join(agentsDir, `${agentId}.md`);
+  // Primary location: .orchestrix-core/agents/{agentId}.yaml
+  const primaryPath = path.join(installDir, '.orchestrix-core', 'agents', `${agentId}.yaml`);
   
   try {
-    const fs = require('fs-extra');
-    if (await fs.pathExists(agentFile)) {
-      return agentFile;
+    if (await fs.pathExists(primaryPath)) {
+      return primaryPath;
     }
   } catch (error) {
-    // Ignore errors
+    // Continue to check other locations
+  }
+  
+  // Fallback locations - prioritize YAML files
+  const fallbackPaths = [
+    // Source directory (for development)
+    path.join(installDir, 'orchestrix-core', 'agents', `${agentId}.yaml`),
+    // Alternative locations
+    path.join(installDir, 'agents', `${agentId}.yaml`),
+    // Legacy .md files for backward compatibility (lower priority)
+    path.join(installDir, '.orchestrix-core', 'agents', `${agentId}.md`),
+    path.join(installDir, 'agents', `${agentId}.md`)
+  ];
+  
+  for (const agentPath of fallbackPaths) {
+    try {
+      if (await fs.pathExists(agentPath)) {
+        return agentPath;
+      }
+    } catch (error) {
+      // Continue checking other paths
+    }
   }
   
   return null;
 }
 
+/**
+ * Get agent metadata from config
+ * @param {Object} config - The parsed agent configuration
+ * @returns {Object} - Agent metadata
+ */
+function getAgentMetadata(config) {
+  if (!config || !config.agent) {
+    return {
+      id: 'unknown',
+      name: 'Unknown Agent',
+      title: 'Unknown Agent',
+      description: 'No description available'
+    };
+  }
+  
+  const agent = config.agent;
+  return {
+    id: agent.id || 'unknown',
+    name: agent.name || agent.title || agent.id || 'Unknown Agent',
+    title: agent.title || agent.name || agent.id || 'Unknown Agent',
+    description: agent.whenToUse || 'No description available',
+    icon: agent.icon || '🤖',
+    tools: agent.tools || []
+  };
+}
+
+/**
+ * Validate YAML agent file structure
+ * @param {Object} config - The parsed agent configuration
+ * @returns {Object} - Validation result
+ */
+function validateAgentStructure(config) {
+  const errors = [];
+  const warnings = [];
+  
+  if (!config) {
+    errors.push('Configuration is null or undefined');
+    return { valid: false, errors, warnings };
+  }
+  
+  // Required fields
+  if (!config.agent) {
+    errors.push('Missing required "agent" section');
+  } else {
+    if (!config.agent.id) errors.push('Missing required agent.id');
+    if (!config.agent.name && !config.agent.title) warnings.push('Missing agent name/title');
+  }
+  
+  // Optional but recommended fields
+  if (!config.core_principles) warnings.push('Missing core_principles section');
+  if (!config.commands) warnings.push('Missing commands section');
+  if (!config.dependencies) warnings.push('Missing dependencies section');
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
+
 module.exports = {
+  // New functions
+  loadAgentYaml,
+  getAgentMetadata,
+  validateAgentStructure,
+  
+  // Updated functions (maintain backward compatibility)
   extractYamlFromAgent,
   extractAgentDependencies,
   validateAgentDependencies,

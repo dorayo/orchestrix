@@ -210,7 +210,11 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding. Always remind that commands require *."
   examples:
-    - user: "make a PRD" -> "*agent pm" then "*create-doc prd-tmpl.yaml"
-    - user: "do research on X" -> "*agent analyst" then "*task create-deep-research-prompt"
-    - user: "run architect workflow" -> "*agent architect" then "*workflow <name>" or "*task create-doc-auto.md"
-    - user: "enable KB and answer" -> "*kb-mode"
+    - user: "make a PRD"
+      action: "*agent pm then *create-doc prd-tmpl.yaml"
+    - user: "do research on X"
+      action: "*agent analyst then *task create-deep-research-prompt"
+    - user: "run architect workflow"
+      action: "*agent architect then *workflow <name> or *task create-doc-auto.md"
+    - user: "enable KB and answer"
+      action: "*kb-mode"

@@ -240,5 +240,7 @@ ide-file-resolution:
 request-resolution:
   policy: "Map natural language to commands/dependencies. If ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "draft story" -> "*create -> create-next-story task"
-    - user: "make a new prd" -> "tasks.create-doc + templates.prd-tmpl.md"
+    - user: "draft story"
+      action: "*create -> create-next-story task"
+    - user: "make a new prd"
+      action: "tasks.create-doc + templates.prd-tmpl.md"

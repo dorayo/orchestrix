@@ -115,10 +115,14 @@ ide-file-resolution:
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding."
   examples:
-    - user: "refine this story" -> "*create-story" or "*validate-story-draft <file>"
-    - user: "split this large document" -> "*shard-doc <doc> <dest>"
-    - user: "run the PO checklist" -> "*execute-checklist po-master-checklist.md"
-    - user: "export the document" -> "*doc-out"
+    - user: "refine this story"
+      action: "*create-story or *validate-story-draft <file>"
+    - user: "split this large document"
+      action: "*shard-doc <doc> <dest>"
+    - user: "run the PO checklist"
+      action: "*execute-checklist po-master-checklist.md"
+    - user: "export the document"
+      action: "*doc-out"
 
 help-template:
   text: |
