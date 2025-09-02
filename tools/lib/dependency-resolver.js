@@ -173,8 +173,8 @@ class DependencyResolver {
     try {
       const files = await fs.readdir(path.join(this.orchestrixCore, 'agents'));
       return files
-        .filter(f => f.endsWith('.md'))
-        .map(f => f.replace('.md', ''));
+        .filter(f => f.endsWith('.yaml'))
+        .map(f => f.replace('.yaml', ''));
     } catch (error) {
       return [];
     }
