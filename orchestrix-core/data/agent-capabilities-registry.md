@@ -81,23 +81,25 @@ Comprehensive registry of all Orchestrix agents, their capabilities, tools, and 
 **Role**: Holistic System Architect & Full-Stack Technical Leader
 **Tools**: Read, Edit, Write, Bash, WebSearch
 **Primary Capabilities**:
-- Complete systems architecture design
+- Complete systems architecture design and documentation
 - Cross-stack optimization and technical leadership
-- Technology selection with pragmatic choices
+- Technology selection with pragmatic choices and justification
 - API design and infrastructure planning
-- Technical story review and accuracy validation
-- Project architecture documentation
+- **Story technical accuracy review (≥7/10 score, zero critical issues)**
+- Architecture-story alignment validation and approval
+- Project architecture documentation and updates
 **Optimal For**:
-- System design and architecture documentation
-- Technology selection and evaluation
-- Technical story review and validation
-- Infrastructure planning and design
-- Cross-stack system optimization
+- System architecture design and documentation
+- Technology evaluation and selection
+- **Story technical accuracy review and approval**
+- Infrastructure planning and technical validation
+- Architecture-requirements alignment verification
 **Handoff Triggers**:
-- System architecture design needed
-- Technology evaluation required
-- Technical story review requested
-- Infrastructure planning needed
+- System architecture design needed (Phase 1)
+- Technology evaluation and selection required
+- **Story technical review needed (development iteration)**
+- Architecture-story alignment validation required
+- Technical accuracy scoring below 7/10 threshold
 
 ### dev
 **Name**: Jiangtao
@@ -173,46 +175,48 @@ Comprehensive registry of all Orchestrix agents, their capabilities, tools, and 
 **Role**: Technical Product Owner & Process Steward
 **Tools**: Read, Edit, MultiEdit, Write, Bash, WebSearch
 **Primary Capabilities**:
+- **Cross-document consistency validation and quality assurance**
+- **Document sharding for IDE development preparation**
 - Backlog management and story refinement
 - Acceptance criteria specification and validation
 - Sprint planning and prioritization decisions
-- Document sharding and process stewardship
-- Epic creation and story validation
-- Course correction and quality assurance
+- Epic creation and story validation with quality gates
+- Course correction and process stewardship
 **Optimal For**:
+- **Cross-document consistency validation (PRD, Architecture, UI specs)**
+- **Document sharding and IDE development preparation**
+- Quality assurance and process stewardship
 - Backlog management and story refinement
-- Acceptance criteria and sprint planning
-- Process stewardship and quality control
-- Document organization and sharding
 - Epic and story creation/validation
 **Handoff Triggers**:
-- Backlog refinement needed
-- Story acceptance criteria required
-- Sprint planning and prioritization
-- Process improvement and quality control needed
+- **Cross-document validation needed (Phase 2 quality gate)**
+- **Document sharding for IDE development required**
+- Backlog refinement and story acceptance criteria needed
+- Process improvement and quality control required
+- Epic planning and validation needed
 
 ### sm
 **Name**: Bob
 **Role**: Technical Scrum Master - Story Preparation Specialist
 **Tools**: Read, Edit, MultiEdit, Write
 **Primary Capabilities**:
-- Story creation with technical extraction
-- Epic management and story preparation
-- Technical extraction checklist execution
-- Story quality validation and course correction
-- Detailed story preparation for AI developers
+- Story creation with mandatory technical extraction (≥80% completion rate)
+- Story quality validation with scoring (≥7/10 pass threshold)
+- Technical extraction checklist execution and validation
+- Epic management and story preparation for AI developers
 - Frontend user confirmation processes
+- Course correction and iterative improvement
 **Optimal For**:
-- Story creation and preparation
-- Technical extraction and validation
-- Story quality assurance
+- User story creation with quality gates
+- Technical extraction and validation (≥80% completion)
+- Story quality assurance (≥7/10 scoring)
 - Epic management and planning
-- Preparing detailed stories for development
+- Preparing detailed stories for AI developer handoff
 **Handoff Triggers**:
-- New story creation needed
-- Technical extraction required
-- Story quality validation needed
-- Epic planning and management required
+- New story creation needed in development iteration
+- Technical extraction validation required
+- Story quality scoring below 7/10 threshold
+- Epic planning and story preparation required
 
 ### ux-expert
 **Name**: Jingwen
@@ -261,33 +265,39 @@ Comprehensive registry of all Orchestrix agents, their capabilities, tools, and 
 - **High Complexity**: orchestrix-master or orchestrix-orchestrator
 - **Cross-functional**: orchestrix-master with specialist support
 
-### By Project Phase
-- **Initiation**: analyst → pm → architect → orchestrix-master
-- **Planning**: pm → po → sm → orchestrix-orchestrator
-- **Story Preparation**: sm → po → architect (for technical review)
-- **Development**: dev → qa → architect (for complex changes)
-- **Testing & QA**: qa → dev → qa (review cycle)
-- **UI/UX Work**: ux-expert → architect (for technical integration)
-- **Coordination**: orchestrix-orchestrator → orchestrix-master (for complex orchestration)
+### By Project Phase (Orchestrix Standard Workflow)
+- **Phase 1 - Requirements Analysis & Planning (Web UI)**:
+  - analyst → pm → ux-expert → architect → pm (update PRD)
+- **Phase 2 - Quality Assurance & Validation (Web UI)**:
+  - po (cross-document validation) → po (document sharding for IDE)
+- **Phase 3 - Development Iteration Loop (IDE)**:
+  - sm (story creation + quality gates) → architect (technical review ≥7/10) → dev (implementation) → qa (code review) → [repeat until complete]
+- **Special Workflows**:
+  - **Multi-agent coordination**: orchestrix-orchestrator
+  - **Universal task execution**: orchestrix-master
+  - **Complex orchestration**: orchestrix-orchestrator → orchestrix-master
 
 ---
 
 ## Agent Interaction Patterns
 
 ### Common Handoff Chains
-1. **New Feature**: analyst → pm → architect → sm → dev → qa
-2. **Story Development**: sm → po → dev → qa
-3. **Bug Fix**: qa → dev → qa
-4. **Architecture Change**: architect → dev → qa → orchestrix-master
-5. **UI/UX Feature**: ux-expert → architect → sm → dev → qa
-6. **Market Research**: analyst → pm → po → sm
-7. **Multi-Agent Workflow**: orchestrix-orchestrator → specialist agents → orchestrix-orchestrator
+1. **Standard Orchestrix Workflow**: analyst → pm → ux-expert → architect → pm → po → [development iteration loop]
+2. **Development Iteration Loop**: sm (≥80% + ≥7/10) → architect (≥7/10 + 0 critical) → dev → qa → [repeat]
+3. **Story Quality Gate Failure**: sm → sm (revision) → architect (re-review)
+4. **Cross-Document Validation**: po → [back to relevant agent for fixes] → po
+5. **Bug Fix Cycle**: qa → dev → qa
+6. **Architecture Change**: architect → dev → qa → orchestrix-master (if complex)
+7. **Market Research Deep Dive**: analyst → pm → po
+8. **Multi-Agent Coordination**: orchestrix-orchestrator → specialist agents → orchestrix-orchestrator
 
 ### Collaboration Indicators
 - **High Synergy**: architect ↔ dev, po ↔ sm, pm ↔ analyst, qa ↔ dev
-- **Sequential Flow**: analyst → pm → architect → sm → dev → qa
-- **Parallel Work**: dev + ux-expert, pm + analyst, po + sm
-- **Review Cycles**: dev → qa → dev, sm → po → sm, architect → dev → architect
+- **Standard Sequential Flow**: analyst → pm → ux-expert → architect → pm → po
+- **Development Iteration Flow**: sm → architect → dev → qa
+- **Quality Gate Partnerships**: sm ↔ architect (story quality), po ↔ all (validation)
+- **Parallel Work**: dev + ux-expert (technical integration), pm + analyst (requirements)
+- **Review Cycles**: dev → qa → dev, sm → architect → sm, po → [agent] → po
 - **Coordination Hubs**: orchestrix-orchestrator ↔ all agents, orchestrix-master ↔ all resources
 
 ---
