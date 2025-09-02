@@ -5133,6 +5133,8 @@ parseListSection(text) {
         return this.formatStateTransitions(agentData);
       } else if (trimmedPath === 'elicitation.generic-form[]') {
         return this.formatElicitationForm(agentData);
+      } else if (trimmedPath === 'commands.role-specific[].detailed_specs') {
+        return this.formatRoleSpecificCommandSpecs(agentData);
       } else if (trimmedPath.includes('commands.') && trimmedPath.includes('[].')) {
         return this.formatCommandSpecs(trimmedPath, agentData);
       }
@@ -5272,6 +5274,47 @@ parseListSection(text) {
       }
       return String(value || '');
     }).filter(v => v).join('\n- ');
+  }
+
+  // Format detailed specs for role-specific commands only
+  formatRoleSpecificCommandSpecs(agentData) {
+    const roleSpecificCommands = this.getNestedValue(agentData, 'commands.role-specific');
+    if (!Array.isArray(roleSpecificCommands)) return '';
+    
+    return roleSpecificCommands.map(cmd => {
+      let spec = `#### \\*${cmd.name || 'command'}\n\n`;
+      spec += `Intent: ${cmd.desc || ''}\n`;
+      
+      // Only include sections that have actual content
+      const sections = [
+        { title: 'Preconditions', key: 'preconditions', fallback: 'checks' },
+        { title: 'Guards', key: 'guard', fallback: 'test-integrity-rules' },
+        { title: 'Order', key: 'order' },
+        { title: 'Blocking Conditions', key: 'blocking' },
+        { title: 'Review Gate', key: 'ready-for-review' },
+        { title: 'Completion Gate', key: 'completion' },
+        { title: 'Failure Policy', key: 'on_fail' },
+        { title: 'Write Policy', key: 'write-policy' }
+      ];
+      
+      sections.forEach(section => {
+        let value = cmd[section.key];
+        if (!value && section.fallback) {
+          value = cmd[section.fallback];
+        }
+        
+        if (value) {
+          spec += `${section.title}:\n\n`;
+          if (Array.isArray(value)) {
+            spec += value.map(item => `- ${item}`).join('\n') + '\n';
+          } else {
+            spec += `- ${value}\n`;
+          }
+        }
+      });
+      
+      return spec;
+    }).join('\n');
   }
 
   // Process conditional blocks like {{?field}}...{{/field}}

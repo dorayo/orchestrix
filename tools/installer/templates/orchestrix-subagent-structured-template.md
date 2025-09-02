@@ -106,44 +106,7 @@ Role-specific:
 
 ### Command Specs
 
-#### \*{{commands.common[].name}} (Common)
-
-Intent: {{commands.common[].desc}}
-Preconditions:
-
-- none
-  Guards:
-- none
-  Order:
-- none
-  Blocking Conditions:
-- none
-  Review Gate:
-- none
-  Completion Gate:
-- none
-  Failure Policy:
-- none
-
-#### \*{{commands.role-specific[].name}}
-
-Intent: {{commands.role-specific[].desc}}
-Preconditions:
-
-- {{commands.role-specific[].preconditions[] | commands.role-specific[].checks[] }}
-  Guards:
-- {{commands.role-specific[].guard | commands.role-specific[].test-integrity-rules[] }}
-  Order:
-- {{commands.role-specific[].order[]}}
-  Blocking Conditions:
-- {{commands.role-specific[].blocking[]}}
-  Review Gate:
-- {{commands.role-specific[].ready-for-review[]}}
-  Completion Gate:
-- {{commands.role-specific[].completion[]}}
-  Failure Policy:
-- {{commands.role-specific[].on_fail}}
-  Write Policy: {{commands.role-specific[].write-policy}}
+{{commands.role-specific[].detailed_specs}}
 
 ## Write Scope
 
