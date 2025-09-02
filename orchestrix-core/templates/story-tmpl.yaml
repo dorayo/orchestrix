@@ -40,7 +40,7 @@ sections:
     instruction: Define the user story using the standard format with role, action, and benefit
     elicit: true
     owner: scrum-master
-    editors: [scrum-master]
+    editors: [scrum-master, ux-expert]
     
   - id: acceptance-criteria
     title: Acceptance Criteria
@@ -48,7 +48,7 @@ sections:
     instruction: Copy the acceptance criteria numbered list from the epic file
     elicit: true
     owner: scrum-master
-    editors: [scrum-master]
+    editors: [scrum-master, ux-expert]
     
   - id: tasks-subtasks
     title: Tasks / Subtasks
@@ -96,7 +96,7 @@ sections:
         - [ ] Verify all acceptance criteria
     elicit: true
     owner: scrum-master
-    editors: [scrum-master, dev-agent]
+    editors: [scrum-master, dev-agent, ux-expert]
     
   - id: dev-notes
     title: Dev Notes
@@ -150,7 +150,7 @@ sections:
     columns: [Date, Version, Description, Author]
     instruction: Track changes made to this story document
     owner: scrum-master
-    editors: [scrum-master, dev-agent, qa-agent]
+    editors: [scrum-master, dev-agent, qa-agent, ux-expert]
     
   - id: dev-agent-record
     title: Dev Agent Record
