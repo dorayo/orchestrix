@@ -35,7 +35,14 @@ class Installer {
     // Initialize ES modules
     await initializeModules();
     
-    const spinner = ora("Analyzing installation directory...").start();
+    // const spinner = ora("Analyzing installation directory...").start();
+    const spinner = { 
+      text: '', 
+      start: () => spinner,
+      stop: () => {}, 
+      succeed: (msg) => msg && console.log(chalk.green(`✓ ${msg}`)), 
+      fail: (msg) => msg && console.log(chalk.red(`✗ ${msg}`)) 
+    };
 
     try {
       // Store the original CWD where npx was executed
@@ -1486,7 +1493,7 @@ class Installer {
       copiedFiles.push(path.join(targetSubdir, item));
     }
     
-    console.log(chalk.dim(`  Added ${commonItems.length} common utilities`));
+    // console.log(chalk.dim(`  Added ${commonItems.length} common utilities`));
     return copiedFiles;
   }
 

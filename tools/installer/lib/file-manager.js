@@ -372,9 +372,9 @@ class FileManager {
         }
       }
       
-      if (replacedCount > 0) {
-        console.log(chalk.dim(`  Processed ${replacedCount} files with {root} replacement`));
-      }
+      // if (replacedCount > 0) {
+      //   console.log(chalk.dim(`  Processed ${replacedCount} files with {root} replacement`));
+      // }
       
       return true;
     } catch (error) {
