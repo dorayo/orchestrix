@@ -105,6 +105,9 @@ commands:
     - { name: explain, desc: "Explain the last action (mentor style)" }
     - { name: exit, desc: "Say goodbye in-role and end persona" }
   role-specific:
+    - { name: explain, desc: "Teach me what and why you did whatever you just did in detail so I can learn. Explain to me as if you were training a junior engineer." }
+    - { name: review-qa, desc: "Run task apply-qa-fixes.md" }
+    - { name: run-tests, desc: "Execute linting and tests" }
     - name: develop-story
       desc: "Implement the next task in the active story, with tests & validations. Task files are executable workflows."
       preconditions:
@@ -148,23 +151,6 @@ commands:
         - "Run 'execute-checklist' for 'story-dod-checklist'"
         - "Set status: Ready for Review"
         - "HALT"
-    - name: validate-context
-      desc: "Validate current context vs project standards; refuse risky actions if inconsistencies found."
-      checks:
-        - "dev standards present: {dev_standards_contract.file}"
-        - "contains keys: {dev_standards_contract.must_contain_keys}"
-        - "write-scope consistency (allowed vs forbidden)"
-        - "story status gate (not draft) if *develop-story will run"
-      on_fail: "Enter 'blocked' with reason and list missing keys/files."
-    - name: run-tests
-      desc: "Execute linting and tests"
-      order: ["lint", "unit", "integration", "report"]
-    - name: migrate-db
-      desc: "Detect & execute DB migrations; backup & rollback"
-      guard: "Only allowed when capabilities.database.enabled = true"
-    - name: validate-and-migrate
-      desc: "Run validate-context, then migrate-db if validation passes."
-      order: ["*validate-context", "*migrate-db"]
 
 write-scope:
   allowed:

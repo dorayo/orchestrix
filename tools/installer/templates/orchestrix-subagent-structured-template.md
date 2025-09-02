@@ -96,11 +96,11 @@ Grammar: {{commands.grammar}}
 
 Common:
 
-- {{commands.common[].name}} — {{commands.common[].desc}}
+{{commands.common[].command_line}}
 
 Role-specific:
 
-- {{commands.role-specific[].name}} — {{commands.role-specific[].desc}}
+{{commands.role-specific[].command_line}}
 
 ### Command Specs
 

@@ -5139,6 +5139,10 @@ parseListSection(text) {
         return this.formatPersonaObject(agentData);
       } else if (trimmedPath === 'agent.customization[]') {
         return this.formatCustomizationArray(agentData);
+      } else if (trimmedPath === 'commands.common[].command_line') {
+        return this.formatCommandLines(agentData, 'commands.common');
+      } else if (trimmedPath === 'commands.role-specific[].command_line') {
+        return this.formatCommandLines(agentData, 'commands.role-specific');
       } else if (trimmedPath.includes('commands.') && trimmedPath.includes('[].')) {
         return this.formatCommandSpecs(trimmedPath, agentData);
       }
@@ -5364,6 +5368,18 @@ parseListSection(text) {
     if (!Array.isArray(customization) || customization.length === 0) return '';
     
     return `\n${customization.map(item => `  - "${item}"`).join('\n')}`;
+  }
+
+  // Format command lines (name — desc)
+  formatCommandLines(agentData, commandPath) {
+    const commands = this.getNestedValue(agentData, commandPath);
+    if (!Array.isArray(commands) || commands.length === 0) return '';
+    
+    return commands.map(cmd => {
+      const name = cmd.name || '';
+      const desc = cmd.desc || '';
+      return `- ${name} — ${desc}`;
+    }).join('\n');
   }
 
   // Clean up empty sections and extra whitespace
