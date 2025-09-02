@@ -1978,7 +1978,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
 
 
   async generateEnhancedSubagentContent(agentId, agentContent, installDir) {
-    // 使用结构化模板
+    // 使用修复的结构化模板
     const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-structured-template.md');
     
     // 确保增强模板存在
@@ -5117,11 +5117,14 @@ parseListSection(text) {
     return allPassed;
   }
 
-  // Process structured template with {{field}} syntax
+  // Process structured template with {{field}} syntax and conditional blocks
   processStructuredTemplate(template, agentData, agentId) {
     let content = template;
     
-    // Replace all {{...}} patterns
+    // First, process conditional blocks {{?field}}...{{/field}}
+    content = this.processConditionalBlocks(content, agentData);
+    
+    // Then replace all remaining {{...}} patterns
     content = content.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
       const trimmedPath = path.trim();
       
@@ -5134,8 +5137,13 @@ parseListSection(text) {
         return this.formatCommandSpecs(trimmedPath, agentData);
       }
       
-      return this.resolveTemplatePath(trimmedPath, agentData, agentId) || match;
+      const value = this.resolveTemplatePath(trimmedPath, agentData, agentId);
+      // If value is empty or undefined, return empty string instead of the original template variable
+      return value || '';
     });
+    
+    // Clean up any remaining empty sections
+    content = this.cleanupEmptySections(content);
     
     return content;
   }
@@ -5264,6 +5272,45 @@ parseListSection(text) {
       }
       return String(value || '');
     }).filter(v => v).join('\n- ');
+  }
+
+  // Process conditional blocks like {{?field}}...{{/field}}
+  processConditionalBlocks(content, agentData) {
+    // Pattern to match conditional blocks: {{?path}}content{{/path}}
+    const conditionalPattern = /\{\{\?([^}]+)\}\}([\s\S]*?)\{\{\/\1\}\}/g;
+    
+    return content.replace(conditionalPattern, (match, path, innerContent) => {
+      const trimmedPath = path.trim();
+      const value = this.getNestedValue(agentData, trimmedPath);
+      
+      // Include the block if the value exists and is not empty
+      if (value !== null && value !== undefined && value !== '' && 
+          !(Array.isArray(value) && value.length === 0)) {
+        return innerContent;
+      }
+      
+      return ''; // Remove the entire block if condition is false
+    });
+  }
+
+  // Clean up empty sections and extra whitespace
+  cleanupEmptySections(content) {
+    // Remove sections that are just headers with no content
+    content = content.replace(/^## [^\n]*\n\n(?=##|$)/gm, '');
+    
+    // Remove multiple consecutive empty lines
+    content = content.replace(/\n{3,}/g, '\n\n');
+    
+    // Remove trailing whitespace from lines
+    content = content.replace(/[ \t]+$/gm, '');
+    
+    // Remove empty bullet points
+    content = content.replace(/^- *$/gm, '');
+    
+    // Remove lines that are just dashes or colons
+    content = content.replace(/^[ \t]*[-:]+[ \t]*$/gm, '');
+    
+    return content.trim();
   }
 }
 

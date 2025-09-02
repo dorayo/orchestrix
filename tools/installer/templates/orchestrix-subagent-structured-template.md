@@ -21,27 +21,29 @@ Allowed Reads:
 
 Forbidden Reads: {{activation.load_policy.forbidden_reads}}
 
-Visibility Rule: {{activation.load_policy.visibility_rule}}
+{{?activation.load_policy.visibility_rule}}Visibility Rule: {{activation.load_policy.visibility_rule}}{{/activation.load_policy.visibility_rule}}
 
-Assigned Story Source: {{activation.load_policy.assigned_story_source}}
+{{?activation.load_policy.assigned_story_source}}Assigned Story Source: {{activation.load_policy.assigned_story_source}}{{/activation.load_policy.assigned_story_source}}
 
-### Blocked If
+{{?activation.blocked_if}}### Blocked If
 
 - Reason: {{activation.blocked_if[].reason}}
 - When: {{activation.blocked_if[].when}}
 - Action: {{activation.blocked_if[].action}}
+  {{/activation.blocked_if}}
 
 ### On Start
 
 - {{activation.on_start[]}}
 
-## Dev Standards Contract
+{{?dev_standards_contract}}## Dev Standards Contract
 
 File: {{dev_standards_contract.file}}
 Must Contain Keys: {{dev_standards_contract.must_contain_keys[]}}
 Fail If Missing: {{dev_standards_contract.fail_if_missing}}
+{{/dev_standards_contract}}
 
-## Conflict Resolution
+{{?conflict-resolution}}## Conflict Resolution
 
 Invariants:
 
@@ -50,17 +52,19 @@ Invariants:
 - {{conflict-resolution.precedence[]}}
   Rules:
 - {{conflict-resolution.rules[]}}
+  {{/conflict-resolution}}
 
 ## Core Principles
 
 - {{core_principles[]}}
 
-## State Machine
+{{?state-machine}}## State Machine
 
 States: {{state-machine.states[]}}
 
 Transitions:
 {{state-machine.transitions[]}}
+{{/state-machine}}
 
 ## Output Invariants
 
@@ -151,18 +155,21 @@ Forbidden:
 
 - {{write-scope.forbidden[]}}
 
-## Capabilities
+{{?capabilities}}## Capabilities
 
-Database Enabled: {{capabilities.database.enabled}}
+{{?capabilities.database}}Database Enabled: {{capabilities.database.enabled}}{{/capabilities.database}}
+{{/capabilities}}
 
-## Security
+{{?security}}## Security
 
 - {{security[]}}
+  {{/security}}
 
-## Telemetry
+{{?telemetry}}## Telemetry
 
 - {{telemetry[]}}
   Metrics: {{telemetry.metrics[]}}
+  {{/telemetry}}
 
 ## Help Template
 
@@ -170,23 +177,26 @@ Database Enabled: {{capabilities.database.enabled}}
 {{help-template.text}}
 ```
 
-## Blocked Response
+{{?blocked-response}}## Blocked Response
 
 ```
 {{blocked-response.text}}
 ```
 
-## Exit Policy
+{{/blocked-response}}
+
+{{?exit-policy}}## Exit Policy
 
 - {{exit-policy[]}}
+  {{/exit-policy}}
 
 ## Dependencies
 
 Tasks:
 
 - {{dependencies.tasks[]}}
-  Checklists:
-- {{dependencies.checklists[]}}
+  {{?dependencies.checklists}} Checklists:
+- {{dependencies.checklists[]}}{{/dependencies.checklists}}
 
 ## IDE File Resolution
 
