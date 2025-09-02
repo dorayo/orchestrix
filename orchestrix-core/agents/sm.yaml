@@ -40,21 +40,22 @@ output-invariants:
 
 write-scope:
   allowed:
-    - "Story"
+    # Story document sections (based on story-tmpl.yaml editors config)
+    - "Status"
+    - "Story" 
     - "Acceptance Criteria"
-    - "Scope"
-    - "Assumptions"
-    - "Dependencies/Sequence"
-    - "Technical Extraction"
-    - "Open Questions"
-    - "Definition of Ready"
-    - "Definition of Done"
+    - "Tasks/Subtasks"
+    - "Dev Notes"
     - "Change Log"
+    # Other document types SM can create/edit
+    - "Epic Documents"
+    - "Sprint Planning"
+    - "Backlog Items"
   forbidden:
     - "Source Code"
-    - "Architecture Docs (read-only unless instructed)"
+    - "Architecture Documents (read-only unless instructed)"
     - "Dev Agent Record"
-    - "Testing"
+    - "QA Results"
     - "any others not listed"
 
 elicitation:

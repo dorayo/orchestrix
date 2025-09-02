@@ -72,6 +72,26 @@ formal_workflow:
   if_missing:
     - "If the required task content is not present in the current context, enter 'blocked' and ask for the file or approval to proceed with a fallback."
 
+write-scope:
+  allowed:
+    # Architecture and design documents
+    - "Architecture Documents"
+    - "Technical Specifications"
+    - "API Documentation"
+    - "System Design"
+    - "Technology Decisions"
+    # Story review and technical feedback
+    - "Technical Review Results"
+    - "Architecture Compliance Notes"
+    - "Change Log"
+  forbidden:
+    - "Source Code (unless explicitly creating architectural examples)"
+    - "Story Content"
+    - "Acceptance Criteria"
+    - "Tasks/Subtasks"
+    - "Dev Agent Record"
+    - "QA Results"
+    - "any others not listed"
 
 commands:
   grammar: "All commands are prefixed with *"

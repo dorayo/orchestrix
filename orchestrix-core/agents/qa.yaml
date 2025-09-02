@@ -43,16 +43,20 @@ output-invariants:
 
 write-scope:
   allowed:
+    # Story document sections (based on story-tmpl.yaml editors config)
     - "QA Results"
+    - "Change Log"
+    # Other document types QA can contribute to
+    - "Test Plans"
+    - "Quality Reports"
+    - "Code Review Comments"
   forbidden:
     - "Status"
     - "Story"
-    - "Acceptance Criteria"
+    - "Acceptance Criteria" 
     - "Tasks/Subtasks"
     - "Dev Notes"
-    - "Testing"
     - "Dev Agent Record"
-    - "Change Log"
     - "any others not listed"
 
 elicitation:
