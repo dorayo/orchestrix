@@ -7,8 +7,8 @@ async function testTemplateReplacement() {
   console.log('🧪 Testing template replacement fixes...\n');
   
   try {
-    // Read the template
-    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-template.md');
+    // Read the template (use enhanced template)
+    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-enhanced-template.md');
     const template = await fs.readFile(templatePath, 'utf8');
     
     console.log('📄 Template content (first 10 lines):');

@@ -7,7 +7,10 @@ async function testTemplateFix() {
   
   try {
     // 读取dev agent文件进行测试
-    const agentPath = path.join(__dirname, '..', '..', '..', 'orchestrix-core', 'agents', 'dev.md');
+    let agentPath = path.join(__dirname, '..', '..', '..', 'orchestrix-core', 'agents', 'dev.yaml');
+    if (!await fs.pathExists(agentPath)) {
+      agentPath = path.join(__dirname, '..', '..', '..', 'orchestrix-core', 'agents', 'dev.md');
+    }
     const agentContent = await fs.readFile(agentPath, 'utf8');
     
     console.log('✓ Agent content loaded');

@@ -188,8 +188,8 @@ class IdeSetupTester {
 
     const agentPath = resolver.resolveAgentPath('test');
     this.assert(
-      agentPath.includes('.orchestrix-core/agents/test.md'),
-      'Agent path resolved correctly',
+      agentPath.includes('.orchestrix-core/agents/test') && (agentPath.endsWith('.yaml') || agentPath.endsWith('.md')),
+      'Agent path resolved correctly with YAML or MD extension',
       `Agent path: ${agentPath}`
     );
   }

@@ -7,7 +7,7 @@ async function debugEnhancedDetailed() {
   
   try {
     // 1. 检查模板文件
-    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-template.md');
+    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-enhanced-template.md');
     console.log('1. 检查模板文件路径:', templatePath);
     
     const templateExists = await fs.access(templatePath).then(() => true).catch(() => false);
@@ -24,8 +24,12 @@ async function debugEnhancedDetailed() {
     
     // 2. 读取agent文件
     console.log('\n2. 读取dev agent文件');
-    const agentPath = path.join(__dirname, '..', '..', '..', 'orchestrix-core', 'agents', 'dev.md');
+    let agentPath = path.join(__dirname, '..', '..', '..', 'orchestrix-core', 'agents', 'dev.yaml');
+    if (!await fs.pathExists(agentPath)) {
+      agentPath = path.join(__dirname, '..', '..', '..', 'orchestrix-core', 'agents', 'dev.md');
+    }
     const agentContent = await fs.readFile(agentPath, 'utf8');
+    console.log('   Agent文件路径:', agentPath);
     console.log('   Agent文件长度:', agentContent.length);
     
     // 3. 测试metadata提取
