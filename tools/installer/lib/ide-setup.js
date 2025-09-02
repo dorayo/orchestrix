@@ -531,8 +531,16 @@ class IdeSetup {
     }
     
     if (await fileManager.pathExists(agentsDir)) {
-      const agentFiles = glob.sync("*.md", { cwd: agentsDir });
-      allAgentIds.push(...agentFiles.map((file) => path.basename(file, ".md")));
+      // Support both YAML and MD files, prioritize YAML
+      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir });
+      const mdFiles = glob.sync("*.md", { cwd: agentsDir });
+      
+      // Extract IDs from YAML files first
+      const yamlIds = yamlFiles.map((file) => path.basename(file, ".yaml"));
+      // Extract IDs from MD files, but exclude those already found in YAML
+      const mdIds = mdFiles.map((file) => path.basename(file, ".md")).filter(id => !yamlIds.includes(id));
+      
+      allAgentIds.push(...yamlIds, ...mdIds);
     }
     
     return [...new Set(allAgentIds)];
@@ -759,8 +767,16 @@ class IdeSetup {
     }
     
     try {
-      const agentFiles = glob.sync("*.md", { cwd: agentsDir });
-      return agentFiles.map(file => path.basename(file, ".md"));
+      // Support both YAML and MD files, prioritize YAML
+      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir });
+      const mdFiles = glob.sync("*.md", { cwd: agentsDir });
+      
+      // Extract IDs from YAML files first
+      const yamlIds = yamlFiles.map((file) => path.basename(file, ".yaml"));
+      // Extract IDs from MD files, but exclude those already found in YAML
+      const mdIds = mdFiles.map((file) => path.basename(file, ".md")).filter(id => !yamlIds.includes(id));
+      
+      return [...yamlIds, ...mdIds];
     } catch (error) {
       console.warn(`Failed to read expansion pack agents from ${packPath}: ${error.message}`);
       return [];
