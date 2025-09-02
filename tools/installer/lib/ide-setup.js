@@ -5135,6 +5135,10 @@ parseListSection(text) {
         return this.formatElicitationForm(agentData);
       } else if (trimmedPath === 'commands.role-specific[].detailed_specs') {
         return this.formatRoleSpecificCommandSpecs(agentData);
+      } else if (trimmedPath === 'agent.persona') {
+        return this.formatPersonaObject(agentData);
+      } else if (trimmedPath === 'agent.customization[]') {
+        return this.formatCustomizationArray(agentData);
       } else if (trimmedPath.includes('commands.') && trimmedPath.includes('[].')) {
         return this.formatCommandSpecs(trimmedPath, agentData);
       }
@@ -5340,6 +5344,28 @@ parseListSection(text) {
     });
   }
 
+  // Format persona object in YAML-like structure
+  formatPersonaObject(agentData) {
+    const persona = this.getNestedValue(agentData, 'agent.persona');
+    if (!persona || typeof persona !== 'object') return '';
+    
+    const lines = [];
+    if (persona.role) lines.push(`  role: "${persona.role}"`);
+    if (persona.style) lines.push(`  style: "${persona.style}"`);
+    if (persona.identity) lines.push(`  identity: "${persona.identity}"`);
+    if (persona.focus) lines.push(`  focus: "${persona.focus}"`);
+    
+    return lines.length > 0 ? `\n${lines.join('\n')}` : '';
+  }
+
+  // Format customization array
+  formatCustomizationArray(agentData) {
+    const customization = this.getNestedValue(agentData, 'agent.customization');
+    if (!Array.isArray(customization) || customization.length === 0) return '';
+    
+    return `\n${customization.map(item => `  - "${item}"`).join('\n')}`;
+  }
+
   // Clean up empty sections and extra whitespace
   cleanupEmptySections(content) {
     // Remove sections that are just headers with no content
@@ -5354,8 +5380,11 @@ parseListSection(text) {
     // Remove empty bullet points
     content = content.replace(/^- *$/gm, '');
     
-    // Remove lines that are just dashes or colons
-    content = content.replace(/^[ \t]*[-:]+[ \t]*$/gm, '');
+    // Remove lines that are just dashes or colons (but not YAML frontmatter ---)
+    content = content.replace(/^[ \t]*[-:]+[ \t]*$/gm, (match) => {
+      // Preserve YAML frontmatter markers (exactly three dashes)
+      return match.trim() === '---' ? match : '';
+    });
     
     return content.trim();
   }

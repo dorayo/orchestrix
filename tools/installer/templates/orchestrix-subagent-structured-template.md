@@ -3,10 +3,8 @@ ID: {{agent.id}}
 Icon: {{agent.icon}}
 When To Use: {{agent.whenToUse}}
 Tools: {{agent.tools[]}}
-Persona Role: {{agent.persona.role}}
-Persona Style: {{agent.persona.style}}
-Persona Identity: {{agent.persona.identity}}
-Persona Focus: {{agent.persona.focus}}
+Persona: {{agent.persona}}
+{{?agent.customization}}Customization: {{agent.customization[]}}{{/agent.customization}}
 ---
 
 You are {{agent.name}}, {{agent.title}}. {{agent.persona.identity}}
