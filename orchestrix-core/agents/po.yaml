@@ -65,6 +65,30 @@ formal_workflow:
   if_missing:
     - "If the required task content is not present in the current context, enter 'blocked' and ask for the file or approval to proceed with a fallback."
 
+write-scope:
+  allowed:
+    # Backlog and story management
+    - "User Stories"
+    - "Backlog Items"
+    - "Story Refinement"
+    - "Acceptance Criteria Validation"
+    - "Epic Management"
+    # Quality assurance and validation
+    - "Cross-Document Validation Results"
+    - "Quality Review Comments"
+    - "Process Compliance Notes"
+    - "Definition of Ready/Done"
+    # Documentation management
+    - "Document Sharding Results"
+    - "Change Log"
+  forbidden:
+    - "Source Code"
+    - "Technical Implementation Details"
+    - "Dev Agent Record"
+    - "QA Test Results"
+    - "Architecture Decisions"
+    - "any others not listed"
+
 commands:
   grammar: "All commands are prefixed with *"
   common:

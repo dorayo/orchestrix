@@ -64,6 +64,30 @@ formal_workflow:
   if_missing:
     - "If the required task content is not present in the current context, enter 'blocked' and ask for the file or approval to proceed with a fallback."
 
+write-scope:
+  allowed:
+    # Research and analysis documents
+    - "Project Briefs"
+    - "Market Research"
+    - "Competitive Analysis"
+    - "User Research"
+    - "Business Analysis"
+    - "Brainstorming Results"
+    - "Research Reports"
+    # Documentation and discovery
+    - "Project Documentation"
+    - "Existing Project Analysis"
+    - "Requirements Discovery"
+    - "Change Log"
+  forbidden:
+    - "Source Code"
+    - "Technical Architecture"
+    - "Product Specifications"
+    - "Dev Agent Record"
+    - "QA Results"
+    - "UI/UX Design"
+    - "any others not listed"
+
 commands:
   grammar: "All commands are prefixed with *"
   common:

@@ -60,6 +60,29 @@ formal_workflow:
   if_missing:
     - "If the required task content is not present in the current context, enter 'blocked' and request the file or approval to proceed with a fallback."
 
+write-scope:
+  allowed:
+    # UI/UX design documents
+    - "Front-end Specifications"
+    - "UI/UX Design Documents"
+    - "User Experience Guidelines"
+    - "Design Systems"
+    - "Wireframes and Prototypes"
+    - "User Research Results"
+    - "Accessibility Guidelines"
+    # Collaboration and feedback
+    - "Design Review Comments"
+    - "Change Log"
+  forbidden:
+    - "Source Code"
+    - "Backend Architecture"
+    - "Database Design"
+    - "Dev Agent Record"
+    - "QA Results"
+    - "Story Content"
+    - "Acceptance Criteria"
+    - "any others not listed"
+
 commands:
   grammar: "All commands are prefixed with *"
   common:
