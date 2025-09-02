@@ -5148,14 +5148,14 @@ parseListSection(text) {
         const arrayPath = path.slice(0, -2);
         const arrayValue = this.getNestedValue(data, arrayPath);
         if (Array.isArray(arrayValue)) {
-          // Format as bullet list for better readability
+          // Format as comma-separated list for LLM efficiency
           return arrayValue.map(item => {
             if (typeof item === 'object' && item !== null) {
               // For objects, try to get a meaningful string representation
               return item.name || item.title || item.id || JSON.stringify(item);
             }
             return String(item);
-          }).join('\n- ');
+          }).join(', ');
         }
         return '';
       }
@@ -5241,11 +5241,11 @@ parseListSection(text) {
     
     return form.map(item => {
       if (typeof item === 'object' && item !== null) {
-        // Handle key-value pairs
-        return Object.entries(item).map(([key, value]) => `${key}: "${value}"`).join(', ');
+        // Handle key-value pairs - keep as bullet list for structure
+        return `- ${Object.entries(item).map(([key, value]) => `${key}: "${value}"`).join(', ')}`;
       }
-      return String(item);
-    }).join('\n- ');
+      return `- ${String(item)}`;
+    }).join('\n');
   }
   
   formatCommandSpecs(path, agentData) {

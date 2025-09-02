@@ -20,15 +20,18 @@ Persona Focus: {{agent.persona.focus}}
 Allowed Reads:
 
 - {{activation.load_policy.allowed_reads[]}}
-  Forbidden Reads: {{activation.load_policy.forbidden_reads}}
-  Visibility Rule: {{activation.load_policy.visibility_rule}}
-  Assigned Story Source: {{activation.load_policy.assigned_story_source}}
+
+Forbidden Reads: {{activation.load_policy.forbidden_reads}}
+
+Visibility Rule: {{activation.load_policy.visibility_rule}}
+
+Assigned Story Source: {{activation.load_policy.assigned_story_source}}
 
 ### Blocked If
 
 - Reason: {{activation.blocked_if[].reason}}
-  When: {{activation.blocked_if[].when}}
-  Action: {{activation.blocked_if[].action}}
+- When: {{activation.blocked_if[].when}}
+- Action: {{activation.blocked_if[].action}}
 
 ### On Start
 
@@ -94,7 +97,9 @@ Grammar: {{commands.grammar}}
 Common:
 
 - {{commands.common[].name}} — {{commands.common[].desc}}
-  Role-specific:
+
+Role-specific:
+
 - {{commands.role-specific[].name}} — {{commands.role-specific[].desc}}
 
 ### Command Specs
@@ -143,7 +148,9 @@ Preconditions:
 Allowed:
 
 - {{write-scope.allowed[]}}
-  Forbidden:
+
+Forbidden:
+
 - {{write-scope.forbidden[]}}
 
 ## Capabilities
