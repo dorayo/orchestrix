@@ -144,24 +144,16 @@ class IdeSetup {
  async setupClaudeCode(installDir, selectedAgent, runTests = false) {
   console.log(chalk.blue("\n🔧 设置 Claude Code 双模式集成..."));
   
-  // 使用增强的Sub Agent生成
-  const useEnhancedTemplate = true;
+  // 使用增强的Sub Agent生成系统
+  // 先检查模板是否存在
+  const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-enhanced-template.md');
+  const templateExists = await fileManager.fileExists(templatePath);
   
-  let subagentsCount;
-  if (useEnhancedTemplate) {
-    // 先检查模板是否存在
-    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-template.md');
-    const templateExists = await fileManager.fileExists(templatePath);
-    
-    if (!templateExists) {
-      console.log(chalk.yellow('⚠️  Enhanced template not found, creating default template...'));
-      await this.createDefaultSubagentTemplate();
-    }
-    
-    subagentsCount = await this.setupClaudeCodeSubagentsEnhanced(installDir, selectedAgent);
-  } else {
-    subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
+  if (!templateExists) {
+    throw new Error('Enhanced template not found. Please ensure orchestrix-subagent-enhanced-template.md exists in templates directory.');
   }
+  
+  const subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
   
   console.log(chalk.green(`✔ 已创建 ${subagentsCount} 个优化的 Claude Code 子代理`));
   
@@ -1081,57 +1073,9 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     return true;
   }
 
-  async loadSubagentTemplate() {
-    const templatePath = path.join(__dirname, '..', 'templates', 'deterministic-subagent-template.md');
-    try {
-      return await fileManager.readFile(templatePath);
-    } catch (error) {
-      // Fallback to simple template if deterministic template not found
-      const fallbackPath = path.join(__dirname, '..', 'templates', 'simple-subagent-template.md');
-      try {
-        return await fileManager.readFile(fallbackPath);
-      } catch (fallbackError) {
-        console.warn(`Could not load subagent templates: ${error.message}`);
-        return null;
-      }
-    }
-  }
 
-  async generateSubagentFromTemplate(agentId, agentContent, installDir) {
-    const template = await this.loadSubagentTemplate();
-    if (!template) {
-      return null;
-    }
 
-    const metadata = this.extractAgentMetadata(agentContent);
-    
-    // Deterministic workflow placeholders
-    const placeholders = {
-      '{AGENT_ID}': agentId,
-      '{DESCRIPTION}': this.generateDescription(metadata),
-      '{WHEN_TO_USE}': this.generateWhenToUse(metadata),
-      '{TOOLS}': this.getAgentPermissions(agentId).join(', '),
-      '{AGENT_NAME}': metadata.agent?.name || agentId,
-      '{ROLE}': metadata.persona?.role || 'AI Assistant',
-      '{FOCUS}': metadata.persona?.focus || 'Execute tasks efficiently and follow Orchestrix workflows.',
-      '{INTENT_PATTERNS}': this.generateIntentPatterns(metadata, agentContent, agentId),
-      '{WORKFLOW_DEFINITIONS}': this.generateWorkflowDefinitions(metadata, agentContent, agentId),
-      '{DEPENDENCIES}': this.generateDependencies(metadata),
-      '{SPECIAL_INSTRUCTIONS}': this.generateSpecialInstructions(metadata, agentId)
-    };
-    
-    // Replace all placeholders in the template
-    let content = template;
-    for (const [placeholder, value] of Object.entries(placeholders)) {
-      const regex = new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g');
-      content = content.replace(regex, value);
-    }
-    
-    // Finally replace {root} with .orchestrix-core (this should be the LAST step)
-    content = content.replace(/\{root\}/g, '.orchestrix-core');
-    
-    return content;
-  }
+
 
   generateDescription(metadata) {
     const title = metadata.agent?.title || metadata.agent?.name || 'AI Assistant';
@@ -1962,34 +1906,9 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
 **Clarification Rule:** Ask for specific details when user requests are ambiguous or could match multiple workflows`;
   }
 
+
+
   async setupClaudeCodeSubagents(installDir, selectedAgent) {
-    const subagentsDir = path.join(installDir, ".claude", "agents");
-    const agents = selectedAgent ? [selectedAgent] : await this.getAllAgentIds(installDir);
-
-    await fileManager.ensureDirectory(subagentsDir);
-
-    for (const agentId of agents) {
-      // Find the agent file
-      const agentPath = await this.findAgentPath(agentId, installDir);
-
-      if (agentPath) {
-        const agentContent = await fileManager.readFile(agentPath);
-        const subagentPath = path.join(subagentsDir, `${agentId}.md`);
-        
-        const subagentContent = await this.generateSubagentContent(agentId, agentContent, installDir);
-        
-        await fileManager.writeFile(subagentPath, subagentContent);
-        // Removed individual subagent creation messages for cleaner output
-      }
-    }
-
-    // Return count instead of displaying message here
-    return agents.length;
-  }
-
-  // 在 ide-setup.js 中添加新方法
-
-  async setupClaudeCodeSubagentsEnhanced(installDir, selectedAgent) {
     const subagentsDir = path.join(installDir, ".claude", "agents");
     const agents = selectedAgent ? [selectedAgent] : await this.getAllAgentIds(installDir);
     
@@ -2012,38 +1931,23 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     return agents.length;
   }
 
-  // 确保模板文件总是可用
-  async ensureTemplateExists(templatePath) {
-    if (!(await fileManager.fileExists(templatePath))) {
-      console.log(chalk.yellow(`Creating missing template: ${path.basename(templatePath)}`));
-      await this.createDefaultSubagentTemplate();
-    }
-  }
+
 
   async generateEnhancedSubagentContent(agentId, agentContent, installDir) {
-    // 尝试使用新的增强模板
-    const enhancedTemplatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-enhanced-template.md');
-    const originalTemplatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-template.md');
+    // 使用简化版模板
+    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-simple-template.md');
     
-    let templatePath = enhancedTemplatePath;
-    
-    // 如果增强模板不存在，使用原始模板
-    if (!await fileManager.fileExists(enhancedTemplatePath)) {
-      templatePath = originalTemplatePath;
-      await this.ensureTemplateExists(templatePath);
+    // 确保增强模板存在
+    if (!await fileManager.fileExists(templatePath)) {
+      throw new Error(`Enhanced template not found: ${templatePath}`);
     }
     
     try {
       const template = await fileManager.readFile(templatePath);
       const metadata = this.extractCompleteAgentMetadata(agentContent, agentId);
       
-      // 根据使用的模板类型生成占位符
-      let replacements;
-      if (templatePath === enhancedTemplatePath) {
-        replacements = await this.generateEnhancedReplacements(agentId, metadata, agentContent);
-      } else {
-        replacements = await this.generateAllReplacements(agentId, metadata, agentContent);
-      }
+      // 使用简化版占位符生成器
+      const replacements = await this.generateSimpleReplacements(agentId, metadata, agentContent);
       
       // 替换模板中的占位符，提供有意义的默认值
       const placeholderDefaults = this.getPlaceholderDefaults(agentId);
@@ -2058,9 +1962,9 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       return content;
       
     } catch (error) {
-      console.warn(`Failed to use enhanced template for ${agentId}: ${error.message}`);
-      console.warn(`Stack trace: ${error.stack}`);
-      return this.generateSubagentContent(agentId, agentContent, installDir);
+      console.error(`Failed to generate enhanced SubAgent for ${agentId}: ${error.message}`);
+      console.error(`Stack trace: ${error.stack}`);
+      throw new Error(`SubAgent generation failed for ${agentId}: ${error.message}`);
     }
   }
 
@@ -3326,6 +3230,311 @@ parseListSection(text) {
 }
 
   // 生成增强模板的占位符替换值（保持原始YAML结构）
+  async generateSimpleReplacements(agentId, metadata, agentContent) {
+    const { extractYamlFromAgent } = require('../../lib/yaml-utils');
+    const yamlContent = extractYamlFromAgent(agentContent);
+    
+    return {
+      '{AGENT_ID}': agentId,
+      '{AGENT_TITLE}': metadata.agent?.title || agentId,
+      '{AGENT_NAME}': metadata.agent?.name || agentId,
+      '{AGENT_ROLE_DESCRIPTION}': this.generateRoleDescription(metadata, agentId),
+      '{AGENT_DESCRIPTION}': metadata.agent?.whenToUse || `Use for ${agentId} related tasks`,
+      '{AGENT_TOOLS}': this.getCompleteToolsList(metadata, agentId),
+      '{ORIGINAL_YAML_CONTENT}': yamlContent || '',
+      '{COMMANDS_SUMMARY}': this.generateCommandsSummary(metadata),
+      '{DEPENDENCIES_SUMMARY}': this.generateDependenciesSummary(metadata),
+      '{CORE_PRINCIPLES_LIST}': this.formatCorePrinciplesList(metadata),
+      '{SPECIALIZED_CAPABILITIES}': this.generateSpecializedCapabilities(metadata, agentId)
+    };
+  }
+
+  async generateOptimizedReplacements(agentId, metadata, agentContent) {
+    const { extractYamlFromAgent } = require('../../lib/yaml-utils');
+    const yamlContent = extractYamlFromAgent(agentContent);
+    
+    return {
+      '{AGENT_ID}': agentId,
+      '{AGENT_TITLE}': metadata.agent?.title || agentId,
+      '{AGENT_NAME}': metadata.agent?.name || agentId,
+      '{AGENT_ROLE}': metadata.persona?.role || 'AI Assistant',
+      '{AGENT_DESCRIPTION}': metadata.agent?.whenToUse || `Use for ${agentId} related tasks`,
+      '{AGENT_TOOLS}': this.getCompleteToolsList(metadata, agentId),
+      '{AGENT_FOCUS}': metadata.persona?.focus || 'Execute tasks efficiently',
+      '{AGENT_STYLE}': metadata.persona?.style || 'Professional and efficient',
+      '{AGENT_ROLE_DESCRIPTION}': this.generateRoleDescription(metadata, agentId),
+      '{ORIGINAL_YAML_CONTENT}': yamlContent || '',
+      '{COMMANDS_SUMMARY}': this.generateEnhancedCommandsSummary(metadata),
+      '{ORCHESTRIX_ASSETS_SUMMARY}': this.generateOrchestrixAssetsSummary(metadata),
+      '{WORKFLOW_INTEGRATION_GUIDE}': this.generateWorkflowIntegrationGuide(metadata, agentId),
+      '{CORE_PRINCIPLES_LIST}': this.formatCorePrinciplesList(metadata),
+      '{QUALITY_STANDARDS}': this.generateQualityStandards(metadata, agentId),
+      '{PERFORMANCE_GUIDELINES}': this.generatePerformanceGuidelines(metadata),
+      '{PRE_EXECUTION_CHECKLIST}': this.generatePreExecutionChecklist(metadata, agentId),
+      '{TASK_EXECUTION_PROTOCOL}': this.generateTaskExecutionProtocol(metadata, agentId),
+      '{COMPLETION_CRITERIA}': this.generateCompletionCriteria(metadata, agentId),
+      '{COLLABORATION_GUIDELINES}': this.generateCollaborationGuidelines(metadata, agentId),
+      '{SPECIALIZED_CAPABILITIES}': this.generateSpecializedCapabilities(metadata, agentId),
+      '{TOOL_UTILIZATION_GUIDE}': this.generateToolUtilizationGuide(metadata, agentId),
+      '{INTEGRATION_PATTERNS}': this.generateIntegrationPatterns(metadata, agentId),
+      '{REQUEST_RESOLUTION_EXAMPLES}': this.generateRequestResolutionExamples(metadata, agentId)
+    };
+  }
+
+  // 生成角色描述
+  generateRoleDescription(metadata, agentId) {
+    const identity = metadata.persona?.identity || '';
+    const focus = metadata.persona?.focus || '';
+    if (identity && focus) {
+      return `${identity} Your primary focus is ${focus.toLowerCase()}.`;
+    }
+    return `Specialized in ${agentId} workflows within the Orchestrix framework.`;
+  }
+
+  // 生成增强的命令摘要
+  generateEnhancedCommandsSummary(metadata) {
+    if (!metadata.commands || !Array.isArray(metadata.commands)) {
+      return 'Use `*help` to see available commands';
+    }
+    
+    return metadata.commands
+      .map(cmd => {
+        if (typeof cmd === 'string') {
+          return `- \`*${cmd}\``;
+        } else if (typeof cmd === 'object') {
+          const cmdName = Object.keys(cmd)[0];
+          const cmdDesc = cmd[cmdName];
+          if (typeof cmdDesc === 'string') {
+            return `- \`*${cmdName}\`: ${cmdDesc.length > 80 ? cmdDesc.substring(0, 80) + '...' : cmdDesc}`;
+          } else {
+            return `- \`*${cmdName}\`: Advanced workflow (see YAML configuration for details)`;
+          }
+        }
+        return '';
+      })
+      .filter(line => line)
+      .join('\n');
+  }
+
+  // 生成 Orchestrix 资产摘要
+  generateOrchestrixAssetsSummary(metadata) {
+    let summary = '';
+    
+    if (metadata.dependencies?.tasks && Array.isArray(metadata.dependencies.tasks)) {
+      summary += `**Available Tasks**: ${metadata.dependencies.tasks.join(', ')}\n`;
+    }
+    
+    if (metadata.dependencies?.templates && Array.isArray(metadata.dependencies.templates)) {
+      summary += `**Document Templates**: ${metadata.dependencies.templates.join(', ')}\n`;
+    }
+    
+    if (metadata.dependencies?.checklists && Array.isArray(metadata.dependencies.checklists)) {
+      summary += `**Quality Checklists**: ${metadata.dependencies.checklists.join(', ')}\n`;
+    }
+    
+    if (metadata.dependencies?.data && Array.isArray(metadata.dependencies.data)) {
+      summary += `**Reference Data**: ${metadata.dependencies.data.join(', ')}\n`;
+    }
+    
+    return summary || 'Standard Orchestrix framework assets available';
+  }
+
+  // 生成工作流集成指南
+  generateWorkflowIntegrationGuide(metadata, agentId) {
+    return `When executing commands:
+1. **Command Recognition**: All commands require \`*\` prefix (e.g., \`*help\`)
+2. **Task Execution**: Load and execute tasks from \`.orchestrix-core/tasks/\`
+3. **Template Usage**: Generate documents using \`.orchestrix-core/templates/\`
+4. **Quality Validation**: Run checklists from \`.orchestrix-core/checklists/\`
+5. **Data Reference**: Access knowledge from \`.orchestrix-core/data/\`
+
+**Pattern Matching**: Match user requests to available commands and dependencies flexibly.`;
+  }
+
+  // 生成质量标准
+  generateQualityStandards(metadata, agentId) {
+    const standards = [
+      '- Follow Orchestrix framework guidelines and conventions',
+      '- Execute all required checklists before marking tasks complete',
+      '- Maintain consistency with project standards defined in core-config.yaml',
+      '- Document all decisions and changes appropriately'
+    ];
+    
+    // 添加特定于代理的标准
+    if (agentId === 'dev') {
+      standards.push('- Never modify test expectations to make tests pass');
+      standards.push('- All code changes must pass linting and testing validations');
+    } else if (agentId === 'qa') {
+      standards.push('- Comprehensive testing coverage required');
+      standards.push('- All quality gates must be satisfied');
+    }
+    
+    return standards.join('\n');
+  }
+
+  // 生成执行前检查清单
+  generatePreExecutionChecklist(metadata, agentId) {
+    return `- [ ] Confirm task requirements and acceptance criteria
+- [ ] Check project standards in core-config.yaml  
+- [ ] Identify required Orchestrix assets (tasks/templates/checklists)
+- [ ] Verify user permissions and authorization
+- [ ] Load necessary dependency files`;
+  }
+
+  // 生成任务执行协议
+  generateTaskExecutionProtocol(metadata, agentId) {
+    return `1. **Parse Request**: Understand user intent and match to available commands
+2. **Load Dependencies**: Access required tasks, templates, and checklists  
+3. **Execute Workflow**: Follow task instructions exactly as written
+4. **Validate Quality**: Run applicable checklists and validations
+5. **Report Progress**: Update status and document decisions
+6. **Confirm Completion**: Ensure all acceptance criteria are met`;
+  }
+
+  // 生成完成标准
+  generateCompletionCriteria(metadata, agentId) {
+    const criteria = [
+      '- All task steps completed successfully',
+      '- Required checklists passed',
+      '- Documentation updated appropriately',
+      '- Quality standards maintained'
+    ];
+    
+    if (agentId === 'dev') {
+      criteria.push('- All tests passing');
+      criteria.push('- Code review ready');
+    }
+    
+    return criteria.join('\n');
+  }
+
+  // 生成协作指南
+  generateCollaborationGuidelines(metadata, agentId) {
+    return `**Handoff Protocol**: Use story files and standardized status reporting for agent coordination
+**Conflict Resolution**: Defer to agent with primary responsibility for the task domain
+**Escalation**: Request human input when facing ambiguous requirements or blockers`;
+  }
+
+  // 生成专业能力
+  generateSpecializedCapabilities(metadata, agentId) {
+    const capabilities = metadata.agent?.customization || [];
+    if (Array.isArray(capabilities) && capabilities.length > 0) {
+      return capabilities.map(cap => `- ${cap}`).join('\n');
+    }
+    return `- Expert in ${agentId} domain workflows
+- Orchestrix framework integration specialist
+- Quality-focused execution methodology`;
+  }
+
+  // 生成工具利用指南
+  generateToolUtilizationGuide(metadata, agentId) {
+    const tools = this.getCompleteToolsList(metadata, agentId).split(', ');
+    return tools.map(tool => `- **${tool}**: Utilized for ${agentId} specific operations`).join('\n');
+  }
+
+  // 生成集成模式
+  generateIntegrationPatterns(metadata, agentId) {
+    return `**Task Integration**: Execute Orchestrix tasks as atomic, reusable workflows
+**Template Integration**: Generate consistent documentation using standard templates  
+**Checklist Integration**: Ensure quality through systematic validation processes
+**Data Integration**: Leverage centralized knowledge base for informed decisions`;
+  }
+
+  // 生成请求解析示例
+  generateRequestResolutionExamples(metadata, agentId) {
+    const examples = [];
+    
+    if (metadata.dependencies?.tasks) {
+      examples.push(`- "create documentation" → \`*create-doc\` → tasks/create-doc.md + relevant templates`);
+    }
+    
+    if (agentId === 'dev') {
+      examples.push(`- "implement story" → \`*develop-story\` → tasks/implement-story-auto.md workflow`);
+    } else if (agentId === 'qa') {
+      examples.push(`- "validate this" → \`*review\` → tasks/review-story.md + validation checklists`);
+    }
+    
+    examples.push(`- "help me with..." → \`*help\` → show available commands and guidance`);
+    
+    return examples.join('\n');
+  }
+
+  async generateCleanReplacements(agentId, metadata, agentContent) {
+    const { extractYamlFromAgent } = require('../../lib/yaml-utils');
+    const yamlContent = extractYamlFromAgent(agentContent);
+    
+    return {
+      '{AGENT_ID}': agentId,
+      '{AGENT_TITLE}': metadata.agent?.title || agentId,
+      '{AGENT_NAME}': metadata.agent?.name || agentId,
+      '{AGENT_ROLE}': metadata.persona?.role || 'AI Assistant',
+      '{AGENT_DESCRIPTION}': metadata.agent?.whenToUse || `Use for ${agentId} related tasks`,
+      '{AGENT_TOOLS}': this.getCompleteToolsList(metadata, agentId),
+      '{AGENT_FOCUS}': metadata.persona?.focus || 'Execute tasks efficiently',
+      '{ORIGINAL_YAML_CONTENT}': yamlContent || '',
+      '{COMMANDS_SUMMARY}': this.generateCommandsSummary(metadata),
+      '{DEPENDENCIES_SUMMARY}': this.generateDependenciesSummary(metadata),
+      '{CORE_PRINCIPLES_LIST}': this.formatCorePrinciplesList(metadata)
+    };
+  }
+
+  // 生成简洁的命令摘要
+  generateCommandsSummary(metadata) {
+    if (!metadata.commands || !Array.isArray(metadata.commands)) {
+      return 'No commands configured';
+    }
+    
+    return metadata.commands
+      .map(cmd => {
+        if (typeof cmd === 'string') {
+          return `- \`*${cmd}\``;
+        } else if (typeof cmd === 'object') {
+          const cmdName = Object.keys(cmd)[0];
+          const cmdDesc = cmd[cmdName];
+          if (typeof cmdDesc === 'string') {
+            return `- \`*${cmdName}\`: ${cmdDesc.length > 100 ? cmdDesc.substring(0, 100) + '...' : cmdDesc}`;
+          } else {
+            return `- \`*${cmdName}\`: Complex command (see YAML configuration)`;
+          }
+        }
+        return '';
+      })
+      .filter(line => line)
+      .join('\n');
+  }
+
+  // 生成简洁的依赖摘要
+  generateDependenciesSummary(metadata) {
+    if (!metadata.dependencies) {
+      return 'No dependencies configured';
+    }
+    
+    let summary = '';
+    if (metadata.dependencies.tasks && Array.isArray(metadata.dependencies.tasks)) {
+      summary += `**Tasks**: ${metadata.dependencies.tasks.join(', ')}\n`;
+    }
+    if (metadata.dependencies.templates && Array.isArray(metadata.dependencies.templates)) {
+      summary += `**Templates**: ${metadata.dependencies.templates.join(', ')}\n`;
+    }
+    if (metadata.dependencies.checklists && Array.isArray(metadata.dependencies.checklists)) {
+      summary += `**Checklists**: ${metadata.dependencies.checklists.join(', ')}\n`;
+    }
+    
+    return summary || 'No dependencies configured';
+  }
+
+  // 格式化核心原则列表
+  formatCorePrinciplesList(metadata) {
+    if (!metadata.core_principles || !Array.isArray(metadata.core_principles)) {
+      return '- Follow Orchestrix framework guidelines';
+    }
+    
+    return metadata.core_principles
+      .filter(principle => typeof principle === 'string')
+      .map(principle => `- ${principle}`)
+      .join('\n');
+  }
+
   async generateEnhancedReplacements(agentId, metadata, agentContent) {
     const { extractYamlFromAgent } = require('../../lib/yaml-utils');
     const yamlContent = extractYamlFromAgent(agentContent);
@@ -3741,29 +3950,7 @@ parseListSection(text) {
       .map(line => line.substring(2).trim());
   }
   
-  async generateSubagentContent(agentId, agentContent, installDir) {
-    try {
-      // Try to use the template system first
-      const templateContent = await this.generateSubagentFromTemplate(agentId, agentContent, installDir);
-      if (templateContent) {
-        return templateContent;
-      }
-    } catch (error) {
-      console.warn(`Template system failed for ${agentId}, falling back to direct generation: ${error.message}`);
-    }
 
-    // Fallback to direct generation if template fails
-    // Extract agent metadata from original orchestrix-core agent
-    const agentMetadata = this.extractAgentMetadata(agentContent);
-    
-    // Generate YAML frontmatter for Claude Code Subagent
-    const yamlFrontmatter = this.generateSubagentYaml(agentId, agentMetadata);
-    
-    // Generate optimized markdown content for LLM consumption
-    const markdownContent = this.generateOptimizedSubagentMarkdown(agentId, agentMetadata, agentContent);
-    
-    return `${yamlFrontmatter}\n${markdownContent}`;
-  }
 
   extractAgentMetadata(agentContent) {
     // Use the unified YAML extraction function
@@ -4746,92 +4933,7 @@ parseListSection(text) {
     console.log(chalk.dim("You can modify these settings anytime in .vscode/settings.json"));
   }
 
-  // 创建默认的 sub agent 模板
-  async createDefaultSubagentTemplate() {
-    const templateDir = path.join(__dirname, '..', 'templates');
-    const templatePath = path.join(templateDir, 'orchestrix-subagent-template.md');
-    
-    // 确保模板目录存在
-    await fileManager.ensureDirectory(templateDir);
-    
-    const defaultTemplate = `---
-name: {AGENT_ID}
-description: "Orchestrix {AGENT_TITLE} - {AGENT_ROLE}. Use PROACTIVELY for {PRIMARY_USE_CASES}. MUST BE USED when {MANDATORY_TRIGGERS}."
-tools: {COMPLETE_TOOLS_LIST}
----
 
-# Orchestrix {AGENT_TITLE} Agent - {AGENT_NAME}
-
-You are {AGENT_NAME}, the Orchestrix {AGENT_TITLE} agent. You are a {AGENT_ROLE}.
-
-## CRITICAL INITIALIZATION
-
-When invoked, IMMEDIATELY:
-
-1. Understand you are operating within the Orchestrix framework
-2. Check for \`.orchestrix-core/\` directory structure
-{AGENT_SPECIFIC_STARTUP}
-  
-  ## Core Identity & Principles
-  
-  **Role**: {AGENT_ROLE}
-  **Style**: {AGENT_STYLE}
-  **Identity**: {AGENT_IDENTITY}
-  **Focus**: {AGENT_FOCUS}
-  
-  **CORE PRINCIPLES**:
-  {CORE_PRINCIPLES_LIST}
-  {CRITICAL_CONSTRAINTS_SECTION}
-  
-  ## Command Recognition & Execution
-  
-  Recognize these primary commands (with or without \`*\` prefix):
-  {COMMANDS_WITH_DESCRIPTIONS}
-  {COMPLEX_COMMANDS_SECTION}
-  
-  ## Workflow Execution Protocols
-  {WORKFLOW_SECTIONS}
-  
-  ## File Resolution & Dependencies
-  
-  **Orchestrix Project Structure**:
-  \`\`\`
-  .orchestrix-core/
-  ├── tasks/          → Executable task workflows
-  ├── templates/      → Document templates
-  ├── checklists/     → Validation checklists
-  ├── data/          → Reference data
-  └── core-config.yaml → Project configuration
-  
-  docs/
-  ├── prd/           → Sharded PRD sections
-  ├── architecture/  → Sharded architecture sections
-  └── stories/       → User stories
-  \`\`\`
-  
-  **Dependency Mapping**:
-  {DEPENDENCY_MAPPING}
-  
-  **File Loading Protocol**:
-  1. Dependencies resolve to \`.orchestrix-core/{type}/{filename}\`
-  2. Load files ONLY when executing specific commands
-  3. Use grep/find for discovery rather than loading entire directories
-  {PERMISSIONS_SECTION}
-  {QUALITY_SECTION}
-  
-  ## Context Discovery Protocol
-  
-  Since you start fresh each invocation:
-  {CONTEXT_DISCOVERY_STEPS}
-  
-  ## Performance Guidelines
-  {PERFORMANCE_GUIDELINES}
-  
-  Remember: {AGENT_CLOSING_REMINDER}`;
-    
-    await fileManager.writeFile(templatePath, defaultTemplate);
-    console.log(chalk.green(`✔ Created default sub agent template at ${templatePath}`));
-  }
 
   // 在 ide-setup.js 的最后添加一个测试方法
   async testSubagentGeneration(installDir) {
