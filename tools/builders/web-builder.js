@@ -1,7 +1,7 @@
 const fs = require("node:fs").promises;
 const path = require("node:path");
 const DependencyResolver = require("../lib/dependency-resolver");
-const yamlUtils = require("../lib/yaml-utils");
+const { findAgentPath, loadAgentYaml, extractYamlFromAgent } = require("../lib/yaml-utils");
 
 class WebBuilder {
   constructor(options = {}) {
@@ -187,7 +187,7 @@ These references map directly to bundle sections:
 
   processAgentContent(content) {
     // First, replace content before YAML with the template
-    const yamlContent = yamlUtils.extractYamlFromAgent(content);
+    const yamlContent = extractYamlFromAgent(content);
     if (!yamlContent) return content;
 
     const yamlMatch = content.match(/```ya?ml\n([\s\S]*?)\n```/);
@@ -317,13 +317,14 @@ These references map directly to bundle sections:
     const agentsDir = path.join(packDir, "agents");
     try {
       const agentFiles = await fs.readdir(agentsDir);
-      const agentMarkdownFiles = agentFiles.filter((f) => f.endsWith(".md"));
+      // Support both YAML and MD files
+      const agentFiles_filtered = agentFiles.filter((f) => f.endsWith(".yaml") || f.endsWith(".md"));
 
-      if (agentMarkdownFiles.length > 0) {
+      if (agentFiles_filtered.length > 0) {
         console.log(`    Building individual agents for ${packName}:`);
 
-        for (const agentFile of agentMarkdownFiles) {
-          const agentName = agentFile.replace(".md", "");
+        for (const agentFile of agentFiles_filtered) {
+          const agentName = agentFile.replace(/\.(yaml|md)$/, "");
           console.log(`      - ${agentName}`);
 
           // Build individual agent bundle
@@ -375,14 +376,17 @@ These references map directly to bundle sections:
     const template = this.generateWebInstructions('expansion-agent', packName);
     const sections = [template];
 
-    // Add agent configuration
-    const agentPath = path.join(packDir, "agents", `${agentName}.md`);
+    // Add agent configuration - support both YAML and MD files
+    let agentPath = path.join(packDir, "agents", `${agentName}.yaml`);
+    if (!await fs.access(agentPath).then(() => true).catch(() => false)) {
+      agentPath = path.join(packDir, "agents", `${agentName}.md`);
+    }
     const agentContent = await fs.readFile(agentPath, "utf8");
     const agentWebPath = this.convertToWebPath(agentPath, packName);
     sections.push(this.formatSection(agentWebPath, agentContent, packName));
 
     // Resolve and add agent dependencies
-    const yamlContent = yamlUtils.extractYamlFromAgent(agentContent);
+    const yamlContent = extractYamlFromAgent(agentContent);
     if (yamlContent) {
       try {
         const yaml = require("js-yaml");
@@ -482,8 +486,8 @@ These references map directly to bundle sections:
     const agentsDir = path.join(packDir, "agents");
     try {
       const agentFiles = await fs.readdir(agentsDir);
-      for (const agentFile of agentFiles.filter((f) => f.endsWith(".md"))) {
-        const agentName = agentFile.replace(".md", "");
+      for (const agentFile of agentFiles.filter((f) => f.endsWith(".yaml") || f.endsWith(".md"))) {
+        const agentName = agentFile.replace(/\.(yaml|md)$/, "");
         expansionAgents.add(agentName);
       }
     } catch (error) {
@@ -521,8 +525,11 @@ These references map directly to bundle sections:
 
     for (const agentId of agentsToProcess) {
       if (expansionAgents.has(agentId)) {
-        // Use expansion pack version (override)
-        const agentPath = path.join(agentsDir, `${agentId}.md`);
+        // Use expansion pack version (override) - support both YAML and MD
+        let agentPath = path.join(agentsDir, `${agentId}.yaml`);
+        if (!await fs.access(agentPath).then(() => true).catch(() => false)) {
+          agentPath = path.join(agentsDir, `${agentId}.md`);
+        }
         const agentContent = await fs.readFile(agentPath, "utf8");
         const expansionAgentWebPath = this.convertToWebPath(agentPath, packName);
         sections.push(this.formatSection(expansionAgentWebPath, agentContent, packName));
@@ -549,15 +556,18 @@ These references map directly to bundle sections:
           }
         }
       } else {
-        // Use core orchestrix version
+        // Use core orchestrix version - support both YAML and MD
         try {
-          const coreAgentPath = path.join(this.rootDir, "orchestrix-core", "agents", `${agentId}.md`);
+          let coreAgentPath = path.join(this.rootDir, "orchestrix-core", "agents", `${agentId}.yaml`);
+          if (!await fs.access(coreAgentPath).then(() => true).catch(() => false)) {
+            coreAgentPath = path.join(this.rootDir, "orchestrix-core", "agents", `${agentId}.md`);
+          }
           const coreAgentContent = await fs.readFile(coreAgentPath, "utf8");
           const coreAgentWebPath = this.convertToWebPath(coreAgentPath, packName);
           sections.push(this.formatSection(coreAgentWebPath, coreAgentContent, packName));
 
           // Parse and collect dependencies from core agent
-          const yamlContent = yamlUtils.extractYamlFromAgent(coreAgentContent, true);
+          const yamlContent = extractYamlFromAgent(coreAgentContent, true);
           if (yamlContent) {
             try {
               const agentConfig = this.parseYaml(yamlContent);

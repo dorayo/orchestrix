@@ -29,8 +29,8 @@ class VersionSyncManager {
       const agentFiles = await fs.readdir(agentsDir);
       
       for (const agentFile of agentFiles) {
-        if (agentFile.endsWith('.md')) {
-          const agentId = path.basename(agentFile, '.md');
+        if (agentFile.endsWith('.yaml') || agentFile.endsWith('.md')) {
+          const agentId = path.basename(agentFile, agentFile.endsWith('.yaml') ? '.yaml' : '.md');
           const agentPath = path.join(agentsDir, agentFile);
           const agentContent = await fs.readFile(agentPath, 'utf8');
           
@@ -97,8 +97,12 @@ class VersionSyncManager {
       
       if (!agentInfo) return true;
       
-      const agentPath = path.join(installDir, '.orchestrix-core', 'agents', `${agentId}.md`);
-      if (!await fs.pathExists(agentPath)) return true;
+      // Check for both YAML and MD files
+      let agentPath = path.join(installDir, '.orchestrix-core', 'agents', `${agentId}.yaml`);
+      if (!await fs.pathExists(agentPath)) {
+        agentPath = path.join(installDir, '.orchestrix-core', 'agents', `${agentId}.md`);
+        if (!await fs.pathExists(agentPath)) return true;
+      }
       
       const currentContent = await fs.readFile(agentPath, 'utf8');
       const currentChecksum = this.generateChecksum(currentContent);
