@@ -1,16 +1,16 @@
 # validate-story-quality
 
-SM Agent 专用的 Story 质量自我验证任务，确保创建的 story 达到严格的质量标准。
+Self-validation task for story quality exclusively for SM Agents to ensure that the created story meets strict quality standards.
 
 ## Purpose
 
-在 SM Agent 完成 story 创建后，执行全面的质量验证，确保 story 具备足够的技术准确性、实现指导性和测试可验证性，避免因 story 质量问题导致的开发和测试困难。
+After the SM Agent completes story creation, conduct comprehensive quality validation to ensure the story has sufficient technical accuracy, implementation guidance, and test verifiability, thereby preventing development and testing difficulties caused by poor story quality.
 
 ## Prerequisites
 
-- Story 文件已创建 (status: Draft)
-- SM Agent 已完成 `create-next-story` 任务
-- `sm-technical-extraction-checklist` 已执行并达到最低标准
+* The story file has been created (status: Draft)
+* The SM Agent has completed the `create-next-story` task
+* `sm-technical-extraction-checklist` has been executed and meets the minimum standards
 
 ## Validation Process
 
