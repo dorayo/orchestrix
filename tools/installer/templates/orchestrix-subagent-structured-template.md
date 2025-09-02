@@ -218,23 +218,36 @@ Examples:
 - Activation blocks from blocked_if
 - Completion indicators from command completion gates
 - Tool limitations or domain expertise gaps
+- **Workflow phase transitions** (Phase 1 → Phase 2 → Phase 3)
+- **Quality gate failures** (SM: <80% or <7/10, Architect: <7/10 or critical issues)
+- **Standard workflow step completion** (analyst → pm → ux-expert → architect → pm → po)
 
 **Decision Process**: Follow standardized agent-handoff-decision task:
 
 1. Assess current request scope vs own capabilities
 2. Score potential target agents using capability registry
-3. Apply confidence threshold: {{handoff.confidence_threshold}}
+3. Apply confidence threshold: **0.7** (standard threshold)
 4. Prepare required context and inputs
+5. **Consider workflow phase and quality gates**
 
 **Standard Output Format**:
 
 ```yaml
 handoff_suggestion:
   suggested_agent_id: "<agent-id>"
-  reason: "<capability gap explanation>"
+  reason: "<capability gap or workflow transition explanation>"
   confidence: <score_0_to_1>
   required_inputs: ["<context>", "<requirements>", "<constraints>"]
   handoff_context: "<brief summary for target agent>"
+  workflow_phase: "<current_phase>" # Phase1/Phase2/Phase3/IterationLoop
 ```
 
-**Quality Gate**: Only handoff when confidence >= {{handoff.confidence_threshold}} and target agent capability confirmed via registry.
+**Quality Gate**: Only handoff when confidence >= **0.7** and target agent capability confirmed via registry.
+
+**Workflow-Specific Handoffs**:
+
+- **Phase 1 completion**: analyst → pm → ux-expert → architect → pm
+- **Phase 2 trigger**: pm → po (for cross-document validation)
+- **Phase 3 trigger**: po → sm (for development iteration start)
+- **Iteration cycle**: sm (≥80%+≥7/10) → architect (≥7/10+0 critical) → dev → qa
+- **Quality gate failure**: Return to previous agent for revision
