@@ -4,7 +4,7 @@ const yaml = require("js-yaml");
 const glob = require("glob");
 const fileManager = require("./file-manager");
 const configLoader = require("./config-loader");
-const { extractYamlFromAgent, extractAgentDependencies } = require("../../lib/yaml-utils");
+const { extractYamlFromAgent, extractAgentDependencies, loadAgentYaml, findAgentPath, getAgentMetadata } = require("../../lib/yaml-utils");
 
 // Dynamic import for ES module
 let chalk;
@@ -195,12 +195,23 @@ class IdeSetup {
     return {
       resolveAgentPath: (agentId) => {
         if (packageName !== "core") {
-          const expansionAgentPath = path.join(installDir, rootPath, "agents", `${agentId}.md`);
-          if (require('fs').existsSync(expansionAgentPath)) {
-            return expansionAgentPath;
+          // Check for both YAML and MD files in expansion pack
+          const expansionYamlPath = path.join(installDir, rootPath, "agents", `${agentId}.yaml`);
+          const expansionMdPath = path.join(installDir, rootPath, "agents", `${agentId}.md`);
+          if (require('fs').existsSync(expansionYamlPath)) {
+            return expansionYamlPath;
+          }
+          if (require('fs').existsSync(expansionMdPath)) {
+            return expansionMdPath;
           }
         }
-        return path.join(installDir, ".orchestrix-core", "agents", `${agentId}.md`);
+        // Check for both YAML and MD files in core
+        const coreYamlPath = path.join(installDir, ".orchestrix-core", "agents", `${agentId}.yaml`);
+        const coreMdPath = path.join(installDir, ".orchestrix-core", "agents", `${agentId}.md`);
+        if (require('fs').existsSync(coreYamlPath)) {
+          return coreYamlPath;
+        }
+        return coreMdPath;
       },
       
       resolveTaskPath: (taskId) => {
@@ -262,9 +273,12 @@ class IdeSetup {
       let agentPath;
       if (packageName !== "core") {
         // For expansion packs, first try to find the agent in the expansion pack directory
-        const expansionPackPath = path.join(installDir, rootPath, "agents", `${agentId}.md`);
-        if (await fileManager.pathExists(expansionPackPath)) {
-          agentPath = expansionPackPath;
+        const expansionYamlPath = path.join(installDir, rootPath, "agents", `${agentId}.yaml`);
+        const expansionMdPath = path.join(installDir, rootPath, "agents", `${agentId}.md`);
+        if (await fileManager.pathExists(expansionYamlPath)) {
+          agentPath = expansionYamlPath;
+        } else if (await fileManager.pathExists(expansionMdPath)) {
+          agentPath = expansionMdPath;
         } else {
           // Fall back to core if not found in expansion pack
           agentPath = await this.findAgentPath(agentId, installDir);
@@ -436,15 +450,22 @@ class IdeSetup {
   }
 
   async findAgentPath(agentId, installDir) {
-    // Try to find the agent file in various locations
+    // Try to find the agent file in various locations, prioritizing YAML files
     const possiblePaths = [
+      // YAML files (preferred)
+      path.join(installDir, ".orchestrix-core", "agents", `${agentId}.yaml`),
+      path.join(installDir, "orchestrix-core", "agents", `${agentId}.yaml`), // Source directory
+      path.join(installDir, "agents", `${agentId}.yaml`),
+      // MD files (backward compatibility)
       path.join(installDir, ".orchestrix-core", "agents", `${agentId}.md`),
+      path.join(installDir, "orchestrix-core", "agents", `${agentId}.md`), // Source directory
       path.join(installDir, "agents", `${agentId}.md`)
     ];
     
     // Also check expansion pack directories
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir });
     for (const expDir of expansionDirs) {
+      possiblePaths.push(path.join(installDir, expDir, `${agentId}.yaml`));
       possiblePaths.push(path.join(installDir, expDir, `${agentId}.md`));
     }
     
@@ -525,34 +546,33 @@ class IdeSetup {
   }
 
   async getAgentTitle(agentId, installDir) {
-    // Try to find the agent file in various locations
-    const possiblePaths = [
-      path.join(installDir, ".orchestrix-core", "agents", `${agentId}.md`),
-      path.join(installDir, "agents", `${agentId}.md`)
-    ];
+    // Use the updated findAgentPath method
+    const agentPath = await this.findAgentPath(agentId, installDir);
     
-    // Also check expansion pack directories
-    const expansionDirs = glob.sync(".*/agents", { cwd: installDir });
-    for (const expDir of expansionDirs) {
-      possiblePaths.push(path.join(installDir, expDir, `${agentId}.md`));
-    }
-    
-    for (const agentPath of possiblePaths) {
-      if (await fileManager.pathExists(agentPath)) {
-        try {
+    if (agentPath) {
+      try {
+        if (agentPath.endsWith('.yaml')) {
+          // Direct YAML file loading
+          const agentConfig = await loadAgentYaml(agentPath);
+          if (agentConfig) {
+            const metadata = getAgentMetadata(agentConfig);
+            return metadata.title;
+          }
+        } else {
+          // Legacy MD file support
           const agentContent = await fileManager.readFile(agentPath);
           const yamlMatch = agentContent.match(/```ya?ml\r?\n([\s\S]*?)```/);
           
           if (yamlMatch) {
-            const yaml = yamlMatch[1];
-            const titleMatch = yaml.match(/title:\s*(.+)/);
+            const yamlContent = yamlMatch[1];
+            const titleMatch = yamlContent.match(/title:\s*(.+)/);
             if (titleMatch) {
               return titleMatch[1].trim();
             }
           }
-        } catch (error) {
-          console.warn(`Failed to read agent title for ${agentId}: ${error.message}`);
         }
+      } catch (error) {
+        console.warn(`Failed to read agent title for ${agentId}: ${error.message}`);
       }
     }
     
