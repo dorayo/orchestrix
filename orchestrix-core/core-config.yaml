@@ -1,6 +1,6 @@
 title: Orchestrix Core System
 short-title: Orchestrix Agile Core System
-version: 4.1.3
+version: 4.2.0
 description: >
   The core agent framework for Orchestrix, providing the essential agents,
   workflows, and data for building and managing AI-driven development teams.
