@@ -41,7 +41,8 @@ class Installer {
       start: () => spinner,
       stop: () => {}, 
       succeed: (msg) => msg && console.log(chalk.green(`✓ ${msg}`)), 
-      fail: (msg) => msg && console.log(chalk.red(`✗ ${msg}`)) 
+      fail: (msg) => msg && console.log(chalk.red(`✗ ${msg}`)),
+      warn: (msg) => msg && console.log(chalk.yellow(`⚠ ${msg}`))
     };
 
     try {
