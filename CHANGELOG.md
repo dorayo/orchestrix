@@ -1,3 +1,10 @@
+## [4.2.3](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.2...v4.2.3) (2025-09-03)
+
+
+### Bug Fixes
+
+* add missing spinner.warn method in installer ([d2bbac3](https://github.com/dorayo/ORCHESTRIX/commit/d2bbac3f68ce6269da4f47c47066d54fb53eda5d))
+
 ## [4.2.2](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.1...v4.2.2) (2025-09-03)
 
 
