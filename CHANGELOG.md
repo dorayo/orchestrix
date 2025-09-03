@@ -1,3 +1,10 @@
+## [4.2.2](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.1...v4.2.2) (2025-09-03)
+
+
+### Bug Fixes
+
+* remove visibility_rule restrictions from agents and add Docker priority to dev agent ([d593b39](https://github.com/dorayo/ORCHESTRIX/commit/d593b394cab000fe5a0a5e4438902587fce30625))
+
 ## [4.2.1](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.0...v4.2.1) (2025-09-02)
 
 
