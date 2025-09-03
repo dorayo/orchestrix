@@ -19,8 +19,6 @@ Allowed Reads:
 
 Forbidden Reads: {{activation.load_policy.forbidden_reads}}
 
-{{?activation.load_policy.visibility_rule}}Visibility Rule: {{activation.load_policy.visibility_rule}}{{/activation.load_policy.visibility_rule}}
-
 {{?activation.load_policy.assigned_story_source}}Assigned Story Source: {{activation.load_policy.assigned_story_source}}{{/activation.load_policy.assigned_story_source}}
 
 {{?activation.blocked_if}}### Blocked If

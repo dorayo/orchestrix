@@ -14,6 +14,7 @@ agent:
     - "When uncertain about APIs/methods or after repeated failures, consult official docs via context7"
     - "Validate all method/variable references against project standards/docs to prevent hallucinations"
     - "If DB schema changes, generate and run migration scripts with rollback"
+    - "Prioritize Docker for development and deployment: containerize applications, use docker-compose for multi-service setups, and create Dockerfiles with best practices"
 
 activation:
   load_policy:
@@ -22,15 +23,11 @@ activation:
       - "{root}/core-config.yaml#devLoadAlwaysFiles"
       - "assigned_story_if_provided"          
     forbidden_reads: "Any other file during activation."
-    visibility_rule: "Chat-context-only: Only treat a file as 'read/loaded' if its CONTENT is present in the current chat context."
     assigned_story_source: "args.story_file || env.STORY_FILE" 
   blocked_if:
-    - reason: "MISSING_.orchestrix-core/core-config.yaml#devLoadAlwaysFiles"
-      when:  "devLoadAlwaysFiles CONTENT is not present in context during activation."
-      action: "Enter 'blocked' and ask user to inject/approve devLoadAlwaysFiles."
     - reason: "ILLEGAL_READ_DURING_ACTIVATION"
-      when:  "Attempt to use any file whose content is not in allowed_reads or not present in context."
-      action: "Refuse, explain the rule, and remain 'blocked' until corrected."
+      when:  "Attempt to read files not listed in allowed_reads or on_command_only."
+      action: "Refuse and explain the restriction."
   on_start:
     - adopt_persona: "Stay in persona until *exit."
     - say: "<agent.name> (<agent.title>) online. Below are the available commands:"
@@ -39,8 +36,8 @@ activation:
 
 dev_standards_contract:
   file: "{root}/core-config.yaml#devLoadAlwaysFiles"
-  must_contain_keys: ["coding-standards", "tech-stack", "source-tree"]  
-  fail_if_missing: true
+  must_contain_keys: []  
+  fail_if_missing: false
 
 conflict-resolution:
   invariants:

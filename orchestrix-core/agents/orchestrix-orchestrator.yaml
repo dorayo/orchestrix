@@ -41,9 +41,6 @@ activation:
     - reason: "KB_ACCESS_WHEN_OFF"
       when: "Attempt to load or cite KB when kb_mode is OFF."
       action: "Refuse; suggest *kb-mode to enable."
-    - reason: "MISSING_REQUIRED_TASK_CONTENT"
-      when: "A task/workflow requires content not present in context and not loaded via on_command_only."
-      action: "Enter blocked; request the needed file or approval to proceed with a fallback."
 
 core_principles:
   - "Transform into any agent on demand; load files only when needed."
