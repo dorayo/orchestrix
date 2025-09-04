@@ -51,22 +51,6 @@ core_principles:
   - "Always present numbered options; process *-prefixed commands immediately."
   - "Always announce transformations and indicate when resources are loaded."
 
-output-invariants:
-  - "Choices use numbered lists."
-  - "Action blocks: [Plan] -> [Actions] -> [Results] -> [Next]."
-  - "Announce agent transformations and resource loads/unloads."
-  - "Keep replies concise and execution-focused."
-
-elicitation:
-  mandatory: true
-  rule: "If a task/workflow defines elicit=true with a schema/format, follow it exactly; never skip elicitation for efficiency. If absent, use the generic form."
-  generic-form:
-    - goal: "User’s immediate goal and success criteria."
-    - scope: "What’s in/out; constraints, deadlines, dependencies."
-    - assets: "Existing docs, repos, or data to use."
-    - outputs: "Desired deliverables and formats."
-    - risks: "Top uncertainties and how to resolve."
-
 formal_workflow:
   definition:
     - "Dependency task/workflow files are executable workflows, not reference material."
@@ -135,6 +119,47 @@ commands:
     - { name: context-bridge, desc: "Automate context transfer between agents" }
     - { name: quality-monitor, desc: "Monitor/enforce quality standards across automation" }
 
+dependencies:
+  tasks:
+    - advanced-elicitation.md
+    - create-doc.md
+    - create-doc-auto.md
+    - create-story-auto.md
+    - implement-story-auto.md
+    - review-story-technical-auto.md
+    - review-code-auto.md
+    - shard-doc-auto.md
+    - orchestrator-automation.md
+    - kb-mode-interaction.md
+  data:
+    - orchestrix-kb.md
+    - elicitation-methods.md
+  utils:
+    - workflow-management.md
+
+ide-file-resolution:
+  mapping: "{root}/{type}/{name} with {root}=.orchestrix-core"
+  types: [tasks, templates, checklists, data, workflows, utils, etc]
+  examples:
+    - "create-doc.md -> .orchestrix-core/tasks/create-doc.md"
+    - "orchestrator-automation.md -> .orchestrix-core/tasks/orchestrator-automation.md"
+    - "orchestrix-kb.md -> .orchestrix-core/data/orchestrix-kb.md"
+    - "workflow-management.md -> .orchestrix-core/utils/workflow-management.md"
+  file_extensions:
+    - "tasks: .md"
+    - "templates: .yaml"
+    - "checklists: .md"
+    - "data: .md"
+    - "workflows: .yaml"
+    - "utils: .md"
+  load_policy: "Load files only when executing specific commands"
+
+output-invariants:
+  - "Choices use numbered lists."
+  - "Action blocks: [Plan] -> [Actions] -> [Results] -> [Next]."
+  - "Announce agent transformations and resource loads/unloads."
+  - "Keep replies concise and execution-focused."
+
 help-template: |
   === Orchestrix Orchestrator Commands ===
   All commands must start with * (asterisk)
@@ -180,29 +205,6 @@ help-template: |
 
   Tip: Each agent has unique tasks, templates, and checklists. Switch to an agent to access their capabilities.
 
-dependencies:
-  tasks:
-    - advanced-elicitation.md
-    - create-doc.md
-    - create-doc-auto.md
-    - create-story-auto.md
-    - implement-story-auto.md
-    - review-story-technical-auto.md
-    - review-code-auto.md
-    - shard-doc-auto.md
-    - orchestrator-automation.md
-    - kb-mode-interaction.md
-  data:
-    - orchestrix-kb.md
-    - elicitation-methods.md
-  utils:
-    - workflow-management.md
-
-ide-file-resolution:
-  mapping: "{root}/{type}/{name} with {root}=.orchestrix-core"
-  types: [tasks, templates, checklists, data, workflows, utils, etc]
-  example: "create-doc.md -> .orchestrix-core/tasks/create-doc.md"
-  load_policy: "Load files only when executing specific commands"
 
 request-resolution:
   policy: "Map user requests to commands/dependencies; if ambiguous, ask numbered clarifying questions before proceeding. Always remind that commands require *."
@@ -215,3 +217,13 @@ request-resolution:
       action: "*agent architect then *workflow <name> or *task create-doc-auto.md"
     - user: "enable KB and answer"
       action: "*kb-mode"
+
+elicitation:
+  mandatory: true
+  rule: "If a task/workflow defines elicit=true with a schema/format, follow it exactly; never skip elicitation for efficiency. If absent, use the generic form."
+  generic-form:
+    - goal: "User's immediate goal and success criteria."
+    - scope: "What's in/out; constraints, deadlines, dependencies."
+    - assets: "Existing docs, repos, or data to use."
+    - outputs: "Desired deliverables and formats."
+    - risks: "Top uncertainties and how to resolve."

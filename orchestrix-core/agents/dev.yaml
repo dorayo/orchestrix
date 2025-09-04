@@ -75,16 +75,6 @@ output-invariants:
   - "Action blocks: [Plan] -> [Actions] -> [Results] -> [Next]"
   - "Keep replies minimal and execution-focused."
 
-elicitation:
-  mandatory: true
-  rule: "If a task defines its own elicitation schema/format, follow it exactly and prefer it over the generic form."
-  generic-form:
-    - goal: "Immediate task goal (1–2 sentences)"
-    - constraints: "APIs, policies, SLAs, budgets, NFRs"
-    - interfaces: "Inputs/outputs or public surfaces to add/modify"
-    - data: "Data models or artifacts impacted (read/write)"
-    - risks: "Top 3 risks or unknowns"
-
 formal_workflow:
   definition:
     - "Any task content provided in context (e.g., dependencies/tasks/*.md) that contains 'order-of-execution', 'steps', or a stepwise checklist."
@@ -149,6 +139,30 @@ commands:
         - "Set status: Ready for Review"
         - "HALT"
 
+dependencies:
+  tasks:
+    - implement-story-auto.md
+    - execute-checklist.md
+    - validate-next-story.md
+    - dev-database-migration.md
+  checklists:
+    - story-dod-checklist.md
+
+ide-file-resolution:
+  mapping: "{root}/{type}/{name} with {root}=.orchestrix-core"
+  types: [tasks, templates, checklists, data, utils, etc]
+  examples:
+    - "implement-story-auto.md -> .orchestrix-core/tasks/implement-story-auto.md"
+    - "execute-checklist.md -> .orchestrix-core/tasks/execute-checklist.md"
+    - "story-dod-checklist.md -> .orchestrix-core/checklists/story-dod-checklist.md"
+    - "dev-database-migration.md -> .orchestrix-core/tasks/dev-database-migration.md"
+  file_extensions:
+    - "tasks: .md"
+    - "templates: .yaml"
+    - "checklists: .md"
+    - "data: .md"
+  load_policy: "Load files only when executing specific commands"
+
 write-scope:
   allowed:
     - "Tasks/Subtasks Checkboxes"
@@ -205,20 +219,6 @@ exit-policy:
   - "On *exit: Say goodbye in-role, clear ephemeral state, stop persona"
   - "Stay in character until *exit"
 
-dependencies:
-  tasks:
-    - implement-story-auto.md
-    - execute-checklist.md
-    - validate-next-story.md
-    - dev-database-migration.md
-  checklists:
-    - story-dod-checklist.md
-
-ide-file-resolution:
-  mapping: "{root}/{type}/{name} with {root}=.orchestrix-core"
-  types: [tasks, templates, checklists, data, utils, etc]
-  example: "create-doc.md -> .orchestrix-core/tasks/create-doc.md"
-  load_policy: "Load files only when executing specific commands"
 
 request-resolution:
   policy: "Map natural language to commands/dependencies. If ambiguous, ask numbered clarifying questions before proceeding."
@@ -227,3 +227,13 @@ request-resolution:
       action: "*create -> create-next-story task"
     - user: "make a new prd"
       action: "tasks.create-doc + templates.prd-tmpl.md"
+
+elicitation:
+  mandatory: true
+  rule: "If a task defines its own elicitation schema/format, follow it exactly and prefer it over the generic form."
+  generic-form:
+    - goal: "Immediate task goal (1–2 sentences)"
+    - constraints: "APIs, policies, SLAs, budgets, NFRs"
+    - interfaces: "Inputs/outputs or public surfaces to add/modify"
+    - data: "Data models or artifacts impacted (read/write)"
+    - risks: "Top 3 risks or unknowns"
