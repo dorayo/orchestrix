@@ -36,7 +36,7 @@
 architecture_loading:
   base_documents: 
     - docs/architecture/tech-stack.md
-    - docs/architecture/unified-project-structure.md  
+    - docs/architecture/source-tree.md  
     - docs/architecture/coding-standards.md
     - docs/architecture/testing-strategy.md
     
@@ -67,7 +67,7 @@ validation_engine:
     
   naming_conventions:
     - Component names follow coding-standards.md
-    - File paths align with unified-project-structure.md  
+    - File paths align with source-tree.md  
     - Variable/method names follow established patterns
     
   architecture_patterns:
@@ -131,7 +131,7 @@ compliance_checking:
     - Check for deprecated or unsupported technologies
     
   structure_validation:
-    - Validate file paths against unified-project-structure.md
+    - Validate file paths against source-tree.md
     - Check component naming conventions from coding-standards.md
     - Verify test file locations per testing-strategy.md
     

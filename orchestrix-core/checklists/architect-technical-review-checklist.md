@@ -14,7 +14,7 @@ This checklist ensures comprehensive and consistent technical accuracy reviews b
 ### Documentation Access Check
 - [ ] **Core Architecture Docs Available**:
   - [ ] `docs/architecture/tech-stack.md` accessible
-  - [ ] `docs/architecture/unified-project-structure.md` accessible  
+  - [ ] `docs/architecture/source-tree.md` accessible  
   - [ ] `docs/architecture/coding-standards.md` accessible
   - [ ] `docs/architecture/testing-strategy.md` accessible
 
@@ -49,7 +49,7 @@ This checklist ensures comprehensive and consistent technical accuracy reviews b
 **Critical Issues Found**: ________________
 
 ### Project Structure Alignment (1 Point)
-- [ ] **File Locations**: All proposed files match `unified-project-structure.md`
+- [ ] **File Locations**: All proposed files match `source-tree.md`
 - [ ] **Directory Organization**: Follows established folder hierarchy
 - [ ] **Module Separation**: Proper separation of concerns maintained
 - [ ] **Import/Export Patterns**: Consistent with project structure

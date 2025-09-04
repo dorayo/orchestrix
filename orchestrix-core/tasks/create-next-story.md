@@ -44,7 +44,7 @@ To identify the next logical story based on project progress and epic definition
 
 #### 3.2 Read Architecture Documents Based on Story Type
 
-**For ALL Stories:** tech-stack.md, unified-project-structure.md, coding-standards.md, testing-strategy.md
+**For ALL Stories:** tech-stack.md, source-tree.md, coding-standards.md, testing-strategy.md
 
 **For Backend/API Stories, additionally:** data-models.md, database-schema.md, backend-architecture.md, rest-api-spec.md, external-apis.md
 
@@ -80,7 +80,7 @@ ALWAYS cite source documents: `[Source: docs/architecture/{filename}.md#{section
 
 ### 4. Verify Project Structure Alignment
 
-- Cross-reference story requirements with Project Structure Guide from `docs/architecture/unified-project-structure.md`
+- Cross-reference story requirements with Project Structure Guide from `docs/architecture/source-tree.md`
 - Ensure file paths, component locations, or module names align with defined structures
 - Document any structural conflicts in "Project Structure Notes" section within the story draft
 

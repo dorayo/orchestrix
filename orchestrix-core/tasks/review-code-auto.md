@@ -60,7 +60,7 @@ review_context:
 # Comprehensive code quality analysis with refactoring
 review_methodology:
   architecture_compliance:
-    - Verify file locations match unified-project-structure.md
+    - Verify file locations match source-tree.md
     - Check component/service patterns per architecture docs
     - Validate API design follows rest-api-spec.md (if applicable)
     - Confirm data models align with architecture definitions

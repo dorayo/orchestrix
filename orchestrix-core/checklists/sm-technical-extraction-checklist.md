@@ -89,7 +89,7 @@ QUALITY STANDARD: If more than 20% of checklist items are marked [ ] Not Done, m
 - [ ] Configuration file locations follow project standards
 - [ ] Test file locations and naming follow conventions
 
-**Required Source Reference:** `[Source: docs/architecture/unified-project-structure.md#{section}]`
+**Required Source Reference:** `[Source: docs/architecture/source-tree.md#{section}]`
 
 ## 4. Integration and Interface Verification
 

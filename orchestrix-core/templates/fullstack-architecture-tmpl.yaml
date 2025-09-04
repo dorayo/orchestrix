@@ -481,8 +481,8 @@ sections:
             language: typescript
             template: "{{auth_middleware}}"
 
-  - id: unified-project-structure
-    title: Unified Project Structure
+  - id: source-tree
+    title: Source Tree
     instruction: Create a monorepo structure that accommodates both frontend and backend. Adapt based on chosen tools and frameworks.
     elicit: true
     type: code

@@ -27,7 +27,7 @@ This task is part of the second layer quality assurance in the Orchestrix framew
    
    **All Stories:**
    - docs/architecture/tech-stack.md
-   - docs/architecture/unified-project-structure.md
+   - docs/architecture/source-tree.md
    - docs/architecture/coding-standards.md
    - docs/architecture/testing-strategy.md
    
@@ -61,7 +61,7 @@ This task is part of the second layer quality assurance in the Orchestrix framew
 4. **Technical Component Validation**
    - **Tech Stack Compliance**: Verify all mentioned technologies align with `tech-stack.md`
    - **Naming Conventions**: Check component, file, and variable names follow `coding-standards.md`
-   - **Project Structure**: Ensure file paths match `unified-project-structure.md`
+   - **Project Structure**: Ensure file paths match `source-tree.md`
    - **API Design**: Validate endpoints follow patterns in `rest-api-spec.md` (if applicable)
    - **Data Models**: Confirm data structures align with `data-models.md` (if applicable)
 

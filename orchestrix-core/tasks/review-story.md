@@ -58,7 +58,7 @@ When a developer agent marks a story as "Ready for Review", perform a comprehens
 
 6. **Standards Compliance Check**
    - Verify adherence to `docs/coding-standards.md`
-   - Check compliance with `docs/unified-project-structure.md`
+   - Check compliance with `docs/source-tree.md`
    - Validate testing approach against `docs/testing-strategy.md`
    - Ensure all guidelines mentioned in the story are followed
 

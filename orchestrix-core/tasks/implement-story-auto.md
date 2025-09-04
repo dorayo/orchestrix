@@ -46,7 +46,7 @@ story_loading:
   standards_loading:
     - docs/architecture/coding-standards.md
     - docs/architecture/tech-stack.md  
-    - docs/architecture/unified-project-structure.md
+    - docs/architecture/source-tree.md
     - docs/architecture/testing-strategy.md
     - Additional architecture docs as specified in Dev Notes
     
@@ -77,7 +77,7 @@ implementation_sequence:
     
   quality_validation:
     - Code follows coding-standards.md patterns
-    - File locations match unified-project-structure.md
+    - File locations match source-tree.md
     - Testing follows testing-strategy.md requirements
     - All functionality meets acceptance criteria
     - No test requirements modified inappropriately
@@ -128,7 +128,7 @@ task_execution:
     - Plan file structure and component approach
     
   implementation_phase:
-    - Create/modify files per unified-project-structure.md
+    - Create/modify files per source-tree.md
     - Follow naming conventions from coding-standards.md
     - Implement functionality per Technical Preferences Summary
     - Apply patterns specified in architecture documents
