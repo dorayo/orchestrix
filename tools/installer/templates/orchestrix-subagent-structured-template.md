@@ -62,18 +62,6 @@ Transitions:
 {{state-machine.transitions[]}}
 {{/state-machine}}
 
-## Output Invariants
-
-- {{output-invariants[]}}
-
-## Elicitation
-
-Mandatory: {{elicitation.mandatory}}
-Rule: {{elicitation.rule}}
-Generic Form:
-
-- {{elicitation.generic-form[]}}
-
 ## Formal Workflow
 
 Definition:
@@ -90,19 +78,49 @@ Definition:
 
 Grammar: {{commands.grammar}}
 
-### Index
-
-Common:
+### Common Commands
 
 {{commands.common[].command_line}}
 
-Role-specific:
-
-{{commands.role-specific[].command_line}}
-
-### Command Specs
+### Role-Specific Commands
 
 {{commands.role-specific[].detailed_specs}}
+
+## Dependencies
+
+Tasks:
+
+- {{dependencies.tasks[]}}
+  {{?dependencies.templates}} Templates:
+- {{dependencies.templates[]}}{{/dependencies.templates}}
+  {{?dependencies.checklists}} Checklists:
+- {{dependencies.checklists[]}}{{/dependencies.checklists}}
+  {{?dependencies.data}} Data:
+- {{dependencies.data[]}}{{/dependencies.data}}
+  {{?dependencies.workflows}} Workflows:
+- {{dependencies.workflows[]}}{{/dependencies.workflows}}
+  {{?dependencies.utils}} Utils:
+- {{dependencies.utils[]}}{{/dependencies.utils}}
+
+## IDE File Resolution
+
+Mapping: {{ide-file-resolution.mapping}}
+Types: {{ide-file-resolution.types[]}}
+
+{{?ide-file-resolution.examples}}Examples:
+
+- {{ide-file-resolution.examples[]}}{{/ide-file-resolution.examples}}
+  {{?ide-file-resolution.example}}Example: {{ide-file-resolution.example}}{{/ide-file-resolution.example}}
+
+{{?ide-file-resolution.file_extensions}}File Extensions:
+
+- {{ide-file-resolution.file_extensions[]}}{{/ide-file-resolution.file_extensions}}
+
+Load Policy: {{ide-file-resolution.load_policy}}
+
+## Output Invariants
+
+- {{output-invariants[]}}
 
 ## Write Scope
 
@@ -113,6 +131,14 @@ Allowed:
 Forbidden:
 
 - {{write-scope.forbidden[]}}
+
+## Elicitation
+
+Mandatory: {{elicitation.mandatory}}
+{{?elicitation.rule}}Rule: {{elicitation.rule}}{{/elicitation.rule}}
+Generic Form:
+
+- {{elicitation.generic-form[]}}
 
 {{?capabilities}}## Capabilities
 
@@ -148,21 +174,6 @@ Forbidden:
 
 - {{exit-policy[]}}
   {{/exit-policy}}
-
-## Dependencies
-
-Tasks:
-
-- {{dependencies.tasks[]}}
-  {{?dependencies.checklists}} Checklists:
-- {{dependencies.checklists[]}}{{/dependencies.checklists}}
-
-## IDE File Resolution
-
-Mapping: {{ide-file-resolution.mapping}}
-Types: {{ide-file-resolution.types[]}}
-Example: {{ide-file-resolution.example}}
-Load Policy: {{ide-file-resolution.load_policy}}
 
 ## Request Resolution
 
