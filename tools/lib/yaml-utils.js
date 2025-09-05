@@ -57,9 +57,12 @@ function extractYamlFromAgent(agentContent, cleanCommands = false) {
     }
   }
   
-  // If it's already YAML content (starts with agent: or similar YAML indicators)
-  if (agentContent.trim().startsWith('agent:') || agentContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_]*:/)) {
-    return agentContent.trim();
+  // If it's already YAML content (starts with common YAML keys)
+  const trimmedContent = agentContent.trim();
+  if (trimmedContent.startsWith('REQUEST-RESOLUTION:') || 
+      trimmedContent.startsWith('agent:') || 
+      trimmedContent.match(/^[a-zA-Z_][a-zA-Z0-9_-]*:\s/)) {
+    return trimmedContent;
   }
   
   // Legacy: Extract from markdown format

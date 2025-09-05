@@ -186,54 +186,72 @@ These references map directly to bundle sections:
   }
 
   processAgentContent(content) {
-    // First, replace content before YAML with the template
+    // Handle both pure YAML files and legacy markdown format
     const yamlContent = extractYamlFromAgent(content);
     if (!yamlContent) return content;
 
-    const yamlMatch = content.match(/```ya?ml\n([\s\S]*?)\n```/);
-    if (!yamlMatch) return content;
-    
-    const yamlStartIndex = content.indexOf(yamlMatch[0]);
-    const yamlEndIndex = yamlStartIndex + yamlMatch[0].length;
-
-    // Parse YAML and remove root and IDE-FILE-RESOLUTION properties
     try {
       const yaml = require("js-yaml");
       const parsed = yaml.load(yamlContent);
 
-      // Remove the properties if they exist at root level
+      if (!parsed || typeof parsed !== 'object') {
+        console.warn("Invalid YAML structure in agent content");
+        return content;
+      }
+
+      // Remove web-incompatible properties
       delete parsed.root;
       delete parsed["IDE-FILE-RESOLUTION"];
       delete parsed["REQUEST-RESOLUTION"];
 
-      // Also remove from activation-instructions if they exist
-      if (parsed["activation-instructions"] && Array.isArray(parsed["activation-instructions"])) {
-        parsed["activation-instructions"] = parsed["activation-instructions"].filter(
+      // Clean activation_instructions array
+      if (parsed.activation_instructions && Array.isArray(parsed.activation_instructions)) {
+        parsed.activation_instructions = parsed.activation_instructions.filter(
           (instruction) => {
             return (
               typeof instruction === 'string' &&
-              !instruction.startsWith("IDE-FILE-RESOLUTION:") &&
-              !instruction.startsWith("REQUEST-RESOLUTION:")
+              !instruction.includes("IDE-FILE-RESOLUTION") &&
+              !instruction.includes("REQUEST-RESOLUTION") &&
+              !instruction.includes("{root}")
+            );
+          }
+        );
+      }
+
+      // Clean workflow_rules if it contains IDE-specific content
+      if (parsed.workflow_rules && Array.isArray(parsed.workflow_rules)) {
+        parsed.workflow_rules = parsed.workflow_rules.filter(
+          (rule) => {
+            return (
+              typeof rule === 'string' &&
+              !rule.includes("IDE-FILE-RESOLUTION") &&
+              !rule.includes("{root}")
             );
           }
         );
       }
 
       // Reconstruct the YAML
-      const cleanedYaml = yaml.dump(parsed, { lineWidth: -1 });
+      const cleanedYaml = yaml.dump(parsed, { 
+        lineWidth: -1,
+        noRefs: true,
+        sortKeys: false
+      });
 
       // Get the agent name from the YAML for the header
       const agentName = parsed.agent?.id || "agent";
+      const agentTitle = parsed.agent?.title || parsed.agent?.name || agentName;
 
-      // Build the new content with just the agent header and YAML
-      const newHeader = `# ${agentName}\n\nCRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:\n\n`;
-      const afterYaml = content.substring(yamlEndIndex);
+      // Build the new content with proper web bundle format
+      const newHeader = `# ${agentTitle}\n\nCRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:\n\n`;
 
-      return newHeader + "```yaml\n" + cleanedYaml.trim() + "\n```" + afterYaml;
+      return newHeader + "```yaml\n" + cleanedYaml.trim() + "\n```\n";
     } catch (error) {
       console.warn("Failed to process agent YAML:", error.message);
-      // If parsing fails, return original content
-      return content;
+      // If parsing fails, return original content with minimal processing
+      const agentMatch = content.match(/agent:\s*\n\s*id:\s*(\w+)/);
+      const agentId = agentMatch ? agentMatch[1] : "agent";
+      return `# ${agentId}\n\nCRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:\n\n\`\`\`yaml\n${yamlContent}\n\`\`\`\n`;
     }
   }
 
