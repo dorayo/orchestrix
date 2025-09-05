@@ -23,6 +23,8 @@ devLoadAlwaysFiles:
   - docs/ui-architecture.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
+qa:
+  qaLocation: docs/qa
 frontendFirstStrategy: true
 userConfirmationRequired: true
 slashPrefix: Orchestrix
