@@ -1,3 +1,11 @@
+## [5.1.3](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.2...v5.1.3) (2025-09-05)
+
+
+### Bug Fixes
+
+* a little change of create-next-story.md ([ebc739c](https://github.com/dorayo/ORCHESTRIX/commit/ebc739cecae9c567e25c061a16be2efe79b9c238))
+* enhance create-next-story with Task/Subtasks needs testing ([443aa2e](https://github.com/dorayo/ORCHESTRIX/commit/443aa2e8ac0d32bf8bdf078e7a8787647ad1847e))
+
 ## [5.1.2](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.1...v5.1.2) (2025-09-05)
 
 
