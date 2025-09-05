@@ -1,3 +1,10 @@
+## [5.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.0...v5.1.1) (2025-09-05)
+
+
+### Bug Fixes
+
+* add qa:qaLocation into core-config.yaml ([823d1d2](https://github.com/dorayo/ORCHESTRIX/commit/823d1d2514a9f6307a58ae649f98deea350233c5))
+
 ## [4.2.3](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.2...v4.2.3) (2025-09-03)
 
 
