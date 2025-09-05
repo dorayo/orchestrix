@@ -141,7 +141,7 @@ ALWAYS cite source documents: `[Source: docs/architecture/{filename}.md#{section
   - Each task must reference relevant architecture documentation
   - Include mandatory testing subtasks based on Testing Strategy
   - Link tasks to ACs where applicable (e.g., `Task 1 (AC: 1, 3)`)
-  - **CRITICAL**: Every testable task MUST include "Run and verify all tests pass" as final step
+  - **CRITICAL**: Every testable task MUST include "Run and verify all tests pass (both new and existing)" as final step
 - Add notes on project structure alignment or discrepancies found in Step 4
 
 ### 7. Enhanced Story Quality Verification
