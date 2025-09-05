@@ -1,3 +1,21 @@
+# [5.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.3...v5.0.0) (2025-09-05)
+
+
+### Bug Fixes
+
+* add qa:qaLocation into core-config.yaml ([823d1d2](https://github.com/dorayo/ORCHESTRIX/commit/823d1d2514a9f6307a58ae649f98deea350233c5))
+
+
+### Features
+
+* 优化agent配置文件结构和依赖解析 ([63b1008](https://github.com/dorayo/ORCHESTRIX/commit/63b1008f652118696934291c52a72fc455f34f45))
+* 修复 Claude Code subagent 模板和 YAML 解析 ([0d28073](https://github.com/dorayo/ORCHESTRIX/commit/0d28073df59127a682533552b4eb533b690ebf0d))
+
+
+### BREAKING CHANGES
+
+* Agent配置文件结构已重新组织，可能影响直接解析YAML的工具
+
 ## [4.2.3](https://github.com/dorayo/ORCHESTRIX/compare/v4.2.2...v4.2.3) (2025-09-03)
 
 
