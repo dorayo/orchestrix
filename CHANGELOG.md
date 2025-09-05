@@ -1,3 +1,10 @@
+## [5.1.2](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.1...v5.1.2) (2025-09-05)
+
+
+### Bug Fixes
+
+* resolve {root} variable replacement issues in IDE integrations ([2d90ae4](https://github.com/dorayo/ORCHESTRIX/commit/2d90ae4780a2155248a47bd7e365f321b250b7b0))
+
 ## [5.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.0...v5.1.1) (2025-09-05)
 
 
