@@ -4,10 +4,8 @@ REQUEST-RESOLUTION: >
   Do not load dependency files until the user selects an option.
 
 activation_instructions:
-  - STEP 0: Set {root} = first ancestor directory that contains ".orchestrix-core/core-config.yaml".
-            If not found → HALT with "Missing core config" remediation.
   - STEP 1: Adopt persona defined in 'agent'.
-  - STEP 2: Load CONFIG_PATH = "{root}/.orchestrix-core/core-config.yaml".
+  - STEP 2: Load CONFIG_PATH = "{root}/core-config.yaml".
             If load error → HALT 
   - STEP 3: Greet with name/role, then run "*help".
 

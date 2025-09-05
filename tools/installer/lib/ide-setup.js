@@ -112,7 +112,10 @@ class IdeSetup {
         // Extract the complete YAML content from the agent file
         const yamlContent = extractYamlFromAgent(agentContent);
         if (yamlContent) {
-          mdcContent += yamlContent;
+          // Replace {root} variables for Cursor rules
+          // {root} should resolve to .orchestrix-core
+          let processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+          mdcContent += processedYamlContent;
         } else {
           // If YAML extraction completely fails, provide meaningful error message
           mdcContent += `# YAML configuration not found for ${agentId}\n`;
@@ -366,7 +369,9 @@ class IdeSetup {
         // Extract just the YAML content from the agent file
         const yamlContent = extractYamlFromAgent(agentContent);
         if (yamlContent) {
-          mdContent += yamlContent;
+          // Replace {root} variables for Windsurf rules
+          const processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+          mdContent += processedYamlContent;
         } else {
           // If no YAML found, include the whole content minus the header
           mdContent += agentContent.replace(/^#.*$/m, "").trim();
@@ -418,7 +423,9 @@ class IdeSetup {
         // Extract just the YAML content from the agent file
         const yamlContent = extractYamlFromAgent(agentContent);
         if (yamlContent) {
-          mdContent += yamlContent;
+          // Replace {root} variables for Trae rules
+          const processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+          mdContent += processedYamlContent;
         }
         else {
           // If no YAML found, include the whole content minus the header
@@ -934,7 +941,9 @@ class IdeSetup {
         // Extract just the YAML content from the agent file
         const yamlContent = extractYamlFromAgent(agentContent);
         if (yamlContent) {
-          mdContent += yamlContent;
+          // Replace {root} variables for Cline rules
+          const processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+          mdContent += processedYamlContent;
         } else {
           // If no YAML found, include the whole content minus the header
           mdContent += agentContent.replace(/^#.*$/m, "").trim();
