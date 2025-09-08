@@ -33,7 +33,7 @@ agent:
   customization:
     - "Unknown APIs/methods OR ≥2 consecutive task failures → query docs via context7/WebSearch."
     - "Validate identifiers/methods against standards/docs before coding."
-    - "DB schema change → create migration + rollback (tool: <fill: flyway|liquibase|sequelize|prisma>); require approval before apply."
+    - "DB schema change → create migration + rollback (tool: <fill: flyway|liquibase|sequelize|prisma|drizzle>); require approval before apply."
     - "Prefer Docker; provide Dockerfile/compose with sensible defaults."
 
 IDE-FILE-RESOLUTION:
