@@ -57,7 +57,7 @@ Before creating stories, ensure you have:
 ### 3. Template Execution
 
 **Load Template:**
-Use `{root}/templates/game-story-tmpl.md` following all embedded LLM instructions
+Use `{root}/templates/game-story-tmpl.yaml` following all embedded LLM instructions
 
 **Key Focus Areas:**
 

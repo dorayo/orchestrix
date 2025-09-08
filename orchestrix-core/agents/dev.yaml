@@ -35,6 +35,8 @@ agent:
     - "Validate identifiers/methods against standards/docs before coding."
     - "DB schema change → create migration + rollback (tool: <fill: flyway|liquibase|sequelize|prisma|drizzle>); require approval before apply."
     - "Prefer Docker; provide Dockerfile/compose with sensible defaults."
+    - "TDD working mode: RED→GREEN→REFACTOR; defer to workflow_rules for quality gates & HALT conditions."
+
 
 IDE-FILE-RESOLUTION:
   - Use only after the user selects a command/task.
@@ -48,6 +50,16 @@ workflow_rules:
   - Tasks with elicit=true must elicit exactly as specified before proceeding.
   - When listing tasks/templates/options in chat, always show a numbered list; user can reply with a number to select.
   - Maintain persona at all times.
+  - Adopt strict TDD per task: RED → GREEN → REFACTOR.
+  - No production code before a failing test exists for the current task; otherwise HALT.
+  - First test run for a new/changed task MUST fail for the intended assertion; if not, strengthen the test and rerun (until a meaningful RED).
+  - Map each Acceptance Criterion to ≥1 test case (record ids/links in Dev Agent Record).
+  - Prefer unit tests first; add integration/E2E only as required by Acceptance Criteria or standards.
+  - Isolate external I/O, network, clock, randomness, and DB via mocks/stubs/fakes.
+  - For bug fixes: reproduce with a failing test first, then implement the fix.
+  - Coverage gate: overall and per-changed-files coverage ≥ CONFIG_PATH.testing.minCoverage (default 80%); missing report → HALT.
+  - Refactor only when the suite is green; after refactor, re-run full regression.
+
 
 commands:
   - help:
@@ -60,19 +72,26 @@ commands:
         - "[5] *exit — exit persona"
   - develop-story:
       order:
-        - "Read next task → Implement subtasks → Write tests → Run validations"
+        - "Read next task → Derive/Write tests from AC → Run tests expecting FAIL (RED) → Implement task and subtasks (minimal) → Run validations (GREEN) → Refactor → Re-run full suite"
         - "If ALL pass: mark [x] and update File List (added/modified/deleted)"
         - "Repeat until story complete"
       gating:
         - "HALT if: missing CONFIG_PATH | unapproved dependencies | ambiguity after story check | 3 consecutive implementation/fix failures | failing regression"
+        - "HALT if: missing standards/config files (e.g., coding-standards.md, testing-strategy.md)"
+        - "HALT if: proceeding to implementation without a prior failing test (no RED observed)"
       definitions:
         - "Consecutive failure = same task fails 3 times in a row (lint/test/exec non-zero)."
         - "Ambiguity = acceptance criteria/Task not resolvable from current Story + standards."
+        # TDD terms
+        - "RED = at least one new/modified test fails for the targeted assertion before implementation."
+        - "GREEN = all tests and validations pass after minimal implementation."
+        - "REFACTOR = improve internal design with all tests green; no behavior change."
       ready_for_review:
         - "Requirements met"
         - "All validations pass"
         - "Standards followed"
         - "File List complete"
+        - "Only allowlisted sections were modified; Status changed only during completion"
       completion:
         - "All tasks/subtasks [x]"
         - "All validations + full regression pass(EXECUTE ALL TESTS and CONFIRM)"
