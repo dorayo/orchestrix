@@ -1,3 +1,10 @@
+# [5.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.4...v5.2.0) (2025-09-09)
+
+
+### Features
+
+* Field-Level API Contract ([287e3e5](https://github.com/dorayo/ORCHESTRIX/commit/287e3e54c3a5c3b3397223caafb3678259bafc9f))
+
 ## [5.1.4](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.3...v5.1.4) (2025-09-08)
 
 
