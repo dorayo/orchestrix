@@ -78,6 +78,28 @@ Extract:
 
 ALWAYS cite source documents: `[Source: docs/architecture/{filename}.md#{section}]`
 
+#### 3.4 Generate Field-Level API Contract Table
+
+If the story involves API communication or any shared data structure between frontend and backend, you MUST extract and define all relevant fields in a contract table format inside the `Dev Notes` section under the heading `Field-Level API Contract`.
+
+- This table MUST include field names, types, required status, descriptions, and original sources
+- Field names MUST match casing, structure, and naming conventions defined in architecture documents
+- Do NOT invent field names or structures. If missing, explicitly mark as [MISSING] and flag the issue
+- This table will serve as the **authoritative reference** for both frontend and backend developers during implementation and integration
+
+**Example Table Format:**
+
+```md
+| Field       | Type     | Required | Description             | Source                                  |
+|-------------|----------|----------|-------------------------|-----------------------------------------|
+| userId      | string   | Yes      | Unique user identifier  | [Source: data-models.md#User]           |
+| email       | string   | Yes      | User email address      | [Source: rest-api-spec.md#RegisterUser] |
+| avatarUrl   | string   | No       | Profile image URL       | [Source: components.md#UserCard]        |
+
+- This table is MANDATORY if the story involves request/response payloads, database entities, or component props
+
+- If no fields are relevant, include this note: "No shared data fields defined for this story"
+
 ### 4. Verify Project Structure Alignment
 
 - Cross-reference story requirements with Project Structure Guide from `docs/architecture/source-tree.md`
@@ -132,16 +154,9 @@ ALWAYS cite source documents: `[Source: docs/architecture/{filename}.md#{section
   - If information for a category is not found in the architecture docs, explicitly state: "No specific guidance found in architecture docs"
 - **`Tasks / Subtasks` section:**
   - Generate detailed, sequential list of technical tasks based ONLY on: Epic Requirements, Story AC, Reviewed Architecture Information
-  - **For EACH task, explicitly define:**
-    - **Implementation Steps**: Core development work
-    - **Testing Requirements**: Specific tests that must pass (unit/integration/e2e) and test coverage expectations
-    - **Definition of Done**: Clear criteria including "All tests passing"
-    - **Verification Steps**: How to confirm the task is truly complete
-  - **Task Format**: `Task X.Y: [Implementation] → [Testing] → [Verification] (AC: X,Y)`
   - Each task must reference relevant architecture documentation
-  - Include mandatory testing subtasks based on Testing Strategy
+  - Include unit testing as explicit subtasks based on the Testing Strategy
   - Link tasks to ACs where applicable (e.g., `Task 1 (AC: 1, 3)`)
-  - **CRITICAL**: Every testable task MUST include "Run and verify all tests pass (both new and existing)" as final step
 - Add notes on project structure alignment or discrepancies found in Step 4
 
 ### 7. Enhanced Story Quality Verification

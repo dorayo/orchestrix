@@ -99,8 +99,24 @@ sections:
       - Do not invent information
       - If known add Relevant Source Tree info that relates to this story
       - If there were important notes from previous story that are relevant to this one, include them here
-      - MANDATORY: Include Technical Preferences Summary section with key technical choices and constraints from architecture docs
-      - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents, these notes along with the tasks and subtasks must give the Dev Agent the complete context it needs to comprehend with the least amount of overhead the information to complete the story, meeting all AC and completing all tasks+subtasks
+      - MANDATORY: Include **Technical Preferences Summary** section with key technical choices and constraints from architecture docs
+      - MANDATORY: Include **Field-Level API Contract** section when story involves API request/response payloads or shared data models. 
+        - Table format with columns: Field | Type | Required | Used In (Request/Response/UI/DB) | Notes
+        - Values must be consistent with Data Models and API Specifications from architecture docs
+        - This table acts as the authoritative alignment for frontend/backend/QA
+      - MANDATORY: Include **Data Models** section with schemas, validation rules, and relationships (with references)
+      - MANDATORY: Include **API Specifications** section with endpoint details, request/response formats, authentication, and error handling rules
+      - MANDATORY: Include **Component Specifications** section with props, state, and integration requirements for UI components
+      - MANDATORY: Include **File Locations** section with exact file paths for new code according to project structure
+      - MANDATORY: Include **Testing Requirements** section listing test standards, cases, and strategies from testing-strategy.md
+      - MANDATORY: Include **Testing Integrity Requirements** section with immutable test rules
+      - MANDATORY: Include **Technical Constraints** section listing version requirements, performance/security rules, and integration constraints
+      - MANDATORY: Include **Technical Extraction Verification Summary** section with completion rate and flagged issues from Step 5
+      - Every technical detail MUST include its source reference: [Source: docs/architecture/{filename}.md#{section}]
+      - If information for a category is not found in the architecture docs, explicitly state: "No specific guidance found in architecture docs"
+      - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents directly. 
+        These notes, together with the Tasks/Subtasks, must give the Dev Agent complete context to implement the story, 
+        meeting all Acceptance Criteria and completing all tasks/subtasks with minimal overhead.
     elicit: true
     owner: scrum-master
     editors: [scrum-master]
