@@ -1,5 +1,9 @@
 # validate-story-quality
 
+> **⚠️ DEPRECATED**: This task has been superseded by the unified checklist system.  
+> **Recommended**: Use `execute-checklist.md` with `sm-story-creation-comprehensive-checklist.md` for complete story validation.  
+> **Status**: Kept for backward compatibility. May be removed in future versions.
+
 Self-validation task for story quality exclusively for SM Agents to ensure that the created story meets strict quality standards.
 
 ## Purpose
@@ -204,4 +208,112 @@ This validation process enforces the following quality gates:
 3. **Risk Management Gate**: High-risk items must have mitigation strategies
 4. **Developer Readiness Gate**: Story must be implementable without extensive additional research
 
-**CRITICAL**: Stories that fail any quality gate cannot proceed to development phase and must be revised or escalated for expert consultation. 
+**CRITICAL**: Stories that fail any quality gate cannot proceed to development phase and must be revised or escalated for expert consultation.
+
+---
+
+## 9. Comprehensive Quality Scoring & Status Decision
+
+### 9.1 Collect Validation Results
+
+**Input Sources:**
+1. **Technical Extraction Score** (from sm-technical-extraction-checklist)
+   - Completion Rate: ___% (must be >80%)
+   - Critical Issues: ___
+
+2. **Structure Validation Result** (from story-draft-checklist)
+   - Result: PASS / FAIL
+   - Issues Found: ___
+
+3. **Implementation Readiness** (from current task Sections 1-8)
+   - Dev Notes Quality: ___/10
+   - Anti-Hallucination Score: ___/10
+   - Developer Readiness: ___/10
+
+### 9.2 Calculate Quality Score
+
+**Scoring Formula:**
+```
+Quality Score = (
+  Technical Extraction Score × 0.40 +
+  Structure Validation Score × 0.30 +
+  Implementation Readiness Score × 0.30
+)
+
+Where:
+- Technical Extraction Score = Completion Rate (e.g., 85% = 8.5/10)
+- Structure Validation Score = PASS: 10/10, FAIL: 0/10
+- Implementation Readiness = Average of (Dev Notes + Anti-Hallucination + Developer Readiness)
+```
+
+**Example Calculation:**
+```
+Technical Extraction: 85% = 8.5/10
+Structure Validation: PASS = 10/10
+Implementation Readiness: (8 + 9 + 7) / 3 = 8.0/10
+
+Quality Score = 8.5×0.4 + 10×0.3 + 8.0×0.3 = 3.4 + 3.0 + 2.4 = 8.8/10
+```
+
+### 9.3 Automatic Status Decision
+
+**Decision Matrix:**
+
+| Quality Score | Status | Next Action | Rationale |
+|--------------|--------|-------------|-----------|
+| **≥ 8.0** | **Approved** | Ready for Dev implementation | High quality, minimal risk |
+| **6.0 - 7.9** | **Draft** | Recommend Architect review | Medium quality, needs expert validation |
+| **< 6.0** | **Blocked** | Return to SM for revision | Low quality, high risk |
+
+**Special Rules:**
+- If Technical Extraction < 80%: Automatic **Blocked** (regardless of total score)
+- If Structure Validation = FAIL: Automatic **Blocked**
+- If Critical Issues > 3: Automatic **Blocked**
+
+### 9.4 Generate Final Report
+
+```markdown
+## Story Quality Validation Report
+
+**Story:** {epicNum}.{storyNum} - {storyTitle}
+**Validation Date:** {timestamp}
+**Validator:** SM Agent (Automated)
+
+### Quality Score Breakdown
+- Technical Extraction: {score}/10 (weight: 40%)
+- Structure Validation: {score}/10 (weight: 30%)
+- Implementation Readiness: {score}/10 (weight: 30%)
+- **Total Quality Score: {total}/10**
+
+### Status Decision
+- **Recommended Status:** {Approved/Draft/Blocked}
+- **Rationale:** {explanation}
+
+### Critical Issues (if any)
+1. {issue}
+2. {issue}
+
+### Recommendations
+- {recommendation}
+- {recommendation}
+
+### Next Steps
+- [ ] {action}
+- [ ] {action}
+```
+
+### 9.5 Update Story File
+
+**Automatically update Story status based on decision:**
+- If Approved: Set `Status: Approved` in story file
+- If Draft: Set `Status: Draft`, add note "Architect review recommended"
+- If Blocked: Set `Status: Blocked`, document blocking issues
+
+**Add validation summary to story file:**
+```markdown
+## SM Validation Summary
+- Quality Score: {score}/10
+- Status: {Approved/Draft/Blocked}
+- Validation Date: {timestamp}
+- Issues: {count} critical, {count} minor
+``` 

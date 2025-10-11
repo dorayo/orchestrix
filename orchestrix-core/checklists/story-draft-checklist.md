@@ -1,6 +1,10 @@
 # Story Draft Checklist
 
-The Scrum Master should use this checklist to validate that each story contains sufficient context for a developer agent to implement it successfully, while assuming the dev agent has reasonable capabilities to figure things out.
+> **⚠️ DEPRECATED**: This checklist has been superseded by `sm-story-creation-comprehensive-checklist.md` which provides unified validation.  
+> **Recommended**: Use `sm-story-creation-comprehensive-checklist.md` for complete story validation.  
+> **Status**: Kept for backward compatibility. May be removed in future versions.
+
+The Scrum Master should use this checklist to validate story structure and completeness AFTER technical extraction has been completed. This checklist focuses on story-specific validation that is NOT covered by the technical extraction checklist.
 
 [[LLM: INITIALIZATION INSTRUCTIONS - STORY DRAFT VALIDATION
 
@@ -46,76 +50,37 @@ We're checking for SUFFICIENT guidance, not exhaustive detail.]]
 - [ ] Dependencies on previous stories are identified (if applicable)
 - [ ] Business context and value are clear
 
-## 2. TECHNICAL IMPLEMENTATION GUIDANCE
+## 2. STRUCTURE & TEMPLATE COMPLIANCE
 
-[[LLM: Developers need enough technical context to start coding. Check:
+[[LLM: Verify story follows template structure and has all required sections filled.]]
 
-1. Key files/components to create or modify are mentioned
-2. Technology choices are specified where non-obvious
-3. Integration points with existing code are identified
-4. Data models or API contracts are defined or referenced
-5. Non-standard patterns or exceptions are called out
+- [ ] All required template sections are present
+- [ ] No placeholders ({{variables}}) remain unfilled
+- [ ] Story follows standard template structure
+- [ ] Status field is properly set
+- [ ] Change Log has initial entry
 
-Note: We don't need every file listed - just the important ones.]]
+## 3. ACCEPTANCE CRITERIA COVERAGE
 
-- [ ] Key files to create/modify are identified (not necessarily exhaustive)
-- [ ] Technologies specifically needed for this story are mentioned
-- [ ] Critical APIs or interfaces are sufficiently described
-- [ ] Necessary data models or structures are referenced
-- [ ] Required environment variables are listed (if applicable)
-- [ ] Any exceptions to standard coding patterns are noted
+[[LLM: Verify all acceptance criteria are properly mapped to implementation tasks.]]
 
-## 3. TECHNICAL PREFERENCES ALIGNMENT
+- [ ] All ACs have corresponding tasks in Tasks/Subtasks section
+- [ ] Task-AC mapping is explicit (e.g., "Task 1 (AC: 1, 3)")
+- [ ] Tasks logically cover all AC requirements
+- [ ] No ACs are left without implementation tasks
+- [ ] AC numbering is consistent and clear
 
-[[LLM: Technical preferences ensure consistency across the project and prevent dev agents from making decisions that conflict with established standards. Verify:
+## 4. TASK SEQUENCE & LOGIC
 
-1. Technical choices align with original technical-preferences.md
-2. Key constraints are preserved and communicated
-3. No conflicting technical decisions are introduced
-4. Architecture patterns follow established preferences
-5. Technology selections match approved standards]]
+[[LLM: Verify tasks are logically ordered and dependencies are clear.]]
 
-- [ ] Technical choices align with original technical preferences
-- [ ] Key technology constraints are preserved in Dev Notes with source references
-- [ ] No conflicting technical decisions introduced without justification
-- [ ] Architecture patterns follow established preference specifications
-- [ ] Technology stack choices match approved standards from architecture docs
-- [ ] Dev Notes include specific guidance on preferred patterns and approaches
-- [ ] **MANDATORY**: SM Agent technical extraction checklist completion rate > 80%
-- [ ] **MANDATORY**: All technical details in Dev Notes have valid source document references
-- [ ] **MANDATORY**: No unverified technical assumptions present in the story
+- [ ] Tasks follow logical implementation order
+- [ ] Dependencies between tasks are clear and documented
+- [ ] No circular dependencies exist
+- [ ] Frontend-first strategy applied correctly (if enabled)
+- [ ] User confirmation checkpoints included (if required)
 
-## 4. REFERENCE EFFECTIVENESS
-
-[[LLM: References should help, not create a treasure hunt. Ensure:
-
-1. References point to specific sections, not whole documents
-2. The relevance of each reference is explained
-3. Critical information is summarized in the story
-4. References are accessible (not broken links)
-5. Previous story context is summarized if needed]]
-
-- [ ] References to external documents point to specific relevant sections
-- [ ] Critical information from previous stories is summarized (not just referenced)
-- [ ] Context is provided for why references are relevant
-- [ ] References use consistent format (e.g., `docs/filename.md#section`)
-
-## 5. SELF-CONTAINMENT ASSESSMENT
-
-[[LLM: Stories should be mostly self-contained to avoid context switching. Verify:
-
-1. Core requirements are in the story, not just in references
-2. Domain terms are explained or obvious from context
-3. Assumptions are stated explicitly
-4. Edge cases are mentioned (even if deferred)
-5. The story could be understood without reading 10 other documents]]
-
-- [ ] Core information needed is included (not overly reliant on external docs)
-- [ ] Implicit assumptions are made explicit
-- [ ] Domain-specific terms or concepts are explained
-- [ ] Edge cases or error scenarios are addressed
-
-## 6. TESTING GUIDANCE
+## 5. TESTING GUIDANCE
 
 [[LLM: Testing ensures the implementation actually works. Check:
 
@@ -161,22 +126,17 @@ Generate a concise validation report:
 
 Be pragmatic - perfect documentation doesn't exist, but it must be enough to provide the extreme context a dev agent needs to get the work down and not create a mess.]]
 
-| Category                                  | Status | Issues |
-| ----------------------------------------- | ------ | ------ |
-| 1. Goal & Context Clarity                | _TBD_  |        |
-| 2. Technical Implementation Guidance     | _TBD_  |        |
-| 3. Technical Preferences Alignment     | _TBD_  |        |
-| 4. Reference Effectiveness               | _TBD_  |        |
-| 5. Self-Containment Assessment           | _TBD_  |        |
-| 6. Testing Guidance                      | _TBD_  |        |
+| Category | Status | Issues |
+|----------|--------|--------|
+| 1. Goal & Context Clarity | _TBD_ | |
+| 2. Structure & Template Compliance | _TBD_ | |
+| 3. AC Coverage | _TBD_ | |
+| 4. Task Sequence & Logic | _TBD_ | |
+| 5. Testing Guidance | _TBD_ | |
 
 **Final Assessment:**
 
-- READY: The story provides sufficient context for implementation (ALL mandatory items must be PASS)
-- NEEDS REVISION: The story requires updates (see issues) 
-- BLOCKED: External information required (specify what information)
+- **PASS**: All sections marked PASS 
+- **FAIL**: Any section marked FAIL
 
-**Quality Gate Enforcement:**
-- Any MANDATORY item marked as FAIL automatically downgrades assessment to NEEDS REVISION
-- Stories with < 80% technical extraction completion rate are automatically BLOCKED
-- Missing source references for technical details require immediate REVISION
+**Note:** This checklist focuses on story structure and completeness. Technical accuracy and extraction completeness are validated separately by the sm-technical-extraction-checklist.

@@ -1518,16 +1518,16 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           sequence: [
             'Execute create-next-story.md task',
             'Generate comprehensive story with acceptance criteria',
-            'Run execute-checklist with story-draft-checklist.md'
+            'Run execute-checklist with sm-story-creation-comprehensive-checklist.md'
           ],
           dependencies: ['create-next-story.md', 'execute-checklist.md'],
-          checklist: 'story-draft-checklist.md'
+          checklist: 'sm-story-creation-comprehensive-checklist.md'
         },
         'story_validation': {
           sequence: [
-            'Execute validate-story-quality task',
+            'Execute comprehensive story quality check',
             'Analyze story completeness and technical accuracy',
-            'Provide improvement recommendations'
+            'Provide automatic status decision and recommendations'
           ]
         },
         'project_adjustment': {
@@ -2317,7 +2317,7 @@ generateConstraintsSection(metadata, agentId) {
     'sm': [
       'You are NOT allowed to implement stories or modify code EVER!',
       'Stories MUST achieve >80% technical extraction completion rate',
-      'MANDATORY: Execute sm-technical-extraction-checklist during story creation'
+      'MANDATORY: Execute sm-story-creation-comprehensive-checklist during story creation'
     ],
     'qa': [
       'ONLY update QA Results section of story files',
@@ -2738,7 +2738,7 @@ generateSmWorkflow(metadata) {
 3. Execute create-next-story.md task
 4. Generate story using story-tmpl.yaml
 5. Extract ALL technical details from architecture
-6. Run sm-technical-extraction-checklist
+6. Run sm-story-creation-comprehensive-checklist
 7. Verify >80% completion rate
 8. If pass → Save to docs/stories/
 9. If fail → Enhance technical details and retry
@@ -3126,8 +3126,7 @@ generateQualitySection(metadata, agentId) {
     'sm': `\n## Quality Standards & Validation
 
 **Mandatory Validations**:
-- sm-technical-extraction-checklist for EVERY story
-- story-draft-checklist before marking as Draft
+- sm-story-creation-comprehensive-checklist for EVERY story
 - Minimum 80% technical extraction score
 - Quality score ≥7/10 for approval
 
@@ -3771,7 +3770,7 @@ parseListSection(text) {
       'sm': [
         'You are NOT allowed to implement stories or modify code EVER!',
         'Stories MUST achieve >80% technical extraction completion rate',
-        'MANDATORY: Execute sm-technical-extraction-checklist during story creation'
+        'MANDATORY: Execute sm-story-creation-comprehensive-checklist during story creation'
       ],
       'qa': [
         'ONLY update QA Results section of story files',
@@ -3879,7 +3878,7 @@ parseListSection(text) {
 3. Execute create-next-story.md task
 4. Generate story using story-tmpl.yaml
 5. Extract ALL technical details
-6. Run sm-technical-extraction-checklist
+6. Run sm-story-creation-comprehensive-checklist
 7. Verify >80% completion rate
 8. If pass → Save to docs/stories/
 9. If fail → Enhance and retry
@@ -4005,8 +4004,7 @@ parseListSection(text) {
       return `\n## Quality Standards & Validation
 
   **Mandatory Validations**:
-  - sm-technical-extraction-checklist for EVERY story
-  - story-draft-checklist before marking as Draft
+  - sm-story-creation-comprehensive-checklist for EVERY story
   - Minimum 80% technical extraction score
   - Quality score ≥7/10 for approval
 
@@ -5065,7 +5063,7 @@ parseListSection(text) {
           '80% technical extraction',
           'create-next-story',
           'NOT allowed to implement stories',
-          'story-draft-checklist',
+          'sm-story-creation-comprehensive-checklist',
           'docs/prd/',
           'docs/architecture/'
         ]

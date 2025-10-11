@@ -176,25 +176,25 @@ If the story involves API communication or any shared data structure between fro
   - Flag any areas where architecture guidance is incomplete or conflicting
   - Note any dependencies on external clarification or decisions
 
-### 8. Story Draft Completion and Review
+### 8. Comprehensive Quality Check and Status Decision
 
-- Review all sections for completeness and accuracy
-- Verify all source references are included for technical details
-- Ensure tasks align with both epic requirements and architecture constraints
-- Update status to "Draft" and save the story file
-- Execute `{root}/tasks/execute-checklist` `{root}/checklists/story-draft-checklist`
-- **MANDATORY**: Execute `{root}/tasks/validate-story-quality` for comprehensive quality verification
-- Provide summary to user including:
-  - Story created: `{devStoryLocation}/{epicNum}.{storyNum}.story.md`
-  - Status: Draft (or Approved/Blocked based on validation results)
-  - Technical extraction verification completion rate
-  - Quality score and assessment results
-  - Key technical components included from architecture docs
-  - Any deviations or conflicts noted between epic and architecture
-  - Checklist Results and Quality Validation Report
-  - **Critical Issues** (if any) that need immediate attention
-  - Next steps: 
-    - For High-Quality stories (Score 8+): Ready for developer assignment
-    - For Medium-Quality stories (Score 6-7): Review improvement recommendations
-    - For Low-Quality stories (Score < 6): Return to architecture review or escalate to architect
-    - Complex stories should have PO run `{root}/tasks/validate-next-story` for business validation
+**Execute Unified Quality Check:**
+
+- Execute `{root}/tasks/execute-checklist.md` with checklist `{root}/checklists/sm-story-creation-comprehensive-checklist.md`
+- The comprehensive checklist will automatically:
+  1. Check technical extraction completeness (>80% required)
+  2. Check story structure and template compliance
+  3. Assess implementation readiness and developer guidance
+  4. Calculate weighted quality score (Technical 40%, Structure 30%, Readiness 30%)
+  5. Apply automatic status decision matrix
+  6. Update story file with final status and quality check summary
+
+**Automatic Status Assignment:**
+- Quality Score ≥ 8.0 → Status = "Approved" (ready for development)
+- Quality Score 6.0-7.9 → Status = "Draft" (recommend Architect review)
+- Quality Score < 6.0 → Status = "Blocked" (requires revision)
+
+**Summary Report:**
+The checklist execution will provide a comprehensive quality check report including quality score breakdown, critical issues, recommendations, and next steps.
+
+**Note:** This unified approach replaces the previous multi-step validation process and ensures consistent, thorough quality assessment through the standardized checklist system.

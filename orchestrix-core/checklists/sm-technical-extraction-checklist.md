@@ -1,5 +1,9 @@
 # SM Agent Technical Detail Extraction Checklist
 
+> **⚠️ DEPRECATED**: This checklist has been superseded by `sm-story-creation-comprehensive-checklist.md` which provides unified validation.  
+> **Recommended**: Use `sm-story-creation-comprehensive-checklist.md` for complete story validation.  
+> **Status**: Kept for backward compatibility. May be removed in future versions.
+
 This checklist ensures that the SM Agent accurately and comprehensively extracts technical information from architecture documents when creating stories, preventing information gaps or misinterpretations.
 
 [[LLM: INITIALIZATION INSTRUCTIONS - SM AGENT TECHNICAL EXTRACTION VERIFICATION

@@ -1,150 +1,111 @@
-# Validate Next Story Task
+# Validate Next Story Task (PO Business Validation Tool)
 
 ## Purpose
 
-To comprehensively validate a story draft before implementation begins, ensuring it is complete, accurate, and provides sufficient context for successful development. This task identifies issues and gaps that need to be addressed, preventing hallucinations and ensuring implementation readiness.
+**IMPORTANT: This task is designed for Product Owner (PO) business validation, NOT for SM or Dev technical validation.**
 
-## SEQUENTIAL Task Execution (Do not proceed until current Task is complete)
+This task provides a business-focused validation perspective to ensure:
+- Story aligns with business goals and epic objectives
+- Business value is clear and measurable
+- User impact is properly considered
+- Story scope is appropriate for business delivery
 
-### 0. Load Core Configuration and Inputs
+**When to Use:**
+- PO wants to validate business aspects before development
+- Complex stories requiring business stakeholder review
+- Stories with significant user impact or business risk
+- Optional quality gate for high-priority epics
 
-- Load `.orchestrix-core/core-config.yaml`
-- If the file does not exist, HALT and inform the user: "core-config.yaml not found. This file is required for story validation."
-- Extract key configurations: `devStoryLocation`, `prd.*`, `architecture.*`
-- Identify and load the following inputs:
-  - **Story file**: The drafted story to validate (provided by user or discovered in `devStoryLocation`)
-  - **Parent epic**: The epic containing this story's requirements
-  - **Architecture documents**: Based on configuration (sharded or monolithic)
-  - **Story template**: `orchestrix-core/templates/story-tmpl.yaml` for completeness validation
+**When NOT to Use:**
+- SM technical validation (use sm-technical-extraction-checklist instead)
+- Dev implementation readiness (use validate-story-quality instead)
+- Architect technical review (use review-story-technical-accuracy instead)
 
-### 1. Template Completeness Validation
+## Target User
+- **Primary:** Product Owner (PO) Agent
+- **Secondary:** Business stakeholders (human review)
+- **NOT for:** SM Agent, Dev Agent, Architect Agent
 
-- Load `orchestrix-core/templates/story-tmpl.yaml` and extract all section headings from the template
-- **Missing sections check**: Compare story sections against template sections to verify all required sections are present
-- **Placeholder validation**: Ensure no template placeholders remain unfilled (e.g., `{{EpicNum}}`, `{{role}}`, `_TBD_`)
-- **Agent section verification**: Confirm all sections from template exist for future agent use
-- **Structure compliance**: Verify story follows template structure and formatting
+---
 
-### 2. File Structure and Source Tree Validation
+## Business-Focused Validation Process
 
-- **File paths clarity**: Are new/existing files to be created/modified clearly specified?
-- **Source tree relevance**: Is relevant project structure included in Dev Notes?
-- **Directory structure**: Are new directories/components properly located according to project structure?
-- **File creation sequence**: Do tasks specify where files should be created in logical order?
-- **Path accuracy**: Are file paths consistent with project structure from architecture docs?
+### 1. Business Value Assessment
+- Is the business value clearly articulated?
+- Does the story deliver measurable business outcomes?
+- Is the ROI justified for the implementation effort?
 
-### 3. UI/Frontend Completeness Validation (if applicable)
+### 2. User Impact Analysis
+- Are target users clearly identified?
+- Is the user benefit tangible and significant?
+- Does the story improve user experience measurably?
 
-- **Component specifications**: Are UI components sufficiently detailed for implementation?
-- **Styling/design guidance**: Is visual implementation guidance clear?
-- **User interaction flows**: Are UX patterns and behaviors specified?
-- **Responsive/accessibility**: Are these considerations addressed if required?
-- **Integration points**: Are frontend-backend integration points clear?
+### 3. Epic Alignment Verification
+- Does the story contribute to epic goals?
+- Is the story scope appropriate for the epic phase?
+- Are there any scope creep concerns?
 
-### 4. Acceptance Criteria Satisfaction Assessment
+### 4. Business Risk Assessment
+- What are the business risks if this story fails?
+- Are there regulatory or compliance considerations?
+- Is the story critical for business operations?
 
-- **AC coverage**: Will all acceptance criteria be satisfied by the listed tasks?
-- **AC testability**: Are acceptance criteria measurable and verifiable?
-- **Missing scenarios**: Are edge cases or error conditions covered?
-- **Success definition**: Is "done" clearly defined for each AC?
-- **Task-AC mapping**: Are tasks properly linked to specific acceptance criteria?
+### 5. Stakeholder Readiness
+- Have necessary stakeholders been consulted?
+- Are business requirements clearly understood?
+- Is there alignment on success criteria?
 
-### 5. Validation and Testing Instructions Review
+---
 
-- **Test approach clarity**: Are testing methods clearly specified?
-- **Test scenarios**: Are key test cases identified?
-- **Validation steps**: Are acceptance criteria validation steps clear?
-- **Testing tools/frameworks**: Are required testing tools specified?
-- **Test data requirements**: Are test data needs identified?
+## Output: Business Validation Report
 
-### 6. Security Considerations Assessment (if applicable)
+```markdown
+## Business Validation Report
 
-- **Security requirements**: Are security needs identified and addressed?
-- **Authentication/authorization**: Are access controls specified?
-- **Data protection**: Are sensitive data handling requirements clear?
-- **Vulnerability prevention**: Are common security issues addressed?
-- **Compliance requirements**: Are regulatory/compliance needs addressed?
+**Story:** {epicNum}.{storyNum}
+**Validator:** PO Agent
+**Date:** {timestamp}
 
-### 7. Tasks/Subtasks Sequence Validation
+### Business Value Score: {score}/10
+- Clear business value: ✅/❌
+- Measurable outcomes: ✅/❌
+- ROI justified: ✅/❌
 
-- **Logical order**: Do tasks follow proper implementation sequence?
-- **Dependencies**: Are task dependencies clear and correct?
-- **Granularity**: Are tasks appropriately sized and actionable?
-- **Completeness**: Do tasks cover all requirements and acceptance criteria?
-- **Blocking issues**: Are there any tasks that would block others?
+### User Impact Score: {score}/10
+- Target users identified: ✅/❌
+- User benefit tangible: ✅/❌
+- UX improvement measurable: ✅/❌
 
-### 8. Anti-Hallucination Verification
+### Epic Alignment Score: {score}/10
+- Contributes to epic goals: ✅/❌
+- Appropriate scope: ✅/❌
+- No scope creep: ✅/❌
 
-- **Source verification**: Every technical claim must be traceable to source documents
-- **Architecture alignment**: Dev Notes content matches architecture specifications
-- **No invented details**: Flag any technical decisions not supported by source documents
-- **Reference accuracy**: Verify all source references are correct and accessible
-- **Fact checking**: Cross-reference claims against epic and architecture documents
+### Business Decision
+- **GO**: Story approved for development from business perspective
+- **NO-GO**: Story requires business clarification or revision
+- **DEFER**: Story should be postponed to later sprint
 
-### 8.5. Technical Preferences Validation
+### Business Recommendations
+- {recommendation}
+- {recommendation}
+```
 
-- **Preferences alignment**: Verify Dev Notes include technical preferences summary from architecture docs
-- **Constraint preservation**: Ensure key technical constraints from original preferences are captured
-- **Technology consistency**: Check that specified technologies align with established preferences  
-- **Pattern compliance**: Verify architectural patterns follow approved preferences
-- **No conflicts**: Flag any technical decisions that contradict established preferences
+---
 
-### 9. Dev Agent Implementation Readiness
+## Integration with Technical Validation
 
-- **Self-contained context**: Can the story be implemented without reading external docs?
-- **Clear instructions**: Are implementation steps unambiguous?
-- **Complete technical context**: Are all required technical details present in Dev Notes?
-- **Missing information**: Identify any critical information gaps
-- **Actionability**: Are all tasks actionable by a development agent?
+**Validation Flow:**
+```
+SM Technical Validation (sm-technical-extraction-checklist)
+         ↓
+SM Quality Scoring (validate-story-quality)
+         ↓
+[Optional] PO Business Validation (validate-next-story) ← YOU ARE HERE
+         ↓
+Architect Technical Review (review-story-technical-accuracy)
+         ↓
+Dev Implementation
+```
 
-### 10. Generate Validation Report
-
-Provide a structured validation report including:
-
-#### Template Compliance Issues
-
-- Missing sections from story template
-- Unfilled placeholders or template variables
-- Structural formatting issues
-
-#### Critical Issues (Must Fix - Story Blocked)
-
-- Missing essential information for implementation
-- Inaccurate or unverifiable technical claims
-- Incomplete acceptance criteria coverage
-- Missing required sections
-
-#### Should-Fix Issues (Important Quality Improvements)
-
-- Unclear implementation guidance
-- Missing security considerations
-- Task sequencing problems
-- Incomplete testing instructions
-
-#### Technical Preferences Issues (Consistency and Alignment)
-
-- Missing technical preferences summary in Dev Notes
-- Technical decisions that contradict established preferences
-- Missing constraint information from original preferences
-- Technology choices not aligned with approved standards
-- Architecture patterns inconsistent with established preferences
-
-#### Nice-to-Have Improvements (Optional Enhancements)
-
-- Additional context that would help implementation
-- Clarifications that would improve efficiency
-- Documentation improvements
-
-#### Anti-Hallucination Findings
-
-- Unverifiable technical claims
-- Missing source references
-- Inconsistencies with architecture documents
-- Invented libraries, patterns, or standards
-
-#### Final Assessment
-
-- **GO**: Story is ready for implementation
-- **NO-GO**: Story requires fixes before implementation
-- **Implementation Readiness Score**: 1-10 scale
-- **Confidence Level**: High/Medium/Low for successful implementation
+**Note:** PO business validation is optional and independent of technical validation. A story can proceed to development with technical approval even without PO validation, unless explicitly required by project governance.
