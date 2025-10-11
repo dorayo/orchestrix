@@ -48,21 +48,24 @@ We're checking for SUFFICIENT guidance, not exhaustive detail.]]
 
 ## 2. TECHNICAL IMPLEMENTATION GUIDANCE
 
-[[LLM: Technical guidance prevents dev agents from making wrong architectural decisions. Verify:
+[[LLM: Developers need enough technical context to start coding. Check:
 
-1. Architecture decisions are clearly communicated
-2. Technical patterns and conventions are specified
-3. Library/framework choices are explicit
-4. File locations and naming patterns are provided
-5. Integration points are clearly documented]]
+1. Key files/components to create or modify are mentioned
+2. Technology choices are specified where non-obvious
+3. Integration points with existing code are identified
+4. Data models or API contracts are defined or referenced
+5. Non-standard patterns or exceptions are called out
 
-- [ ] Key architectural decisions are documented with rationale
-- [ ] Required libraries/frameworks are specified with versions
-- [ ] File locations follow established project structure
-- [ ] Integration patterns with existing code are clear
-- [ ] API contracts and data models are referenced
+Note: We don't need every file listed - just the important ones.]]
 
-## 2.5. TECHNICAL PREFERENCES ALIGNMENT
+- [ ] Key files to create/modify are identified (not necessarily exhaustive)
+- [ ] Technologies specifically needed for this story are mentioned
+- [ ] Critical APIs or interfaces are sufficiently described
+- [ ] Necessary data models or structures are referenced
+- [ ] Required environment variables are listed (if applicable)
+- [ ] Any exceptions to standard coding patterns are noted
+
+## 3. TECHNICAL PREFERENCES ALIGNMENT
 
 [[LLM: Technical preferences ensure consistency across the project and prevent dev agents from making decisions that conflict with established standards. Verify:
 
@@ -82,7 +85,7 @@ We're checking for SUFFICIENT guidance, not exhaustive detail.]]
 - [ ] **MANDATORY**: All technical details in Dev Notes have valid source document references
 - [ ] **MANDATORY**: No unverified technical assumptions present in the story
 
-## 3. REFERENCE EFFECTIVENESS
+## 4. REFERENCE EFFECTIVENESS
 
 [[LLM: References should help, not create a treasure hunt. Ensure:
 
@@ -97,7 +100,7 @@ We're checking for SUFFICIENT guidance, not exhaustive detail.]]
 - [ ] Context is provided for why references are relevant
 - [ ] References use consistent format (e.g., `docs/filename.md#section`)
 
-## 4. SELF-CONTAINMENT ASSESSMENT
+## 5. SELF-CONTAINMENT ASSESSMENT
 
 [[LLM: Stories should be mostly self-contained to avoid context switching. Verify:
 
@@ -112,7 +115,7 @@ We're checking for SUFFICIENT guidance, not exhaustive detail.]]
 - [ ] Domain-specific terms or concepts are explained
 - [ ] Edge cases or error scenarios are addressed
 
-## 5. TESTING GUIDANCE
+## 6. TESTING GUIDANCE
 
 [[LLM: Testing ensures the implementation actually works. Check:
 
@@ -162,22 +165,16 @@ Be pragmatic - perfect documentation doesn't exist, but it must be enough to pro
 | ----------------------------------------- | ------ | ------ |
 | 1. Goal & Context Clarity                | _TBD_  |        |
 | 2. Technical Implementation Guidance     | _TBD_  |        |
-| 2.5. Technical Preferences Alignment     | _TBD_  |        |
-| 3. Reference Effectiveness               | _TBD_  |        |
-| 4. Self-Containment Assessment           | _TBD_  |        |
-| 5. Testing Guidance                      | _TBD_  |        |
+| 3. Technical Preferences Alignment     | _TBD_  |        |
+| 4. Reference Effectiveness               | _TBD_  |        |
+| 5. Self-Containment Assessment           | _TBD_  |        |
+| 6. Testing Guidance                      | _TBD_  |        |
 
 **Final Assessment:**
 
 - READY: The story provides sufficient context for implementation (ALL mandatory items must be PASS)
 - NEEDS REVISION: The story requires updates (see issues) 
 - BLOCKED: External information required (specify what information)
-
-**CRITICAL: Stories cannot be marked as READY unless ALL mandatory technical verification requirements are met:**
-- SM Agent technical extraction checklist completed with >80% success rate
-- All technical details have valid source document references  
-- No unverified technical assumptions present
-- Technical preferences alignment confirmed
 
 **Quality Gate Enforcement:**
 - Any MANDATORY item marked as FAIL automatically downgrades assessment to NEEDS REVISION

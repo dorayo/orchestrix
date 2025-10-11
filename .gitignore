@@ -29,3 +29,5 @@ sample-project/*
 .orchestrix*/
 .cursor/
 web-bundles/
+.vscode/
+.kiro/

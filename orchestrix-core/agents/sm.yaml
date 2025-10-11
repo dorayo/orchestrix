@@ -23,7 +23,7 @@ instruction_precedence:
   - On conflict, higher priority wins; log the decision in Dev Agent Record.
 
 agent:
-  name: Bob
+  name: Sam
   id: sm
   title: Scrum Master
   icon: "🏃"
@@ -97,11 +97,10 @@ commands:
 
 dependencies:
   tasks:
-    - create-story-auto.md
     - create-next-story.md
-    - execute-checklist.md
     - correct-course.md
     - frontend-user-confirmation.md
+    - execute-checklist.md
     - validate-story-quality.md
   templates:
     - story-tmpl.yaml

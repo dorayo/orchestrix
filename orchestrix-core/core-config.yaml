@@ -1,6 +1,4 @@
 title: Orchestrix Core System
-short-title: Orchestrix Agile Core System
-version: 5.2.0
 description: >
   The core agent framework for Orchestrix, providing the essential agents,
   workflows, and data for building and managing AI-driven development teams.
@@ -19,8 +17,6 @@ devLoadAlwaysFiles:
   - docs/architecture/coding-standards.md
   - docs/architecture/tech-stack.md
   - docs/architecture/source-tree.md
-  - docs/front-end-spec.md
-  - docs/ui-architecture.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
 qa:
