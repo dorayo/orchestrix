@@ -1,0 +1,325 @@
+# SM Decision: Revision Approval
+# Determines whether revised Story should be auto-approved, require Round 2 review, prompt user, or remain blocked
+
+decision_type: sm-revision-approval
+
+description: >
+  Evaluate Story revision quality after Architect feedback to determine if the Story 
+  should be auto-approved (skip Round 2), require mandatory Round 2 review, prompt 
+  user for decision, or remain blocked. This decision optimizes the review workflow 
+  by avoiding unnecessary review rounds when quality improvements are significant.
+
+inputs:
+  - name: previous_architect_score
+    type: number
+    description: Architecture score from previous Architect review (0-10)
+    required: true
+    
+  - name: new_quality_score
+    type: number
+    description: New technical quality score after revision (0-10)
+    required: true
+    
+  - name: critical_issues_total
+    type: number
+    description: Total number of critical issues from Architect review
+    required: true
+    
+  - name: critical_issues_resolved
+    type: number
+    description: Number of critical issues resolved in revision
+    required: true
+    
+  - name: high_issues_total
+    type: number
+    description: Total number of high severity issues from Architect review
+    required: true
+    
+  - name: high_issues_resolved
+    type: number
+    description: Number of high severity issues resolved in revision
+    required: true
+    
+  - name: medium_issues_total
+    type: number
+    description: Total number of medium severity issues from Architect review
+    required: true
+    
+  - name: medium_issues_resolved
+    type: number
+    description: Number of medium severity issues resolved in revision
+    required: true
+    
+  - name: structure_validation_passed
+    type: boolean
+    description: Whether structure validation passed (100%)
+    required: true
+    
+  - name: technical_extraction_rate
+    type: number
+    description: Technical extraction completion rate (0-100)
+    required: true
+    
+  - name: review_round
+    type: number
+    description: Current review round number (should be 1 for this decision)
+    required: true
+
+rules:
+  # Rule 1: Auto-Approve - Significant Improvement
+  - condition: "critical_issues_total == critical_issues_resolved AND (new_quality_score - previous_architect_score) >= 2.0 AND new_quality_score >= 8.0 AND structure_validation_passed == true AND technical_extraction_rate >= 80"
+    result: AUTO_APPROVED
+    reasoning: "Significant quality improvement: all critical issues resolved, quality score improved by 2+ points to ≥8.0, structure and extraction requirements met. Story can proceed without Round 2 review."
+    next_action: "check_test_design_for_final_status"
+    metadata:
+      skip_round_2: true
+      approval_type: "significant_improvement"
+      quality_improvement: "{{new_quality_score - previous_architect_score}}"
+    
+  # Rule 2: Auto-Approve - Only Minor Issues
+  - condition: "critical_issues_total == 0 AND high_issues_total == 0 AND new_quality_score >= 8.0 AND structure_validation_passed == true AND technical_extraction_rate >= 80"
+    result: AUTO_APPROVED
+    reasoning: "Only minor issues (Medium/Low) were revised and high quality achieved (≥8.0). No critical or high severity concerns. Story can proceed without Round 2 review."
+    next_action: "check_test_design_for_final_status"
+    metadata:
+      skip_round_2: true
+      approval_type: "minor_issues_only"
+      issue_severity: "low"
+    
+  # Rule 3: Mandatory Round 2 Review - Critical/High issues revised but quality not excellent
+  - condition: "(critical_issues_resolved > 0 OR high_issues_resolved > 0) AND new_quality_score < 8.0 AND new_quality_score >= 6.0"
+    result: ROUND_2_REVIEW_REQUIRED
+    reasoning: "Critical or High severity issues were revised but quality score <8.0. Architect validation required to ensure issues properly addressed."
+    next_status: AwaitingArchReview
+    next_action: "handoff_to_architect_round_2"
+    metadata:
+      skip_round_2: false
+      review_round: 2
+      review_reason: "critical_high_issues_revised"
+      test_design_deferred: true
+    
+  # Rule 4: User Decision - Medium issues revised, good quality
+  - condition: "critical_issues_total == critical_issues_resolved AND high_issues_total == high_issues_resolved AND medium_issues_resolved > 0 AND new_quality_score >= 7.0 AND new_quality_score < 8.0 AND structure_validation_passed == true AND technical_extraction_rate >= 80"
+    result: USER_DECISION_REQUIRED
+    reasoning: "Medium issues revised with good quality (7.0-7.9). No unresolved Critical/High issues. User can choose to accept risk and approve or request Round 2 review."
+    next_action: "prompt_user_decision"
+    metadata:
+      skip_round_2: "user_choice"
+      quality_level: "good"
+      risk_level: "low"
+    
+  # Rule 5: Blocked - Quality too low
+  - condition: "new_quality_score < 6.0"
+    result: BLOCKED
+    reasoning: "Quality score <6.0 after revision. Story quality insufficient. SM must further revise before any review can proceed."
+    next_status: Blocked
+    next_action: "sm_continue_revision"
+    metadata:
+      blocked_reason: "insufficient_quality"
+      quality_threshold: 6.0
+      test_design_deferred: true
+    
+  # Rule 6: Blocked - Structure validation failed
+  - condition: "structure_validation_passed == false"
+    result: BLOCKED
+    reasoning: "Structure validation failed (<100%). Story structure incomplete or invalid. SM must fix structure issues before proceeding."
+    next_status: Blocked
+    next_action: "sm_fix_structure"
+    metadata:
+      blocked_reason: "structure_validation_failed"
+      test_design_deferred: true
+    
+  # Rule 7: Blocked - Technical extraction insufficient
+  - condition: "technical_extraction_rate < 80"
+    result: BLOCKED
+    reasoning: "Technical extraction rate <80%. Story lacks sufficient technical details. SM must improve technical specifications before proceeding."
+    next_status: Blocked
+    next_action: "sm_improve_technical_details"
+    metadata:
+      blocked_reason: "insufficient_technical_extraction"
+      extraction_threshold: 80
+      test_design_deferred: true
+    
+  # Rule 8: Default - Standard Round 2 Review
+  - condition: "new_quality_score >= 6.0 AND structure_validation_passed == true AND technical_extraction_rate >= 80"
+    result: ROUND_2_REVIEW_REQUIRED
+    reasoning: "Quality improved but requires Architect validation. Standard review process - quality meets minimum but not auto-approval threshold."
+    next_status: AwaitingArchReview
+    next_action: "handoff_to_architect_round_2"
+    metadata:
+      skip_round_2: false
+      review_round: 2
+      review_reason: "standard_review"
+      test_design_deferred: true
+
+output:
+  approval_decision:
+    type: enum
+    values: [AUTO_APPROVED, ROUND_2_REVIEW_REQUIRED, USER_DECISION_REQUIRED, BLOCKED]
+    description: Revision approval decision outcome
+    
+  reasoning:
+    type: string
+    description: Explanation of why this decision was made
+    
+  next_status:
+    type: string
+    description: Story status to set (only for ROUND_2_REVIEW_REQUIRED and BLOCKED)
+    
+  next_action:
+    type: string
+    description: Next action to take (check_test_design_for_final_status, handoff_to_architect_round_2, prompt_user_decision, sm_continue_revision, sm_fix_structure, sm_improve_technical_details)
+    
+  metadata:
+    type: object
+    description: Additional metadata about the decision
+    properties:
+      skip_round_2:
+        type: boolean or string
+        description: Whether Round 2 review is skipped (true, false, or "user_choice")
+      approval_type:
+        type: string
+        description: Type of auto-approval (significant_improvement, minor_issues_only)
+      quality_improvement:
+        type: number
+        description: Quality score improvement amount
+      issue_severity:
+        type: string
+        description: Severity level of issues addressed
+      review_round:
+        type: number
+        description: Next review round number
+      review_reason:
+        type: string
+        description: Reason for requiring Round 2 review
+      test_design_deferred:
+        type: boolean
+        description: Whether test design decision is deferred
+      quality_level:
+        type: string
+        description: Quality level description (good, excellent)
+      risk_level:
+        type: string
+        description: Risk level for user decision (low, medium)
+      blocked_reason:
+        type: string
+        description: Reason for blocking (insufficient_quality, structure_validation_failed, insufficient_technical_extraction)
+      quality_threshold:
+        type: number
+        description: Quality threshold not met
+      extraction_threshold:
+        type: number
+        description: Extraction threshold not met
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "SM Agent"
+  related_requirements:
+    - "6.9"
+    - "6.11"
+  usage_context: >
+    Called by SM Agent in revise-story-from-architect-feedback task after quality 
+    re-check (Step 5). This decision determines whether the revised Story should:
+    1. Be auto-approved and proceed to test design phase (skip Round 2)
+    2. Require mandatory Round 2 Architect review
+    3. Prompt user to decide between approval and Round 2 review
+    4. Remain blocked for further SM revision
+    
+    COORDINATION NOTE: When result is AUTO_APPROVED or user approves, the SM should 
+    then call sm-story-status decision to determine final status based on test design 
+    level (AwaitingTestDesign or TestDesignComplete).
+    
+    The revision approval decision optimizes workflow by:
+    - Avoiding unnecessary Round 2 reviews when quality improvement is significant
+    - Ensuring critical issues get proper validation
+    - Giving users control over medium-risk scenarios
+    - Preventing low-quality stories from proceeding
+
+examples:
+  - input:
+      previous_architect_score: 6.5
+      new_quality_score: 8.5
+      critical_issues_total: 1
+      critical_issues_resolved: 1
+      high_issues_total: 0
+      high_issues_resolved: 0
+      medium_issues_total: 2
+      medium_issues_resolved: 2
+      structure_validation_passed: true
+      technical_extraction_rate: 95
+      review_round: 1
+    output:
+      approval_decision: AUTO_APPROVED
+      reasoning: "Significant quality improvement: all critical issues resolved, quality score improved by 2+ points to ≥8.0, structure and extraction requirements met. Story can proceed without Round 2 review."
+      next_action: "check_test_design_for_final_status"
+      
+  - input:
+      previous_architect_score: 7.0
+      new_quality_score: 8.2
+      critical_issues_total: 0
+      critical_issues_resolved: 0
+      high_issues_total: 0
+      high_issues_resolved: 0
+      medium_issues_total: 3
+      medium_issues_resolved: 3
+      structure_validation_passed: true
+      technical_extraction_rate: 90
+      review_round: 1
+    output:
+      approval_decision: AUTO_APPROVED
+      reasoning: "Only minor issues (Medium/Low) were revised and high quality achieved (≥8.0). No critical or high severity concerns. Story can proceed without Round 2 review."
+      next_action: "check_test_design_for_final_status"
+      
+  - input:
+      previous_architect_score: 6.5
+      new_quality_score: 7.5
+      critical_issues_total: 1
+      critical_issues_resolved: 1
+      high_issues_total: 1
+      high_issues_resolved: 1
+      medium_issues_total: 2
+      medium_issues_resolved: 2
+      structure_validation_passed: true
+      technical_extraction_rate: 85
+      review_round: 1
+    output:
+      approval_decision: ROUND_2_REVIEW_REQUIRED
+      reasoning: "Critical or High severity issues were revised but quality score <8.0. Architect validation required to ensure issues properly addressed."
+      next_status: AwaitingArchReview
+      next_action: "handoff_to_architect_round_2"
+      
+  - input:
+      previous_architect_score: 7.0
+      new_quality_score: 7.5
+      critical_issues_total: 0
+      critical_issues_resolved: 0
+      high_issues_total: 0
+      high_issues_resolved: 0
+      medium_issues_total: 3
+      medium_issues_resolved: 3
+      structure_validation_passed: true
+      technical_extraction_rate: 85
+      review_round: 1
+    output:
+      approval_decision: USER_DECISION_REQUIRED
+      reasoning: "Medium issues revised with good quality (7.0-7.9). No unresolved Critical/High issues. User can choose to accept risk and approve or request Round 2 review."
+      next_action: "prompt_user_decision"
+      
+  - input:
+      previous_architect_score: 6.5
+      new_quality_score: 5.5
+      critical_issues_total: 2
+      critical_issues_resolved: 1
+      high_issues_total: 1
+      high_issues_resolved: 0
+      medium_issues_total: 2
+      medium_issues_resolved: 1
+      structure_validation_passed: true
+      technical_extraction_rate: 75
+      review_round: 1
+    output:
+      approval_decision: BLOCKED
+      reasoning: "Quality score <6.0 after revision. Story quality insufficient. SM must further revise before any review can proceed."
+      next_status: Blocked
+      next_action: "sm_continue_revision"

@@ -12,13 +12,88 @@ required:
   - story_slug: '{slug}' # If missing, derive from title (lowercase, hyphenated)
 ```
 
+## Agent Permission Check
+
+**CRITICAL**: Before proceeding with QA review, verify QA agent has the required permissions:
+
+1. **Verify Agent Identity:**
+   - Confirm you are the QA agent
+   - Reference `{root}/data/story-status-transitions.yaml`
+
+2. **Check Review Permission:**
+   - Verify QA has permission to modify stories in `Review` status
+   - Reference `can_modify_in_statuses` in agent_permissions
+   - Verify QA can perform status changes:
+     - Review -> Done
+     - Review -> InProgress
+
+3. **If permission check fails:**
+   - Log error: "QA agent does not have permission to review this story"
+   - Reference the responsible agent from story-status-transitions.yaml
+   - HALT and inform user of the permission violation
+   - Do NOT proceed with review
+
 ## Prerequisites
 
 - Story status must be "Review"
 - Developer has completed all tasks and updated the File List
 - All automated tests are passing
 
+## Status Transition Validation
+
+Before proceeding with the review, validate that QA is authorized to review this Story:
+
+1. **Check Current Story Status:**
+   - Read the Story's `Status` field
+   - Verify status is `Review`
+   - If status is not `Review`, HALT and inform user:
+     ```
+     ERROR: Invalid status for QA review
+     Current Status: {current_status}
+     Expected Status: Review
+     
+     QA can only review stories with status 'Review'.
+     Current responsible agent: {responsible_agent_from_config}
+     ```
+
+2. **Validate Agent Permission:**
+   - Reference `{root}/data/story-status-transitions.yaml`
+   - Confirm QA has permission to modify stories in `Review` status
+   - Verify QA can transition to target statuses: `Done`, `InProgress`
+
+3. **If validation fails:**
+   - Log error with details from `story-status-transitions.yaml` error_messages
+   - HALT and provide guidance on correct workflow
+   - Do NOT proceed with review
+
 ## Review Process - Adaptive Test Architecture
+
+### 0. Initialize Review Round Tracking
+
+**CRITICAL**: Before starting the review, check and update the QA review round counter:
+
+1. Read the Story file's `QA Review Metadata` section
+2. Check the `review_round` field:
+   - If field doesn't exist or is 0: Initialize to 1 (first review)
+   - If field exists: Increment by 1 (e.g., 1 → 2, 2 → 3)
+3. Update the `review_round` field in the Story file
+4. Record the current round number for use in determining review standards
+
+**Round Limits:**
+- Maximum 3 rounds of QA review allowed
+- Each round applies progressively more pragmatic standards
+- Round 1: Strict standards (all criteria must be met)
+- Round 2: Moderate standards (50% issue reduction + no high severity)
+- Round 3: Pragmatic standards (no critical issues + acceptable technical debt)
+
+**If this is Round 4 or higher:**
+- STOP the review process
+- Prompt user for decision:
+  - Option 1: Accept current state and mark as Done (record technical debt)
+  - Option 2: Escalate to Architect or SM for re-evaluation
+  - Option 3: Continue fixing (last chance, no more automatic reviews)
+- Record user decision in QA Review Metadata
+- Exit the review task
 
 ### 1. Risk Assessment (Determines Review Depth)
 
@@ -32,50 +107,60 @@ required:
 
 ### 2. Comprehensive Analysis
 
-**A. Requirements Traceability**
+**Apply analysis depth based on current review round:**
 
-- Map each acceptance criteria to its validating tests (document mapping with Given-When-Then, not test code)
+**Apply analysis depth based on review round:**
+
+**A. Requirements Traceability**
+- Map each AC to validating tests (Given-When-Then format)
 - Identify coverage gaps
-- Verify all requirements have corresponding test cases
+- Verify all requirements have test cases
 
 **B. Code Quality Review**
-
 - Architecture and design patterns
-- Refactoring opportunities (and perform them)
-- Code duplication or inefficiencies
-- Performance optimizations
-- Security vulnerabilities
+- Refactoring opportunities (perform when safe)
+- Code duplication, inefficiencies
+- Performance, security vulnerabilities
 - Best practices adherence
 
-**C. Test Architecture Assessment**
+**Architecture Concern Detection:**
+If architecture issues detected:
+1. Execute decision: `make-decision`
+   - Type: `qa-escalate-architect`
+   - Context: {concern_description, severity, impact, concern_type, affects_multiple_components, requires_design_change, has_workaround}
+2. Apply result:
+   - ESCALATE → Document, set Status = Escalated, handoff to Architect, exit
+   - DOCUMENT → Document, continue review
 
+**C. Test Architecture Assessment**
 - Test coverage adequacy at appropriate levels
-- Test level appropriateness (what should be unit vs integration vs e2e)
-- Test design quality and maintainability
-- Test data management strategy
-- Mock/stub usage appropriateness
+- Test level appropriateness (unit vs integration vs e2e)
+- Test design quality, maintainability
+- Test data management, mock/stub usage
 - Edge case and error scenario coverage
-- Test execution time and reliability
+- Test execution time, reliability
 
 **D. Non-Functional Requirements (NFRs)**
-
 - Security: Authentication, authorization, data protection
 - Performance: Response times, resource usage
-- Reliability: Error handling, recovery mechanisms
+- Reliability: Error handling, recovery
 - Maintainability: Code clarity, documentation
 
 **E. Testability Evaluation**
-
-- Controllability: Can we control the inputs?
-- Observability: Can we observe the outputs?
-- Debuggability: Can we debug failures easily?
+- Controllability: Can we control inputs?
+- Observability: Can we observe outputs?
+- Debuggability: Can we debug failures?
 
 **F. Technical Debt Identification**
-
 - Accumulated shortcuts
 - Missing tests
 - Outdated dependencies
 - Architecture violations
+
+**Round-Specific Standards:**
+- Round 1: Strict (all criteria must be met)
+- Round 2: Moderate (50% improvement + no high severity)
+- Round 3: Pragmatic (no critical issues + acceptable debt)
 
 ### 3. Active Refactoring
 
@@ -106,7 +191,7 @@ required:
 
 ## Output 1: Update Story File - QA Results Section ONLY
 
-**CRITICAL**: You are ONLY authorized to update the "QA Results" section of the story file. DO NOT modify any other sections.
+**CRITICAL**: You are ONLY authorized to update the "QA Results" section and "QA Review Metadata" section of the story file. DO NOT modify any other sections.
 
 **QA Results Anchor Rule:**
 
@@ -114,18 +199,60 @@ required:
 - If it exists, append a new dated entry below existing entries
 - Never edit other sections
 
+**QA Review Metadata Update:**
+
+Before appending QA Results, update the `QA Review Metadata` section:
+
+1. Update `review_round` field with current round number
+2. Increment `total_reviews_conducted` by 1
+3. Append to `review-history` list with:
+   - Round number
+   - Review date
+   - Reviewer ID
+   - Gate result
+   - Total issues found
+   - Critical and High severity issue counts
+   - Issues from previous round (if Round 2+)
+   - Issues resolved (if Round 2+)
+   - Improvement percentage (if Round 2+)
+   - Decision
+
 After review and any refactoring, append your results to the story file in the QA Results section:
 
 ```markdown
 ## QA Results
 
-### Review Date: [Date]
+### Review Date: [Date] - Round [N]
 
 ### Reviewed By: Quinn (Test Architect)
+
+### Review Round Information
+
+- **Round**: [1/2/3]
+- **Standards Applied**: [Strict/Moderate/Pragmatic]
+- **Issues from Previous Round**: [count] (if Round 2+)
+- **Issues Resolved**: [count] (if Round 2+)
+- **Improvement Percentage**: [percentage]% (if Round 2+)
 
 ### Code Quality Assessment
 
 [Overall assessment of implementation quality]
+
+### Architecture Concerns Detected
+
+[If architecture concerns are found, document them here. Otherwise, state "None"]
+
+**Concern Type**: [Performance/Security/Scalability/Design/Data Integrity/Technical Debt]
+**Severity**: [High/Critical]
+**Description**: [Detailed description of the architecture concern]
+**Impact**: [Potential impact on system quality, performance, or maintainability]
+**Recommendation**: [Suggested approach or questions for Architect]
+**Files Affected**: [List of files with architecture concerns]
+
+[If multiple concerns exist, repeat the above structure for each]
+
+**Escalation Required**: [Yes/No]
+- If Yes: Story Status will be set to Escalated and Architect will be notified
 
 ### Refactoring Performed
 
@@ -177,6 +304,15 @@ NFR assessment: qa.qaLocation/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
 
 [✓ Ready for Done] / [✗ Changes Required - See unchecked items above]
 (Story owner decides final status)
+
+### Technical Debt (Round 3 only, if applicable)
+
+[If Round 3 and accepting technical debt, document here:]
+
+- **Issue**: [description]
+- **Impact**: [impact assessment]
+- **Severity**: [Low/Medium]
+- **Follow-up Plan**: [plan for addressing in future]
 ```
 
 ## Output 2: Create Quality Gate File
@@ -197,6 +333,12 @@ gate: PASS|CONCERNS|FAIL|WAIVED
 status_reason: '1-2 sentence explanation of gate decision'
 reviewer: 'Quinn (Test Architect)'
 updated: '{ISO-8601 timestamp}'
+
+# Review round tracking (REQUIRED)
+review_round: {current_round}  # 1, 2, or 3
+issues_from_previous_round: {count}  # 0 if Round 1, else count from previous gate file
+issues_resolved: {count}  # 0 if Round 1, else (issues_from_previous - current_issues)
+improvement_percentage: {percentage}  # 0 if Round 1, else (issues_resolved / issues_from_previous) × 100
 
 top_issues: [] # Empty if no issues
 waiver: { active: false } # Set active: true only if WAIVED
@@ -235,37 +377,32 @@ recommendations:
       refs: ['services/data.ts']
 ```
 
+**Populating Round Tracking Fields:**
+
+1. **review_round**: Use the current round number from Story's QA Review Metadata
+2. **issues_from_previous_round**: 
+   - If Round 1: Set to 0
+   - If Round 2+: Read the previous gate file and count total issues from `top_issues`
+3. **issues_resolved**:
+   - If Round 1: Set to 0
+   - If Round 2+: Calculate as (issues_from_previous_round - current_issues_count)
+4. **improvement_percentage**:
+   - If Round 1: Set to 0
+   - If Round 2+: Calculate as (issues_resolved / issues_from_previous_round) × 100
+   - Round to nearest integer
+
 ### Gate Decision Criteria
 
-**Deterministic rule (apply in order):**
+Execute decision: `make-decision`
+- Type: `qa-gate-decision`
+- Context: {review_round, issues_by_severity, previous_issues}
 
-If risk_summary exists, apply its thresholds first (≥9 → FAIL, ≥6 → CONCERNS), then NFR statuses, then top_issues severity.
+Apply decision result:
+- PASS → Gate = PASS, Status = Done
+- CONCERNS → Gate = CONCERNS, Status = InProgress
+- FAIL → Gate = FAIL, Status = InProgress or Escalated
 
-1. **Risk thresholds (if risk_summary present):**
-   - If any risk score ≥ 9 → Gate = FAIL (unless waived)
-   - Else if any score ≥ 6 → Gate = CONCERNS
-
-2. **Test coverage gaps (if trace available):**
-   - If any P0 test from test-design is missing → Gate = CONCERNS
-   - If security/data-loss P0 test missing → Gate = FAIL
-
-3. **Issue severity:**
-   - If any `top_issues.severity == high` → Gate = FAIL (unless waived)
-   - Else if any `severity == medium` → Gate = CONCERNS
-
-4. **NFR statuses:**
-   - If any NFR status is FAIL → Gate = FAIL
-   - Else if any NFR status is CONCERNS → Gate = CONCERNS
-   - Else → Gate = PASS
-
-- WAIVED only when waiver.active: true with reason/approver
-
-Detailed criteria:
-
-- **PASS**: All critical requirements met, no blocking issues
-- **CONCERNS**: Non-critical issues found, team should review
-- **FAIL**: Critical issues that should be addressed
-- **WAIVED**: Issues acknowledged but explicitly waived by team
+WAIVED only when waiver.active: true with reason/approver
 
 ### Quality Score Calculation
 
@@ -307,8 +444,62 @@ Stop the review and request clarification if:
 
 After review:
 
-1. Update the QA Results section in the story file
-2. Create the gate file in directory from `qa.qaLocation/gates`
-3. Recommend status: "Ready for Done" or "Changes Required" (owner decides)
-4. If files were modified, list them in QA Results and ask Dev to update File List
-5. Always provide constructive feedback and actionable recommendations
+1. Update the QA Review Metadata section with round tracking information
+2. Update the QA Results section in the story file
+3. Create the gate file in directory from `qa.qaLocation/gates`
+4. **Validate and Update Story Status:**
+   
+   **Before setting status, validate the transition:**
+   
+   a. **Check for Architecture Concerns:**
+      - If architecture concerns were detected and escalation is required:
+        - Set Story Status = Escalated
+        - Skip gate decision (no gate file created)
+        - Skip remaining validation steps
+        - Proceed to Output Handoff Message for Architect
+   
+   b. **Validate Transition is Allowed (if no escalation):**
+      - Reference `{root}/data/story-status-transitions.yaml`
+      - Current status: `Review`
+      - Target status: One of [`Done`, `InProgress`, `Escalated`]
+      - Verify the transition is in the allowed_transitions list
+      - Confirm QA has permission for this status change
+   
+   c. **Check Prerequisites:**
+      - For `Done`: Verify qa_gate = PASS AND all_acceptance_criteria_met = true AND no_critical_issues = true
+      - For `InProgress`: Verify qa_gate = CONCERNS or FAIL AND has_issues_to_fix = true
+      - For `Escalated`: Verify architecture_concerns_detected = true
+   
+   d. **If validation fails:**
+      - Log error with details from story-status-transitions.yaml
+      - HALT and inform user of validation failure
+      - Do NOT update status
+   
+   e. **If validation succeeds:**
+      - Update Story Status based on gate result and round:
+        - If Architecture Concerns Detected → Set Status = Escalated
+        - Else if Gate = PASS → Set Status = Done
+        - Else if Gate = CONCERNS or FAIL → Set Status = InProgress
+      - Log the transition for audit purposes
+
+5. If files were modified, list them in QA Results and ask Dev to update File List
+6. Always provide constructive feedback and actionable recommendations
+
+### Output Handoff Message
+
+Based on the final status, output the appropriate handoff message:
+
+- **If Status = Escalated:**
+  ```
+  Architecture concerns detected. Next: Architect please execute command `review-escalation {story_id}`
+  ```
+
+- **If Status = Done:**
+  ```
+  Story completed!
+  ```
+
+- **If Status = InProgress:**
+  ```
+  Next: Dev please execute command `review-qa {story_id}`
+  ```

@@ -19,7 +19,8 @@
 - ✅ MUST generate technical accuracy score ≥7/10 to pass
 - ✅ MUST identify critical/major/minor issues with specific locations
 - ✅ MUST provide actionable recommendations for improvements
-- ✅ MUST update story status to Approved/Requires_Revision/Blocked
+- ✅ MUST check test design level from Story metadata
+- ✅ MUST update story status to AwaitingTestDesign/Approved/Requires_Revision/Blocked based on score and test design level
 
 ### Auto-Halt Conditions:
 - ❌ Story file not found → Report missing story, halt
@@ -165,6 +166,18 @@ issue_classification:
     - Performance considerations
 ```
 
+### Test Design Level Check:
+```yaml
+# Check test design level to determine correct status transition
+test_design_routing:
+  1. Read Story's QA Test Design Metadata section
+  2. Extract test_design_level field (Simple/Standard/Comprehensive)
+  3. If review passes (score ≥7 AND no critical issues):
+     - If test_design_level = Simple: Set Status to Approved
+     - If test_design_level ∈ {Standard, Comprehensive}: Set Status to AwaitingTestDesign
+  4. If review fails: Set Status to RequiresRevision or Escalated
+```
+
 ### Report Auto-Generation:
 ```yaml
 # Structured technical review report generation
@@ -172,7 +185,8 @@ report_generation:
   overall_assessment:
     - Technical Accuracy Score: X/10
     - Pass/Fail Recommendation
-    - Status Decision: Approved/Requires_Revision/Blocked
+    - Test Design Level: Simple/Standard/Comprehensive
+    - Status Decision: AwaitingTestDesign/Approved/Requires_Revision/Blocked
     
   detailed_analysis:
     - Technical Compliance breakdown (5 sub-scores)
@@ -183,7 +197,7 @@ report_generation:
     - Critical issues with exact locations
     - Major issues with recommended solutions
     - Minor issues with optional improvements
-    - Next steps for SM Agent
+    - Next steps for appropriate agent (QA/Dev/SM)
 ```
 
 ---
@@ -267,7 +281,13 @@ report_generation:
 {{specific_actionable_recommendations}}
 
 ### Next Steps
-- {{auto_generated_next_steps_based_on_score}}
+- {{auto_generated_next_steps_based_on_score_and_test_design_level}}
+
+### Handoff Message
+- If Status = AwaitingTestDesign: "Next: QA please execute command `test-design {story_id}`"
+- If Status = Approved: "Next: Dev please execute command `implement-story {story_id}`"
+- If Status = RequiresRevision: "Next: SM please execute command `revise {story_id}`"
+- If Status = Escalated: "Story escalated - requires human intervention"
 ```
 
 ---
@@ -312,11 +332,12 @@ error_handling:
 - ✅ Technical accuracy score generated with justification
 - ✅ All architecture compliance checks completed
 - ✅ Issues classified with specific locations and recommendations
-- ✅ Story status updated appropriately (Approved/Requires_Revision/Blocked)
-- ✅ Actionable feedback provided for SM Agent next steps
+- ✅ Story status updated appropriately (AwaitingTestDesign/Approved/Requires_Revision/Blocked)
+- ✅ Actionable feedback provided for next agent
 
 ### Quality Gates:
-- **Score ≥7/10**: Auto-approve for development
+- **Score ≥7/10 + Test Design Level = Simple**: Auto-approve for development (Status = Approved)
+- **Score ≥7/10 + Test Design Level ∈ {Standard, Comprehensive}**: Transition to QA test design (Status = AwaitingTestDesign)
 - **Score 5-6/10**: Requires minor fixes, conditional pass  
 - **Score <5/10**: Major revision required, blocked status
 - **Zero Critical Issues**: No architectural violations or impossible requirements

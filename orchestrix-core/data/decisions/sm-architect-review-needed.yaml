@@ -1,0 +1,80 @@
+# SM Decision: Architect Review Needed
+# Determines if Architect review is required based on Story quality and complexity
+
+decision_type: sm-architect-review-needed
+
+description: >
+  Evaluate Story quality score and complexity indicators to determine if 
+  Architect review is required before proceeding to test design phase.
+
+inputs:
+  - name: quality_score
+    type: number
+    description: Story quality score from SM checklist (0-10)
+    required: true
+    
+  - name: complexity_indicators
+    type: number
+    description: Number of complexity indicators present (0-5)
+    required: true
+
+rules:
+  # Rule 1: High quality + High complexity → Architect review required
+  - condition: "quality_score >= 8.0 AND complexity_indicators >= 2"
+    result: REQUIRED
+    reasoning: "High quality Story but high complexity requires architectural validation to ensure technical feasibility and alignment"
+    next_status: AwaitingArchReview
+    next_action: "handoff_to_architect"
+    
+  # Rule 2: Medium quality → Architect review required
+  - condition: "quality_score >= 6.0 AND quality_score < 8.0"
+    result: REQUIRED
+    reasoning: "Medium quality Story requires architectural guidance to clarify technical approach and ensure completeness"
+    next_status: AwaitingArchReview
+    next_action: "handoff_to_architect"
+    
+  # Rule 3: High quality + Low complexity → No Architect review needed
+  - condition: "quality_score >= 8.0 AND complexity_indicators <= 1"
+    result: NOT_REQUIRED
+    reasoning: "High quality Story with low complexity can proceed directly to test design phase"
+    next_status: null
+    next_action: "check_test_design_level"
+    
+  # Rule 4: Low quality → Blocked, SM must revise first
+  - condition: "quality_score < 6.0"
+    result: BLOCKED
+    reasoning: "Story quality too low for any review. SM must revise Story to improve quality before proceeding"
+    next_status: Blocked
+    next_action: "sm_revise_story"
+
+output:
+  result:
+    type: enum
+    values: [REQUIRED, NOT_REQUIRED, BLOCKED]
+    description: Decision result indicating if Architect review is needed
+    
+  reasoning:
+    type: string
+    description: Explanation of why this decision was made
+    
+  next_status:
+    type: string
+    description: Story status to set based on decision (AwaitingArchReview, Blocked, or null)
+    nullable: true
+    
+  next_action:
+    type: string
+    description: Next action to take (handoff_to_architect, check_test_design_level, sm_revise_story)
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "SM Agent"
+  related_requirements:
+    - "6.2"
+    - "6.4"
+    - "6.5"
+  usage_context: >
+    Called by SM Agent after completing Story quality assessment in create-next-story 
+    and revise-story-from-architect-feedback tasks. This decision determines the 
+    coordination path: Architect review first, or directly to test design phase.

@@ -16,8 +16,18 @@ status_reason: "{{status_reason}}" # 1-2 sentence summary of why this gate decis
 reviewer: "Quinn (Test Architect)"
 updated: "{{iso_timestamp}}"
 
+# Review round tracking (for progressive standards)
+review_round: 1  # Current review round (1-3)
+issues_from_previous_round: 0  # Count of issues from previous round (0 if Round 1)
+issues_resolved: 0  # Count of issues resolved since previous round (0 if Round 1)
+improvement_percentage: 0  # Percentage improvement from previous round (0 if Round 1)
+
 # Always present but only active when WAIVED
 waiver: { active: false }
+
+# Architecture concern escalation (for QA → Architect escalation)
+architecture_concern: false  # Set to true if architecture issues detected
+escalation_reason: ""  # Describe architecture concern if escalating to Architect
 
 # Issues (if any) - Use fixed severity: low | medium | high
 top_issues: []
@@ -31,6 +41,52 @@ risk_summary:
 
 # Examples section using block scalars for clarity
 examples:
+  round_1_example: |
+    # Round 1: First review with strict standards
+    review_round: 1
+    issues_from_previous_round: 0
+    issues_resolved: 0
+    improvement_percentage: 0
+    gate: FAIL
+    status_reason: "Critical security issues and missing test coverage"
+    top_issues:
+      - id: "SEC-001"
+        severity: high
+        finding: "No rate limiting on login endpoint"
+        suggested_action: "Add rate limiting middleware before production"
+      - id: "TEST-001"
+        severity: medium
+        finding: "Missing integration tests for auth flow"
+        suggested_action: "Add test coverage for critical paths"
+
+  round_2_example: |
+    # Round 2: After Dev fixes, moderate standards applied
+    review_round: 2
+    issues_from_previous_round: 5
+    issues_resolved: 3
+    improvement_percentage: 60  # (3/5) × 100 = 60%
+    gate: PASS
+    status_reason: "Issues reduced by 60%, no high severity issues remain, core functionality verified"
+    top_issues:
+      - id: "DOC-001"
+        severity: low
+        finding: "API documentation could be more detailed"
+        suggested_action: "Enhance API documentation in future iteration"
+
+  round_3_example: |
+    # Round 3: Pragmatic standards, accepting technical debt
+    review_round: 3
+    issues_from_previous_round: 3
+    issues_resolved: 2
+    improvement_percentage: 67  # (2/3) × 100 = 67%
+    gate: PASS
+    status_reason: "No critical issues, remaining minor issues documented as technical debt"
+    top_issues:
+      - id: "PERF-001"
+        severity: low
+        finding: "Query optimization opportunity in user search"
+        suggested_action: "Optimize in future performance sprint"
+
   with_issues: |
     top_issues:
       - id: "SEC-001"
@@ -47,6 +103,18 @@ examples:
       active: true
       reason: "Accepted for MVP release - will address in next sprint"
       approved_by: "Product Owner"
+
+  with_architecture_concern: |
+    # When QA detects architecture issues requiring Architect review
+    architecture_concern: true
+    escalation_reason: "Potential performance bottleneck in data access layer - N+1 query pattern detected that could impact scalability"
+    gate: CONCERNS
+    status_reason: "Architecture concern requires Architect review before proceeding"
+    top_issues:
+      - id: "ARCH-001"
+        severity: high
+        finding: "N+1 query pattern in user data fetching"
+        suggested_action: "Architect to review and recommend optimization strategy"
 
 # ============ Optional Extended Fields ============
 # Uncomment and use if your team wants more detail

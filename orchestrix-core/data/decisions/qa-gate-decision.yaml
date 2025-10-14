@@ -1,0 +1,406 @@
+# QA Decision: Gate Decision
+# Determines QA Gate result (PASS/FAIL/CONCERNS) with progressive standards
+
+decision_type: qa-gate-decision
+
+description: >
+  Evaluate QA review findings including review round, issues by severity, and 
+  previous issues to determine if the Story passes QA Gate. Uses progressive 
+  standards: stricter on first review, more lenient on subsequent reviews to 
+  balance quality with iteration efficiency.
+
+inputs:
+  - name: review_round
+    type: number
+    description: Current review iteration number (1 = first review, 2+ = re-review)
+    required: true
+    
+  - name: issues_by_severity
+    type: object
+    description: Count of issues by severity level
+    required: true
+    properties:
+      critical:
+        type: number
+        description: Number of critical/blocking issues
+      high:
+        type: number
+        description: Number of high severity issues
+      medium:
+        type: number
+        description: Number of medium severity issues
+      low:
+        type: number
+        description: Number of low severity issues
+    
+  - name: previous_issues
+    type: object
+    description: Issue counts from previous review (null if first review)
+    required: false
+    nullable: true
+    properties:
+      critical:
+        type: number
+      high:
+        type: number
+      medium:
+        type: number
+      low:
+        type: number
+
+rules:
+  # Rule 1: PASS - Perfect quality (any review round)
+  - condition: "issues_by_severity.critical == 0 AND issues_by_severity.high == 0 AND issues_by_severity.medium == 0"
+    result: PASS
+    reasoning: "No critical, high, or medium severity issues found. Story meets quality standards and is ready for production."
+    next_status: Complete
+    next_action: "mark_story_complete"
+    metadata:
+      quality_level: "excellent"
+      requires_dev_action: false
+    
+  # Rule 2: PASS - High quality with only low issues (any review round)
+  - condition: "issues_by_severity.critical == 0 AND issues_by_severity.high == 0 AND issues_by_severity.medium <= 1 AND issues_by_severity.low <= 3"
+    result: PASS
+    reasoning: "Only minor issues found that don't impact core functionality. Story meets acceptable quality threshold for production."
+    next_status: Complete
+    next_action: "mark_story_complete"
+    metadata:
+      quality_level: "good"
+      requires_dev_action: false
+      minor_issues_noted: true
+    
+  # Rule 3: PASS - Progressive standard for re-review (2nd+ round)
+  - condition: "review_round >= 2 AND issues_by_severity.critical == 0 AND issues_by_severity.high <= 1 AND issues_by_severity.medium <= 2"
+    result: PASS
+    reasoning: "On re-review with no critical issues and minimal high/medium issues. Dev has addressed previous concerns adequately. Applying progressive standard to avoid excessive iteration."
+    next_status: Complete
+    next_action: "mark_story_complete"
+    metadata:
+      quality_level: "acceptable"
+      requires_dev_action: false
+      progressive_standard_applied: true
+      improvement_from_previous: true
+    
+  # Rule 4: CONCERNS - Moderate issues on first review
+  - condition: "review_round == 1 AND issues_by_severity.critical == 0 AND issues_by_severity.high <= 2 AND issues_by_severity.medium <= 4"
+    result: CONCERNS
+    reasoning: "Moderate number of high/medium issues found on first review. Dev should address these concerns before Story is production-ready."
+    next_status: Review
+    next_action: "handoff_to_dev_fix"
+    metadata:
+      quality_level: "needs_improvement"
+      requires_dev_action: true
+      issue_focus: "high_and_medium"
+      expected_effort: "medium"
+    
+  # Rule 5: CONCERNS - Single critical issue (any review round)
+  - condition: "issues_by_severity.critical == 1 AND issues_by_severity.high <= 2"
+    result: CONCERNS
+    reasoning: "One critical issue found that must be resolved. Issue is isolated and can be addressed through targeted fix."
+    next_status: Review
+    next_action: "handoff_to_dev_fix"
+    metadata:
+      quality_level: "needs_improvement"
+      requires_dev_action: true
+      issue_focus: "critical"
+      expected_effort: "medium"
+      critical_issue_isolated: true
+    
+  # Rule 6: CONCERNS - High issue count but showing improvement (3rd+ round)
+  - condition: "review_round >= 3 AND issues_by_severity.critical == 0 AND issues_by_severity.high <= 3 AND previous_issues != null AND (issues_by_severity.high + issues_by_severity.medium) < (previous_issues.high + previous_issues.medium)"
+    result: CONCERNS
+    reasoning: "Multiple review rounds but showing improvement. No critical issues and issue count is decreasing. One more iteration should resolve remaining concerns."
+    next_status: Review
+    next_action: "handoff_to_dev_fix"
+    metadata:
+      quality_level: "improving"
+      requires_dev_action: true
+      issue_focus: "remaining_high"
+      expected_effort: "low"
+      improvement_trend: "positive"
+      review_cycles: 3
+    
+  # Rule 7: FAIL - Multiple critical issues
+  - condition: "issues_by_severity.critical >= 2"
+    result: FAIL
+    reasoning: "Multiple critical issues indicate fundamental problems with implementation. Story requires significant rework before it can pass QA Gate."
+    next_status: Review
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      requires_dev_action: true
+      issue_focus: "critical_multiple"
+      expected_effort: "high"
+      rework_required: true
+    
+  # Rule 8: FAIL - Excessive high severity issues
+  - condition: "issues_by_severity.critical >= 1 AND issues_by_severity.high >= 3"
+    result: FAIL
+    reasoning: "Critical issue combined with multiple high severity issues indicates systemic quality problems. Substantial rework needed."
+    next_status: Review
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      requires_dev_action: true
+      issue_focus: "systemic"
+      expected_effort: "high"
+      rework_required: true
+    
+  # Rule 9: FAIL - High issue count on first review
+  - condition: "review_round == 1 AND issues_by_severity.high >= 4"
+    result: FAIL
+    reasoning: "Excessive high severity issues on first review indicate implementation does not meet quality standards. Dev should address all high severity issues before resubmission."
+    next_status: Review
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      requires_dev_action: true
+      issue_focus: "high_multiple"
+      expected_effort: "high"
+      first_review_failure: true
+    
+  # Rule 10: FAIL - No improvement after multiple reviews
+  - condition: "review_round >= 3 AND previous_issues != null AND (issues_by_severity.critical + issues_by_severity.high) >= (previous_issues.critical + previous_issues.high)"
+    result: FAIL
+    reasoning: "Multiple review cycles without improvement in critical/high severity issues. Escalating to determine if Story needs architectural review or scope reassessment."
+    next_status: Escalated
+    next_action: "escalate_to_architect"
+    metadata:
+      quality_level: "stalled"
+      requires_dev_action: false
+      escalation_reason: "no_improvement"
+      escalation_target: "architect"
+      review_cycles: 3
+      alternative_approach_needed: true
+    
+  # Rule 11: FAIL - Excessive total issues
+  - condition: "(issues_by_severity.critical + issues_by_severity.high + issues_by_severity.medium) >= 10"
+    result: FAIL
+    reasoning: "Excessive total issue count indicates Story was not adequately tested or reviewed before QA. Dev should perform thorough self-review and address all issues."
+    next_status: Review
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      requires_dev_action: true
+      issue_focus: "comprehensive"
+      expected_effort: "high"
+      self_review_needed: true
+    
+  # Rule 12: CONCERNS - Default for borderline cases
+  - condition: "issues_by_severity.critical == 0"
+    result: CONCERNS
+    reasoning: "Issues found that need to be addressed but no critical blockers. Dev should fix identified issues and resubmit for QA review."
+    next_status: Review
+    next_action: "handoff_to_dev_fix"
+    metadata:
+      quality_level: "needs_improvement"
+      requires_dev_action: true
+      issue_focus: "general"
+      expected_effort: "medium"
+
+output:
+  gate_result:
+    type: enum
+    values: [PASS, FAIL, CONCERNS]
+    description: QA Gate decision result
+    
+  reasoning:
+    type: string
+    description: Explanation of why this gate decision was made
+    
+  next_status:
+    type: string
+    description: Story status to set based on gate result (Complete, Review, Escalated)
+    
+  next_action:
+    type: string
+    description: Next action to take (mark_story_complete, handoff_to_dev_fix, handoff_to_dev_rework, escalate_to_architect)
+    
+  metadata:
+    type: object
+    description: Additional metadata about the gate decision
+    properties:
+      quality_level:
+        type: string
+        description: Overall quality assessment (excellent, good, acceptable, needs_improvement, improving, poor, stalled)
+      requires_dev_action:
+        type: boolean
+        description: Whether Dev needs to take action
+      issue_focus:
+        type: string
+        description: Primary focus area for fixes (critical, high_and_medium, remaining_high, critical_multiple, systemic, high_multiple, comprehensive, general)
+      expected_effort:
+        type: string
+        description: Expected effort level for fixes (low, medium, high)
+      progressive_standard_applied:
+        type: boolean
+        description: Whether progressive standard was applied for re-review
+      improvement_from_previous:
+        type: boolean
+        description: Whether improvement from previous review was noted
+      minor_issues_noted:
+        type: boolean
+        description: Whether minor issues were noted but allowed to pass
+      rework_required:
+        type: boolean
+        description: Whether substantial rework is required
+      first_review_failure:
+        type: boolean
+        description: Whether this is a failure on first review
+      improvement_trend:
+        type: string
+        description: Trend of improvement (positive, negative, stalled)
+      review_cycles:
+        type: number
+        description: Number of review cycles completed
+      escalation_reason:
+        type: string
+        description: Reason for escalation (no_improvement)
+      escalation_target:
+        type: string
+        description: Who to escalate to (architect)
+      alternative_approach_needed:
+        type: boolean
+        description: Whether an alternative approach should be considered
+      self_review_needed:
+        type: boolean
+        description: Whether Dev should perform more thorough self-review
+      critical_issue_isolated:
+        type: boolean
+        description: Whether critical issue is isolated and can be targeted
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "QA Agent"
+  related_requirements:
+    - "6.2"
+    - "6.4"
+    - "6.8"
+  usage_context: >
+    Called by QA Agent at the end of review-story task to determine the QA Gate 
+    result. This decision uses progressive standards: stricter on first review 
+    (review_round=1) to catch issues early, more lenient on subsequent reviews 
+    (review_round>=2) to avoid excessive iteration and balance quality with 
+    development velocity.
+    
+    Progressive Standards Logic:
+    - First Review (round=1): Strict standards, FAIL on 4+ high issues
+    - Re-Review (round=2): Moderate standards, PASS with 1 high + 2 medium
+    - Multiple Re-Reviews (round>=3): Lenient standards if showing improvement
+    
+    COORDINATION NOTE: When result is PASS, QA should:
+    - Set Story Status = Complete
+    - Record final QA report in Story metadata
+    - Output completion message to team
+    
+    When result is CONCERNS or FAIL, QA should:
+    - Set Story Status = Review
+    - Record issues in QA Test Results
+    - Output Handoff message to Dev: "Next: Dev please execute command 'fix-qa-issues {story-id}'"
+    - Distinguish between CONCERNS (targeted fixes) and FAIL (substantial rework)
+    
+    When result is FAIL with escalation, QA should:
+    - Set Story Status = Escalated
+    - Record escalation reason in Story metadata
+    - Output Handoff message to Architect for guidance
+    
+    The gate decision considers:
+    - Issue severity distribution (critical > high > medium > low)
+    - Review round number (progressive standards)
+    - Improvement trend from previous reviews
+    - Total issue count (quality threshold)
+
+examples:
+  - input:
+      review_round: 1
+      issues_by_severity:
+        critical: 0
+        high: 0
+        medium: 0
+        low: 2
+      previous_issues: null
+    output:
+      gate_result: PASS
+      reasoning: "No critical, high, or medium severity issues found. Story meets quality standards and is ready for production."
+      next_status: Complete
+      next_action: "mark_story_complete"
+      
+  - input:
+      review_round: 1
+      issues_by_severity:
+        critical: 0
+        high: 2
+        medium: 3
+        low: 1
+      previous_issues: null
+    output:
+      gate_result: CONCERNS
+      reasoning: "Moderate number of high/medium issues found on first review. Dev should address these concerns before Story is production-ready."
+      next_status: Review
+      next_action: "handoff_to_dev_fix"
+      
+  - input:
+      review_round: 2
+      issues_by_severity:
+        critical: 0
+        high: 1
+        medium: 2
+        low: 0
+      previous_issues:
+        critical: 0
+        high: 3
+        medium: 4
+        low: 2
+    output:
+      gate_result: PASS
+      reasoning: "On re-review with no critical issues and minimal high/medium issues. Dev has addressed previous concerns adequately. Applying progressive standard to avoid excessive iteration."
+      next_status: Complete
+      next_action: "mark_story_complete"
+      
+  - input:
+      review_round: 1
+      issues_by_severity:
+        critical: 2
+        high: 1
+        medium: 0
+        low: 0
+      previous_issues: null
+    output:
+      gate_result: FAIL
+      reasoning: "Multiple critical issues indicate fundamental problems with implementation. Story requires significant rework before it can pass QA Gate."
+      next_status: Review
+      next_action: "handoff_to_dev_rework"
+      
+  - input:
+      review_round: 3
+      issues_by_severity:
+        critical: 1
+        high: 2
+        medium: 1
+        low: 0
+      previous_issues:
+        critical: 1
+        high: 2
+        medium: 3
+        low: 1
+    output:
+      gate_result: FAIL
+      reasoning: "Multiple review cycles without improvement in critical/high severity issues. Escalating to determine if Story needs architectural review or scope reassessment."
+      next_status: Escalated
+      next_action: "escalate_to_architect"
+      
+  - input:
+      review_round: 1
+      issues_by_severity:
+        critical: 1
+        high: 1
+        medium: 2
+        low: 1
+      previous_issues: null
+    output:
+      gate_result: CONCERNS
+      reasoning: "One critical issue found that must be resolved. Issue is isolated and can be addressed through targeted fix."
+      next_status: Review
+      next_action: "handoff_to_dev_fix"

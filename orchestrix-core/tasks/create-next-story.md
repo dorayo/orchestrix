@@ -4,6 +4,31 @@
 
 To identify the next logical story based on project progress and epic definitions, and then to prepare a comprehensive, self-contained, and actionable story file using the `Story Template`. This task ensures the story is enriched with all necessary technical context, requirements, and acceptance criteria, making it ready for efficient implementation by a Developer Agent with minimal need for additional research or finding its own context.
 
+## Agent Permission Check
+
+**CRITICAL**: Before proceeding with story creation, verify SM agent has the required permissions:
+
+1. **Verify Agent Identity:**
+   - Confirm you are the SM (Story Manager) agent
+   - Reference `{root}/data/story-status-transitions.yaml`
+
+2. **Check Story Creation Permission:**
+   - Verify SM has `can_create_story: true` in agent_permissions
+   - Verify SM has `can_set_initial_status: true`
+   - Allowed initial statuses: `Blocked`, `AwaitingArchReview`, `Approved`
+
+3. **If this is modifying an existing story:**
+   - Read the Story's current `Status` field
+   - Verify status is one of: `Blocked`, `RequiresRevision`
+   - Confirm SM has permission to modify stories in this status
+   - Reference `can_modify_in_statuses` in story-status-transitions.yaml
+
+4. **If permission check fails:**
+   - Log error: "SM agent does not have permission to create/modify this story"
+   - Reference the responsible agent from story-status-transitions.yaml
+   - HALT and inform user of the permission violation
+   - Do NOT proceed with story creation/modification
+
 ## SEQUENTIAL Task Execution (Do not proceed until current Task is complete)
 
 ### 0. Load Core Configuration and Check Workflow
@@ -130,7 +155,7 @@ If the story involves API communication or any shared data structure between fro
 ### 6. Populate Story Template with Full Context
 
 - Create new story file: `{devStoryLocation}/{epicNum}.{storyNum}.story.md` using Story Template
-- Fill in basic story information: Title, Status (Draft), Story statement, Acceptance Criteria from Epic
+- Fill in basic story information: Title, Status (will be set by quality check), Story statement, Acceptance Criteria from Epic
 - **`Dev Notes` section (CRITICAL):**
   - CRITICAL: This section MUST contain ONLY information extracted and verified in Step 5. NEVER invent or assume technical details.
   - Include ALL relevant technical details from Steps 2-3 and verified in Step 5, organized by category:
@@ -181,20 +206,298 @@ If the story involves API communication or any shared data structure between fro
 **Execute Unified Quality Check:**
 
 - Execute `{root}/tasks/execute-checklist.md` with checklist `{root}/checklists/sm-story-creation-comprehensive-checklist.md`
-- The comprehensive checklist will automatically:
-  1. Check technical extraction completeness (>80% required)
-  2. Check story structure and template compliance
-  3. Assess implementation readiness and developer guidance
-  4. Calculate weighted quality score (Technical 40%, Structure 30%, Readiness 30%)
-  5. Apply automatic status decision matrix
+- The comprehensive checklist implements a **two-phase quality assessment system**:
+
+**Status Transition Validation:**
+
+Before setting any status, validate the transition using `{root}/data/story-status-transitions.yaml`:
+
+1. **For new story creation (no current status):**
+   - SM is authorized to set initial status
+   - Allowed initial statuses: `Blocked`, `AwaitingArchReview`, `TestDesignComplete`, `AwaitingTestDesign`
+   - Validate that the target status matches the decision result
+
+2. **Validate transition is allowed:**
+   - Check that the target status is in the allowed_transitions list
+   - Verify SM has permission to set this status
+   - Confirm all prerequisites are met for the transition
+
+3. **If validation fails:**
+   - Log error with details from error_messages in config
+   - HALT and inform user of the validation failure
+   - Provide guidance on correct status or required actions
+
+4. **If validation succeeds:**
+   - Proceed with setting the status
+   - Log the transition for audit purposes
+
+**Phase 1: Structure Validation (Gate Condition - Must be 100%)**
+  1. Check all required template sections are present
+  2. Verify no unfilled placeholders remain
+  3. Validate all ACs have corresponding tasks with explicit mapping
+  4. Verify tasks follow logical implementation order
+  5. **If structure validation < 100%:** Immediately set Status = `Blocked`, STOP processing
+  6. **If structure validation = 100%:** Proceed to Phase 2
+
+**Phase 2: Technical Quality Assessment (Only if Phase 1 passes)**
+  1. Check technical extraction completeness (≥80% required - hard requirement)
+  2. **If technical extraction < 80%:** Immediately set Status = `Blocked`, STOP processing
+  3. Calculate Technical Quality Score (0-10) with weights:
+     - Technical Extraction: 50% (architecture info, technical preferences, source references)
+     - Implementation Readiness: 50% (Dev Notes quality, testing strategy, implementability)
+  4. Detect complexity indicators (7 indicators: API changes, DB schema, new patterns, cross-service, security, performance, architecture docs)
+  5. Make status decisions using decision tasks
   6. Update story file with final status and quality check summary
 
-**Automatic Status Assignment:**
-- Quality Score ≥ 8.0 → Status = "Approved" (ready for development)
-- Quality Score 6.0-7.9 → Status = "Draft" (recommend Architect review)
-- Quality Score < 6.0 → Status = "Blocked" (requires revision)
+**Make Status Decisions:**
 
-**Summary Report:**
-The checklist execution will provide a comprehensive quality check report including quality score breakdown, critical issues, recommendations, and next steps.
+After completing Phase 2 quality assessment, use the decision-making framework to determine story status:
 
-**Note:** This unified approach replaces the previous multi-step validation process and ensures consistent, thorough quality assessment through the standardized checklist system.
+**Step 1: Architect Review Decision**
+
+Execute `{root}/tasks/make-decision.md` with:
+- **decision_type:** `sm-architect-review-needed`
+- **context:**
+  - `quality_score`: Technical Quality Score from Phase 2
+  - `complexity_indicators`: Count of detected complexity indicators
+
+**Decision outputs:** `REQUIRED`, `NOT_REQUIRED`, or `BLOCKED`
+- If `BLOCKED`: Set Status = `Blocked`, STOP processing
+- If `REQUIRED`: Set Status = `AwaitingArchReview`, proceed to test design level determination (deferred)
+- If `NOT_REQUIRED`: Proceed to Step 2
+
+**Step 2: Test Design Level Decision**
+
+Execute `{root}/tasks/make-decision.md` with:
+- **decision_type:** `sm-test-design-level`
+- **context:**
+  - `complexity_indicators`: Count of detected complexity indicators
+  - `quality_score`: Technical Quality Score from Phase 2
+  - `security_sensitive`: Boolean flag from complexity analysis
+
+**Decision outputs:** `Simple`, `Standard`, or `Comprehensive`
+
+**Step 3: Final Story Status Decision**
+
+Execute `{root}/tasks/make-decision.md` with:
+- **decision_type:** `sm-story-status`
+- **context:**
+  - `architect_review_result`: Result from Step 1
+  - `test_design_level`: Result from Step 2
+
+**Decision outputs:** Final story status and next action
+
+**Final Output Format:**
+
+The checklist will generate a comprehensive report including:
+
+```markdown
+## Story Quality Check Report
+
+### Phase 1: Structure Validation (Gate Condition)
+- **Result:** [PASS / FAIL]
+- **Completion Rate:** [X]% (must be 100% to proceed)
+- **Failed Items:** [list if any]
+
+### Phase 2: Technical Quality Assessment
+- **Executed:** [Yes / No - skipped if Phase 1 failed]
+- **Technical Quality Score:** [X.X/10]
+  - Technical Extraction: [X]% × 0.50 = [X.X]
+  - Implementation Readiness: [X]% × 0.50 = [X.X]
+- **Technical Extraction Completion Rate:** [X]% (≥80% required)
+
+### Complexity Analysis
+**Detected Indicators:** [count] / 7
+[List specific indicators found with brief explanation]
+
+### Decision Results
+
+**Architect Review Decision:**
+- **Result:** [REQUIRED / NOT_REQUIRED / BLOCKED]
+- **Reasoning:** [From decision task]
+
+**Test Design Level Decision:**
+- **Level:** [Simple / Standard / Comprehensive]
+- **Reasoning:** [From decision task]
+
+**Final Story Status:**
+- **Status:** [Blocked / AwaitingArchReview / AwaitingTestDesign / TestDesignComplete]
+- **Next Action:** [From decision task]
+- **Reasoning:** [From decision task]
+```
+
+### 9. Record Change Log Entry
+
+**Objective:** Automatically record the story creation and status decision in the Change Log for audit trail
+
+**Add Change Log Entry to Story File:**
+
+Locate or create the "Change Log" section in the Story file and add a new entry at the top:
+
+```markdown
+## Change Log
+
+### {YYYY-MM-DD HH:MM:SS} - SM Story Creation
+
+**Action:** Initial story creation and quality assessment
+
+**Quality Assessment Results:**
+- Structure Validation: {PASS/FAIL} ({completion_rate}%)
+- Technical Quality Score: {score}/10
+  - Technical Extraction: {score}/10 ({completion_rate}%)
+  - Implementation Readiness: {score}/10
+- Complexity Indicators Detected: {count}/7
+  {List detected indicators if any}
+
+**Decision Results:**
+- Architect Review: {REQUIRED/NOT_REQUIRED/BLOCKED} - {reasoning}
+- Test Design Level: {Simple/Standard/Comprehensive} - {reasoning}
+- Final Status: `{Blocked/AwaitingArchReview/AwaitingTestDesign/TestDesignComplete}`
+- Decision Reasoning: {explanation from decision tasks}
+
+**Next Action:** {Based on status - what happens next}
+
+---
+
+{Previous Change Log entries if any}
+```
+
+**Change Log Entry Details:**
+
+Include the following information from the quality assessment and decision tasks:
+- **Date/Time:** Current timestamp in YYYY-MM-DD HH:MM:SS format
+- **Structure Validation Result:** PASS/FAIL and completion percentage
+- **Technical Quality Score:** Overall score and component scores
+- **Technical Extraction Rate:** Completion percentage (important for decision logic)
+- **Complexity Indicators:** Count and list of detected indicators
+- **Decision Results:** Outputs from all three decision tasks with reasoning
+- **Next Action:** Clear description of what should happen next
+
+**Example Change Log Entry:**
+
+```markdown
+## Change Log
+
+### 2024-01-15 14:30:22 - SM Story Creation
+
+**Action:** Initial story creation and quality assessment
+
+**Quality Assessment Results:**
+- Structure Validation: PASS (100%)
+- Technical Quality Score: 8.2/10
+  - Technical Extraction: 8.5/10 (92%)
+  - Implementation Readiness: 7.9/10
+- Complexity Indicators Detected: 2/7
+  - API contract changes (new user registration endpoint)
+  - Database schema modifications (user table updates)
+
+**Decision Results:**
+- Architect Review: REQUIRED - High quality but high complexity requires architectural validation
+- Test Design Level: Standard (deferred until after Architect approval)
+- Final Status: `AwaitingArchReview`
+- Decision Reasoning: Story requires Architect review before proceeding to test design phase
+
+**Next Action:** Architect should execute `review-story {epicNum}.{storyNum}` to validate architectural decisions
+
+---
+```
+
+### 10. Output Handoff Message Based on Final Status
+
+**The decision tasks automatically determine the final status. Output the appropriate handoff message:**
+
+**Generate Handoff Message Based on Status:**
+
+1. **Read the final status** from the story status decision result (Step 8)
+2. **Read the next_action** from the decision task output
+3. **Generate the appropriate handoff message** based on the decision task recommendations
+
+**Handoff Message Logic:**
+
+Use the `next_action` field from the `sm-story-status` decision task to generate the handoff message.
+
+**If Status = `Blocked`:**
+```
+Story blocked - SM must revise and resubmit
+```
+
+**If Status = `AwaitingArchReview`:**
+```
+Next: Architect please execute command 'review-story {epicNum}.{storyNum}'
+Note: Test design level has been determined ({test_design_level}) but will be applied after Architect approval
+```
+
+**If Status = `AwaitingTestDesign`:**
+
+Base message:
+```
+Next: QA please execute command 'test-design {epicNum}.{storyNum}'
+Test Design Level: {test_design_level}
+```
+
+**Additional message if security sensitive** (test_design_level = "Comprehensive" OR securitySensitive = true):
+```
+Next: QA please execute command 'test-design {epicNum}.{storyNum}' and 'risk-profile {epicNum}.{storyNum}'
+Test Design Level: Comprehensive (security-sensitive)
+```
+
+**If Status = `TestDesignComplete`:**
+```
+Next: Dev please execute command 'implement-story {epicNum}.{storyNum}'
+Note: Test design level is Simple - test design not required
+```
+
+**If Status = `Approved`:**
+```
+Next: Dev please execute command 'implement-story {epicNum}.{storyNum}'
+```
+
+**Update Story File with Handoff Message:**
+
+Add the handoff message to the end of the Story file in a "Next Steps" section for easy reference.
+
+**Output Handoff Message to Console:**
+
+Display the handoff message prominently to the user so they know exactly what to do next.
+
+### 11. Summary and Completion
+
+**The two-phase quality assessment with decision-based status determination is now complete.**
+
+**Summary of Process:**
+
+1. **Phase 1 (Structure Validation):** Gate condition requiring 100% completion
+   - If failed: Status = `Blocked`, process stops
+   - If passed: Proceed to Phase 2
+
+2. **Phase 2 (Technical Quality Assessment):** Scoring and complexity detection
+   - Technical Extraction: 50% weight (≥80% completion required)
+   - Implementation Readiness: 50% weight
+   - If Technical Extraction < 80%: Status = `Blocked`, process stops
+   - Calculate Technical Quality Score (0-10)
+   - Detect 7 complexity indicators
+
+3. **Decision-Based Status Determination:** Three decision tasks determine final status
+   - **Decision 1:** Architect Review Needed (`sm-architect-review-needed`)
+   - **Decision 2:** Test Design Level (`sm-test-design-level`)
+   - **Decision 3:** Final Story Status (`sm-story-status`)
+
+4. **Handoff Message:** Output appropriate message based on decision results
+
+**Final Status Outcomes:**
+
+- **`Blocked`:** SM must revise Story and re-run quality check
+- **`AwaitingArchReview`:** Architect should execute `review-story {epicNum}.{storyNum}`
+- **`AwaitingTestDesign`:** QA should execute test design tasks based on level
+- **`TestDesignComplete`:** Dev can begin implementation with `implement-story {epicNum}.{storyNum}`
+
+**Quality Assurance:**
+This decision-based approach ensures:
+- Structure is validated before assessing technical quality
+- Technical extraction meets minimum threshold (80%)
+- Complexity is properly detected and considered
+- Status is determined by reusable decision logic (see `{root}/data/decisions/`)
+- Consistent decision-making across all story creation workflows
+- Clear handoff messages guide the next steps
+
+**Note:** This approach uses the centralized decision-making framework, reducing token usage and improving maintainability by externalizing decision rules to YAML configuration files.

@@ -1,0 +1,545 @@
+# Story Status Transitions Configuration
+# This file defines the allowed status transitions, responsible agents, and prerequisites
+
+version: "1.0.0"
+
+# Status Definitions
+statuses:
+  Blocked:
+    description: "Story quality is insufficient and requires SM revision"
+    responsible_agent: SM
+    next_actions:
+      - "SM revises Story"
+      - "Re-execute quality check"
+    allowed_transitions:
+      - AwaitingArchReview
+      - AwaitingTestDesign
+      - Approved
+      - Blocked  # Allow staying in Blocked state during iterations
+    
+  AwaitingArchReview:
+    description: "Awaiting Architect technical review"
+    responsible_agent: Architect
+    next_actions:
+      - "Architect performs technical review"
+    allowed_transitions:
+      - Approved
+      - AwaitingTestDesign
+      - RequiresRevision
+      - Escalated
+  
+  AwaitingTestDesign:
+    description: "Awaiting QA test design"
+    responsible_agent: QA
+    next_actions:
+      - "QA performs test design"
+      - "QA performs risk profile (if required)"
+    allowed_transitions:
+      - TestDesignComplete
+  
+  TestDesignComplete:
+    description: "Test design complete, ready for development"
+    responsible_agent: Dev
+    next_actions:
+      - "Dev starts implementing features"
+    allowed_transitions:
+      - Approved
+      - InProgress
+    
+  RequiresRevision:
+    description: "Architect review found issues, requires SM revision"
+    responsible_agent: SM
+    next_actions:
+      - "SM revises Story based on Architect feedback"
+      - "Re-execute quality check"
+    allowed_transitions:
+      - AwaitingArchReview
+      - AwaitingTestDesign
+      - Approved
+      - Blocked
+    
+  Approved:
+    description: "Story approved, development can begin"
+    responsible_agent: Dev
+    next_actions:
+      - "Dev starts implementing features"
+    allowed_transitions:
+      - InProgress
+    
+  InProgress:
+    description: "Dev is implementing features or fixing QA-identified issues"
+    responsible_agent: Dev
+    next_actions:
+      - "Dev completes implementation"
+      - "Dev fixes QA issues"
+    allowed_transitions:
+      - Review
+      - Blocked
+    
+  Review:
+    description: "Awaiting QA review"
+    responsible_agent: QA
+    next_actions:
+      - "QA performs code review and testing"
+    allowed_transitions:
+      - Done
+      - InProgress
+      - Escalated
+    
+  Done:
+    description: "Story completed"
+    responsible_agent: null
+    next_actions: []
+    allowed_transitions: []
+    
+  Escalated:
+    description: "Requires human intervention for decision making or Architect review of escalated issues"
+    responsible_agent: Architect
+    next_actions:
+      - "Architect reviews escalated issue"
+      - "Human evaluation and decision making (if needed)"
+    allowed_transitions:
+      - AwaitingArchReview
+      - Approved
+      - Blocked
+      - InProgress
+      - Review
+
+# Transition Rules
+# Define specific rules for each transition
+transition_rules:
+  # SM transitions
+  Blocked_to_AwaitingArchReview:
+    from: Blocked
+    to: AwaitingArchReview
+    agent: SM
+    prerequisites:
+      - structure_validation_passed: true
+      - technical_extraction_rate: "≥ 80%"
+      - technical_quality_score: "≥ 6.0"
+      - complexity_indicators_detected: true
+    description: "Quality meets standards after SM revision, requires Architect review"
+  
+  Blocked_to_AwaitingTestDesign:
+    from: Blocked
+    to: AwaitingTestDesign
+    agent: SM
+    prerequisites:
+      - structure_validation_passed: true
+      - technical_extraction_rate: "≥ 80%"
+      - technical_quality_score: "≥ 8.0"
+      - complexity_indicators: "0 or 1"
+      - test_design_level: "Standard or Comprehensive"
+    description: "Quality meets standards, low complexity, requires QA test design"
+  
+  Blocked_to_Approved:
+    from: Blocked
+    to: Approved
+    agent: SM
+    prerequisites:
+      - structure_validation_passed: true
+      - technical_extraction_rate: "≥ 80%"
+      - technical_quality_score: "≥ 8.0"
+      - complexity_indicators: "0 or 1"
+      - decision_matrix_result: "Approved"
+    description: "Excellent quality and low complexity after SM revision, direct approval"
+  
+  RequiresRevision_to_AwaitingArchReview:
+    from: RequiresRevision
+    to: AwaitingArchReview
+    agent: SM
+    prerequisites:
+      - revision_completed: true
+      - quality_check_passed: true
+      - critical_issues_revised: true
+      - review_round: "< 2"
+    description: "Triggers 2nd round Architect review after SM revision"
+  
+  RequiresRevision_to_Approved:
+    from: RequiresRevision
+    to: Approved
+    agent: SM
+    prerequisites:
+      - revision_completed: true
+      - all_critical_issues_resolved: true
+      - quality_score_improvement: "≥ 2"
+      - final_quality_score: "≥ 8.0"
+      - only_minor_issues_revised: true
+    description: "Meets automatic approval conditions after SM revision"
+  
+  RequiresRevision_to_Blocked:
+    from: RequiresRevision
+    to: Blocked
+    agent: SM
+    prerequisites:
+      - revision_completed: true
+      - quality_still_insufficient: true
+    description: "Quality still insufficient after SM revision"
+  
+  RequiresRevision_to_AwaitingTestDesign:
+    from: RequiresRevision
+    to: AwaitingTestDesign
+    agent: SM
+    prerequisites:
+      - revision_completed: true
+      - quality_check_passed: true
+      - test_design_level: "Standard or Comprehensive"
+      - test_design_exists: false
+      - architect_review_not_needed: true
+    description: "SM revision complete, requires QA test design (no Architect review needed)"
+  
+  # Architect transitions
+  AwaitingArchReview_to_Approved:
+    from: AwaitingArchReview
+    to: Approved
+    agent: Architect
+    prerequisites:
+      - review_completed: true
+      - review_score: "≥ 7"
+      - no_critical_issues: true
+      - test_design_level: "Simple"
+    description: "Architect review passed, simple test design level (skip test design)"
+  
+  AwaitingArchReview_to_AwaitingTestDesign:
+    from: AwaitingArchReview
+    to: AwaitingTestDesign
+    agent: Architect
+    prerequisites:
+      - review_completed: true
+      - review_score: "≥ 7"
+      - no_critical_issues: true
+      - test_design_level: "Standard or Comprehensive"
+    description: "Architect review passed, requires QA test design"
+  
+  AwaitingArchReview_to_RequiresRevision:
+    from: AwaitingArchReview
+    to: RequiresRevision
+    agent: Architect
+    prerequisites:
+      - review_completed: true
+    conditions:
+      - review_score: "< 7"
+      - or_has_critical_issues: true
+    description: "Architect review found issues, requires revision"
+  
+  AwaitingArchReview_to_Escalated:
+    from: AwaitingArchReview
+    to: Escalated
+    agent: Architect
+    prerequisites:
+      - review_completed: true
+      - requires_human_intervention: true
+    description: "Architect found complex issues requiring human intervention"
+  
+  # QA test design transitions
+  AwaitingTestDesign_to_TestDesignComplete:
+    from: AwaitingTestDesign
+    to: TestDesignComplete
+    agent: QA
+    prerequisites:
+      - test_design_completed: true
+      - test_design_document_created: true
+      - risk_profile_completed: "if required"
+    description: "QA test design completed"
+  
+  TestDesignComplete_to_Approved:
+    from: TestDesignComplete
+    to: Approved
+    agent: SM
+    prerequisites:
+      - test_design_reviewed: true
+    description: "Test design reviewed, ready for development"
+  
+  TestDesignComplete_to_InProgress:
+    from: TestDesignComplete
+    to: InProgress
+    agent: Dev
+    prerequisites:
+      - implementation_started: true
+    description: "Dev starts implementing features directly from test design complete"
+  
+  # Dev transitions
+  Approved_to_InProgress:
+    from: Approved
+    to: InProgress
+    agent: Dev
+    prerequisites:
+      - implementation_started: true
+    description: "Dev starts implementing features"
+  
+  InProgress_to_Review:
+    from: InProgress
+    to: Review
+    agent: Dev
+    prerequisites:
+      - implementation_completed: true
+      - all_tasks_done: true
+      - tests_written: true
+    description: "Dev completes implementation, submits for QA review"
+  
+  InProgress_to_Blocked:
+    from: InProgress
+    to: Blocked
+    agent: Dev
+    prerequisites:
+      - blocking_issue_identified: true
+      - issue_type: "AC unclear or ambiguous"
+      - issue_documented: true
+    description: "Dev blocks Story due to unclear Acceptance Criteria or requirements"
+  
+  # QA transitions
+  Review_to_Done:
+    from: Review
+    to: Done
+    agent: QA
+    prerequisites:
+      - qa_review_completed: true
+      - qa_gate: "PASS"
+      - all_acceptance_criteria_met: true
+      - no_critical_issues: true
+    description: "QA review passed, Story completed"
+  
+  Review_to_InProgress:
+    from: Review
+    to: InProgress
+    agent: QA
+    prerequisites:
+      - qa_review_completed: true
+    conditions:
+      - qa_gate: "CONCERNS or FAIL"
+      - has_issues_to_fix: true
+    description: "QA review found issues, requires Dev fixes"
+  
+  Review_to_Escalated:
+    from: Review
+    to: Escalated
+    agent: QA
+    prerequisites:
+      - qa_review_completed: true
+      - architecture_concern_identified: true
+      - concern_severity: "Medium or High"
+      - concern_documented: true
+    description: "QA identified architecture concerns requiring Architect review"
+  
+  # Human/Escalated transitions
+  Escalated_to_AwaitingArchReview:
+    from: Escalated
+    to: AwaitingArchReview
+    agent: Human
+    prerequisites:
+      - human_decision_made: true
+      - decision: "re_review"
+    description: "Re-enter Architect review after human decision"
+  
+  Escalated_to_Approved:
+    from: Escalated
+    to: Approved
+    agent: Human
+    prerequisites:
+      - human_decision_made: true
+      - decision: "approve"
+    description: "Human decision approval"
+  
+  Escalated_to_Blocked:
+    from: Escalated
+    to: Blocked
+    agent: Human
+    prerequisites:
+      - human_decision_made: true
+      - decision: "revise"
+    description: "Human decision requires revision"
+  
+  Escalated_to_InProgress:
+    from: Escalated
+    to: InProgress
+    agent: Architect
+    prerequisites:
+      - escalation_review_completed: true
+      - architect_decision: "requires_dev_changes"
+      - guidance_provided: true
+    description: "Architect reviewed escalation, requires Dev implementation changes"
+  
+  Escalated_to_Review:
+    from: Escalated
+    to: Review
+    agent: Architect
+    prerequisites:
+      - escalation_review_completed: true
+      - architect_decision: "no_changes_needed"
+      - guidance_provided: true
+    description: "Architect reviewed escalation, no changes needed, return to QA review"
+
+# Agent Permissions
+# Define which agents can modify stories in each status
+agent_permissions:
+  SM:
+    can_modify_in_statuses:
+      - Blocked
+      - RequiresRevision
+      - TestDesignComplete
+    can_create_story: true
+    can_set_initial_status: true
+    allowed_status_changes:
+      - Blocked -> AwaitingArchReview
+      - Blocked -> AwaitingTestDesign
+      - Blocked -> Approved
+      - Blocked -> Blocked
+      - RequiresRevision -> AwaitingArchReview
+      - RequiresRevision -> AwaitingTestDesign
+      - RequiresRevision -> Approved
+      - RequiresRevision -> Blocked
+      - TestDesignComplete -> Approved
+  
+  Architect:
+    can_modify_in_statuses:
+      - AwaitingArchReview
+      - Escalated
+    can_create_story: false
+    can_set_initial_status: false
+    allowed_status_changes:
+      - AwaitingArchReview -> Approved
+      - AwaitingArchReview -> AwaitingTestDesign
+      - AwaitingArchReview -> RequiresRevision
+      - AwaitingArchReview -> Escalated
+      - Escalated -> InProgress
+      - Escalated -> Review
+  
+  Dev:
+    can_modify_in_statuses:
+      - Approved
+      - TestDesignComplete
+      - InProgress
+    can_create_story: false
+    can_set_initial_status: false
+    allowed_status_changes:
+      - Approved -> InProgress
+      - TestDesignComplete -> InProgress
+      - InProgress -> Review
+      - InProgress -> Blocked
+  
+  QA:
+    can_modify_in_statuses:
+      - AwaitingTestDesign
+      - Review
+    can_create_story: false
+    can_set_initial_status: false
+    allowed_status_changes:
+      - AwaitingTestDesign -> TestDesignComplete
+      - Review -> Done
+      - Review -> InProgress
+      - Review -> Escalated
+  
+  Human:
+    can_modify_in_statuses:
+      - Escalated
+    can_create_story: false
+    can_set_initial_status: false
+    allowed_status_changes:
+      - Escalated -> AwaitingArchReview
+      - Escalated -> Approved
+      - Escalated -> Blocked
+
+# Error Messages
+error_messages:
+  invalid_transition:
+    template: "Invalid status transition: cannot transition from '{current_status}' to '{target_status}'"
+    suggestion: "Allowed transition targets: {allowed_transitions}"
+  
+  unauthorized_agent:
+    template: "{agent} is not authorized to modify Stories in '{status}' status"
+    suggestion: "The responsible agent for current status is: {responsible_agent}"
+  
+  missing_prerequisites:
+    template: "Prerequisites for status transition are not met"
+    suggestion: "Missing conditions: {missing_prerequisites}"
+  
+  invalid_status:
+    template: "Invalid status: '{status}'"
+    suggestion: "Valid statuses: {valid_statuses}"
+
+# Validation Rules
+validation:
+  # Validate that status transitions follow the allowed paths
+  enforce_allowed_transitions: true
+  
+  # Validate that only authorized agents can change status
+  enforce_agent_permissions: true
+  
+  # Validate prerequisites before allowing transition
+  enforce_prerequisites: true
+  
+  # Log all status transitions for audit
+  log_transitions: true
+  
+  # Allow manual override by Human agent
+  allow_human_override: true
+  
+  # Additional validation rules for new transitions
+  special_validations:
+    # Req 5.1: AwaitingArchReview → Approved must check test design level
+    AwaitingArchReview_to_Approved:
+      validate_test_design_level: true
+      allowed_test_design_levels: ["Simple"]
+      error_message: "Cannot transition to Approved with Standard/Comprehensive test design level. Use AwaitingTestDesign instead."
+    
+    # Req 5.1: AwaitingArchReview → AwaitingTestDesign for Standard/Comprehensive
+    AwaitingArchReview_to_AwaitingTestDesign:
+      validate_test_design_level: true
+      allowed_test_design_levels: ["Standard", "Comprehensive"]
+      error_message: "Cannot transition to AwaitingTestDesign with Simple test design level. Use Approved instead."
+    
+    # Req 5.2: RequiresRevision → AwaitingTestDesign must check if test design exists
+    RequiresRevision_to_AwaitingTestDesign:
+      validate_test_design_exists: true
+      test_design_should_exist: false
+      error_message: "Test design already exists. SM should mark it for review instead of creating new transition."
+      additional_checks:
+        - check_architect_review_not_needed: true
+        - check_test_design_level: ["Standard", "Comprehensive"]
+    
+    # Req 5.3: InProgress → Blocked must document blocking issue
+    InProgress_to_Blocked:
+      validate_blocking_issue: true
+      required_fields:
+        - issue_description
+        - issue_type
+        - blocking_reason
+      error_message: "Blocking issue must be documented in Dev Log before blocking Story."
+    
+    # Req 5.4: Review → Escalated must document architecture concern
+    Review_to_Escalated:
+      validate_escalation_reason: true
+      required_fields:
+        - architecture_concern
+        - concern_severity
+        - concern_description
+      error_message: "Architecture concern must be documented in QA Results before escalation."
+    
+    # Req 5.5: Escalated → InProgress/Review must have Architect guidance
+    Escalated_to_InProgress:
+      validate_architect_guidance: true
+      required_fields:
+        - architect_review_result
+        - guidance_provided
+        - recommended_changes
+      error_message: "Architect must provide guidance before returning to InProgress."
+    
+    Escalated_to_Review:
+      validate_architect_guidance: true
+      required_fields:
+        - architect_review_result
+        - guidance_provided
+        - no_changes_rationale
+      error_message: "Architect must provide guidance before returning to Review."
+    
+    # Req 5.6: All transitions must be logged in Change Log
+    all_transitions:
+      require_change_log_entry: true
+      log_fields:
+        - from_status
+        - to_status
+        - agent
+        - timestamp
+        - reason
+        - decision_path
+      error_message: "All status transitions must be logged in Story Change Log."

@@ -14,21 +14,29 @@ workflow:
 agent_config:
   editable_sections: 
     - Status
-    - Story
-    - Acceptance Criteria
     - Tasks / Subtasks
-    - Dev Notes
-    - Testing
+    - Dev Agent Record
     - Change Log
 
 sections:
   - id: status
     title: Status
     type: choice
-    choices: [Draft, Approved, InProgress, FrontendReview, BackendInProgress, Review, Done]
-    instruction: Select the current status of the story
+    choices: [Blocked, AwaitingArchReview, AwaitingTestDesign, TestDesignComplete, RequiresRevision, Approved, InProgress, Review, Done, Escalated]
+    instruction: |
+      Select the current status of the story:
+      - Blocked: Story quality not meeting standards, requires SM revision
+      - AwaitingArchReview: Waiting for Architect technical review
+      - AwaitingTestDesign: Waiting for QA test design
+      - TestDesignComplete: Test design complete, ready for development
+      - RequiresRevision: Architect review found issues, requires SM revision
+      - Approved: Story approved and ready for development
+      - InProgress: Dev is implementing or fixing QA issues
+      - Review: Waiting for QA review
+      - Done: Story completed
+      - Escalated: Requires human intervention for decision
     owner: scrum-master
-    editors: [scrum-master, dev-agent]
+    editors: [scrum-master, architect-agent, qa-agent, dev-agent]
     
   - id: story
     title: Story
@@ -54,43 +62,107 @@ sections:
     title: Tasks / Subtasks
     type: bullet-list
     instruction: |
-      Break down the story into specific tasks and subtasks needed for implementation.
+      Break down the story into specific tasks and subtasks using the Contract-Driven Vertical Slice strategy.
       
-      **For Frontend-First Strategy (when frontendFirstStrategy: true):**
-      - Structure tasks in phases: Frontend → User Confirmation → Backend → Integration
-      - Each phase can contain multiple tasks as needed
-      - Include specific user confirmation checkpoint after frontend completion
-      - Reference applicable acceptance criteria numbers where relevant.
+      **Contract-Driven 4-Phase Approach:**
+      - Phase 1: Define technical contracts and write contract tests (TDD RED)
+      - Phase 2: Build walking skeleton with mock data to establish end-to-end flow (TDD GREEN)
+      - Phase 3: Implement business logic incrementally using TDD cycle (RED → GREEN → REFACTOR)
+      - Phase 4: Integration testing, edge cases, and quality assurance
       
-      **For Traditional Stories:**
-      - Use standard task breakdown approach with flexible task grouping
+      **Key Principles:**
+      - Start with contracts (interfaces, types, schemas) based on SM Dev Notes business contracts
+      - Establish end-to-end data flow early with minimal implementation
+      - Follow test priorities from QA test design (P0 → P1 → P2)
+      - Reference applicable acceptance criteria numbers for each task
+      - Each phase builds on the previous phase's foundation
+    owner: scrum-master
+    editors: [scrum-master, dev-agent]
     template: |
-      **Phase 1: Frontend Implementation**
-      - [ ] [Task Name] (AC: # if applicable)
-        - [ ] [Subtask details]
-      - [ ] [Task Name] (AC: # if applicable)
-        - [ ] [Subtask details]
-      - [ ] [Additional tasks as needed...]
+      **Phase 1: Contract Definition & Test Setup**
+      - [ ] 1.1 Define technical contracts (interfaces, types, schemas)
+        - [ ] Create TypeScript interfaces based on SM Dev Notes business contracts
+        - [ ] Create Zod validation schemas for runtime type safety
+        - [ ] Define API request/response types
+        - [ ] Document contract decisions in Dev Log
+        - (AC: [reference acceptance criteria numbers])
       
-      **Phase 1 Checkpoint: User Confirmation Required**
-      - [ ] **USER REVIEW**: Present frontend to user for confirmation
-        - [ ] Verify UI/UX matches requirements
-        - [ ] Confirm user flows work as expected
-        - [ ] Get approval before proceeding to backend
+      - [ ] 1.2 Write contract validation tests (TDD RED)
+        - [ ] Write P0 contract tests first (following QA test design priorities)
+        - [ ] Write type validation tests
+        - [ ] Write schema validation tests
+        - [ ] Verify tests fail appropriately (RED phase)
+        - (AC: [reference acceptance criteria numbers])
       
-      **Phase 2: Backend Implementation (After User Approval)**
-      - [ ] [Backend Task Name] (AC: # if applicable)
-        - [ ] [Implementation details]
-      - [ ] [Backend Task Name] (AC: # if applicable)
-        - [ ] [Implementation details]
-      - [ ] [Additional backend tasks as needed...]
+      **Phase 2: Walking Skeleton**
+      - [ ] 2.1 Implement minimal API endpoints with mock data
+        - [ ] Create route handlers matching contracts
+        - [ ] Return mock responses that satisfy contracts
+        - [ ] Implement basic error handling
+        - (AC: [reference acceptance criteria numbers])
       
-      **Phase 3: Integration & Testing**
-      - [ ] [Integration Task Name] (AC: # if applicable)
-        - [ ] [Integration details]
-      - [ ] [Testing Task Name] (AC: # if applicable)
-        - [ ] [Testing details]
-      - [ ] [Additional integration/testing tasks as needed...]
+      - [ ] 2.2 Implement minimal frontend components
+        - [ ] Create basic UI components matching design
+        - [ ] Wire components to API endpoints
+        - [ ] Implement basic state management
+        - (AC: [reference acceptance criteria numbers])
+      
+      - [ ] 2.3 Verify end-to-end data flow
+        - [ ] Ensure contract tests pass (TDD GREEN phase)
+        - [ ] Verify data flows from frontend through API to backend
+        - [ ] Perform manual smoke test of complete flow
+        - [ ] Record skeleton implementation in Dev Log
+        - (AC: [reference acceptance criteria numbers])
+      
+      **Phase 3: Business Logic Implementation**
+      - [ ] 3.1 Implement backend business logic (TDD cycle)
+        - [ ] Write P0 business logic tests → implement → refactor
+        - [ ] Write P1 tests → implement → refactor
+        - [ ] Implement data persistence layer
+        - [ ] Implement business rules and validations
+        - [ ] Record implementation details in Dev Log
+        - (AC: [reference acceptance criteria numbers])
+      
+      - [ ] 3.2 Implement frontend business logic
+        - [ ] Implement state management logic
+        - [ ] Implement user interaction handlers
+        - [ ] Implement client-side validation
+        - [ ] Implement error handling and user feedback
+        - (AC: [reference acceptance criteria numbers])
+      
+      - [ ] 3.3 Replace mock data with real implementations
+        - [ ] Connect to actual data sources
+        - [ ] Remove mock data and temporary stubs
+        - [ ] Verify all P0 and P1 tests still pass
+        - (AC: [reference acceptance criteria numbers])
+      
+      **Phase 4: Integration & Quality Assurance**
+      - [ ] 4.1 Integration testing
+        - [ ] Test component interactions
+        - [ ] Test API integration points
+        - [ ] Test error scenarios and edge cases
+        - [ ] Execute P2 tests if time permits
+        - (AC: [reference acceptance criteria numbers])
+      
+      - [ ] 4.2 Edge case handling
+        - [ ] Handle boundary conditions
+        - [ ] Handle error states gracefully
+        - [ ] Implement proper loading states
+        - [ ] Add appropriate user feedback
+        - (AC: [reference acceptance criteria numbers])
+      
+      - [ ] 4.3 Performance optimization
+        - [ ] Identify and address performance bottlenecks
+        - [ ] Optimize critical paths
+        - [ ] Implement caching where appropriate
+        - (AC: [reference acceptance criteria numbers])
+      
+      - [ ] 4.4 Final QA review preparation
+        - [ ] Verify all acceptance criteria are met
+        - [ ] Ensure all tests are passing
+        - [ ] Complete Dev Log with final summary
+        - [ ] Update Dev Agent Record with implementation summary
+        - (AC: [reference acceptance criteria numbers])
     
   - id: dev-notes
     title: Dev Notes
@@ -175,15 +247,9 @@ sections:
         owner: dev-agent
         editors: [dev-agent]
         
-      - id: debug-log-references
-        title: Debug Log References
-        instruction: Reference any debug logs or traces generated during development
-        owner: dev-agent
-        editors: [dev-agent]
-        
-      - id: completion-notes
-        title: Completion Notes List
-        instruction: Notes about the completion of tasks and any issues encountered
+      - id: implementation-summary
+        title: Implementation Summary
+        instruction: Provide a 3-5 sentence high-level summary of the implementation, including key technical decisions, challenges overcome, and final outcomes
         owner: dev-agent
         editors: [dev-agent]
         
@@ -193,8 +259,547 @@ sections:
         owner: dev-agent
         editors: [dev-agent]
         
+      - id: dev-log-reference
+        title: Dev Log Reference
+        template: "docs/dev/logs/{story-id}-dev-log.md"
+        instruction: Reference to the detailed development log file containing complete implementation history, technical decisions, issues encountered, and phase-by-phase progress
+        owner: dev-agent
+        editors: [dev-agent]
+        
+      - id: open-issues
+        title: Open Issues
+        instruction: |
+          List of unresolved issues or concerns identified by Dev Agent during implementation.
+          These issues should be reviewed by QA Agent during quality review.
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        type: list
+        item_template: |
+          - Issue: {{issue_description}}
+            Type: {{issue_type}}
+            Severity: {{severity_level}}
+            Target Agent: {{target_agent}}
+            Date Raised: {{date_raised}}
+            Status: {{status}}
+        
+  - id: quality-assessment-metadata
+    title: Quality Assessment Metadata
+    instruction: |
+      This section is populated by the SM Agent during quality check (two-phase assessment).
+      Phase 1: Structure Validation (gate condition - must be 100%)
+      Phase 2: Technical Quality Score (0-10) + Complexity Detection (0-7 indicators)
+    owner: scrum-master
+    editors: [scrum-master]
+    sections:
+      - id: structure-validation
+        title: Structure Validation
+        instruction: Phase 1 gate condition - must pass 100% before technical quality assessment
+        owner: scrum-master
+        editors: [scrum-master]
+        fields:
+          - id: structure_validation_passed
+            title: Structure Validation Passed
+            type: boolean
+            instruction: Whether all structure validation criteria passed (100% required)
+            
+          - id: structure_completion_rate
+            title: Structure Completion Rate
+            type: percentage
+            instruction: Percentage of structure validation criteria passed (must be 100%)
+            
+          - id: structure_validation_date
+            title: Validation Date
+            type: timestamp
+            instruction: Timestamp when structure validation was performed
+            
+          - id: failed_criteria
+            title: Failed Criteria
+            type: list
+            instruction: List of structure validation criteria that failed (empty if all passed)
+            
+      - id: technical-quality-assessment
+        title: Technical Quality Assessment
+        instruction: Phase 2 assessment - only performed if structure validation passed
+        owner: scrum-master
+        editors: [scrum-master]
+        fields:
+          - id: technical_quality_score
+            title: Technical Quality Score
+            type: number
+            range: 0-10
+            instruction: Overall technical quality score (50% technical extraction + 50% implementation readiness)
+            
+          - id: technical_extraction_score
+            title: Technical Extraction Score
+            type: number
+            range: 0-10
+            instruction: Score for technical extraction quality (architecture info, preferences alignment, source references)
+            
+          - id: technical_extraction_completion_rate
+            title: Technical Extraction Completion Rate
+            type: percentage
+            instruction: Percentage of technical extraction completed (minimum 80% required)
+            
+          - id: implementation_readiness_score
+            title: Implementation Readiness Score
+            type: number
+            range: 0-10
+            instruction: Score for implementation readiness (dev notes quality, testing strategy, implementability)
+            
+          - id: assessment_date
+            title: Assessment Date
+            type: timestamp
+            instruction: Timestamp when technical quality assessment was performed
+            
+      - id: complexity-detection
+        title: Complexity Detection
+        instruction: Detection of complexity indicators in Story content
+        owner: scrum-master
+        editors: [scrum-master]
+        fields:
+          - id: complexity_indicators_detected
+            title: Complexity Indicators Detected
+            type: number
+            range: 0-7
+            instruction: Count of complexity indicators detected
+            
+          - id: detected_indicators_list
+            title: Detected Indicators List
+            type: checklist
+            instruction: List of specific complexity indicators detected
+            items:
+              - API contract changes (endpoints, request/response schemas)
+              - Database schema modifications (tables, columns, relationships)
+              - New architectural patterns (not following existing patterns)
+              - Cross-service dependencies (integration with other services)
+              - Security-sensitive operations (authentication, authorization, encryption)
+              - Performance-critical features (high-traffic, real-time, large data)
+              - Core architecture document modifications
+              
+          - id: complexity_detection_date
+            title: Detection Date
+            type: timestamp
+            instruction: Timestamp when complexity detection was performed
+            
+      - id: decision-matrix-result
+        title: Decision Matrix Result
+        instruction: Result from applying decision matrix based on quality score and complexity
+        owner: scrum-master
+        editors: [scrum-master]
+        fields:
+          - id: architect_review_recommendation
+            title: Architect Review Recommendation
+            type: choice
+            choices: [NOT_NEEDED, OPTIONAL, RECOMMENDED, N/A]
+            instruction: |
+              Recommendation based on decision matrix:
+              - NOT_NEEDED: High quality (≥8.0) + Low complexity (0 indicators)
+              - OPTIONAL: High quality (≥8.0) + Single complexity indicator (1)
+              - RECOMMENDED: High quality (≥8.0) + High complexity (≥2) OR Medium quality (6.0-7.9)
+              - N/A: Low quality (<6.0) or blocked status
+              
+          - id: decision_status
+            title: Decision Status
+            type: choice
+            choices: [Approved, AwaitingArchReview, Blocked]
+            instruction: Status determined by decision matrix based on quality score and complexity
+            
+          - id: decision_reasoning
+            title: Decision Reasoning
+            type: text
+            instruction: Explanation for the decision based on quality score, complexity indicators, and decision matrix rules
+            
+          - id: decision_date
+            title: Decision Date
+            type: timestamp
+            instruction: Timestamp when decision was made
+            
+          - id: quality_level
+            title: Quality Level
+            type: choice
+            choices: [excellent, good, insufficient]
+            instruction: "Quality level classification (excellent: ≥8.0, good: 6.0-7.9, insufficient: <6.0)"
+            
+          - id: risk_level
+            title: Risk Level
+            type: choice
+            choices: [low, low-medium, medium, medium-high, high]
+            instruction: Risk level based on quality and complexity combination
+  
+  - id: qa-test-design-metadata
+    title: QA Test Design Metadata
+    instruction: |
+      This section is populated by the QA Agent during test design phase.
+      Test design occurs before development begins, providing Dev Agent with clear testing strategy.
+      Test design level is determined by SM Agent based on complexity, quality score, and security sensitivity.
+    owner: qa-agent
+    editors: [qa-agent, scrum-master]
+    fields:
+      - id: test_design_level
+        title: Test Design Level
+        type: choice
+        choices: [Simple, Standard, Comprehensive]
+        instruction: |
+          Test design level determined by SM Agent based on story characteristics:
+          - Simple: Complexity=0, Quality≥8.5, No security sensitivity (test design skipped)
+          - Standard: Complexity=1-2 OR Quality=7.0-8.5 (test-design task required)
+          - Comprehensive: Complexity≥3 OR Security sensitive (test-design + risk-profile tasks required)
+          
+      - id: test_design_status
+        title: Test Design Status
+        type: choice
+        choices: [NotRequired, Pending, InProgress, Complete]
+        instruction: |
+          Current status of test design:
+          - NotRequired: Simple level, test design skipped
+          - Pending: Test design required but not yet started
+          - InProgress: QA Agent currently working on test design
+          - Complete: Test design completed, ready for development
+          
+      - id: test_design_document
+        title: Test Design Document
+        type: reference
+        path: qa/assessments/{story-id}-test-design-{date}.md
+        instruction: |
+          Reference to the test design document created by QA Agent.
+          Document contains:
+          - Test scenarios by acceptance criteria
+          - Test levels (Unit/Integration/E2E)
+          - Test priorities (P0/P1/P2/P3)
+          - Recommended execution order
+          Format: qa/assessments/{epic}.{story}-test-design-YYYY-MM-DD.md
+          
+      - id: risk_profile_document
+        title: Risk Profile Document
+        type: reference
+        path: qa/assessments/{story-id}-risk-{date}.md
+        conditional: test_design_level == "Comprehensive"
+        instruction: |
+          Reference to the risk profile document (only for Comprehensive level).
+          Document contains:
+          - Security risk assessment
+          - Technical risk analysis
+          - Business risk evaluation
+          - Operational risk considerations
+          - Risk mitigation strategies
+          Format: qa/assessments/{epic}.{story}-risk-YYYY-MM-DD.md
+          
+      - id: test_design_completion_date
+        title: Test Design Completion Date
+        type: timestamp
+        instruction: Timestamp when test design was completed by QA Agent
+        
+      - id: test_design_summary
+        title: Test Design Summary
+        type: text
+        instruction: |
+          Brief summary of test design approach and key testing priorities.
+          Includes:
+          - Total test scenarios count
+          - P0/P1/P2 test distribution
+          - Key risk areas to focus on
+          - Special testing considerations
+          
+      - id: dev_feedback
+        title: Dev Feedback
+        type: text
+        instruction: |
+          Feedback from Dev Agent regarding test design issues or concerns.
+          Populated by Dev Agent when test design is found to be unreasonable or missing important scenarios.
+          Includes:
+          - Description of test design issues
+          - Missing test scenarios
+          - Unreasonable test expectations
+          - Suggested improvements
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+  
+  - id: architect-review-metadata
+    title: Architect Review Metadata
+    instruction: |
+      This section is populated by the Architect Agent during technical review.
+      Tracks review rounds, decisions, and outcomes.
+      Maximum 2 rounds of review allowed.
+      
+      **Warning Message Placement:** If Architect review is RECOMMENDED and user skips, a warning message box should be added 
+      immediately after this metadata section (before the Story section) to alert all stakeholders.
+    owner: scrum-master
+    editors: [scrum-master, architect-agent]
+    sections:
+      - id: review-rounds
+        title: Review Rounds
+        instruction: |
+          Tracks architect review rounds (maximum 2 rounds allowed).
+          Each review round is recorded with timestamp, score, and outcome.
+        owner: architect-agent
+        editors: [architect-agent]
+        fields:
+          - id: review_round
+            title: Current Review Round
+            type: number
+            range: 0-2
+            instruction: Current review round number (0 = no review yet, 1 = first review, 2 = second review)
+            
+          - id: total_reviews_conducted
+            title: Total Reviews Conducted
+            type: number
+            instruction: Total number of architect reviews conducted for this story
+            
+      - id: review-history
+        title: Review History
+        instruction: |
+          Historical record of all architect reviews conducted.
+          Each entry includes round number, date, score, decision, and key findings.
+          This is an append-only log.
+        owner: architect-agent
+        editors: [architect-agent]
+        type: list
+        item_template: |
+          - Round: {{round_number}}
+            Date: {{review_date}}
+            Reviewer: {{reviewer_id}}
+            Score: {{review_score}}/10
+            Decision: {{decision}}
+            Critical Issues: {{critical_issues_count}}
+            Key Findings: {{key_findings_summary}}
+            
+      - id: complexity-analysis
+        title: Complexity Analysis
+        instruction: Automatically populated by SM Agent during quality check (legacy - kept for backward compatibility)
+        owner: scrum-master
+        editors: [scrum-master]
+        fields:
+          - id: complexity_analysis_date
+            title: Analysis Date
+            type: timestamp
+            instruction: Timestamp when complexity analysis was performed
+            
+          - id: detected_indicators
+            title: Detected Indicators
+            type: checklist
+            instruction: List of complexity indicators detected in Story content
+            items:
+              - API contract changes (endpoints, request/response schemas)
+              - Database schema modifications (tables, columns, relationships)
+              - New architectural patterns (not following existing patterns)
+              - Cross-service dependencies (integration with other services)
+              - Security-sensitive operations (authentication, authorization, encryption)
+              - Performance-critical features (high-traffic, real-time, large data)
+              - Core architecture document modifications
+              
+          - id: total_indicators
+            title: Total Indicators Detected
+            type: number
+            instruction: Count of detected indicators (0-7)
+            
+          - id: recommendation
+            title: Architect Review Recommendation
+            type: choice
+            choices: [RECOMMENDED, OPTIONAL, NOT_NEEDED]
+            instruction: Recommendation based on complexity analysis and quality score
+            
+          - id: reasoning
+            title: Recommendation Reasoning
+            type: text
+            instruction: Specific explanation for the recommendation based on detected indicators and quality score
+            
+      - id: review-decision
+        title: Review Decision
+        instruction: User decision about whether to trigger architect review
+        owner: scrum-master
+        editors: [scrum-master, architect-agent]
+        fields:
+          - id: review_decision
+            title: Decision
+            type: choice
+            choices: [PENDING, COMPLETED, SKIPPED]
+            instruction: Current status of architect review decision
+            
+          - id: decision_date
+            title: Decision Date
+            type: timestamp
+            instruction: Timestamp when user made the review decision
+            
+          - id: decision_by
+            title: Decision By
+            type: text
+            instruction: Identifier of user who made the decision
+            
+      - id: review-completed
+        title: Review Completion Details
+        instruction: Populated when architect review is completed (conditional - only if review_decision = COMPLETED)
+        owner: architect-agent
+        editors: [architect-agent]
+        conditional: review_decision == "COMPLETED"
+        fields:
+          - id: review_date
+            title: Review Date
+            type: timestamp
+            instruction: Timestamp when architect review was completed
+            
+          - id: reviewer
+            title: Reviewer
+            type: text
+            instruction: Identifier of architect agent or human architect who performed review
+            
+          - id: outcome
+            title: Review Outcome
+            type: choice
+            choices: [approved, revise, escalate]
+            instruction: Result of architect review
+            
+          - id: review_score
+            title: Review Score
+            type: number
+            instruction: Score from architect review checklist (0-10)
+            
+          - id: findings
+            title: Review Findings
+            type: text
+            instruction: Summary of architect's findings, recommendations, and any issues identified
+            
+      - id: review-skipped
+        title: Review Skip Details
+        instruction: Populated when user decides to skip architect review (conditional - only if review_decision = SKIPPED)
+        owner: scrum-master
+        editors: [scrum-master]
+        conditional: review_decision == "SKIPPED"
+        fields:
+          - id: skip_reason
+            title: Skip Reason
+            type: text
+            instruction: User-provided reason for skipping the recommended architect review
+            required: true
+            
+          - id: skip_date
+            title: Skip Date
+            type: timestamp
+            instruction: Timestamp when review was skipped
+            
+          - id: skip_warning_acknowledged
+            title: Warning Acknowledged
+            type: boolean
+            instruction: Confirmation that user acknowledged the warning about skipping recommended review
+            
+      - id: dev-escalation
+        title: Dev Escalation
+        instruction: |
+          Populated by Dev Agent when implementation requires deviation from SM's technical approach
+          and needs Architect review for validation.
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        fields:
+          - id: escalation_flagged
+            title: Escalation Flagged
+            type: boolean
+            instruction: Whether Dev Agent has flagged this story for Architect review
+            
+          - id: escalation_date
+            title: Escalation Date
+            type: timestamp
+            instruction: Timestamp when Dev Agent flagged the escalation
+            
+          - id: deviation_reason
+            title: Deviation Reason
+            type: text
+            instruction: Explanation of why Dev Agent needs to deviate from SM's technical approach
+            
+          - id: impact_assessment
+            title: Impact Assessment
+            type: text
+            instruction: Dev Agent's assessment of the impact of the proposed deviation
+            
+          - id: alternative_approach
+            title: Alternative Approach
+            type: text
+            instruction: Dev Agent's proposed alternative technical approach
+    
+  - id: architect-review-results
+    title: Architect Review Results
+    instruction: |
+      Results from Architect Agent architectural review of the Story.
+      This section is appended by the Architect Agent when review is performed.
+      Multiple reviews can be appended with timestamps.
+      
+      See architect-review-gate-tmpl.yaml for detailed format specification.
+    required: false
+    owner: architect-agent
+    editors: [architect-agent]
+    
+  - id: qa-review-metadata
+    title: QA Review Metadata
+    instruction: |
+      This section is populated by the QA Agent during quality review.
+      Tracks QA review rounds (maximum 3 rounds allowed with progressive standards).
+      Round 1: Strict standards
+      Round 2: Moderate standards (50% issue reduction required)
+      Round 3: Pragmatic standards (no critical issues, acceptable technical debt)
+    owner: qa-agent
+    editors: [qa-agent]
+    sections:
+      - id: review-rounds
+        title: Review Rounds
+        instruction: Tracks QA review rounds and progressive standards
+        owner: qa-agent
+        editors: [qa-agent]
+        fields:
+          - id: review_round
+            title: Current Review Round
+            type: number
+            range: 0-3
+            instruction: Current QA review round number (0 = no review yet, 1-3 = review rounds)
+            
+          - id: total_reviews_conducted
+            title: Total Reviews Conducted
+            type: number
+            instruction: Total number of QA reviews conducted for this story
+            
+      - id: review-history
+        title: Review History
+        instruction: |
+          Historical record of all QA reviews conducted.
+          Each entry includes round number, date, gate result, issues found, and improvement metrics.
+          This is an append-only log.
+        owner: qa-agent
+        editors: [qa-agent]
+        type: list
+        item_template: |
+          - Round: {{round_number}}
+            Date: {{review_date}}
+            Reviewer: {{reviewer_id}}
+            Gate: {{gate_result}}
+            Issues Found: {{total_issues}}
+            Critical Issues: {{critical_issues_count}}
+            High Severity Issues: {{high_severity_count}}
+            Issues from Previous Round: {{issues_from_previous_round}}
+            Issues Resolved: {{issues_resolved}}
+            Improvement Percentage: {{improvement_percentage}}%
+            Decision: {{decision}}
+            
+      - id: technical-debt
+        title: Technical Debt
+        instruction: |
+          Records any technical debt accepted during QA review (typically in Round 3).
+          Each entry includes description, impact assessment, and follow-up plan.
+        owner: qa-agent
+        editors: [qa-agent]
+        type: list
+        item_template: |
+          - Date: {{acceptance_date}}
+            Description: {{debt_description}}
+            Impact: {{impact_assessment}}
+            Severity: {{severity_level}}
+            Follow-up Plan: {{follow_up_plan}}
+            Accepted By: {{accepted_by}}
+    
   - id: qa-results
     title: QA Results
-    instruction: Results from QA Agent QA review of the completed story implementation
+    instruction: |
+      Results from QA Agent QA review of the completed story implementation.
+      Detailed QA Gate files are stored in docs/qa/gates/ directory.
+      This section contains summary and links to detailed reports.
     owner: qa-agent
     editors: [qa-agent]

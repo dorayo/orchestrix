@@ -1,0 +1,288 @@
+# Dev Decision: Block Story
+# Determines if Dev should block Story implementation due to unclear requirements or issues
+
+decision_type: dev-block-story
+
+description: >
+  Evaluate issue severity, AC clarity, and problem description to determine if 
+  Dev should block Story implementation and request clarification from SM, or 
+  if the issue can be resolved through other means (feedback, escalation, or 
+  proceeding with implementation).
+
+inputs:
+  - name: issue_description
+    type: string
+    description: Description of the issue or concern encountered during implementation
+    required: true
+    
+  - name: severity
+    type: string
+    description: Severity level of the issue (LOW, MEDIUM, HIGH, CRITICAL)
+    required: true
+    enum: [LOW, MEDIUM, HIGH, CRITICAL]
+    
+  - name: ac_clarity
+    type: number
+    description: Acceptance Criteria clarity score (0-10, where 0=completely unclear, 10=crystal clear)
+    required: true
+
+rules:
+  # Rule 1: Critical severity + Unclear AC → Block immediately
+  - condition: "severity == 'CRITICAL' AND ac_clarity <= 5"
+    result: BLOCK
+    reasoning: "Critical issue with unclear Acceptance Criteria makes implementation impossible without clarification. Blocking Story to prevent incorrect implementation that could cause system failures or security issues."
+    next_status: Blocked
+    next_action: "handoff_to_sm_clarify"
+    metadata:
+      urgency: "immediate"
+      requires_sm_clarification: true
+      can_proceed_without_resolution: false
+      feedback_type: "CLARIFICATION"
+    
+  # Rule 2: High severity + Very unclear AC → Block
+  - condition: "severity == 'HIGH' AND ac_clarity <= 4"
+    result: BLOCK
+    reasoning: "High severity issue combined with very unclear Acceptance Criteria requires SM clarification before proceeding. Risk of significant rework if implemented incorrectly."
+    next_status: Blocked
+    next_action: "handoff_to_sm_clarify"
+    metadata:
+      urgency: "high"
+      requires_sm_clarification: true
+      can_proceed_without_resolution: false
+      feedback_type: "CLARIFICATION"
+    
+  # Rule 3: Medium severity + Unclear AC → Block
+  - condition: "severity == 'MEDIUM' AND ac_clarity <= 3"
+    result: BLOCK
+    reasoning: "Medium severity issue with unclear Acceptance Criteria should be clarified before implementation to avoid wasted effort and potential rework."
+    next_status: Blocked
+    next_action: "handoff_to_sm_clarify"
+    metadata:
+      urgency: "medium"
+      requires_sm_clarification: true
+      can_proceed_without_resolution: false
+      feedback_type: "CLARIFICATION"
+    
+  # Rule 4: Any severity + Completely unclear AC → Block
+  - condition: "ac_clarity <= 2"
+    result: BLOCK
+    reasoning: "Acceptance Criteria are too unclear to implement regardless of issue severity. SM must clarify requirements before Dev can proceed with implementation."
+    next_status: Blocked
+    next_action: "handoff_to_sm_clarify"
+    metadata:
+      urgency: "high"
+      requires_sm_clarification: true
+      can_proceed_without_resolution: false
+      feedback_type: "CLARIFICATION"
+      fundamental_clarity_issue: true
+    
+  # Rule 5: Critical severity + Clear AC → Escalate to Architect
+  - condition: "severity == 'CRITICAL' AND ac_clarity > 5"
+    result: ESCALATE
+    reasoning: "Critical issue with clear AC suggests architectural or technical design problem. Escalating to Architect for guidance rather than blocking."
+    next_status: InProgress
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "immediate"
+      requires_sm_clarification: false
+      requires_architect_review: true
+      can_proceed_without_resolution: false
+      feedback_type: "ESCALATION"
+    
+  # Rule 6: High severity + Moderately clear AC → Provide feedback and continue
+  - condition: "severity == 'HIGH' AND ac_clarity > 4 AND ac_clarity <= 7"
+    result: FEEDBACK
+    reasoning: "High severity issue but AC are moderately clear. Dev should document concern in Dev Log and provide feedback to SM/QA, but can proceed with implementation using best judgment."
+    next_status: InProgress
+    next_action: "log_feedback_continue"
+    metadata:
+      urgency: "high"
+      requires_sm_clarification: false
+      can_proceed_without_resolution: true
+      feedback_type: "ISSUE"
+      feedback_target: "SM"
+      requires_qa_attention: true
+    
+  # Rule 7: Medium severity + Clear AC → Provide feedback and continue
+  - condition: "severity == 'MEDIUM' AND ac_clarity > 3"
+    result: FEEDBACK
+    reasoning: "Medium severity issue with clear AC can be addressed through feedback mechanism. Dev should document in Dev Log and continue implementation."
+    next_status: InProgress
+    next_action: "log_feedback_continue"
+    metadata:
+      urgency: "medium"
+      requires_sm_clarification: false
+      can_proceed_without_resolution: true
+      feedback_type: "ISSUE"
+      feedback_target: "SM"
+    
+  # Rule 8: Low severity → Continue with note
+  - condition: "severity == 'LOW'"
+    result: CONTINUE
+    reasoning: "Low severity issue does not warrant blocking Story. Dev should note the concern in Dev Log for QA review but proceed with implementation."
+    next_status: InProgress
+    next_action: "log_note_continue"
+    metadata:
+      urgency: "low"
+      requires_sm_clarification: false
+      can_proceed_without_resolution: true
+      feedback_type: "NOTE"
+      feedback_target: "QA"
+    
+  # Rule 9: High clarity + Any non-critical severity → Continue
+  - condition: "ac_clarity >= 8 AND severity != 'CRITICAL'"
+    result: CONTINUE
+    reasoning: "Acceptance Criteria are clear and issue is not critical. Dev should document concern but can proceed with implementation confidently."
+    next_status: InProgress
+    next_action: "log_note_continue"
+    metadata:
+      urgency: "low"
+      requires_sm_clarification: false
+      can_proceed_without_resolution: true
+      feedback_type: "NOTE"
+
+output:
+  should_block:
+    type: boolean
+    description: Whether Dev should block Story implementation (true for BLOCK result, false otherwise)
+    
+  result:
+    type: enum
+    values: [BLOCK, ESCALATE, FEEDBACK, CONTINUE]
+    description: Decision result indicating action Dev should take
+    
+  reasoning:
+    type: string
+    description: Explanation of why this decision was made
+    
+  next_status:
+    type: string
+    description: Story status to set based on decision (Blocked or InProgress)
+    
+  next_action:
+    type: string
+    description: Next action to take (handoff_to_sm_clarify, escalate_to_architect, log_feedback_continue, log_note_continue)
+    
+  metadata:
+    type: object
+    description: Additional metadata about the blocking decision
+    properties:
+      urgency:
+        type: string
+        description: Urgency level (immediate, high, medium, low)
+      requires_sm_clarification:
+        type: boolean
+        description: Whether SM clarification is required
+      requires_architect_review:
+        type: boolean
+        description: Whether Architect review is required
+      can_proceed_without_resolution:
+        type: boolean
+        description: Whether Dev can proceed without resolving the issue
+      feedback_type:
+        type: string
+        description: Type of feedback (CLARIFICATION, ESCALATION, ISSUE, NOTE)
+      feedback_target:
+        type: string
+        description: Target agent for feedback (SM, QA, Architect)
+      requires_qa_attention:
+        type: boolean
+        description: Whether QA should pay special attention to this area
+      fundamental_clarity_issue:
+        type: boolean
+        description: Whether this is a fundamental clarity problem with requirements
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "Dev Agent"
+  related_requirements:
+    - "6.2"
+    - "6.4"
+    - "6.7"
+    - "3.1"
+  usage_context: >
+    Called by Dev Agent during implement-story task when encountering issues 
+    or concerns during implementation. This decision determines whether to:
+    1. Block Story and request SM clarification (BLOCK)
+    2. Escalate to Architect for technical guidance (ESCALATE)
+    3. Provide feedback but continue implementation (FEEDBACK)
+    4. Note concern and continue implementation (CONTINUE)
+    
+    The decision considers both the severity of the issue and the clarity of 
+    Acceptance Criteria. Critical issues with unclear AC always result in blocking, 
+    while minor issues with clear AC can be noted and implementation continues.
+    
+    COORDINATION NOTE: When result is BLOCK, Dev should:
+    - Set Story Status = Blocked
+    - Record issue in Dev Log with detailed description
+    - Output Handoff message to SM: "Next: SM please execute command 'clarify-story {story-id}'"
+    - Wait for SM clarification before resuming implementation
+    
+    When result is ESCALATE, Dev should:
+    - Keep Story Status = InProgress
+    - Record issue in Dev Log and Architect Review Metadata
+    - Output Handoff message to Architect for guidance
+    - May continue with other parts of Story while waiting for guidance
+    
+    When result is FEEDBACK or CONTINUE, Dev should:
+    - Keep Story Status = InProgress
+    - Record concern in Dev Log
+    - Add feedback to appropriate metadata section (QA Test Design or SM Notes)
+    - Continue with implementation
+
+examples:
+  - input:
+      issue_description: "Acceptance Criteria 3 states 'handle errors properly' but doesn't specify which errors or how to handle them"
+      severity: "HIGH"
+      ac_clarity: 4
+    output:
+      should_block: true
+      result: BLOCK
+      reasoning: "High severity issue with very unclear Acceptance Criteria requires SM clarification before proceeding. Risk of significant rework if implemented incorrectly."
+      next_status: Blocked
+      next_action: "handoff_to_sm_clarify"
+      
+  - input:
+      issue_description: "Performance requirement mentions 'fast response' but no specific SLA defined"
+      severity: "MEDIUM"
+      ac_clarity: 6
+    output:
+      should_block: false
+      result: FEEDBACK
+      reasoning: "Medium severity issue with clear AC can be addressed through feedback mechanism. Dev should document in Dev Log and continue implementation."
+      next_status: InProgress
+      next_action: "log_feedback_continue"
+      
+  - input:
+      issue_description: "Database schema change might impact other services"
+      severity: "CRITICAL"
+      ac_clarity: 8
+    output:
+      should_block: false
+      result: ESCALATE
+      reasoning: "Critical issue with clear AC suggests architectural or technical design problem. Escalating to Architect for guidance rather than blocking."
+      next_status: InProgress
+      next_action: "escalate_to_architect"
+      
+  - input:
+      issue_description: "Minor typo in error message text"
+      severity: "LOW"
+      ac_clarity: 9
+    output:
+      should_block: false
+      result: CONTINUE
+      reasoning: "Low severity issue does not warrant blocking Story. Dev should note the concern in Dev Log for QA review but proceed with implementation."
+      next_status: InProgress
+      next_action: "log_note_continue"
+      
+  - input:
+      issue_description: "AC doesn't specify what should happen in edge case X"
+      severity: "MEDIUM"
+      ac_clarity: 2
+    output:
+      should_block: true
+      result: BLOCK
+      reasoning: "Medium severity issue with unclear Acceptance Criteria should be clarified before implementation to avoid wasted effort and potential rework."
+      next_status: Blocked
+      next_action: "handoff_to_sm_clarify"

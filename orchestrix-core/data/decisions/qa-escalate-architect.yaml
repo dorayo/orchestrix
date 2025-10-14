@@ -1,0 +1,473 @@
+# QA Decision: Escalate to Architect
+# Determines if QA should escalate architecture concerns to Architect for review
+
+decision_type: qa-escalate-architect
+
+description: >
+  Evaluate concern description, severity level, and impact assessment to 
+  determine if QA should escalate architecture concerns to Architect for 
+  technical guidance when discovering potential architectural issues during 
+  code review or testing.
+
+inputs:
+  - name: concern_description
+    type: string
+    description: Description of the architectural concern or issue discovered
+    required: true
+    
+  - name: severity
+    type: string
+    description: Severity level of the concern (LOW, MEDIUM, HIGH, CRITICAL)
+    required: true
+    enum: [LOW, MEDIUM, HIGH, CRITICAL]
+    
+  - name: impact
+    type: string
+    description: Impact assessment of the concern on system quality, performance, security, or maintainability
+    required: true
+    
+  - name: concern_type
+    type: string
+    description: Type of architectural concern
+    required: false
+    enum: [PERFORMANCE, SECURITY, SCALABILITY, MAINTAINABILITY, DESIGN_PATTERN, DATA_INTEGRITY, INTEGRATION, OTHER]
+    default: OTHER
+    
+  - name: affects_multiple_components
+    type: boolean
+    description: Whether the concern affects multiple components or services
+    required: false
+    default: false
+    
+  - name: requires_design_change
+    type: boolean
+    description: Whether addressing the concern requires design or architecture changes
+    required: false
+    default: false
+    
+  - name: has_workaround
+    type: boolean
+    description: Whether there is a viable workaround available
+    required: false
+    default: false
+
+rules:
+  # Rule 1: Critical severity → Always escalate immediately
+  - condition: "severity == 'CRITICAL'"
+    result: ESCALATE
+    reasoning: "Critical severity issues require immediate Architect review regardless of other factors. These issues could have severe system-wide consequences and must be addressed by Architect before Story can proceed."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "immediate"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "CRITICAL_SEVERITY"
+      blocks_story: true
+    
+  # Rule 2: Security concern with High/Critical severity → Always escalate
+  - condition: "concern_type == 'SECURITY' AND (severity == 'HIGH' OR severity == 'CRITICAL')"
+    result: ESCALATE
+    reasoning: "Security concerns with high or critical severity require Architect review to ensure proper security controls and compliance. Security issues must be validated and resolved by Architect."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "immediate"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "SECURITY_CONCERN"
+      requires_security_review: true
+      blocks_story: true
+    
+  # Rule 3: Performance bottleneck with High severity → Escalate
+  - condition: "concern_type == 'PERFORMANCE' AND severity == 'HIGH'"
+    result: ESCALATE
+    reasoning: "High severity performance concerns require Architect review to identify optimal solutions and ensure performance requirements are met. Performance bottlenecks can significantly impact user experience."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "PERFORMANCE_BOTTLENECK"
+      requires_performance_analysis: true
+      blocks_story: true
+    
+  # Rule 4: Scalability issue with High severity → Escalate
+  - condition: "concern_type == 'SCALABILITY' AND severity == 'HIGH'"
+    result: ESCALATE
+    reasoning: "High severity scalability concerns require Architect review to ensure system can handle growth and load requirements. Scalability issues can limit system capacity and future expansion."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "SCALABILITY_ISSUE"
+      requires_capacity_planning: true
+      blocks_story: true
+    
+  # Rule 5: Requires design change + High severity → Escalate
+  - condition: "requires_design_change == true AND severity == 'HIGH'"
+    result: ESCALATE
+    reasoning: "High severity issues requiring design changes must be reviewed by Architect to ensure proper architectural approach and consistency with system design principles."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "DESIGN_CHANGE_REQUIRED"
+      requires_design_review: true
+      blocks_story: true
+    
+  # Rule 6: Affects multiple components + High/Medium severity → Escalate
+  - condition: "affects_multiple_components == true AND (severity == 'HIGH' OR severity == 'MEDIUM')"
+    result: ESCALATE
+    reasoning: "Issues affecting multiple components with medium or high severity require Architect review to assess cross-component dependencies and ensure proper coordination."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "CROSS_COMPONENT_IMPACT"
+      requires_integration_review: true
+      blocks_story: true
+    
+  # Rule 7: Data integrity concern with High severity → Escalate
+  - condition: "concern_type == 'DATA_INTEGRITY' AND severity == 'HIGH'"
+    result: ESCALATE
+    reasoning: "High severity data integrity concerns require Architect review to ensure data consistency and reliability. Data integrity issues can lead to data corruption or loss."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "DATA_INTEGRITY_CONCERN"
+      requires_data_review: true
+      blocks_story: true
+    
+  # Rule 8: Medium severity + Requires design change + No workaround → Escalate
+  - condition: "severity == 'MEDIUM' AND requires_design_change == true AND has_workaround == false"
+    result: ESCALATE
+    reasoning: "Medium severity issues requiring design changes without viable workarounds should be escalated to Architect for proper resolution. Proceeding without addressing could accumulate technical debt."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "medium"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "DESIGN_CHANGE_NO_WORKAROUND"
+      blocks_story: true
+    
+  # Rule 9: Security concern with Medium severity → Escalate
+  - condition: "concern_type == 'SECURITY' AND severity == 'MEDIUM'"
+    result: ESCALATE
+    reasoning: "Security concerns at medium severity should be escalated to Architect to ensure proper security controls are in place. Security issues should not be left unaddressed."
+    next_action: "escalate_to_architect"
+    next_status: "Escalated"
+    metadata:
+      urgency: "medium"
+      requires_architect_approval: true
+      can_proceed_without_resolution: false
+      escalation_type: "SECURITY_CONCERN"
+      requires_security_review: true
+      blocks_story: true
+    
+  # Rule 10: Medium severity + Has workaround + Not design change → Document concern
+  - condition: "severity == 'MEDIUM' AND has_workaround == true AND requires_design_change == false"
+    result: DOCUMENT
+    reasoning: "Medium severity issues with viable workarounds that don't require design changes can be documented for future improvement. QA should record concern in QA Results with workaround details and mark for future technical debt review."
+    next_action: "document_concern"
+    next_status: "Review"
+    metadata:
+      urgency: "low"
+      requires_architect_approval: false
+      can_proceed_without_resolution: true
+      escalation_type: "NONE"
+      requires_documentation: true
+      add_to_technical_debt: true
+      blocks_story: false
+    
+  # Rule 11: Low severity + Affects multiple components → Document and notify
+  - condition: "severity == 'LOW' AND affects_multiple_components == true"
+    result: DOCUMENT
+    reasoning: "Low severity issues affecting multiple components should be documented for awareness but don't require immediate escalation. QA should record in QA Results and consider mentioning in team communication."
+    next_action: "document_concern"
+    next_status: "Review"
+    metadata:
+      urgency: "low"
+      requires_architect_approval: false
+      can_proceed_without_resolution: true
+      escalation_type: "NONE"
+      requires_documentation: true
+      notify_team: true
+      blocks_story: false
+    
+  # Rule 12: Low severity + Single component + Has workaround → Document only
+  - condition: "severity == 'LOW' AND affects_multiple_components == false AND has_workaround == true"
+    result: DOCUMENT
+    reasoning: "Low severity issues with workarounds affecting single components can be documented for future improvement without escalation. QA should record in QA Results for tracking."
+    next_action: "document_concern"
+    next_status: "Review"
+    metadata:
+      urgency: "low"
+      requires_architect_approval: false
+      can_proceed_without_resolution: true
+      escalation_type: "NONE"
+      requires_documentation: true
+      blocks_story: false
+    
+  # Rule 13: Low severity + Requires design change → Document and suggest review
+  - condition: "severity == 'LOW' AND requires_design_change == true"
+    result: DOCUMENT
+    reasoning: "Low severity issues requiring design changes should be documented for future architectural review. While not urgent, these should be tracked for potential future refactoring."
+    next_action: "document_concern"
+    next_status: "Review"
+    metadata:
+      urgency: "low"
+      requires_architect_approval: false
+      can_proceed_without_resolution: true
+      escalation_type: "NONE"
+      requires_documentation: true
+      add_to_technical_debt: true
+      suggest_future_review: true
+      blocks_story: false
+
+output:
+  should_escalate:
+    type: boolean
+    description: Whether QA should escalate to Architect (true for ESCALATE result, false for DOCUMENT)
+    
+  result:
+    type: enum
+    values: [ESCALATE, DOCUMENT]
+    description: Decision result indicating whether to escalate or document concern
+    
+  reasoning:
+    type: string
+    description: Explanation of why this decision was made
+    
+  next_action:
+    type: string
+    description: Next action to take (escalate_to_architect or document_concern)
+    
+  next_status:
+    type: string
+    description: Story status to set (Escalated or Review)
+    
+  metadata:
+    type: object
+    description: Additional metadata about the escalation decision
+    properties:
+      urgency:
+        type: string
+        description: Urgency level (immediate, high, medium, low)
+      requires_architect_approval:
+        type: boolean
+        description: Whether Architect approval is required before proceeding
+      can_proceed_without_resolution:
+        type: boolean
+        description: Whether Story can proceed without resolving the concern
+      escalation_type:
+        type: string
+        description: Type of escalation or concern
+      blocks_story:
+        type: boolean
+        description: Whether this concern blocks Story completion
+      requires_documentation:
+        type: boolean
+        description: Whether detailed documentation is required
+      requires_security_review:
+        type: boolean
+        description: Whether security review is needed
+      requires_performance_analysis:
+        type: boolean
+        description: Whether performance analysis is needed
+      requires_capacity_planning:
+        type: boolean
+        description: Whether capacity planning is needed
+      requires_design_review:
+        type: boolean
+        description: Whether design review is needed
+      requires_integration_review:
+        type: boolean
+        description: Whether integration/cross-component review is needed
+      requires_data_review:
+        type: boolean
+        description: Whether data architecture review is needed
+      add_to_technical_debt:
+        type: boolean
+        description: Whether to add to technical debt backlog
+      notify_team:
+        type: boolean
+        description: Whether to notify team about the concern
+      suggest_future_review:
+        type: boolean
+        description: Whether to suggest future architectural review
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "QA Agent"
+  related_requirements:
+    - "6.2"
+    - "6.4"
+    - "6.8"
+    - "4.1"
+    - "4.2"
+    - "4.3"
+  usage_context: >
+    Called by QA Agent during review-story task when discovering potential 
+    architectural concerns during code review or testing. This decision 
+    determines whether to:
+    1. Escalate to Architect for review and resolution (ESCALATE)
+    2. Document concern and proceed with Story (DOCUMENT)
+    
+    The decision considers multiple factors:
+    - Severity level of the concern
+    - Type of architectural concern (performance, security, scalability, etc.)
+    - Impact on system quality and functionality
+    - Whether it affects multiple components
+    - Whether it requires design changes
+    - Availability of workarounds
+    
+    Critical severity, security concerns, performance bottlenecks, and 
+    scalability issues typically require escalation. Low severity concerns 
+    with workarounds can be documented for future improvement.
+    
+    COORDINATION NOTE: When result is ESCALATE, QA should:
+    - Set Story Status = Escalated
+    - Record concern details in QA Results with:
+      * Concern description
+      * Severity assessment
+      * Impact analysis
+      * Affected components
+      * Recommended actions
+    - Add "Architecture Concern" flag to QA Results
+    - Output Handoff message to Architect: "Next: Architect please execute command 'review-escalation {story-id}'"
+    - Wait for Architect guidance before completing review
+    - Story is blocked until Architect provides resolution
+    
+    When result is DOCUMENT, QA should:
+    - Keep Story Status = Review (continue normal review process)
+    - Record concern details in QA Results with:
+      * Concern description
+      * Severity assessment
+      * Workaround details (if applicable)
+      * Recommendation for future improvement
+    - Add to technical debt backlog if metadata indicates
+    - Proceed with completing QA review
+    - Story can proceed to completion
+    
+    IMPORTANT: This decision is specifically for architectural concerns 
+    discovered during QA review. For functional issues or test failures, 
+    use qa-gate-decision instead.
+
+examples:
+  - input:
+      concern_description: "Database queries in user service are causing N+1 problem, loading related data inefficiently"
+      severity: "HIGH"
+      impact: "Severe performance degradation under load, response times exceed 5 seconds for list operations"
+      concern_type: "PERFORMANCE"
+      affects_multiple_components: false
+      requires_design_change: true
+      has_workaround: false
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "High severity performance concerns require Architect review to identify optimal solutions and ensure performance requirements are met. Performance bottlenecks can significantly impact user experience."
+      next_action: "escalate_to_architect"
+      next_status: "Escalated"
+      
+  - input:
+      concern_description: "User authentication tokens are stored in localStorage without encryption"
+      severity: "CRITICAL"
+      impact: "Critical security vulnerability exposing user credentials to XSS attacks"
+      concern_type: "SECURITY"
+      affects_multiple_components: false
+      requires_design_change: true
+      has_workaround: false
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "Critical severity issues require immediate Architect review regardless of other factors. These issues could have severe system-wide consequences and must be addressed by Architect before Story can proceed."
+      next_action: "escalate_to_architect"
+      next_status: "Escalated"
+      
+  - input:
+      concern_description: "Service uses synchronous HTTP calls instead of async messaging for inter-service communication"
+      severity: "MEDIUM"
+      impact: "Reduced scalability and potential cascading failures under high load"
+      concern_type: "SCALABILITY"
+      affects_multiple_components: true
+      requires_design_change: true
+      has_workaround: true
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "Issues affecting multiple components with medium or high severity require Architect review to assess cross-component dependencies and ensure proper coordination."
+      next_action: "escalate_to_architect"
+      next_status: "Escalated"
+      
+  - input:
+      concern_description: "Error handling uses generic catch-all instead of specific error types"
+      severity: "LOW"
+      impact: "Reduced debuggability and error tracking, but functionality works correctly"
+      concern_type: "MAINTAINABILITY"
+      affects_multiple_components: false
+      requires_design_change: false
+      has_workaround: true
+    output:
+      should_escalate: false
+      result: DOCUMENT
+      reasoning: "Low severity issues with workarounds affecting single components can be documented for future improvement without escalation. QA should record in QA Results for tracking."
+      next_action: "document_concern"
+      next_status: "Review"
+      
+  - input:
+      concern_description: "API response format inconsistent with other endpoints in the service"
+      severity: "MEDIUM"
+      impact: "Inconsistent API design makes client integration more complex"
+      concern_type: "DESIGN_PATTERN"
+      affects_multiple_components: false
+      requires_design_change: false
+      has_workaround: true
+    output:
+      should_escalate: false
+      result: DOCUMENT
+      reasoning: "Medium severity issues with viable workarounds that don't require design changes can be documented for future improvement. QA should record concern in QA Results with workaround details and mark for future technical debt review."
+      next_action: "document_concern"
+      next_status: "Review"
+      
+  - input:
+      concern_description: "Data validation allows edge cases that could lead to data inconsistency"
+      severity: "HIGH"
+      impact: "Potential data corruption in edge cases affecting data integrity"
+      concern_type: "DATA_INTEGRITY"
+      affects_multiple_components: false
+      requires_design_change: true
+      has_workaround: false
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "High severity data integrity concerns require Architect review to ensure data consistency and reliability. Data integrity issues can lead to data corruption or loss."
+      next_action: "escalate_to_architect"
+      next_status: "Escalated"
+      
+  - input:
+      concern_description: "Component naming doesn't follow established conventions"
+      severity: "LOW"
+      impact: "Minor inconsistency in codebase, doesn't affect functionality"
+      concern_type: "MAINTAINABILITY"
+      affects_multiple_components: true
+      requires_design_change: false
+      has_workaround: true
+    output:
+      should_escalate: false
+      result: DOCUMENT
+      reasoning: "Low severity issues affecting multiple components should be documented for awareness but don't require immediate escalation. QA should record in QA Results and consider mentioning in team communication."
+      next_action: "document_concern"
+      next_status: "Review"

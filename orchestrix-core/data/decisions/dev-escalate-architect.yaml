@@ -1,0 +1,343 @@
+# Dev Decision: Escalate to Architect
+# Determines if Dev should escalate technical deviation or concern to Architect for review
+
+decision_type: dev-escalate-architect
+
+description: >
+  Evaluate deviation reason, impact assessment, and available alternatives to 
+  determine if Dev should escalate to Architect for technical guidance when 
+  needing to deviate from SM's technical approach or when encountering 
+  architectural concerns during implementation.
+
+inputs:
+  - name: deviation_reason
+    type: string
+    description: Reason for needing to deviate from planned approach or architectural concern
+    required: true
+    
+  - name: impact
+    type: string
+    description: Impact level of the deviation or concern (LOW, MEDIUM, HIGH, CRITICAL)
+    required: true
+    enum: [LOW, MEDIUM, HIGH, CRITICAL]
+    
+  - name: alternatives
+    type: string
+    description: Alternative approaches considered or proposed solution
+    required: true
+    
+  - name: affects_architecture
+    type: boolean
+    description: Whether the deviation affects system architecture or design patterns
+    required: false
+    default: false
+    
+  - name: affects_other_services
+    type: boolean
+    description: Whether the deviation might impact other services or components
+    required: false
+    default: false
+    
+  - name: security_implications
+    type: boolean
+    description: Whether there are security implications to consider
+    required: false
+    default: false
+
+rules:
+  # Rule 1: Critical impact → Always escalate
+  - condition: "impact == 'CRITICAL'"
+    result: ESCALATE
+    reasoning: "Critical impact requires Architect review regardless of other factors. Changes at this level could have system-wide consequences and must be validated by Architect before implementation."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "immediate"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "CRITICAL_IMPACT"
+    
+  # Rule 2: Security implications → Always escalate
+  - condition: "security_implications == true"
+    result: ESCALATE
+    reasoning: "Security implications require Architect review to ensure proper security controls and compliance. Security decisions must be validated by Architect regardless of impact level."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "immediate"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "SECURITY_CONCERN"
+      requires_security_review: true
+    
+  # Rule 3: Affects architecture + High impact → Escalate
+  - condition: "affects_architecture == true AND impact == 'HIGH'"
+    result: ESCALATE
+    reasoning: "High impact architectural changes require Architect review to ensure consistency with system design principles and patterns. Proceeding without review risks architectural debt."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "ARCHITECTURAL_CHANGE"
+    
+  # Rule 4: Affects other services + High/Medium impact → Escalate
+  - condition: "affects_other_services == true AND (impact == 'HIGH' OR impact == 'MEDIUM')"
+    result: ESCALATE
+    reasoning: "Changes affecting other services with medium or high impact require Architect review to assess cross-service dependencies and ensure proper coordination."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "CROSS_SERVICE_IMPACT"
+      requires_integration_review: true
+    
+  # Rule 5: Affects architecture + Medium impact → Escalate
+  - condition: "affects_architecture == true AND impact == 'MEDIUM'"
+    result: ESCALATE
+    reasoning: "Medium impact architectural changes should be reviewed by Architect to maintain architectural consistency and avoid introducing technical debt."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "medium"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "ARCHITECTURAL_CHANGE"
+    
+  # Rule 6: High impact + No alternatives provided → Escalate
+  - condition: "impact == 'HIGH' AND (alternatives == '' OR alternatives == null)"
+    result: ESCALATE
+    reasoning: "High impact deviation without documented alternatives requires Architect input to explore options and validate approach. Architect can help identify better solutions."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "high"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "HIGH_IMPACT_NO_ALTERNATIVES"
+      needs_alternative_analysis: true
+    
+  # Rule 7: Medium impact + Affects architecture or other services → Escalate
+  - condition: "impact == 'MEDIUM' AND (affects_architecture == true OR affects_other_services == true)"
+    result: ESCALATE
+    reasoning: "Medium impact changes affecting architecture or other services should be reviewed by Architect to ensure proper design and coordination."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "medium"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "MEDIUM_IMPACT_ARCHITECTURAL"
+    
+  # Rule 8: Medium impact + Alternatives provided + No architectural concerns → Document and proceed
+  - condition: "impact == 'MEDIUM' AND alternatives != '' AND alternatives != null AND affects_architecture == false AND affects_other_services == false AND security_implications == false"
+    result: DOCUMENT
+    reasoning: "Medium impact deviation with documented alternatives and no architectural concerns can proceed with proper documentation. Dev should record deviation rationale, alternatives considered, and chosen approach in Dev Log for QA review."
+    next_action: "document_and_proceed"
+    metadata:
+      urgency: "low"
+      requires_architect_approval: false
+      can_proceed_without_approval: true
+      escalation_type: "NONE"
+      requires_documentation: true
+      requires_qa_review: true
+    
+  # Rule 9: Low impact + No architectural/security concerns → Document and proceed
+  - condition: "impact == 'LOW' AND affects_architecture == false AND affects_other_services == false AND security_implications == false"
+    result: DOCUMENT
+    reasoning: "Low impact deviation without architectural or security concerns can proceed with documentation. Dev should record rationale in Dev Log for transparency."
+    next_action: "document_and_proceed"
+    metadata:
+      urgency: "low"
+      requires_architect_approval: false
+      can_proceed_without_approval: true
+      escalation_type: "NONE"
+      requires_documentation: true
+    
+  # Rule 10: Low impact + Affects architecture → Escalate for guidance
+  - condition: "impact == 'LOW' AND affects_architecture == true"
+    result: ESCALATE
+    reasoning: "Even low impact architectural changes should be reviewed by Architect to maintain architectural consistency and ensure alignment with design principles."
+    next_action: "escalate_to_architect"
+    metadata:
+      urgency: "low"
+      requires_architect_approval: true
+      can_proceed_without_approval: false
+      escalation_type: "ARCHITECTURAL_CONSISTENCY"
+
+output:
+  should_escalate:
+    type: boolean
+    description: Whether Dev should escalate to Architect (true for ESCALATE result, false for DOCUMENT)
+    
+  result:
+    type: enum
+    values: [ESCALATE, DOCUMENT]
+    description: Decision result indicating whether to escalate or document and proceed
+    
+  reasoning:
+    type: string
+    description: Explanation of why this decision was made
+    
+  next_action:
+    type: string
+    description: Next action to take (escalate_to_architect or document_and_proceed)
+    
+  metadata:
+    type: object
+    description: Additional metadata about the escalation decision
+    properties:
+      urgency:
+        type: string
+        description: Urgency level (immediate, high, medium, low)
+      requires_architect_approval:
+        type: boolean
+        description: Whether Architect approval is required before proceeding
+      can_proceed_without_approval:
+        type: boolean
+        description: Whether Dev can proceed without Architect approval
+      escalation_type:
+        type: string
+        description: Type of escalation (CRITICAL_IMPACT, SECURITY_CONCERN, ARCHITECTURAL_CHANGE, etc.)
+      requires_documentation:
+        type: boolean
+        description: Whether detailed documentation is required
+      requires_qa_review:
+        type: boolean
+        description: Whether QA should pay special attention during review
+      requires_security_review:
+        type: boolean
+        description: Whether security review is needed
+      requires_integration_review:
+        type: boolean
+        description: Whether integration/cross-service review is needed
+      needs_alternative_analysis:
+        type: boolean
+        description: Whether Architect should help analyze alternatives
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "Dev Agent"
+  related_requirements:
+    - "6.2"
+    - "6.4"
+    - "6.7"
+    - "3.3"
+    - "3.4"
+  usage_context: >
+    Called by Dev Agent during implement-story task when needing to deviate 
+    from SM's planned technical approach or when encountering architectural 
+    concerns during implementation. This decision determines whether to:
+    1. Escalate to Architect for review and approval (ESCALATE)
+    2. Document deviation and proceed with implementation (DOCUMENT)
+    
+    The decision considers multiple factors:
+    - Impact level of the deviation
+    - Whether it affects system architecture
+    - Whether it affects other services
+    - Security implications
+    - Availability of alternative approaches
+    
+    Critical impact, security concerns, and architectural changes typically 
+    require escalation. Low impact changes without architectural implications 
+    can be documented and implemented directly.
+    
+    COORDINATION NOTE: When result is ESCALATE, Dev should:
+    - Keep Story Status = InProgress (or set to appropriate status)
+    - Record deviation details in Dev Log with:
+      * Deviation reason
+      * Impact assessment
+      * Alternatives considered
+      * Proposed solution
+    - Add "Dev Escalation" marker to Architect Review Metadata in Story
+    - Output Handoff message to Architect: "Next: Architect please review escalation for {story-id}"
+    - May continue with other parts of Story while waiting for Architect guidance
+    - Must not implement the deviation until Architect provides guidance
+    
+    When result is DOCUMENT, Dev should:
+    - Keep Story Status = InProgress
+    - Record deviation details in Dev Log with full rationale
+    - Document alternatives considered and why chosen approach is preferred
+    - Proceed with implementation
+    - Ensure QA is aware during review (if requires_qa_review is true)
+    
+    IMPORTANT: This decision is specifically for technical deviations and 
+    architectural concerns. For unclear requirements or AC issues, use 
+    dev-block-story decision instead.
+
+examples:
+  - input:
+      deviation_reason: "Proposed database schema doesn't support required query performance. Need to add denormalized table."
+      impact: "HIGH"
+      alternatives: "1) Keep normalized schema with slow queries, 2) Use caching layer, 3) Add denormalized table (recommended)"
+      affects_architecture: true
+      affects_other_services: false
+      security_implications: false
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "High impact architectural changes require Architect review to ensure consistency with system design principles and patterns. Proceeding without review risks architectural debt."
+      next_action: "escalate_to_architect"
+      
+  - input:
+      deviation_reason: "Need to change authentication flow to support new OAuth provider"
+      impact: "MEDIUM"
+      alternatives: "Extend existing auth service vs create new auth module"
+      affects_architecture: false
+      affects_other_services: true
+      security_implications: true
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "Security implications require Architect review to ensure proper security controls and compliance. Security decisions must be validated by Architect regardless of impact level."
+      next_action: "escalate_to_architect"
+      
+  - input:
+      deviation_reason: "Using different validation library than specified because it has better TypeScript support"
+      impact: "LOW"
+      alternatives: "Stick with specified library vs use better-supported alternative"
+      affects_architecture: false
+      affects_other_services: false
+      security_implications: false
+    output:
+      should_escalate: false
+      result: DOCUMENT
+      reasoning: "Low impact deviation without architectural or security concerns can proceed with documentation. Dev should record rationale in Dev Log for transparency."
+      next_action: "document_and_proceed"
+      
+  - input:
+      deviation_reason: "API endpoint structure needs to change to support pagination properly"
+      impact: "MEDIUM"
+      alternatives: "1) Keep current structure with workarounds, 2) Redesign endpoint (recommended), 3) Add new endpoint"
+      affects_architecture: false
+      affects_other_services: false
+      security_implications: false
+    output:
+      should_escalate: false
+      result: DOCUMENT
+      reasoning: "Medium impact deviation with documented alternatives and no architectural concerns can proceed with proper documentation. Dev should record deviation rationale, alternatives considered, and chosen approach in Dev Log for QA review."
+      next_action: "document_and_proceed"
+      
+  - input:
+      deviation_reason: "Microservice communication pattern needs adjustment for better reliability"
+      impact: "CRITICAL"
+      alternatives: "Multiple patterns considered including circuit breaker, retry logic, and event-driven approach"
+      affects_architecture: true
+      affects_other_services: true
+      security_implications: false
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "Critical impact requires Architect review regardless of other factors. Changes at this level could have system-wide consequences and must be validated by Architect before implementation."
+      next_action: "escalate_to_architect"
+      
+  - input:
+      deviation_reason: "Need to refactor internal function structure for better testability"
+      impact: "LOW"
+      alternatives: "Keep current structure vs refactor for testability"
+      affects_architecture: true
+      affects_other_services: false
+      security_implications: false
+    output:
+      should_escalate: true
+      result: ESCALATE
+      reasoning: "Even low impact architectural changes should be reviewed by Architect to maintain architectural consistency and ensure alignment with design principles."
+      next_action: "escalate_to_architect"
+

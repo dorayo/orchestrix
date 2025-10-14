@@ -50,6 +50,17 @@ The goal is quality delivery, not just checking boxes.]]
    - [ ] All tests pass successfully.
    - [ ] Testing follows the standards outlined in the story.
 
+3.5. **Test Design Compliance (if applicable):**
+
+   [[LLM: If QA test design exists, verify compliance with test design document]]
+
+   - [ ] QA test design document was read and understood before implementation
+   - [ ] All P0 tests from test design document are implemented
+   - [ ] Test priorities follow test design recommendations (P0 → P1 → P2)
+   - [ ] Test levels match test design specifications (Unit/Integration/E2E)
+   - [ ] Any deviations from test design are documented in Dev Log with justification
+   - [ ] Test coverage meets or exceeds test design requirements
+
 4. **Test Integrity Verification:**
 
    [[LLM: CRITICAL - Verify test integrity and prevent inappropriate test modifications]]
@@ -73,8 +84,29 @@ The goal is quality delivery, not just checking boxes.]]
    [[LLM: Documentation helps the next developer. What should they know?]]
 
    - [ ] All tasks within the story file are marked as complete.
-   - [ ] Any clarifications or decisions made during development are documented in the story file or linked appropriately.
-   - [ ] The story wrap up section has been completed with notes of changes or information relevant to the next story or overall project, the agent model that was primarily used during development, and the changelog of any changes is properly updated.
+   - [ ] Any clarifications or decisions made during development are documented in the Dev Log file
+   - [ ] The Dev Agent Record has been completed with:
+     - Agent Model Used
+     - Implementation Summary (3-5 sentences, high-level only)
+     - File List (simple list of added/modified/deleted files)
+     - Dev Log Reference (link to detailed development history)
+   - [ ] The changelog of any changes is properly updated.
+
+6.5. **Dev Log Completeness:**
+
+   [[LLM: Dev Log provides detailed development history for context recovery and knowledge transfer]]
+
+   - [ ] Dev Log file exists at docs/dev/logs/{story-id}-dev-log.md
+   - [ ] Story Context section is complete with story metadata
+   - [ ] Test Strategy Summary is recorded (if test design exists)
+   - [ ] All phases (1-4) have subtask logs with implementation details
+   - [ ] All technical decisions are documented with rationale
+   - [ ] All issues encountered are documented with resolutions
+   - [ ] Any deviations from SM design are documented with reasons and impact
+   - [ ] Each phase has a Phase Summary
+   - [ ] Resumption Guide is up-to-date (for context recovery)
+   - [ ] Final Summary is written with achievements, challenges, and technical debt
+   - [ ] Dev Agent Record in Story file includes reference to Dev Log
 
 7. **Dependencies, Build & Configuration:**
 

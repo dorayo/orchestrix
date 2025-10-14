@@ -270,6 +270,221 @@ Quality Score = 8.5×0.4 + 10×0.3 + 8.0×0.3 = 3.4 + 3.0 + 2.4 = 8.8/10
 - If Structure Validation = FAIL: Automatic **Blocked**
 - If Critical Issues > 3: Automatic **Blocked**
 
+### 9.3.5 Complexity Indicator Detection
+
+**Purpose:** Analyze Story content to detect complexity indicators that may warrant Architect review, even for high-quality Stories.
+
+**When to Execute:** After calculating Quality Score (Section 9.2) and before generating final report (Section 9.4).
+
+**Detection Process:**
+
+Before generating the final report, analyze Story content for the following 7 complexity indicators:
+
+#### Indicator 1: API Contract Changes
+
+**Detection Pattern:**
+- **Dev Notes** mention: "endpoint", "API", "REST", "GraphQL", "request", "response", "route", "controller"
+- **Tasks** include: API implementation, endpoint creation, schema definition, API documentation
+- **Acceptance Criteria** reference: API behavior, data formats, HTTP methods, status codes
+
+**Example Triggers:**
+- "Create new POST /api/users endpoint"
+- "Modify response schema for GET /api/products"
+- "Add authentication to existing API"
+- "Update API contract to include new fields"
+
+**Detection Logic:**
+```
+IF (dev_notes OR tasks OR acceptance_criteria) contains API-related keywords
+THEN indicator_1 = TRUE
+ELSE indicator_1 = FALSE
+```
+
+#### Indicator 2: Database Schema Modifications
+
+**Detection Pattern:**
+- **Dev Notes** mention: "database", "schema", "migration", "table", "column", "index", "foreign key", "relationship"
+- **Tasks** include: schema changes, migration scripts, data model updates, entity modifications
+- **Data Models** section shows: new entities, relationship changes, field additions/modifications
+
+**Example Triggers:**
+- "Add new 'orders' table"
+- "Modify 'users' table to include 'role' column"
+- "Create foreign key relationship between tables"
+- "Add index on 'email' column for performance"
+
+**Detection Logic:**
+```
+IF (dev_notes OR tasks OR data_models) contains database schema keywords
+THEN indicator_2 = TRUE
+ELSE indicator_2 = FALSE
+```
+
+#### Indicator 3: New Architectural Patterns
+
+**Detection Pattern:**
+- **Dev Notes** mention: "new pattern", "different approach", "alternative architecture", "design pattern", "architectural change"
+- **Tasks** include: implementing patterns not referenced in architecture docs, introducing new architectural concepts
+- **Technical Preferences** section notes: deviations or new approaches not in existing architecture
+
+**Example Triggers:**
+- "Implement event-driven pattern for notifications"
+- "Use CQRS pattern for order processing"
+- "Introduce microservice for payment handling"
+- "Apply repository pattern for data access"
+
+**Detection Logic:**
+```
+IF (dev_notes OR tasks) mentions new/different patterns NOT in architecture docs
+THEN indicator_3 = TRUE
+ELSE indicator_3 = FALSE
+```
+
+#### Indicator 4: Cross-Service Dependencies
+
+**Detection Pattern:**
+- **Dev Notes** mention: multiple services, service integration, inter-service communication, "service A calls service B"
+- **Tasks** include: calling external services, service orchestration, API integration with other services
+- **Integration** section shows: dependencies on other services, service-to-service communication
+
+**Example Triggers:**
+- "Integrate with payment service API"
+- "Call user service to validate permissions"
+- "Coordinate between order and inventory services"
+- "Subscribe to events from notification service"
+
+**Detection Logic:**
+```
+IF (dev_notes OR tasks OR integration_section) mentions multiple services or service dependencies
+THEN indicator_4 = TRUE
+ELSE indicator_4 = FALSE
+```
+
+#### Indicator 5: Security-Sensitive Operations
+
+**Detection Pattern:**
+- **Dev Notes** mention: "authentication", "authorization", "encryption", "security", "permissions", "PII", "access control", "JWT", "OAuth"
+- **Tasks** include: security implementation, access control, data protection, credential handling
+- **Acceptance Criteria** reference: security requirements, permission checks, data privacy
+
+**Example Triggers:**
+- "Implement JWT authentication"
+- "Add role-based access control"
+- "Encrypt sensitive user data"
+- "Validate user permissions before data access"
+
+**Detection Logic:**
+```
+IF (dev_notes OR tasks OR acceptance_criteria) contains security-related keywords
+THEN indicator_5 = TRUE
+ELSE indicator_5 = FALSE
+```
+
+#### Indicator 6: Performance-Critical Features
+
+**Detection Pattern:**
+- **Dev Notes** mention: "performance", "optimization", "caching", "high-traffic", "real-time", "scalability", "load", "throughput"
+- **Tasks** include: performance optimization, caching strategies, query optimization, load handling
+- **Non-functional Requirements** reference: performance targets, response time requirements, throughput goals
+
+**Example Triggers:**
+- "Optimize query for 10k+ records"
+- "Implement Redis caching for user sessions"
+- "Handle real-time updates via WebSocket"
+- "Support 1000 concurrent users"
+
+**Detection Logic:**
+```
+IF (dev_notes OR tasks OR nfr_section) contains performance-related keywords
+THEN indicator_6 = TRUE
+ELSE indicator_6 = FALSE
+```
+
+#### Indicator 7: Core Architecture Document Modifications
+
+**Detection Pattern:**
+- **Dev Notes** reference: modifications to core architecture docs (data-models.md, rest-api-spec.md, tech-stack.md, etc.)
+- **Tasks** include: updating architecture documentation, modifying core specifications
+- **Story** explicitly mentions: architecture changes, document updates
+
+**Example Triggers:**
+- "Update data-models.md with new entity"
+- "Modify rest-api-spec.md to add endpoints"
+- "Change tech-stack.md to include new library"
+- "Update architecture diagram with new component"
+
+**Detection Logic:**
+```
+IF (dev_notes OR tasks) mentions modifications to architecture documents
+THEN indicator_7 = TRUE
+ELSE indicator_7 = FALSE
+```
+
+---
+
+#### Complexity Scoring Logic
+
+**Calculate Total Indicators:**
+```
+total_indicators = sum([
+  indicator_1,  # API Contract Changes
+  indicator_2,  # Database Schema Modifications
+  indicator_3,  # New Architectural Patterns
+  indicator_4,  # Cross-Service Dependencies
+  indicator_5,  # Security-Sensitive Operations
+  indicator_6,  # Performance-Critical Features
+  indicator_7   # Core Architecture Document Modifications
+])
+
+Range: 0-7 indicators
+```
+
+#### Recommendation Logic
+
+**Generate Architect Review Recommendation:**
+```
+IF total_indicators >= 2:
+    recommendation = "RECOMMENDED"
+    reasoning = "Multiple complexity indicators detected suggest architectural review would be beneficial"
+
+ELIF total_indicators == 1 AND quality_score >= 8.0:
+    recommendation = "OPTIONAL"
+    reasoning = "Single complexity indicator with high quality score - review is optional but may provide value"
+
+ELIF total_indicators == 1 AND quality_score < 8.0:
+    recommendation = "RECOMMENDED"
+    reasoning = "Complexity indicator detected with medium quality score - review recommended for validation"
+
+ELSE:  # total_indicators == 0
+    recommendation = "NOT_NEEDED"
+    reasoning = "No complexity indicators detected - standard implementation, no architectural review needed"
+```
+
+#### Output Format
+
+**Complexity Analysis Result:**
+```markdown
+### Complexity Analysis
+**Detected Indicators:** {total_indicators} / 7
+
+**Indicators Checklist:**
+- [X/  ] API Contract Changes
+- [X/  ] Database Schema Modifications
+- [X/  ] New Architectural Patterns
+- [X/  ] Cross-Service Dependencies
+- [X/  ] Security-Sensitive Operations
+- [X/  ] Performance-Critical Features
+- [X/  ] Core Architecture Document Modifications
+
+**Detected Details:**
+{For each detected indicator, provide brief explanation of what was found}
+
+**Recommendation:** {RECOMMENDED / OPTIONAL / NOT_NEEDED}
+**Reasoning:** {explanation based on indicators and quality score}
+```
+
+---
+
 ### 9.4 Generate Final Report
 
 ```markdown
@@ -288,6 +503,44 @@ Quality Score = 8.5×0.4 + 10×0.3 + 8.0×0.3 = 3.4 + 3.0 + 2.4 = 8.8/10
 ### Status Decision
 - **Recommended Status:** {Approved/Draft/Blocked}
 - **Rationale:** {explanation}
+
+### Complexity Analysis
+**Detected Indicators:** {total_indicators} / 7
+
+**Indicators Checklist:**
+- [X/  ] API Contract Changes
+- [X/  ] Database Schema Modifications
+- [X/  ] New Architectural Patterns
+- [X/  ] Cross-Service Dependencies
+- [X/  ] Security-Sensitive Operations
+- [X/  ] Performance-Critical Features
+- [X/  ] Core Architecture Document Modifications
+
+**Detected Details:**
+{For each detected indicator, provide brief explanation:}
+- {Indicator name}: {What was detected and where (Dev Notes/Tasks/AC)}
+
+**Architect Review Recommendation:** {RECOMMENDED / OPTIONAL / NOT_NEEDED}
+
+**Reasoning:** {Explanation based on detected indicators and quality score}
+
+**Decision Guide:**
+- **RECOMMENDED**: 2+ indicators detected OR 1 indicator with quality score 6.0-7.9
+  - Architectural review would provide significant value
+  - Complex changes that benefit from expert validation
+  
+- **OPTIONAL**: 1 indicator detected AND quality score ≥8.0
+  - High quality implementation with single complexity factor
+  - Review may provide additional insights but not critical
+  
+- **NOT_NEEDED**: 0 indicators detected
+  - Standard implementation following existing patterns
+  - No architectural concerns identified
+
+**Next Steps for Architect Review:**
+- To trigger review: Execute task `review-story-technical-accuracy`
+- To skip review: Document decision reason in Story metadata
+- All decisions will be recorded for audit purposes
 
 ### Critical Issues (if any)
 1. {issue}

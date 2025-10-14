@@ -145,7 +145,47 @@ test_design:
   coverage_gaps: [] # List any ACs without tests
 ```
 
-### Output 3: Trace References
+### Output 3: Update Story File
+
+Update the Story file at `{devStoryLocation}/{epic}.{story}.*.md`:
+
+**QA Test Design Metadata Section:**
+```markdown
+## QA Test Design Metadata
+
+- **Test Design Level:** {Simple|Standard|Comprehensive}
+- **Test Design Status:** Complete
+- **Test Design Document:** qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+- **Risk Profile Document:** {path if risk-profile was executed}
+```
+
+**Status Field:**
+- Update Story Status to: `TestDesignComplete`
+
+**Change Log:**
+- Append entry:
+```markdown
+### {YYYY-MM-DD HH:MM} - QA Test Design Complete
+- Test design document created: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+- Test scenarios identified: {count}
+- P0 tests: {count}, P1 tests: {count}, P2 tests: {count}
+- Status updated to: TestDesignComplete
+```
+
+### Output 4: Handoff Message
+
+Print to console:
+```text
+✅ Test Design Complete for Story {epic}.{story}
+
+📋 Test Design Document: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+📊 Test Scenarios: {total} ({unit} unit, {integration} integration, {e2e} e2e)
+🎯 Priority Distribution: P0: {count}, P1: {count}, P2: {count}
+
+Next: Dev please execute command 'implement-story {epic}.{story}'
+```
+
+### Output 5: Trace References
 
 Print for use by trace-requirements task:
 

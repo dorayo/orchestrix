@@ -1,0 +1,211 @@
+template:
+  id: architect-review-gate-template-v1
+  name: Architect Review Gate
+  version: 1.0
+  output:
+    format: markdown
+    append_to: story_file
+    section: "Architect Review Results"
+    title: "Architect Review: {{review_date}}"
+
+# Core Review Information
+review_date: "{{iso_date}}"
+reviewed_by: "{{architect_agent_name}}"
+architecture_score: "{{score}}/10"  # Total score from checklist
+
+# Review Outcome
+outcome: "{{outcome}}"  # Approved | Revise | Escalate
+outcome_reasoning: "{{reasoning}}"  # 1-2 sentence summary
+
+# Review Focus Areas (5 areas, 10 points total)
+focus_areas:
+  architectural_pattern_compliance:
+    score: "{{pattern_score}}/3"
+    findings:
+      pattern_consistency: "{{pattern_consistency_finding}}"
+      pattern_appropriateness: "{{pattern_appropriateness_finding}}"
+      anti_patterns: "{{anti_patterns_finding}}"
+  
+  system_integration_analysis:
+    score: "{{integration_score}}/2"
+    findings:
+      integration_approach: "{{integration_approach_finding}}"
+      cross_service_dependencies: "{{cross_service_dependencies_finding}}"
+      integration_risks: "{{integration_risks_finding}}"
+  
+  scalability_and_performance:
+    score: "{{scalability_score}}/2"
+    findings:
+      scalability: "{{scalability_finding}}"
+      performance_implications: "{{performance_implications_finding}}"
+      resource_usage: "{{resource_usage_finding}}"
+  
+  security_architecture:
+    score: "{{security_score}}/2"
+    findings:
+      security_alignment: "{{security_alignment_finding}}"
+      risk_assessment: "{{risk_assessment_finding}}"
+      sensitive_data_handling: "{{sensitive_data_handling_finding}}"
+  
+  technical_feasibility:
+    score: "{{feasibility_score}}/1"
+    findings:
+      system_level_feasibility: "{{system_level_feasibility_finding}}"
+      architectural_blockers: "{{architectural_blockers_finding}}"
+
+# Key Architectural Concerns (if any)
+key_concerns: []  # List of main architectural concerns
+
+# Recommendations
+recommendations: []  # List of specific actionable recommendations
+
+# Examples section for reference
+examples:
+  approved_review: |
+    ### Review Date: 2025-01-12
+    
+    ### Reviewed By: Architect Agent
+    
+    ### Architecture Score: 8/10
+    
+    ### Review Focus Areas
+    
+    #### 1. Architectural Pattern Compliance: 3/3
+    - Pattern Consistency: ✓ Follows established REST API patterns
+    - Pattern Appropriateness: ✓ Appropriate use of repository pattern
+    - Anti-Patterns: ✓ No anti-patterns detected
+    
+    #### 2. System Integration Analysis: 2/2
+    - Integration Approach: ✓ Clean service-to-service communication
+    - Cross-Service Dependencies: ✓ Well-defined boundaries
+    - Integration Risks: ✓ Risks properly mitigated
+    
+    #### 3. Scalability & Performance: 1/2
+    - Scalability: ✓ Scales horizontally
+    - Performance Implications: ⚠ Consider adding caching for frequently accessed data
+    - Resource Usage: ✓ Acceptable resource footprint
+    
+    #### 4. Security Architecture: 2/2
+    - Security Alignment: ✓ Follows security best practices
+    - Risk Assessment: ✓ No critical security risks
+    - Sensitive Data Handling: ✓ Proper encryption and access control
+    
+    #### 5. Technical Feasibility: 1/1
+    - System-Level Feasibility: ✓ Technically sound approach
+    - Architectural Blockers: ✓ No blockers identified
+    
+    ### Key Architectural Concerns
+    None
+    
+    ### Recommendations
+    - Consider implementing caching layer for improved performance
+    - Document the new API endpoints in the architecture docs
+    
+    ### Outcome
+    **Decision**: Approved
+    **Reasoning**: Architecture is sound with minor optimization opportunities
+    
+    ---
+
+  revise_review: |
+    ### Review Date: 2025-01-12
+    
+    ### Reviewed By: Architect Agent
+    
+    ### Architecture Score: 5/10
+    
+    ### Review Focus Areas
+    
+    #### 1. Architectural Pattern Compliance: 1/3
+    - Pattern Consistency: ✗ Deviates from established patterns without justification
+    - Pattern Appropriateness: ⚠ Pattern choice needs reconsideration
+    - Anti-Patterns: ✗ Direct database access from controller layer
+    
+    #### 2. System Integration Analysis: 1/2
+    - Integration Approach: ⚠ Tight coupling between services
+    - Cross-Service Dependencies: ✗ Creates circular dependency
+    - Integration Risks: ✗ High risk of cascading failures
+    
+    #### 3. Scalability & Performance: 1/2
+    - Scalability: ✗ Approach doesn't scale beyond single instance
+    - Performance Implications: ⚠ N+1 query problem detected
+    - Resource Usage: ✓ Acceptable resource usage
+    
+    #### 4. Security Architecture: 1/2
+    - Security Alignment: ⚠ Missing authentication on new endpoints
+    - Risk Assessment: ✗ Exposes sensitive data without proper authorization
+    - Sensitive Data Handling: ✓ Encryption is properly implemented
+    
+    #### 5. Technical Feasibility: 1/1
+    - System-Level Feasibility: ✓ Technically feasible
+    - Architectural Blockers: ✓ No blockers
+    
+    ### Key Architectural Concerns
+    - Direct database access violates layered architecture
+    - Circular service dependency creates maintenance issues
+    - Missing authentication on new API endpoints
+    - N+1 query problem will cause performance degradation
+    
+    ### Recommendations
+    - Refactor to use repository pattern for data access
+    - Break circular dependency by introducing event-driven communication
+    - Add authentication middleware to all new endpoints
+    - Implement eager loading or caching to resolve N+1 queries
+    
+    ### Outcome
+    **Decision**: Revise
+    **Reasoning**: Multiple architectural violations that must be addressed before implementation
+    
+    ---
+
+  escalate_review: |
+    ### Review Date: 2025-01-12
+    
+    ### Reviewed By: Architect Agent
+    
+    ### Architecture Score: 4/10
+    
+    ### Review Focus Areas
+    
+    #### 1. Architectural Pattern Compliance: 0/3
+    - Pattern Consistency: ✗ Introduces entirely new pattern not documented
+    - Pattern Appropriateness: ✗ Pattern conflicts with existing architecture
+    - Anti-Patterns: ✗ Multiple anti-patterns detected
+    
+    #### 2. System Integration Analysis: 1/2
+    - Integration Approach: ✗ Requires major changes to existing services
+    - Cross-Service Dependencies: ✗ Creates complex dependency graph
+    - Integration Risks: ✗ High risk of system-wide impact
+    
+    #### 3. Scalability & Performance: 1/2
+    - Scalability: ✗ Fundamental scalability concerns
+    - Performance Implications: ✗ Significant performance degradation expected
+    - Resource Usage: ⚠ High resource consumption
+    
+    #### 4. Security Architecture: 1/2
+    - Security Alignment: ✗ Major security concerns
+    - Risk Assessment: ✗ Critical security vulnerabilities
+    - Sensitive Data Handling: ⚠ Needs security review
+    
+    #### 5. Technical Feasibility: 1/1
+    - System-Level Feasibility: ⚠ Feasible but requires significant rework
+    - Architectural Blockers: ✓ No hard blockers
+    
+    ### Key Architectural Concerns
+    - Proposed approach conflicts with fundamental architecture principles
+    - Introduces new pattern without proper evaluation and documentation
+    - Creates complex dependencies that will be difficult to maintain
+    - Security implications require expert review
+    - Performance impact needs detailed analysis
+    
+    ### Recommendations
+    - Requires human architect review for strategic decision
+    - Consider alternative approaches that align with existing architecture
+    - Conduct security assessment before proceeding
+    - Perform load testing to validate performance assumptions
+    
+    ### Outcome
+    **Decision**: Escalate
+    **Reasoning**: Fundamental architectural concerns require human architect review and strategic decision-making
+    
+    ---

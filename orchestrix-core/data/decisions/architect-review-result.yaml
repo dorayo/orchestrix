@@ -1,0 +1,267 @@
+# Architect Decision: Review Result
+# Determines the outcome of Architect technical review (Approved/RequiresRevision/Escalated)
+
+decision_type: architect-review-result
+
+description: >
+  Evaluate Architect review findings including architecture score, critical issues, 
+  and review round to determine if the Story is approved, requires revision, or 
+  needs escalation to higher authority.
+
+inputs:
+  - name: architecture_score
+    type: number
+    description: Architecture quality score from Architect review (0-10)
+    required: true
+    
+  - name: critical_issues
+    type: number
+    description: Number of critical/blocking issues found (0-N)
+    required: true
+    
+  - name: review_round
+    type: number
+    description: Current review iteration number (1 = first review, 2+ = re-review)
+    required: true
+
+rules:
+  # Rule 1: Approved - High architecture score + No critical issues
+  - condition: "architecture_score >= 8.0 AND critical_issues == 0"
+    result: Approved
+    reasoning: "Architecture review passed with high score and no critical issues. Story is technically sound and ready to proceed to test design phase."
+    next_status: Approved
+    next_action: "check_test_design_level"
+    metadata:
+      requires_sm_action: false
+      test_design_check_needed: true
+    
+  # Rule 2: Approved - Good architecture score + No critical issues (second+ review)
+  - condition: "architecture_score >= 7.0 AND critical_issues == 0 AND review_round >= 2"
+    result: Approved
+    reasoning: "Architecture review passed on re-review with good score and no critical issues. SM has addressed previous concerns adequately."
+    next_status: Approved
+    next_action: "check_test_design_level"
+    metadata:
+      requires_sm_action: false
+      test_design_check_needed: true
+      improvement_noted: true
+    
+  # Rule 3: RequiresRevision - Good score but has critical issues
+  - condition: "architecture_score >= 7.0 AND critical_issues >= 1 AND critical_issues <= 2"
+    result: RequiresRevision
+    reasoning: "Architecture approach is generally sound but has critical issues that must be addressed. SM should revise Story to resolve these specific concerns."
+    next_status: RequiresRevision
+    next_action: "handoff_to_sm_revise"
+    metadata:
+      requires_sm_action: true
+      revision_type: "targeted"
+      expected_effort: "low"
+    
+  # Rule 4: RequiresRevision - Medium score + Few critical issues
+  - condition: "architecture_score >= 6.0 AND architecture_score < 7.0 AND critical_issues <= 2"
+    result: RequiresRevision
+    reasoning: "Architecture needs improvement in multiple areas. SM should revise Story to address architectural concerns and improve technical clarity."
+    next_status: RequiresRevision
+    next_action: "handoff_to_sm_revise"
+    metadata:
+      requires_sm_action: true
+      revision_type: "moderate"
+      expected_effort: "medium"
+    
+  # Rule 5: RequiresRevision - Multiple critical issues (not too many)
+  - condition: "critical_issues >= 3 AND critical_issues <= 5 AND review_round == 1"
+    result: RequiresRevision
+    reasoning: "Multiple critical issues found that require SM attention. Story needs significant revision to address architectural concerns before re-review."
+    next_status: RequiresRevision
+    next_action: "handoff_to_sm_revise"
+    metadata:
+      requires_sm_action: true
+      revision_type: "substantial"
+      expected_effort: "high"
+      architect_consultation_recommended: true
+    
+  # Rule 6: Escalated - Low architecture score (fundamental issues)
+  - condition: "architecture_score < 6.0"
+    result: Escalated
+    reasoning: "Architecture score too low indicating fundamental design issues. This requires escalation to senior architect or technical lead for guidance on approach."
+    next_status: Escalated
+    next_action: "escalate_to_senior_architect"
+    metadata:
+      requires_sm_action: false
+      escalation_reason: "fundamental_design_issues"
+      escalation_target: "senior_architect"
+      severity: "high"
+    
+  # Rule 7: Escalated - Too many critical issues (systemic problems)
+  - condition: "critical_issues > 5"
+    result: Escalated
+    reasoning: "Excessive critical issues indicate systemic problems with Story design or requirements. Escalating to technical lead to reassess Story scope and approach."
+    next_status: Escalated
+    next_action: "escalate_to_technical_lead"
+    metadata:
+      requires_sm_action: false
+      escalation_reason: "systemic_issues"
+      escalation_target: "technical_lead"
+      severity: "high"
+      scope_reassessment_needed: true
+    
+  # Rule 8: Escalated - Persistent issues after multiple reviews
+  - condition: "review_round >= 3 AND (architecture_score < 7.5 OR critical_issues >= 2)"
+    result: Escalated
+    reasoning: "Story has gone through multiple review cycles without sufficient improvement. Escalating to technical lead to determine if Story needs to be split, rescoped, or requires additional expertise."
+    next_status: Escalated
+    next_action: "escalate_to_technical_lead"
+    metadata:
+      requires_sm_action: false
+      escalation_reason: "persistent_quality_issues"
+      escalation_target: "technical_lead"
+      severity: "medium"
+      review_cycles: 3
+      alternative_approach_needed: true
+    
+  # Rule 9: RequiresRevision - Default for borderline cases
+  - condition: "architecture_score >= 6.0 AND critical_issues <= 5"
+    result: RequiresRevision
+    reasoning: "Architecture review identified issues that need to be addressed. SM should revise Story based on Architect feedback and resubmit for review."
+    next_status: RequiresRevision
+    next_action: "handoff_to_sm_revise"
+    metadata:
+      requires_sm_action: true
+      revision_type: "standard"
+      expected_effort: "medium"
+
+output:
+  review_result:
+    type: enum
+    values: [Approved, RequiresRevision, Escalated]
+    description: Architect review decision outcome
+    
+  reasoning:
+    type: string
+    description: Explanation of why this review result was determined
+    
+  next_status:
+    type: string
+    description: Story status to set based on review result (Approved, RequiresRevision, Escalated)
+    
+  next_action:
+    type: string
+    description: Next action to take (check_test_design_level, handoff_to_sm_revise, escalate_to_senior_architect, escalate_to_technical_lead)
+    
+  metadata:
+    type: object
+    description: Additional metadata about the review result
+    properties:
+      requires_sm_action:
+        type: boolean
+        description: Whether SM needs to take action
+      revision_type:
+        type: string
+        description: Type of revision needed (targeted, moderate, substantial, standard)
+      expected_effort:
+        type: string
+        description: Expected effort level for revision (low, medium, high)
+      test_design_check_needed:
+        type: boolean
+        description: Whether test design level check should be performed next
+      escalation_reason:
+        type: string
+        description: Reason for escalation (fundamental_design_issues, systemic_issues, persistent_quality_issues)
+      escalation_target:
+        type: string
+        description: Who to escalate to (senior_architect, technical_lead)
+      severity:
+        type: string
+        description: Severity level of issues (medium, high)
+      improvement_noted:
+        type: boolean
+        description: Whether improvement from previous review was noted
+      architect_consultation_recommended:
+        type: boolean
+        description: Whether SM should consult with Architect during revision
+      scope_reassessment_needed:
+        type: boolean
+        description: Whether Story scope needs reassessment
+      review_cycles:
+        type: number
+        description: Number of review cycles completed
+      alternative_approach_needed:
+        type: boolean
+        description: Whether an alternative technical approach should be considered
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "Architect Agent"
+  related_requirements:
+    - "6.2"
+    - "6.4"
+    - "6.6"
+  usage_context: >
+    Called by Architect Agent at the end of review-story-technical-accuracy task 
+    to determine the review outcome. This decision determines whether the Story 
+    proceeds to test design phase, returns to SM for revision, or escalates to 
+    higher authority.
+    
+    COORDINATION NOTE: When result is Approved, the Architect should trigger 
+    test design level check to determine next status (AwaitingTestDesign or 
+    TestDesignComplete). The test design level should have been determined by 
+    SM during Story creation and stored in Story metadata.
+    
+    The review result influences:
+    - Story status (Approved, RequiresRevision, Escalated)
+    - Next agent in workflow (QA for test design, SM for revision, or escalation)
+    - Whether additional review cycles are needed
+    - Whether Story scope or approach needs reassessment
+
+examples:
+  - input:
+      architecture_score: 8.5
+      critical_issues: 0
+      review_round: 1
+    output:
+      review_result: Approved
+      reasoning: "Architecture review passed with high score and no critical issues. Story is technically sound and ready to proceed to test design phase."
+      next_status: Approved
+      next_action: "check_test_design_level"
+      
+  - input:
+      architecture_score: 7.5
+      critical_issues: 2
+      review_round: 1
+    output:
+      review_result: RequiresRevision
+      reasoning: "Architecture approach is generally sound but has critical issues that must be addressed. SM should revise Story to resolve these specific concerns."
+      next_status: RequiresRevision
+      next_action: "handoff_to_sm_revise"
+      
+  - input:
+      architecture_score: 5.5
+      critical_issues: 3
+      review_round: 1
+    output:
+      review_result: Escalated
+      reasoning: "Architecture score too low indicating fundamental design issues. This requires escalation to senior architect or technical lead for guidance on approach."
+      next_status: Escalated
+      next_action: "escalate_to_senior_architect"
+      
+  - input:
+      architecture_score: 7.0
+      critical_issues: 2
+      review_round: 3
+    output:
+      review_result: Escalated
+      reasoning: "Story has gone through multiple review cycles without sufficient improvement. Escalating to technical lead to determine if Story needs to be split, rescoped, or requires additional expertise."
+      next_status: Escalated
+      next_action: "escalate_to_technical_lead"
+      
+  - input:
+      architecture_score: 7.5
+      critical_issues: 0
+      review_round: 2
+    output:
+      review_result: Approved
+      reasoning: "Architecture review passed on re-review with good score and no critical issues. SM has addressed previous concerns adequately."
+      next_status: Approved
+      next_action: "check_test_design_level"
+

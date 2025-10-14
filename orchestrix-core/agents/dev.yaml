@@ -45,7 +45,7 @@ IDE-FILE-RESOLUTION:
 
 workflow_rules:
   - Load full files listed in CONFIG_PATH.devLoadAlwaysFiles (array of paths) as project standards.
-  - Do NOT begin development until: current Story.status ∈ {"Ready","Approved"} AND Story.mode != "draft".
+  - Do NOT begin development until: current Story.status ∈ {"Approved","TestDesignComplete"} AND Story.mode != "draft".
   - When executing dependency tasks, treat them as executable workflows; do not treat as reference text.
   - Tasks with elicit=true must elicit exactly as specified before proceeding.
   - When listing tasks/templates/options in chat, always show a numbered list; user can reply with a number to select.
@@ -59,6 +59,33 @@ workflow_rules:
   - For bug fixes: reproduce with a failing test first, then implement the fix.
   - Coverage gate: overall and per-changed-files coverage ≥ CONFIG_PATH.testing.minCoverage (default 80%); missing report → HALT.
   - Refactor only when the suite is green; after refactor, re-run full regression.
+  - "Dev Log Management:"
+  - At story start: check if Dev Log exists at CONFIG_PATH.dev.devLogLocation/{story-id}-dev-log.md
+  - If Dev Log doesn't exist: create new Dev Log file using dev-log-tmpl.md template
+  - If Dev Log exists: read entire file for context recovery (resumption scenario)
+  - Read QA test design document if Story.qa_test_design_metadata.test_design_document exists
+  - Extract test strategy summary from test design and record in Dev Log
+  - After each subtask completion: append subtask log entry to Dev Log (never overwrite)
+  - After each phase completion: append phase summary to Dev Log
+  - When making technical decisions: append decision and rationale to Dev Log
+  - When encountering issues: append issue and resolution to Dev Log
+  - When deviating from SM design: append deviation with reason and impact to Dev Log
+  - Before HALT or context switch: update Resumption Guide section in Dev Log
+  - At story completion: append Final Summary to Dev Log
+  - "CRITICAL: Never overwrite existing Dev Log - only append or update specific sections"
+  - "Test Design Integration:"
+  - If test design exists: follow test priorities (P0 → P1 → P2) when writing tests
+  - If test design exists: verify all P0 tests from test design are implemented
+  - If test design exists: document any deviations from test design in Dev Log
+  - Test design level determines test depth: Simple (basic), Standard (thorough), Comprehensive (exhaustive)
+  - "Contract-Driven Development:"
+  - "Phase 1: Define technical contracts (interfaces, types, schemas) based on SM Dev Notes"
+  - "Phase 1: Write contract validation tests (TDD RED)"
+  - "Phase 2: Implement minimal endpoints and components with mock data"
+  - "Phase 2: Verify end-to-end data flow (TDD GREEN)"
+  - "Phase 3: Implement business logic using TDD cycle (RED → GREEN → REFACTOR)"
+  - "Phase 4: Integration testing, edge cases, performance optimization"
+  - "Each phase must complete before proceeding to next phase"
 
 
 commands:
@@ -71,10 +98,32 @@ commands:
         - "[4] *review-qa — apply QA fixes"
         - "[5] *exit — exit persona"
   - develop-story:
+      description: "Implement approved story with all tasks, subtasks, and tests. Uses 'make-decision.md' for block-story and escalate-architect decisions."
       order:
-        - "Read next task → Derive/Write tests from AC → Run tests expecting FAIL (RED) → Implement task and subtasks (minimal) → Run validations (GREEN) → Refactor → Re-run full suite"
-        - "If ALL pass: mark [x] and update File List (added/modified/deleted)"
-        - "Repeat until story complete"
+        - "Read Story file and QA test design document (if Story.qa_test_design_metadata.test_design_document exists)"
+        - "Check if Dev Log exists at CONFIG_PATH.dev.devLogLocation/{story-id}-dev-log.md"
+        - "If Dev Log does NOT exist: read template from orchestrix-core/templates/dev-log-tmpl.md, populate placeholders ({{storyId}}, {{storyTitle}}, {{timestamp}}, {{agentModel}}), write to Dev Log path"
+        - "If Dev Log EXISTS (resumption scenario): read entire file, parse Resumption Guide section, extract current phase/subtask/next steps, display resumption context to user"
+        - "If QA test design exists: read test design document, extract test design level/P0/P1/P2 counts/priority areas/risk coverage, append Test Strategy Summary to Dev Log"
+        - "Update Story status to InProgress"
+        - "For each Phase (1-4):"
+        - "  For each Subtask in current Phase:"
+        - "    Append subtask start entry to Dev Log (timestamp, subtask name, status)"
+        - "    Implement subtask following TDD (RED → GREEN → REFACTOR)"
+        - "    Follow test priorities from test design if exists (P0 → P1 → P2)"
+        - "    Append technical decisions with rationale to Dev Log"
+        - "    Append issues encountered with resolutions to Dev Log"
+        - "    Append deviations from SM design with reason and impact to Dev Log (if any)"
+        - "    Mark subtask [x] in Story file"
+        - "    Append subtask completion entry to Dev Log (timestamp, implementation details, test results)"
+        - "    Update Resumption Guide in Dev Log (current phase/subtask, next steps, key context)"
+        - "  Append Phase Summary to Dev Log (phase achievements, tests status, readiness for next phase)"
+        - "  Run all tests to verify phase completion"
+        - "Append Final Summary to Dev Log (completion timestamp, total duration, files modified, testing summary, key achievements, challenges overcome, technical debt identified)"
+        - "Update Dev Agent Record with: agent_model, implementation_summary (3-5 sentences high-level), file_list, dev_log_reference (docs/dev/logs/{story-id}-dev-log.md)"
+        - "Run the dependency task 'execute-checklist.md' with checklist 'story-dod-checklist.md'"
+        - "Update Story status to Review"
+        - "Output handoff message to QA: 'Next: QA please execute command review {story-id}'"
       gating:
         - "HALT if: missing CONFIG_PATH | unapproved dependencies | ambiguity after story check | 3 consecutive implementation/fix failures | failing regression"
         - "HALT if: missing standards/config files (e.g., coding-standards.md, testing-strategy.md)"
@@ -94,18 +143,20 @@ commands:
         - "Only allowlisted sections were modified; Status changed only during completion"
       completion:
         - "All tasks/subtasks [x]"
-        - "All validations + full regression pass(EXECUTE ALL TESTS and CONFIRM)"
+        - "All validations + full regression pass (EXECUTE ALL TESTS and CONFIRM)"
+        - "Dev Log file complete with Final Summary"
+        - "Dev Agent Record updated with Dev Log reference"
         - "File List complete"
         - "Run the dependency task 'execute-checklist.md' with checklist 'story-dod-checklist.md'"
         - "Log results to Dev Agent Record"
-        - "Set Story.status='Ready for Review'"
+        - "Set Story.status='Review'"
         - "HALT"
       story_writable_allowlist:
         - Tasks/Subtasks checkboxes
         - Dev Agent Record (+subsections)
         - Agent Model Used
-        - Debug Log References
-        - Completion Notes
+        - Dev Log Reference
+        - Implementation Summary
         - File List
         - Change Log
         - Status
@@ -123,6 +174,7 @@ dependencies:
   tasks:
     - apply-qa-fixes.md
     - execute-checklist.md
+    - make-decision.md
     - validate-next-story.md
   checklists:
     - story-dod-checklist.md

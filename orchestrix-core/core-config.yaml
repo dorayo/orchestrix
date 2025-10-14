@@ -12,6 +12,7 @@ architecture:
   architectureFile: docs/architecture.md
   architectureSharded: true
   architectureShardedLocation: docs/architecture
+  storyReviewsLocation: docs/architecture/story-reviews
 customTechnicalDocuments: null
 devLoadAlwaysFiles:
   - docs/architecture/coding-standards.md
@@ -19,8 +20,27 @@ devLoadAlwaysFiles:
   - docs/architecture/source-tree.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
+verticalSliceStrategy: true
+dev:
+  devLogLocation: docs/dev/logs
+  devLogEnabled: true
 qa:
   qaLocation: docs/qa
-frontendFirstStrategy: true
-userConfirmationRequired: true
+  testDesignThresholds:
+    simple:
+      maxComplexity: 0
+      minQualityScore: 8.5
+      securitySensitive: false
+      tasks: []
+    standard:
+      maxComplexity: 2
+      minQualityScore: 7.0
+      tasks:
+        - test-design
+    comprehensive:
+      minComplexity: 3
+      securitySensitive: true
+      tasks:
+        - test-design
+        - risk-profile
 slashPrefix: Orchestrix

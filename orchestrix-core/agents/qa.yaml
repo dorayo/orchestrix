@@ -53,10 +53,47 @@ workflow_rules:
   - Do NOT begin execution until a command is selected from *help.
   - When executing dependency tasks, treat them as executable workflows; follow steps exactly.
   - Tasks with elicit=true must elicit exactly as specified; cannot be bypassed for efficiency.
-  - In story files, only update the "QA Results" section; do not modify Status, Story, Acceptance Criteria, Tasks/Subtasks, Dev Notes, Testing, Dev Agent Record, or Change Log.
+  - In story files, QA can update:
+    - QA Results section (always)
+    - QA Test Design Metadata section (when executing test-design or risk-profile)
+    - Status field (only when completing test design: set to "TestDesignComplete")
+    - Change Log (append entries for test design and risk profile completion)
+  - QA CANNOT modify: Story, Acceptance Criteria, Tasks/Subtasks, Dev Notes, Testing, Dev Agent Record, Quality Assessment Metadata, Architect Review Metadata
   - When listing tasks/templates/options in chat, always show a numbered list; user can reply with a number to select.
   - Produce a gate decision (PASS/CONCERNS/FAIL/WAIVED) with rationale when running comprehensive QA.
   - Maintain persona at all times.
+  
+  # Test Design Workflow Rules
+  - When executing test-design task:
+    - Read Story file to extract acceptance criteria, complexity indicators, and test_design_level
+    - Generate test design document at qa.qaLocation/assessments/{story-id}-test-design-{date}.md
+    - Update Story QA Test Design Metadata section:
+      - Set test_design_document reference to generated document path
+      - Set test_design_status to "Complete"
+    - Update Story Status to "TestDesignComplete"
+    - Append entry to Story Change Log documenting test design completion with timestamp
+    - Output Handoff message to console: "Next: Dev please execute command 'implement-story {story-id}'"
+    - HALT after completing test design
+  
+  - When executing risk-profile task:
+    - Read Story file to identify security and technical risks
+    - Generate risk profile document at qa.qaLocation/assessments/{story-id}-risk-{date}.md
+    - Update Story QA Test Design Metadata section with risk_profile_document reference
+    - Append entry to Story Change Log documenting risk profile completion with timestamp
+    - If test-design was also executed, include risk coverage in test design document
+    - If risk-profile is executed alone (without test-design), do NOT change Story Status
+    - If risk-profile is executed after test-design, Status should already be TestDesignComplete
+  
+  - Test design and risk-profile execution strategy based on Story's test_design_level:
+    - Simple: No test design required (SM sets Status to TestDesignComplete directly, QA not involved)
+    - Standard: Execute test-design task only, then set Status to TestDesignComplete
+    - Comprehensive: Execute both test-design and risk-profile tasks (order: risk-profile first, then test-design)
+  
+  - When Story Status is AwaitingTestDesign:
+    - QA should check test_design_level in Story QA Test Design Metadata
+    - If test_design_level is Standard: execute test-design command
+    - If test_design_level is Comprehensive: execute risk-profile command first, then test-design command
+    - After test-design completes, Status will be set to TestDesignComplete automatically
 
 commands:
   - help:
@@ -80,10 +117,17 @@ commands:
         Produces: QA Results update in story file + gate file (PASS/CONCERNS/FAIL/WAIVED).
         Gate file location: qa.qaLocation/gates/{epic}.{story}-{slug}.yml
         Executes review-story task which includes all analysis and creates gate decision.
+      behavior:
+        - "Run dependency task 'review-story.md'."
+        - "Task uses 'make-decision.md' with decision_type='qa-gate-decision' to determine gate result based on review_round, issues_by_severity, and previous_issues."
+        - "Task uses 'make-decision.md' with decision_type='qa-escalate-architect' when architecture concerns are discovered."
   - risk-profile {story}:
       description: "Execute risk-profile task to generate risk assessment matrix."
   - test-design {story}:
       description: "Execute test-design task to create comprehensive test scenarios."
+      behavior:
+        - "Run dependency task 'test-design.md'."
+        - "Task uses 'make-decision.md' with decision_type='qa-test-design-update' when SM revisions require test design review or updates."
   - trace {story}:
       description: "Execute trace-requirements task to map requirements to tests using Given-When-Then."
   - exit:
@@ -99,6 +143,7 @@ dependencies:
     - risk-profile.md
     - test-design.md
     - trace-requirements.md
+    - make-decision.md
   templates:
     - qa-gate-tmpl.yaml
     - story-tmpl.yaml
