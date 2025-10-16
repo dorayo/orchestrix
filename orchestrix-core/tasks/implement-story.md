@@ -1,738 +1,573 @@
 # Implement Story
 
-## 🤖 EXECUTION MODE (Command-Line & SubAgent)
+## 🤖 EXECUTION MODE
 
-**Mission**: Implement approved story with all tasks, subtasks, and tests, fully automated
+**Mission**: Implement approved story - all tasks, subtasks, tests, fully automated
 
-### Immediate Action Protocol:
-1. Load story (status: Approved)
+### Action Protocol:
+1. Load story (status: Approved/TestDesignComplete)
 2. Load standards (coding, tech stack, structure)
 3. Implement tasks sequentially
-4. Write comprehensive tests
+4. Write tests
 5. Validate (tests, linting)
 6. Update story (tasks, File List, notes)
-7. Execute DoD checklist, set status 'Ready for Review'
+7. Execute DoD checklist → status 'Ready for Review'
 
-### Non-Negotiable Requirements:
-- ✅ Only work on status: 'Approved'
-- ✅ Implement ALL tasks/subtasks in order
-- ✅ Write tests for all functionality
-- ✅ Follow coding standards and architecture
-- ✅ Never modify test requirements
-- ✅ Update only authorized story sections
-- ✅ Execute complete DoD checklist
+### Requirements:
+- ✅ Status: 'Approved'/'TestDesignComplete' only
+- ✅ ALL tasks/subtasks in order
+- ✅ Tests for all functionality
+- ✅ Follow standards/architecture
+- ✅ NEVER modify test requirements
+- ✅ Update authorized sections only
+- ✅ Complete DoD checklist
 
 ### Halt Conditions:
-- ❌ Status not 'Approved'/'TestDesignComplete' → Report, halt
-- ❌ Missing critical sections → Report, halt
-- ❌ Dependencies unavailable → Ask user approval
-- ❌ 3 consecutive failures → Escalate to user
-- ❌ Tests fail → Fix implementation, never weaken tests
+- ❌ Invalid status → Report, halt
+- ❌ Missing sections → Report, halt
+- ❌ Dependencies unavailable → Ask approval
+- ❌ 3 failures → Escalate
+- ❌ Tests fail → Fix implementation, not tests
 
 ---
 
-## 🎯 AUTOMATED IMPLEMENTATION ENGINE
+## 🎯 IMPLEMENTATION ENGINE
 
 ### Story Context Loading:
 ```yaml
-# Comprehensive story and context loading
 story_loading:
-  story_validation:
-    - Verify status: 'Approved'/'TestDesignComplete'
-    - Confirm required sections present
-    - Extract: statement, AC, tasks/subtasks
-    - Load Dev Notes
+  validation:
+    - Verify status: Approved/TestDesignComplete
+    - Confirm required sections
+    - Extract: statement, AC, tasks/subtasks, Dev Notes
     
-  standards_loading:
-    - coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md
+  standards:
+    - Load: coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md
     - Additional docs per Dev Notes
     
-  context_assembly:
-    - Tech Preferences from Dev Notes
-    - Testing Standards, integrity rules
+  context:
+    - Tech Preferences, Testing Standards
     - Previous story notes (if referenced)
     - File locations, naming conventions
     
-  qa_test_design_loading:
-    - Check Story.qa_test_design_metadata exists
+  qa_test_design:
+    - Check qa_test_design_metadata exists
     - If test_design_document exists:
-      - Read test design doc
-      - Extract: level (Simple/Standard/Comprehensive), scenarios, priorities (P0/P1/P2), levels (Unit/Integration/E2E)
-      - Record test strategy summary
-    - Else: Use standard TDD per testing-strategy.md
+      - Read doc
+      - Extract: level, scenarios, priorities (P0/P1/P2), levels (Unit/Integration/E2E)
+      - Record strategy
+    - Else: Standard TDD per testing-strategy.md
     
-  enhanced_validation:
-    - dev-database-migration.md - Handle schema changes with safety
+  validation:
+    - dev-database-migration.md for schema changes
 ```
 
-### Dev Log Initialization:
+### Dev Log Setup:
 ```yaml
-# Dev Log creation and context recovery
 dev_log_setup:
-  step_1_construct_path:
+  construct_path:
     - Read CONFIG_PATH.dev.devLogLocation from core-config.yaml
-    - Construct: {devLogLocation}/{story-id}-dev-log.md
+    - Path: {devLogLocation}/{story-id}-dev-log.md
     
-  step_2_check_existence:
-    - Check if Dev Log exists at path
+  check_existence:
+    - Check if Dev Log exists
     
-  step_3a_create_new_log:
-    condition: Dev Log not found
+  create_new:
+    condition: Not found
     actions:
-      - Read template: orchestrix-core/templates/dev-log-tmpl.md
-      - Replace placeholders: storyId, storyTitle, startTimestamp, agentModel, smDesignPath, testDesignLevel
-          {{p0Count}}: Initialize as "TBD" or 0
-          {{p1Count}}: Initialize as "TBD" or 0
-          {{p2Count}}: Initialize as "TBD" or 0
-          {{priorityAreas}}: Initialize as "To be determined from test design"
-          {{riskCoverage}}: Initialize as "To be determined from test design"
-      - Write populated template to Dev Log path
-      - Log to console: "✓ Created new Dev Log at {path}"
-      - Log to Story Change Log: "Dev Log initialized at {path}"
+      - Read template: dev-log-tmpl.md
+      - Replace: storyId, storyTitle, startTimestamp, agentModel, smDesignPath, testDesignLevel
+      - Initialize: p0Count, p1Count, p2Count as "TBD" or 0
+      - Initialize: priorityAreas, riskCoverage as "TBD"
+      - Write to path
+      - Log: "✓ Created Dev Log at {path}"
+      - Update Story Change Log
     
-  step_3b_resume_from_existing:
-    condition: Dev Log found
+  resume_existing:
+    condition: Found
     actions:
       - Read Dev Log, parse Resumption Guide
       - Extract: current_phase, current_subtask, next_steps, key_context, recent_decisions, open_issues
-      - Display resumption summary to user
-      - Continue from current subtask (don't restart)
+      - Display summary
+      - Continue from current subtask
     
-  step_4_check_test_design:
-    - Check if Story.qa_test_design_metadata section exists
-    - If exists, check if test_design_document field has a value
-    - Extract test design document path
-    - Example: qa/assessments/EPIC-001.STORY-003-test-design-2024-01-15.md
-    
-  step_5_load_test_strategy:
+  load_test_strategy:
     if_test_design_exists:
       - Read test design doc
       - Extract: level, P0/P1/P2 counts, priority areas, risk coverage, scenarios
-      - Update Dev Log Test Strategy Summary
+      - Update Dev Log Test Strategy
     else:
       - Use standard TDD per testing-strategy.md
 ```
 
-### Context Recovery (Resumption Scenario):
+### Context Recovery:
 ```yaml
-# Resume work after interruption
 context_recovery:
-  trigger: Dev Log exists (step 3b)
+  trigger: Dev Log exists
   
   process:
-    step_1_read_dev_log:
-      - Read Dev Log: {devLogLocation}/{story-id}-dev-log.md
-    
-    step_2_parse_resumption_guide:
-      - Parse "## Resumption Guide" section
-      - Extract: current_phase, current_subtask, next_steps, key_context, recent_decisions, open_issues
-    
-    step_3_extract_current_state:
-      - Extract: current_phase (1-4), current_subtask, progress_percentage
-      - Extract: next_steps, key_context, recent_decisions, open_issues
-    
-    step_5_continue_implementation:
-      - Continue from current subtask (don't restart)
-      - Use key_context, follow next_steps, address open_issues
-      - Validate: current_subtask exists, previous subtasks marked [x], files/tests exist
-  
-  notes: Dev Log preserves all work, enables seamless resumption
+    - Read Dev Log: {devLogLocation}/{story-id}-dev-log.md
+    - Parse Resumption Guide section
+    - Extract: current_phase, current_subtask, next_steps, key_context, recent_decisions, open_issues
+    - Continue from current subtask (don't restart)
+    - Use key_context, follow next_steps, address open_issues
+    - Validate: subtask exists, previous marked [x], files/tests exist
 ```
 
 ### Implementation Sequence:
 ```yaml
-# Systematic task execution with quality gates
 implementation_sequence:
   task_processing:
-    1. Read next uncompleted task from Tasks/Subtasks list
-    2. Identify which Phase (1-4) the task belongs to
-    3. Apply phase-specific implementation guidance (see below)
-    4. Identify acceptance criteria references (AC: numbers)
-    5. Plan implementation approach based on Dev Notes guidance
-    6. Implement functionality following coding standards and phase guidance
-    7. Write comprehensive tests (unit, integration as specified)
-    8. Append subtask log entry to Dev Log with:
-       - Current timestamp (ISO 8601 format)
-       - Subtask name and description
-       - Implementation details (what was built, how it works)
-       - Technical decisions made with rationale
-       - Issues encountered with resolutions
-       - Test results (tests written, pass/fail status)
-    9. Execute tests and validation checks
-    10. Only if ALL pass → mark task as [x] completed
-    11. Update Resumption Guide in Dev Log with:
-        - Current phase and subtask number
-        - Next steps (what subtask comes next)
-        - Key context for resumption (critical state information)
-    12. Update File List with new/modified/deleted files
-    13. Check if all tasks in current phase are complete:
-        - If phase complete → Append Phase Summary to Dev Log with:
-          - Phase achievements (what was accomplished)
-          - Tests status (count of tests, all passing)
-          - Readiness for next phase (confirmation phase objectives met)
-    14. Repeat for all tasks and subtasks
+    1. Read next uncompleted task
+    2. Identify Phase (1-4)
+    3. Apply phase guidance
+    4. Identify AC references
+    5. Plan approach per Dev Notes
+    6. Implement per standards
+    7. Write tests (unit, integration)
+    8. Append to Dev Log: timestamp, subtask, details, decisions, issues, test results
+    9. Execute tests/validation
+    10. If pass → mark [x]
+    11. Update Resumption Guide: phase, subtask, next steps, context
+    12. Update File List
+    13. If phase complete → Append Phase Summary: achievements, tests, readiness
+    14. Repeat
     
-  phase_specific_guidance:
+  phase_guidance:
     phase_1_contract_definition:
-      name: "Phase 1: Contract Definition & Test Setup"
-      objectives:
-        - Read SM Dev Notes business contracts
-        - Create technical contracts (TypeScript interfaces, Zod schemas, API types)
-        - Write contract validation tests (TDD RED phase)
-        - Follow QA test design priorities (P0 → P1 → P2) if test design exists
-        - Record contract definitions and design decisions in Dev Log
-      implementation_steps:
-        - Extract business contracts from SM Dev Notes
-        - Define TypeScript interfaces for all data models
-        - Create Zod schemas for runtime validation
-        - Define API request/response types
-        - Write contract validation tests (expect failures initially)
-        - If test design exists, prioritize P0 tests first
-        - Append contract definitions to Dev Log with rationale
-        - Record any design decisions in Dev Log
-      success_criteria:
-        - All technical contracts defined
-        - Contract tests written (RED phase - failing is expected)
-        - Dev Log updated with contract definitions
+      objectives: Read SM contracts, create technical contracts (TS interfaces, Zod schemas, API types), write tests (TDD RED), follow P0→P1→P2
+      steps: Extract contracts, define interfaces/schemas/types, write tests, prioritize P0, log decisions
+      success: Contracts defined, tests written (RED), Dev Log updated
     
     phase_2_walking_skeleton:
-      objectives: Minimal API/UI with mock data, wire end-to-end, contract tests pass (GREEN)
-      steps: Create minimal handlers, mock responses, basic UI, wire components, verify flow
-      success: Endpoints + UI wired, contract tests pass, Dev Log updated
+      objectives: Minimal API/UI, mock data, wire end-to-end, tests pass (GREEN)
+      steps: Create handlers, mock responses, basic UI, wire, verify
+      success: Wired, tests pass, logged
     
     phase_3_business_logic:
-      objectives: TDD cycle (RED→GREEN→REFACTOR), P0→P1→P2 priority
-      steps: Write test (RED), implement (GREEN), refactor. Replace mocks, add state/validation
-      success: All P0/P1 tests pass, P2 as time permits, business logic complete
+      objectives: TDD (RED→GREEN→REFACTOR), P0→P1→P2
+      steps: Write test, implement, refactor, replace mocks, add state/validation
+      success: P0/P1 pass, P2 as time permits, logic complete
     
     phase_4_integration_qa:
-      objectives: Integration tests, edge cases, performance, validate all AC
+      objectives: Integration tests, edge cases, performance, validate AC
       steps: Write/run integration tests, test interactions/errors/boundaries, optimize, regression
-      success: All tests pass, edge cases handled, performance optimized, AC verified
+      success: All pass, edges handled, optimized, AC verified
   
-  quality_validation:
-    - Code follows coding-standards.md patterns
-    - File locations match source-tree.md
-    - Testing follows testing-strategy.md requirements
-    - All functionality meets acceptance criteria
-    - No test requirements modified inappropriately
-    - Phase-specific objectives achieved
+  validation:
+    - Follow coding-standards.md
+    - Match source-tree.md
+    - Follow testing-strategy.md
+    - Meet AC
+    - No test modifications
+    - Phase objectives met
 ```
 
-### Test Integrity Protection System:
+### Test Integrity:
 ```yaml
-# Absolute protection of test requirements
 test_integrity:
-  core_principles:
+  principles:
     - Tests = requirements (AUTHORITATIVE)
-    - NEVER modify test expectations/assertions/AC
-    - Tests fail → fix IMPLEMENTATION, never weaken tests
-    - Follow QA test design priorities/levels if exists
-    - P0 tests MANDATORY, deviations documented
+    - NEVER modify expectations/assertions/AC
+    - Tests fail → fix implementation, not tests
+    - Follow QA priorities/levels if exists
+    - P0 MANDATORY, document deviations
     
-  test_types:
-    requirement_tests: IMMUTABLE (business logic, AC, contracts, data integrity)
+  types:
+    requirement_tests: IMMUTABLE (logic, AC, contracts, integrity)
     implementation_tests: ADJUSTABLE with justification (performance, structure, mocks)
   
-  test_design_compliance:
+  compliance:
     if_test_design_exists:
-      1. Load test design, extract scenarios/priorities/levels
+      1. Load design, extract scenarios/priorities/levels
       2. Phase 1: Write P0 contract tests
-      3. Phase 3: Follow P0→P1→P2 order
-      4. Match specified test levels (Unit/Integration/E2E)
-      5. Document deviations in Dev Log
-      6. Verify all P0 tests implemented before completion
+      3. Phase 3: P0→P1→P2 order
+      4. Match levels (Unit/Integration/E2E)
+      5. Document deviations
+      6. Verify P0 complete
 ```
 
 ---
 
 ## 🔧 EXECUTION LOGIC
 
-### Task Implementation Process:
+### Task Implementation:
 ```yaml
-# Detailed implementation methodology
 task_execution:
-  planning_phase:
-    - Parse task description and subtasks
-    - Identify linked acceptance criteria
-    - Review Dev Notes for specific guidance
-    - Plan file structure and component approach
+  planning:
+    - Parse task/subtasks
+    - Identify AC
+    - Review Dev Notes
+    - Plan structure
     
-  implementation_phase:
+  implementation:
     - Create/modify files per source-tree.md
-    - Follow naming conventions from coding-standards.md
-    - Implement functionality per Technical Preferences Summary
-    - Apply patterns specified in architecture documents
+    - Follow naming per coding-standards.md
+    - Implement per Technical Preferences
+    - Apply architecture patterns
     
-  testing_phase:
+  testing:
     - Write unit tests per testing-strategy.md
     - Create integration tests if specified
-    - Follow test file naming and location conventions
-    - Ensure test coverage for all acceptance criteria
+    - Follow test naming/location
+    - Ensure AC coverage
     
-  validation_phase:
-    - Execute all tests (unit, integration, regression)
-    - Run linting and code quality checks
-    - Detect and execute database migrations (dev-database-migration.md)
-    - Verify acceptance criteria fulfillment
-    - Confirm no test requirements were weakened
+  validation:
+    - Execute tests (unit, integration, regression)
+    - Run linting/quality checks
+    - Execute DB migrations (dev-database-migration.md)
+    - Verify AC fulfillment
+    - Confirm no test weakening
 ```
 
-### Story File Update Management:
+### Story Updates:
 ```yaml
-# Precise story file section updates
 authorized_updates:
   tasks_subtasks:
-    - Mark completed tasks with [x]
-    - Never modify task descriptions or requirements
-    - Update only checkbox status
+    - Mark [x] completed
+    - Never modify descriptions/requirements
     
   dev_agent_record:
-    agent_model: Record AI model and version used
-    implementation_summary: High-level summary (3-5 sentences, high-level only)
-    file_list: Complete list of created/modified/deleted files
-    dev_log_reference: Link to Dev Log file (docs/dev/logs/{story-id}-dev-log.md)
-    open_issues: |
-      Record any unresolved feedback or issues (if applicable):
-      - QA test design feedback (if dev_feedback was added)
-      - Technical debt identified
-      - Performance concerns
-      - Areas needing future improvement
+    agent_model: AI model/version
+    implementation_summary: 3-5 sentences, high-level
+    file_list: Created/modified/deleted files
+    dev_log_reference: docs/dev/logs/{story-id}-dev-log.md
+    open_issues: QA feedback, tech debt, performance concerns, improvements
     
   change_log:
-    - Add entry for story completion
-    - Include date, version, description, author
+    - Add completion entry: date, version, description, author
     
   status:  
-    - Update from 'Approved' to 'Ready for Review' when complete
+    - Update: Approved → Ready for Review
     
-forbidden_modifications:
-  - Status (except completion update to 'Review')
+forbidden:
+  - Status (except completion)
   - Story statement  
-  - Acceptance Criteria
+  - AC
   - Dev Notes
   - Testing sections
-  - QA Test Design Metadata
-  - Quality Assessment Metadata
-  - Architect Review Metadata
-  - Any other sections not explicitly authorized
+  - QA/Quality/Architect metadata
+  - Other sections
 ```
 
-### Quality Gates Execution:
+### Quality Gates:
 ```yaml
-# Comprehensive quality validation
 quality_gates:
-  code_quality:
-    - Linting passes without errors
-    - Coding standards compliance verified
-    - File structure follows project conventions
-    - No hardcoded secrets or sensitive data
+  code:
+    - Linting passes
+    - Standards compliance
+    - Structure follows conventions
+    - No secrets/sensitive data
     
-  functional_quality:
-    - All tasks marked as completed
-    - All acceptance criteria satisfied
-    - Comprehensive test coverage
-    - All tests pass (unit, integration, regression)
+  functional:
+    - All tasks completed
+    - All AC satisfied
+    - Test coverage
+    - All tests pass
     
-  documentation_quality:
-    - File List complete and accurate
-    - Completion Notes document key decisions
-    - Debug references provided if applicable
-    - Change Log updated appropriately
+  documentation:
+    - File List complete
+    - Completion Notes document decisions
+    - Debug references if applicable
+    - Change Log updated
     
-  story_dod_checklist:
+  dod_checklist:
     - Execute story-dod-checklist.md
-    - Verify 100% completion rate
-    - Document any exceptions or issues
-    - Only mark story complete if checklist passes
+    - Verify 100% completion
+    - Document exceptions
+    - Mark complete only if passes
 ```
 
 ---
 
-## ⚡ VALIDATION CHECKPOINTS
+## ⚡ VALIDATION
 
-### Pre-Implementation Validation:
+### Pre-Implementation:
 ```bash
-✓ Story status is 'Approved' or 'TestDesignComplete'
-✓ All required story sections present
-✓ Acceptance Criteria are clear and unambiguous
-✓ Dev Notes contain sufficient implementation guidance  
-✓ Technical standards documents accessible
-✓ Development environment ready
+✓ Status: Approved/TestDesignComplete
+✓ Required sections present
+✓ AC clear/unambiguous
+✓ Dev Notes sufficient
+✓ Standards accessible
+✓ Environment ready
 ```
 
 ### AC Clarity Check:
 ```yaml
-# Check Acceptance Criteria clarity before starting implementation
 ac_clarity_check:
-  when: Before starting any implementation work
+  when: Before implementation
   
   process:
-    1. Review all Acceptance Criteria for clarity
-    2. Assess AC clarity score (0-10 scale)
-    3. If concerns identified, call make-decision task:
+    1. Review AC clarity
+    2. Assess score (0-10)
+    3. If concerns, call make-decision:
        - decision_type: "dev-block-story"
-       - context:
-           issue_description: "{description of clarity issues}"
-           severity: "{LOW|MEDIUM|HIGH|CRITICAL}"
-           ac_clarity: {0-10 score}
-    4. Apply decision result:
-       - If BLOCK: Set Status=Blocked, handoff to SM
-       - If ESCALATE: Escalate to Architect
-       - If FEEDBACK: Log feedback, continue
-       - If CONTINUE: Proceed with implementation
+       - context: {issue_description, severity, ac_clarity}
+    4. Apply result:
+       - BLOCK: Status=Blocked, handoff SM
+       - ESCALATE: Escalate Architect
+       - FEEDBACK: Log, continue
+       - CONTINUE: Proceed
 ```
 
-### During Implementation Validation:
+### During Implementation:
 ```bash
-✓ Each task implemented per Dev Notes guidance
-✓ Code follows coding standards and architecture patterns
-✓ Files created in correct locations per project structure
-✓ Tests written and passing for implemented functionality
-✓ No test requirements modified inappropriately
+✓ Tasks per Dev Notes
+✓ Follow standards/patterns
+✓ Files in correct locations
+✓ Tests written/passing
+✓ No test modifications
 ```
 
-### Post-Implementation Validation:
+### Post-Implementation:
 ```bash
-✓ All tasks and subtasks marked as completed [x]
-✓ Comprehensive tests written and passing
-✓ Linting and code quality checks pass
-✓ File List updated with all changes
-✓ Completion Notes document key decisions
-✓ Story DoD checklist executed and passed
-✓ Story status updated to 'Ready for Review'
+✓ All tasks [x]
+✓ Tests written/passing
+✓ Linting/quality pass
+✓ File List updated
+✓ Completion Notes complete
+✓ DoD checklist passed
+✓ Status: Ready for Review
 ```
 
 ---
 
-## 🛠️ ERROR HANDLING & RECOVERY
+## 🛠️ ERROR HANDLING
 
-### Implementation Failure Management:
+### Failure Management:
 ```yaml
 error_handling:
   dependency_issues:
-    detection: Required library/service unavailable
-    action: Document in Dev Log, ask user approval, update Resumption Guide
-    blocking: HALT until user provides guidance
+    detection: Library/service unavailable
+    action: Document, ask approval, update Resumption Guide
+    blocking: HALT until guidance
     
   test_failures:
-    detection: Tests fail after implementation
-    action: Fix IMPLEMENTATION, never modify test requirements
-    dev_log_action: Log failure details and resolution attempts
-    escalation: After 3 attempts, escalate to user
+    detection: Tests fail
+    action: Fix implementation, never modify tests
+    dev_log: Log failures/resolutions
+    escalation: After 3 attempts, escalate
     
   ac_clarity_issues:
-    detection: Acceptance Criteria unclear, ambiguous, or contradictory
-    action: Use decision system to determine response
-    process: |
-      1. Call make-decision task:
-         - decision_type: "dev-block-story"
-         - context:
-             issue_description: "{AC clarity issue description}"
-             severity: "{assess severity: LOW|MEDIUM|HIGH|CRITICAL}"
-             ac_clarity: {assess clarity score 0-10}
-      2. Apply decision result per decision metadata
-      3. If BLOCK result:
-         - Append issue to Dev Log with AC details
-         - Update Resumption Guide with blocking issue
-         - Set Story Status = Blocked
-         - Add Change Log entry
-         - Output handoff message to SM
-         - HALT until SM clarifies
-      4. If other result: Follow decision guidance
+    detection: AC unclear/ambiguous/contradictory
+    process:
+      1. Call make-decision: dev-block-story
+         context: {issue_description, severity, ac_clarity}
+      2. Apply result
+      3. If BLOCK:
+         - Log issue
+         - Update Resumption Guide
+         - Status=Blocked
+         - Change Log entry
+         - Handoff SM
+         - HALT
+      4. Else: Follow guidance
     
   ambiguous_requirements:
-    detection: Task description unclear (AC is clear)
-    action: Use dev-block-story decision with lower severity
-    process: Document in Dev Log, use best judgment per Dev Notes
+    detection: Task unclear (AC clear)
+    action: Use dev-block-story, lower severity
+    process: Document, use judgment per Dev Notes
     
   architecture_conflicts:
-    detection: Implementation conflicts with architecture standards
-    action: Use decision system to determine escalation need
-    process: |
-      1. Call make-decision task:
-         - decision_type: "dev-escalate-architect"
-         - context:
-             deviation_reason: "{conflict description}"
-             impact: "{LOW|MEDIUM|HIGH|CRITICAL}"
-             alternatives: "{alternatives considered}"
-             affects_architecture: true
-             affects_other_services: {true|false}
-             security_implications: {true|false}
-      2. Apply decision result:
-         - If ESCALATE: Add Dev Escalation to Architect Review Metadata, handoff to Architect
-         - If DOCUMENT: Record in Dev Log, proceed with documented approach
+    detection: Conflicts with standards
+    process:
+      1. Call make-decision: dev-escalate-architect
+         context: {deviation_reason, impact, alternatives, affects_architecture, affects_other_services, security_implications}
+      2. Apply result:
+         - ESCALATE: Add escalation, handoff Architect
+         - DOCUMENT: Record, proceed
   
   technical_decisions:
-    detection: Need to deviate from SM's planned approach
-    action: Use decision system to determine if escalation needed
-    process: |
-      1. Call make-decision task:
-         - decision_type: "dev-escalate-architect"
-         - context:
-             deviation_reason: "{reason for deviation}"
-             impact: "{assess impact: LOW|MEDIUM|HIGH|CRITICAL}"
-             alternatives: "{alternatives considered}"
-             affects_architecture: {assess if architectural change}
-             affects_other_services: {assess cross-service impact}
-             security_implications: {assess security impact}
-      2. Apply decision result:
-         - If ESCALATE: Add Dev Escalation marker, handoff to Architect, wait for guidance
-         - If DOCUMENT: Record decision in Dev Log with full rationale, proceed
-      3. Document in Dev Log:
-         - Decision made
-         - Rationale
-         - Alternatives considered
-         - Expected impact
+    detection: Deviate from SM approach
+    process:
+      1. Call make-decision: dev-escalate-architect
+         context: {deviation_reason, impact, alternatives, affects_architecture, affects_other_services, security_implications}
+      2. Apply result:
+         - ESCALATE: Add marker, handoff, wait
+         - DOCUMENT: Record rationale, proceed
+      3. Log: decision, rationale, alternatives, impact
     
   deviations_from_sm_design:
-    detection: Implementation requires deviation from SM Dev Notes design
-    action: Evaluate necessity and impact of deviation
-    dev_log_action: Append deviation entry to Dev Log with:
-      - Description of deviation
-      - Reason for deviation (why necessary)
-      - Impact assessment (what changes, what risks)
-      - Architect review flag (if deviation is significant)
-    escalation: Flag for architect review if deviation affects architecture
+    detection: Deviation from Dev Notes
+    action: Evaluate necessity/impact
+    dev_log: Description, reason, impact, architect flag
+    escalation: Flag if affects architecture
   
   qa_test_design_issues:
-    detection: QA test design unreasonable or missing important scenarios
-    action: Record feedback for QA review
-    dev_log_action: |
-      1. Append feedback entry to Dev Log with:
-         - Test design issue description
-         - Missing or unreasonable scenarios
-         - Suggested improvements
-         - Impact on implementation
-    story_action: |
-      1. Add or update Story.qa_test_design_metadata.dev_feedback field:
-         ```yaml
-         dev_feedback:
-           - issue: "{description of test design issue}"
-             missing_scenarios: "{list of missing test scenarios}"
-             suggestions: "{suggested improvements}"
-             impact: "{impact on implementation}"
-             timestamp: "{current timestamp}"
-         ```
-      2. Add entry to Story Change Log:
-         - Date: Current timestamp
-         - Description: "Dev feedback on test design: {brief description}"
-         - Author: Dev Agent
-    handoff_note: |
-      Include in completion handoff to QA:
-      "⚠️ Dev Feedback on Test Design
-      
-      The Dev Agent has provided feedback on the test design.
-      Please review Story.qa_test_design_metadata.dev_feedback before QA review."
-    blocking: NO - Continue implementation, QA will review feedback
+    detection: Test design unreasonable/missing scenarios
+    action: Record feedback
+    dev_log: Issue, missing scenarios, suggestions, impact
+    story_action:
+      1. Update qa_test_design_metadata.dev_feedback:
+         {issue, missing_scenarios, suggestions, impact, timestamp}
+      2. Change Log entry
+    handoff: "⚠️ Dev Feedback on Test Design - Review qa_test_design_metadata.dev_feedback"
+    blocking: NO - Continue, QA reviews
   
   before_halt:
-    detection: Any condition requiring HALT (dependency, escalation, blocking issue)
-    action: Update Resumption Guide before halting
-    dev_log_action: Update Resumption Guide in Dev Log with:
-      - Current state (phase, subtask, progress)
-      - Blocking issue description
-      - Context needed for resumption
-      - Recommended next steps
+    detection: HALT condition
+    action: Update Resumption Guide
+    dev_log: State, blocking issue, context, next steps
 ```
 
-### Recovery Procedures:
+### Recovery:
 ```yaml
-recovery_strategies:
+recovery:
   partial_completion:
-    - Save progress on completed tasks
-    - Document blocking issue in Completion Notes
-    - Leave story status as 'Approved' for continuation
-    - Provide clear next steps for resolution
+    - Save progress
+    - Document blocking issue
+    - Status: Approved (for continuation)
+    - Provide next steps
     
-  rollback_scenarios:
-    - Revert implementation if tests fail repeatedly
-    - Restore previous working state
-    - Document rollback reason in Completion Notes
-    - Request user guidance for alternative approach
+  rollback:
+    - Revert if tests fail repeatedly
+    - Restore working state
+    - Document reason
+    - Request guidance
     
   escalation_triggers:
-    - 3 consecutive implementation failures
-    - Unresolvable architecture conflicts
-    - Required dependencies unavailable
-    - Test requirements appear incorrect (never modify without approval)
+    - 3 failures
+    - Unresolvable conflicts
+    - Dependencies unavailable
+    - Test requirements incorrect (never modify without approval)
 ```
 
 ---
 
-## 📊 COMPLETION REPORT GENERATION
+## 📊 COMPLETION REPORT
 
 ### Dev Log Final Summary:
 ```yaml
-# Before generating Story Implementation Summary, append Final Summary to Dev Log
 dev_log_final_summary:
   append_to_dev_log:
     section: "## Final Summary"
     content:
-      completion_timestamp: Current timestamp (ISO 8601 format)
-      total_duration: Calculate from Dev Log start timestamp to completion
+      completion_timestamp: ISO 8601
+      total_duration: Start to completion
       
-      implementation_overview:
-        - Write 3-5 sentences high-level summary
-        - What was accomplished
-        - How it aligns with story objectives
-        - Overall approach taken
+      implementation_overview: 3-5 sentences - accomplished, alignment, approach
       
-      phases_completed:
-        - Total phases completed (1-4)
-        - Total subtasks completed across all phases
-        - Phase-by-phase completion summary
+      phases_completed: Total (1-4), subtasks, phase summaries
       
-      files_modified:
-        - Count of files added
-        - Count of files modified
-        - Count of files deleted
-        - List of key files changed
+      files_modified: Added, modified, deleted counts, key files
       
-      testing_summary:
-        - Total tests written (unit, integration, e2e)
-        - Test coverage percentage (if available)
-        - All tests passing confirmation
-        - Test execution results
+      testing_summary: Tests written (unit/integration/e2e), coverage %, passing, results
       
-      key_achievements:
-        - Major features implemented
-        - Technical challenges solved
-        - Quality improvements made
-        - Performance optimizations achieved
+      key_achievements: Features, challenges solved, quality improvements, optimizations
       
-      challenges_overcome:
-        - Technical obstacles encountered
-        - How they were resolved
-        - Lessons learned
+      challenges_overcome: Obstacles, resolutions, lessons
       
-      technical_debt_identified:
-        - Known limitations or shortcuts
-        - Areas needing future improvement
-        - Refactoring opportunities
-        - Performance bottlenecks to address
+      technical_debt: Limitations, improvements needed, refactoring, bottlenecks
       
-      recommendations_for_future:
-        - Suggestions for related features
-        - Architecture improvements
-        - Testing enhancements
-        - Documentation needs
+      recommendations: Related features, architecture, testing, documentation
   
   log_action:
-    - Log to console: "✓ Dev Log Final Summary written"
-    - Log to Story Change Log: "Dev Log completed with Final Summary"
+    - Console: "✓ Dev Log Final Summary written"
+    - Story Change Log: "Dev Log completed with Final Summary"
 ```
 
 ### Story Implementation Summary:
 ```markdown
-## Implementation Completion Report
+## Implementation Report
 
-**Story ID**: {{story_id}}
-**Implementation Date**: {{completion_date}}
+**Story**: {{story_id}}
+**Date**: {{completion_date}}
 **Developer**: Dev Agent
-**Agent Model**: {{ai_model_version}}
+**Model**: {{ai_model_version}}
 
-### Implementation Summary
-- **Total Tasks**: {{total_tasks}}
-- **Completed Tasks**: {{completed_tasks}}
-- **Tests Written**: {{test_count}}
-- **Files Modified**: {{file_count}}
-- **Implementation Status**: {{COMPLETE/PARTIAL/BLOCKED}}
+### Summary
+- Tasks: {{completed_tasks}}/{{total_tasks}}
+- Tests: {{test_count}}
+- Files: {{file_count}}
+- Status: {{COMPLETE/PARTIAL/BLOCKED}}
 
-### Technical Implementation Details
-- **Architecture Compliance**: ✅/❌ {{details}}
-- **Coding Standards**: ✅/❌ {{details}}  
-- **Test Coverage**: ✅/❌ {{details}}
-- **Performance Considerations**: {{notes}}
+### Technical
+- Architecture: ✅/❌ {{details}}
+- Standards: ✅/❌ {{details}}  
+- Coverage: ✅/❌ {{details}}
+- Performance: {{notes}}
 
-### Files Changed
+### Files
 {{generated_file_list}}
 
-### Key Implementation Decisions
+### Decisions
 {{generated_completion_notes}}
 
-### Quality Validation Results
-- **Unit Tests**: {{pass_count}}/{{total_tests}} passed
-- **Linting**: {{✅/❌}} {{details}}
-- **DoD Checklist**: {{completion_percentage}}% complete
-- **Overall Quality**: {{READY_FOR_REVIEW/NEEDS_WORK/BLOCKED}}
+### Quality
+- Unit Tests: {{pass_count}}/{{total_tests}}
+- Linting: {{✅/❌}} {{details}}
+- DoD: {{completion_percentage}}%
+- Overall: {{READY_FOR_REVIEW/NEEDS_WORK/BLOCKED}}
 
-### Next Steps
+### Next
 {{generated_next_steps}}
 ```
 
-### Handoff Message Generation:
+### Handoff Message:
 ```yaml
-# Generate handoff message for QA review
 handoff_message:
-  condition: Story status updated to 'Ready for Review'
+  condition: Status → Ready for Review
   
-  base_message: |
-    "✅ STORY IMPLEMENTATION COMPLETE
+  base: |
+    "✅ IMPLEMENTATION COMPLETE
     
     Story: {story-id}
     Status: Ready for Review
     
-    Implementation Summary:
-    - Total Tasks: {completed_tasks}/{total_tasks}
-    - Tests Written: {test_count}
-    - Files Modified: {file_count}
-    - All Tests: PASSING
+    Summary:
+    - Tasks: {completed_tasks}/{total_tasks}
+    - Tests: {test_count}
+    - Files: {file_count}
+    - Tests: PASSING
     
     Dev Log: {dev-log-path}
     
-    Next: QA please execute command 'review-story {story-id}'"
+    Next: QA execute 'review-story {story-id}'"
   
-  with_open_issues: |
-    # If Dev Agent Record contains open_issues
-    condition: Story.dev_agent_record.open_issues is not empty
-    append_to_message: |
-      "
-      ⚠️ OPEN ISSUES FOR QA ATTENTION:
-      {list open issues from Dev Agent Record}
-      
-      Please review these items during QA review."
+  with_open_issues:
+    condition: open_issues not empty
+    append: |
+      "⚠️ OPEN ISSUES:
+      {list issues}
+      Review during QA."
   
-  with_qa_feedback: |
-    # If dev_feedback was added to qa_test_design_metadata
-    condition: Story.qa_test_design_metadata.dev_feedback exists
-    append_to_message: |
-      "
-      ⚠️ DEV FEEDBACK ON TEST DESIGN:
-      The Dev Agent has provided feedback on the test design.
-      Please review Story.qa_test_design_metadata.dev_feedback section."
+  with_qa_feedback:
+    condition: dev_feedback exists
+    append: |
+      "⚠️ DEV FEEDBACK ON TEST DESIGN:
+      Review qa_test_design_metadata.dev_feedback."
   
-  output_location:
-    - Console log
-    - Story Change Log (as final entry)
+  output:
+    - Console
+    - Story Change Log
 ```
 
 ---
 
 ## 🎯 SUCCESS CRITERIA
 
-### Implementation Success Indicators:
-- ✅ All tasks and subtasks completed and marked [x]
-- ✅ Comprehensive tests written and passing
-- ✅ Code quality standards met (linting, architecture compliance)
-- ✅ File List accurately reflects all changes
-- ✅ Story DoD checklist 100% complete
-- ✅ Story status updated to 'Ready for Review'
-- ✅ No test requirements inappropriately modified
+### Success Indicators:
+- ✅ All tasks [x]
+- ✅ Tests written/passing
+- ✅ Quality standards met
+- ✅ File List accurate
+- ✅ DoD 100%
+- ✅ Status: Ready for Review
+- ✅ No test modifications
 
-### Quality Assurance Gates:
-- **Functional Completeness**: All acceptance criteria satisfied
-- **Code Quality**: Follows all coding standards and architecture patterns
-- **Context Validation**: No hallucinations, all references validated
-- **Database Migration**: Schema changes handled with safety and rollback
-- **Test Integrity**: Tests preserved and enhanced, never weakened
-- **Documentation**: File List complete, Completion Notes comprehensive
-- **Standards Compliance**: Adheres to all technical preferences and constraints
+### QA Gates:
+- **Functional**: All AC satisfied
+- **Code**: Standards/patterns followed
+- **Context**: No hallucinations, references validated
+- **DB**: Schema changes safe, rollback ready
+- **Tests**: Preserved/enhanced, never weakened
+- **Docs**: File List complete, notes comprehensive
+- **Standards**: Technical preferences/constraints met
 
-### Blocking Conditions Resolution:
-- **Dependency Issues**: User approval obtained for new dependencies
-- **Architecture Conflicts**: Implementation revised to align with standards  
-- **Test Failures**: Implementation fixed, test requirements preserved
-- **Ambiguous Requirements**: Clarification obtained or assumptions documented
+### Resolution:
+- **Dependencies**: User approval
+- **Architecture**: Align with standards  
+- **Tests**: Fix implementation, preserve tests
+- **Requirements**: Clarify or document assumptions
 
-**Fallback Reference**: Use manual `*develop-story` command for complex edge cases or when implementation encounters unresolvable issues.
+**Fallback**: Use manual `*develop-story` for complex edge cases or unresolvable issues.

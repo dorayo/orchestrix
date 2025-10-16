@@ -1,338 +1,236 @@
 # Create Next Story Task
 
-## Purpose
+## Permission Check
 
-To identify the next logical story based on project progress and epic definitions, and then to prepare a comprehensive, self-contained, and actionable story file using the `Story Template`. This task ensures the story is enriched with all necessary technical context, requirements, and acceptance criteria, making it ready for efficient implementation by a Developer Agent with minimal need for additional research or finding its own context.
+1. Confirm you are SM agent via `{root}/data/story-status-transitions.yaml`
+2. Verify `can_create_story: true` and `can_set_initial_status: true`
+3. For existing stories: verify status is `Blocked` or `RequiresRevision`
+4. On failure: log error, reference responsible agent, HALT
 
-## Agent Permission Check
+## Sequential Execution
 
-**CRITICAL**: Before proceeding with story creation, verify SM agent has the required permissions:
+### 0. Load Configuration
 
-1. **Verify Agent Identity:**
-   - Confirm you are the SM (Story Manager) agent
-   - Reference `{root}/data/story-status-transitions.yaml`
+1. Load `{root}/core-config.yaml`
+2. If missing: HALT with message "core-config.yaml not found. Copy from GITHUB orchestrix-core/core-config.yaml or run Orchestrix installer"
+3. Extract: `devStoryLocation`, `prd.*`, `architecture.*`, `workflow.*`
 
-2. **Check Story Creation Permission:**
-   - Verify SM has `can_create_story: true` in agent_permissions
-   - Verify SM has `can_set_initial_status: true`
-   - Allowed initial statuses: `Blocked`, `AwaitingArchReview`, `Approved`
+### 1. Identify Next Story
 
-3. **If this is modifying an existing story:**
-   - Read the Story's current `Status` field
-   - Verify status is one of: `Blocked`, `RequiresRevision`
-   - Confirm SM has permission to modify stories in this status
-   - Reference `can_modify_in_statuses` in story-status-transitions.yaml
+1. Locate epic files via `prdSharded` config
+2. Load highest `{epicNum}.{storyNum}.story.md` from `devStoryLocation`
+3. If story exists:
+   - Verify status is 'Done', else alert: "ALERT: Found incomplete story! File: {lastEpicNum}.{lastStoryNum}.story.md Status: [status]. Fix first or accept risk?"
+   - Select next sequential story in current epic
+   - If epic complete, prompt: "Epic {epicNum} Complete. Options: 1) Begin Epic {epicNum+1} 2) Select specific story 3) Cancel"
+   - NEVER auto-skip epics - require user instruction
+4. If no stories exist: next is 1.1
+5. Announce: "Identified next story: {epicNum}.{storyNum} - {Title}"
 
-4. **If permission check fails:**
-   - Log error: "SM agent does not have permission to create/modify this story"
-   - Reference the responsible agent from story-status-transitions.yaml
-   - HALT and inform user of the permission violation
-   - Do NOT proceed with story creation/modification
+### 2. Gather Requirements
 
-## SEQUENTIAL Task Execution (Do not proceed until current Task is complete)
-
-### 0. Load Core Configuration and Check Workflow
-
-- Load `{root}/core-config.yaml` from the project root
-- If the file does not exist, HALT and inform the user: "core-config.yaml not found. This file is required for story creation. You can either: 1) Copy it from GITHUB orchestrix-core/core-config.yaml and configure it for your project OR 2) Run the Orchestrix installer against your project to upgrade and add the file automatically. Please add and configure core-config.yaml before proceeding."
-- Extract key configurations: `devStoryLocation`, `prd.*`, `architecture.*`, `workflow.*`
-
-### 1. Identify Next Story for Preparation
-
-#### 1.1 Locate Epic Files and Review Existing Stories
-
-- Based on `prdSharded` from config, locate epic files (sharded location/pattern or monolithic PRD sections)
-- If `devStoryLocation` has story files, load the highest `{epicNum}.{storyNum}.story.md` file
-- **If highest story exists:**
-  - Verify status is 'Done'. If not, alert user: "ALERT: Found incomplete story! File: {lastEpicNum}.{lastStoryNum}.story.md Status: [current status] You should fix this story first, but would you like to accept risk & override to create the next story in draft?"
-  - If proceeding, select next sequential story in the current epic
-  - If epic is complete, prompt user: "Epic {epicNum} Complete: All stories in Epic {epicNum} have been completed. Would you like to: 1) Begin Epic {epicNum + 1} with story 1 2) Select a specific story to work on 3) Cancel story creation"
-  - **CRITICAL**: NEVER automatically skip to another epic. User MUST explicitly instruct which story to create.
-- **If no story files exist:** The next story is ALWAYS 1.1 (first story of first epic)
-- Announce the identified story to the user: "Identified next story for preparation: {epicNum}.{storyNum} - {Story Title}"
-
-### 2. Gather Story Requirements and Previous Story Context
-
-- Extract story requirements from the identified epic file
-- If previous story exists, review Dev Agent Record sections for:
-  - Completion Notes and Debug Log References
-  - Implementation deviations and technical decisions
-  - Challenges encountered and lessons learned
-- Extract relevant insights that inform the current story's preparation
+1. Extract requirements from epic file
+2. If previous story exists, review Dev Agent Record for:
+   - Completion notes, debug logs
+   - Implementation deviations, technical decisions
+   - Challenges, lessons learned
+3. Extract insights for current story
 
 ### 3. Gather Architecture Context
 
-#### 3.1 Determine Architecture Reading Strategy
+#### 3.1 Reading Strategy
 
-- **If `architectureSharded: true`**: Read `{architectureShardedLocation}/index.md` then follow structured reading order below
-- **Else**: Use monolithic `architectureFile` for similar sections
+1. If `architectureSharded: true`: read `{architectureShardedLocation}/index.md`
+2. Else: use monolithic `architectureFile`
 
-#### 3.2 Read Architecture Documents Based on Story Type
+#### 3.2 Read by Story Type
 
-**For ALL Stories:** tech-stack.md, source-tree.md, coding-standards.md, testing-strategy.md
+**All Stories:** tech-stack.md, source-tree.md, coding-standards.md, testing-strategy.md
 
-**For Backend/API Stories, additionally:** data-models.md, database-schema.md, backend-architecture.md, rest-api-spec.md, external-apis.md
+**Backend/API:** + data-models.md, database-schema.md, backend-architecture.md, rest-api-spec.md, external-apis.md
 
-**For Frontend/UI Stories, additionally:** frontend-architecture.md, components.md, core-workflows.md, data-models.md
+**Frontend/UI:** + frontend-architecture.md, components.md, core-workflows.md, data-models.md
 
-**For Full-Stack Stories:** Read both Backend and Frontend sections above
+**Full-Stack:** Both Backend + Frontend
 
-#### 3.2.1 Frontend-First Strategy Implementation
+#### 3.3 Extract Technical Details
 
-**If `frontendFirstStrategy: true` in core-config.yaml**, apply the following story decomposition logic for Full-Stack stories:
+Extract ONLY story-relevant information. Do NOT invent libraries, patterns, or standards.
 
-**Phase-Based Task Structure:**
-- **Phase 1 Tasks**: Frontend implementation with mocked data/APIs
-- **Phase 2 Tasks**: Backend implementation to match frontend contracts
-- **Phase 3 Tasks**: Integration and end-to-end testing
+1. Extract:
+   - Data models, schemas, structures
+   - API endpoints (implement/consume)
+   - Component specs for UI
+   - File paths, naming conventions
+   - Testing requirements
+   - Security/performance considerations
+2. Cite sources: `[Source: docs/architecture/{filename}.md#{section}]`
 
-**CRITICAL**: For Full-Stack stories, automatically decompose into frontend-first phases unless story is explicitly backend-only (e.g., data migration, background jobs, pure API endpoints).
+#### 3.4 Field-Level API Contract
 
-#### 3.3 Extract Story-Specific Technical Details
+For API/shared data structures, create table in Dev Notes under "Field-Level API Contract":
 
-Extract ONLY information directly relevant to implementing the current story. Do NOT invent new libraries, patterns, or standards not in the source documents.
+| Field | Type | Required | Description | Source |
+|-------|------|----------|-------------|--------|
+| userId | string | Yes | Unique user identifier | [Source: data-models.md#User] |
 
-Extract:
+Requirements:
+- Include: field names, types, required status, descriptions, sources
+- Match casing/naming from architecture docs
+- Mark missing info as [MISSING]
+- If no fields: note "No shared data fields defined for this story"
 
-- Specific data models, schemas, or structures the story will use
-- API endpoints the story must implement or consume
-- Component specifications for UI elements in the story
-- File paths and naming conventions for new code
-- Testing requirements specific to the story's features
-- Security or performance considerations affecting the story
+### 4. Verify Structure Alignment
 
-ALWAYS cite source documents: `[Source: docs/architecture/{filename}.md#{section}]`
+1. Cross-reference requirements with `docs/architecture/source-tree.md`
+2. Verify file paths, component locations, module names align
+3. Document conflicts in "Project Structure Notes"
 
-#### 3.4 Generate Field-Level API Contract Table
+### 5. Technical Extraction Verification (MANDATORY)
 
-If the story involves API communication or any shared data structure between frontend and backend, you MUST extract and define all relevant fields in a contract table format inside the `Dev Notes` section under the heading `Field-Level API Contract`.
+Execute `{root}/checklists/sm-technical-extraction-checklist.md`:
 
-- This table MUST include field names, types, required status, descriptions, and original sources
-- Field names MUST match casing, structure, and naming conventions defined in architecture documents
-- Do NOT invent field names or structures. If missing, explicitly mark as [MISSING] and flag the issue
-- This table will serve as the **authoritative reference** for both frontend and backend developers during implementation and integration
+1. Complete ALL sections
+2. Mark: [x] Done, [ ] Not Done, [N/A] Not Applicable
+3. Explain [ ] Not Done items
+4. Achieve ≥80% completion (< 20% Not Done)
+5. Quality gates:
+   - If > 20% Not Done: HALT, re-examine architecture
+   - If critical details missing: request clarification
+   - If conflicts: document and flag
+6. Documentation:
+   - [x] Done items → Dev Notes entries
+   - Accurate source references
+   - Validated technical assumptions
 
-**Example Table Format:**
+Failure invalidates story creation.
 
-```md
-| Field       | Type     | Required | Description             | Source                                  |
-|-------------|----------|----------|-------------------------|-----------------------------------------|
-| userId      | string   | Yes      | Unique user identifier  | [Source: data-models.md#User]           |
-| email       | string   | Yes      | User email address      | [Source: rest-api-spec.md#RegisterUser] |
-| avatarUrl   | string   | No       | Profile image URL       | [Source: components.md#UserCard]        |
+### 6. Populate Story Template
 
-- This table is MANDATORY if the story involves request/response payloads, database entities, or component props
+Create `{devStoryLocation}/{epicNum}.{storyNum}.story.md`:
 
-- If no fields are relevant, include this note: "No shared data fields defined for this story"
+1. Fill basic info: Title, Status (set by quality check), Story statement, ACs from Epic
+2. **Dev Notes (CRITICAL):**
+   - Use ONLY verified info from Step 5
+   - Include from Steps 2-3, organized:
+     - Previous Story Insights
+     - Technical Preferences Summary (from technical-preferences.md via architecture)
+     - Data Models (schemas, validation, relationships)
+     - API Specifications (endpoints, request/response, auth)
+     - Component Specifications (UI details, props, state)
+     - File Locations (exact paths)
+     - Testing Requirements (cases, strategies from testing-strategy.md)
+     - Testing Integrity: Tests are AUTHORITATIVE, expectations IMMUTABLE, implementation adapts to tests, modifications need business justification, distinguish requirement tests (immutable) vs implementation tests (adjustable)
+     - Technical Constraints (versions, performance, security)
+     - Technical Extraction Verification Summary (completion rate, flagged issues)
+   - Cite sources: `[Source: docs/architecture/{filename}.md#{section}]`
+   - Reference original preferences, note adaptations
+   - If missing: state "No specific guidance found in architecture docs"
+3. **Tasks/Subtasks:**
+   - Generate sequential tasks from: Epic Requirements, Story AC, Architecture
+   - Reference architecture docs
+   - Include unit testing subtasks per Testing Strategy
+   - Link to ACs: `Task 1 (AC: 1, 3)`
+4. Add structure alignment notes from Step 4
 
-### 4. Verify Project Structure Alignment
+### 7. Quality Verification
 
-- Cross-reference story requirements with Project Structure Guide from `docs/architecture/source-tree.md`
-- Ensure file paths, component locations, or module names align with defined structures
-- Document any structural conflicts in "Project Structure Notes" section within the story draft
+Execute enhanced verification:
 
-### 5. **MANDATORY Technical Detail Extraction Verification**
+1. **Dev Notes Accuracy:**
+   - Verify details match Step 5 verified items
+   - Confirm source references accurate and accessible
+   - Validate no unverified assumptions
+2. **Implementation Guidance:**
+   - Ensure sufficient guidance
+   - Verify technical decisions backed by architecture
+   - Confirm file locations/naming explicitly specified
+3. **Technical Risk:**
+   - Document risks from extraction verification
+   - Flag incomplete/conflicting architecture guidance
+   - Note external dependencies
 
-**CRITICAL:** Before populating the Story Template, execute the technical extraction verification process:
+### 8. Quality Check & Status Decision
 
-- Execute `{root}/checklists/sm-technical-extraction-checklist.md` as a mandatory quality gate
-- **Verification Requirements:**
-  - Complete ALL sections of the technical extraction checklist
-  - Mark each item as [x] Done, [ ] Not Done, or [N/A] Not Applicable
-  - Provide detailed explanations for any [ ] Not Done items
-  - Achieve minimum 80% completion rate (< 20% Not Done items)
-- **Quality Gates:**
-  - If > 20% items marked as [ ] Not Done: HALT and re-examine architecture documents
-  - If critical technical details are missing: Request clarification from user or architect
-  - If technical preferences conflicts detected: Document and flag for resolution
-- **Documentation Requirements:**
-  - All [x] Done items MUST have corresponding entries in the upcoming Dev Notes section
-  - All source document references MUST be accurate and specific
-  - All technical assumptions MUST be validated against architecture documents
+Execute `{root}/tasks/execute-checklist.md` with `{root}/checklists/sm-story-creation-comprehensive-checklist.md`
 
-**FAILURE TO COMPLETE THIS VERIFICATION STEP INVALIDATES THE ENTIRE STORY CREATION PROCESS**
+#### Status Transition Validation
 
-### 6. Populate Story Template with Full Context
+Validate via `{root}/data/story-status-transitions.yaml`:
 
-- Create new story file: `{devStoryLocation}/{epicNum}.{storyNum}.story.md` using Story Template
-- Fill in basic story information: Title, Status (will be set by quality check), Story statement, Acceptance Criteria from Epic
-- **`Dev Notes` section (CRITICAL):**
-  - CRITICAL: This section MUST contain ONLY information extracted and verified in Step 5. NEVER invent or assume technical details.
-  - Include ALL relevant technical details from Steps 2-3 and verified in Step 5, organized by category:
-    - **Previous Story Insights**: Key learnings from previous story
-    - **Technical Preferences Summary**: Key technical choices and constraints from original technical-preferences.md (via architecture docs)
-    - **Data Models**: Specific schemas, validation rules, relationships [with source references]
-    - **API Specifications**: Endpoint details, request/response formats, auth requirements [with source references]
-    - **Component Specifications**: UI component details, props, state management [with source references]
-    - **File Locations**: Exact paths where new code should be created based on project structure
-    - **Testing Requirements**: Specific test cases or strategies from testing-strategy.md
-    - **Testing Integrity Requirements**: CRITICAL test rules that must be preserved
-      - Tests represent requirements and are AUTHORITATIVE
-      - Test expectations, assertions, and acceptance criteria are IMMUTABLE
-      - Implementation must adapt to tests, never the reverse
-      - Any test modifications require explicit business justification
-      - Distinguish requirement tests (immutable) from implementation tests (adjustable)
-    - **Technical Constraints**: Version requirements, performance considerations, security rules
-    - **Technical Extraction Verification Summary**: Include completion rate and any flagged issues from Step 5
-  - Every technical detail MUST include its source reference: `[Source: docs/architecture/{filename}.md#{section}]`
-  - Technical Preferences section MUST explicitly reference original preferences and note any adaptations or constraints
-  - If information for a category is not found in the architecture docs, explicitly state: "No specific guidance found in architecture docs"
-- **`Tasks / Subtasks` section:**
-  - Generate detailed, sequential list of technical tasks based ONLY on: Epic Requirements, Story AC, Reviewed Architecture Information
-  - Each task must reference relevant architecture documentation
-  - Include unit testing as explicit subtasks based on the Testing Strategy
-  - Link tasks to ACs where applicable (e.g., `Task 1 (AC: 1, 3)`)
-- Add notes on project structure alignment or discrepancies found in Step 4
+1. For new stories: SM authorized, allowed statuses: `Blocked`, `AwaitingArchReview`, `TestDesignComplete`, `AwaitingTestDesign`
+2. Validate transition allowed, SM has permission, prerequisites met
+3. On failure: log error, HALT, provide guidance
+4. On success: set status, log transition
 
-### 7. Enhanced Story Quality Verification
+#### Phase 1: Structure Validation (100% Required)
 
-**CRITICAL:** Execute enhanced quality verification before completing the story:
+1. Check required sections present
+2. Verify no unfilled placeholders
+3. Validate ACs have corresponding tasks with mapping
+4. Verify logical task order
+5. If < 100%: set Status = `Blocked`, STOP
+6. If = 100%: proceed to Phase 2
 
-- **Dev Notes Accuracy Check:**
-  - Verify all technical details in Dev Notes correspond to verified items from Step 5
-  - Confirm all source references are accurate and accessible
-  - Validate that no unverified technical assumptions are included
-- **Implementation Guidance Completeness:**
-  - Ensure Dev Notes provide sufficient guidance for implementation
-  - Verify that all technical decisions are backed by architecture documents
-  - Confirm that file locations and naming conventions are explicitly specified
-- **Technical Risk Assessment:**
-  - Document any technical risks identified during extraction verification
-  - Flag any areas where architecture guidance is incomplete or conflicting
-  - Note any dependencies on external clarification or decisions
+#### Phase 2: Technical Quality (If Phase 1 passes)
 
-### 8. Comprehensive Quality Check and Status Decision
+1. Check technical extraction ≥80% (hard requirement)
+2. If < 80%: set Status = `Blocked`, STOP
+3. Calculate Technical Quality Score (0-10):
+   - Technical Extraction: 50%
+   - Implementation Readiness: 50%
+4. Detect 7 complexity indicators: API changes, DB schema, new patterns, cross-service, security, performance, architecture docs
+5. Make status decisions
+6. Update story with status and summary
 
-**Execute Unified Quality Check:**
+#### Status Decisions
 
-- Execute `{root}/tasks/execute-checklist.md` with checklist `{root}/checklists/sm-story-creation-comprehensive-checklist.md`
-- The comprehensive checklist implements a **two-phase quality assessment system**:
+**Step 1: Architect Review** (`sm-architect-review-needed`)
+- Context: `quality_score`, `complexity_indicators`
+- Output: `REQUIRED`, `NOT_REQUIRED`, `BLOCKED`
+- If `BLOCKED`: Status = `Blocked`, STOP
+- If `REQUIRED`: Status = `AwaitingArchReview`, defer test design
+- If `NOT_REQUIRED`: proceed to Step 2
 
-**Status Transition Validation:**
+**Step 2: Test Design Level** (`sm-test-design-level`)
+- Context: `complexity_indicators`, `quality_score`, `security_sensitive`
+- Output: `Simple`, `Standard`, `Comprehensive`
 
-Before setting any status, validate the transition using `{root}/data/story-status-transitions.yaml`:
+**Step 3: Final Status** (`sm-story-status`)
+- Context: `architect_review_result`, `test_design_level`
+- Output: Final status and next action
 
-1. **For new story creation (no current status):**
-   - SM is authorized to set initial status
-   - Allowed initial statuses: `Blocked`, `AwaitingArchReview`, `TestDesignComplete`, `AwaitingTestDesign`
-   - Validate that the target status matches the decision result
-
-2. **Validate transition is allowed:**
-   - Check that the target status is in the allowed_transitions list
-   - Verify SM has permission to set this status
-   - Confirm all prerequisites are met for the transition
-
-3. **If validation fails:**
-   - Log error with details from error_messages in config
-   - HALT and inform user of the validation failure
-   - Provide guidance on correct status or required actions
-
-4. **If validation succeeds:**
-   - Proceed with setting the status
-   - Log the transition for audit purposes
-
-**Phase 1: Structure Validation (Gate Condition - Must be 100%)**
-  1. Check all required template sections are present
-  2. Verify no unfilled placeholders remain
-  3. Validate all ACs have corresponding tasks with explicit mapping
-  4. Verify tasks follow logical implementation order
-  5. **If structure validation < 100%:** Immediately set Status = `Blocked`, STOP processing
-  6. **If structure validation = 100%:** Proceed to Phase 2
-
-**Phase 2: Technical Quality Assessment (Only if Phase 1 passes)**
-  1. Check technical extraction completeness (≥80% required - hard requirement)
-  2. **If technical extraction < 80%:** Immediately set Status = `Blocked`, STOP processing
-  3. Calculate Technical Quality Score (0-10) with weights:
-     - Technical Extraction: 50% (architecture info, technical preferences, source references)
-     - Implementation Readiness: 50% (Dev Notes quality, testing strategy, implementability)
-  4. Detect complexity indicators (7 indicators: API changes, DB schema, new patterns, cross-service, security, performance, architecture docs)
-  5. Make status decisions using decision tasks
-  6. Update story file with final status and quality check summary
-
-**Make Status Decisions:**
-
-After completing Phase 2 quality assessment, use the decision-making framework to determine story status:
-
-**Step 1: Architect Review Decision**
-
-Execute `{root}/tasks/make-decision.md` with:
-- **decision_type:** `sm-architect-review-needed`
-- **context:**
-  - `quality_score`: Technical Quality Score from Phase 2
-  - `complexity_indicators`: Count of detected complexity indicators
-
-**Decision outputs:** `REQUIRED`, `NOT_REQUIRED`, or `BLOCKED`
-- If `BLOCKED`: Set Status = `Blocked`, STOP processing
-- If `REQUIRED`: Set Status = `AwaitingArchReview`, proceed to test design level determination (deferred)
-- If `NOT_REQUIRED`: Proceed to Step 2
-
-**Step 2: Test Design Level Decision**
-
-Execute `{root}/tasks/make-decision.md` with:
-- **decision_type:** `sm-test-design-level`
-- **context:**
-  - `complexity_indicators`: Count of detected complexity indicators
-  - `quality_score`: Technical Quality Score from Phase 2
-  - `security_sensitive`: Boolean flag from complexity analysis
-
-**Decision outputs:** `Simple`, `Standard`, or `Comprehensive`
-
-**Step 3: Final Story Status Decision**
-
-Execute `{root}/tasks/make-decision.md` with:
-- **decision_type:** `sm-story-status`
-- **context:**
-  - `architect_review_result`: Result from Step 1
-  - `test_design_level`: Result from Step 2
-
-**Decision outputs:** Final story status and next action
-
-**Final Output Format:**
-
-The checklist will generate a comprehensive report including:
+#### Report Format
 
 ```markdown
 ## Story Quality Check Report
 
-### Phase 1: Structure Validation (Gate Condition)
-- **Result:** [PASS / FAIL]
-- **Completion Rate:** [X]% (must be 100% to proceed)
-- **Failed Items:** [list if any]
+### Phase 1: Structure Validation
+- Result: [PASS/FAIL]
+- Completion: [X]% (100% required)
+- Failed Items: [list]
 
-### Phase 2: Technical Quality Assessment
-- **Executed:** [Yes / No - skipped if Phase 1 failed]
-- **Technical Quality Score:** [X.X/10]
+### Phase 2: Technical Quality
+- Executed: [Yes/No]
+- Score: [X.X/10]
   - Technical Extraction: [X]% × 0.50 = [X.X]
   - Implementation Readiness: [X]% × 0.50 = [X.X]
-- **Technical Extraction Completion Rate:** [X]% (≥80% required)
+- Extraction Rate: [X]% (≥80% required)
 
 ### Complexity Analysis
-**Detected Indicators:** [count] / 7
-[List specific indicators found with brief explanation]
+- Detected: [count]/7
+[List indicators]
 
-### Decision Results
-
-**Architect Review Decision:**
-- **Result:** [REQUIRED / NOT_REQUIRED / BLOCKED]
-- **Reasoning:** [From decision task]
-
-**Test Design Level Decision:**
-- **Level:** [Simple / Standard / Comprehensive]
-- **Reasoning:** [From decision task]
-
-**Final Story Status:**
-- **Status:** [Blocked / AwaitingArchReview / AwaitingTestDesign / TestDesignComplete]
-- **Next Action:** [From decision task]
-- **Reasoning:** [From decision task]
+### Decisions
+- Architect Review: [REQUIRED/NOT_REQUIRED/BLOCKED] - [reasoning]
+- Test Design Level: [Simple/Standard/Comprehensive] - [reasoning]
+- Final Status: [status] - [reasoning]
+- Next Action: [action]
 ```
 
-### 9. Record Change Log Entry
+### 9. Record Change Log
 
-**Objective:** Automatically record the story creation and status decision in the Change Log for audit trail
-
-**Add Change Log Entry to Story File:**
-
-Locate or create the "Change Log" section in the Story file and add a new entry at the top:
+Add entry to Story file "Change Log" section:
 
 ```markdown
 ## Change Log
@@ -341,163 +239,58 @@ Locate or create the "Change Log" section in the Story file and add a new entry 
 
 **Action:** Initial story creation and quality assessment
 
-**Quality Assessment Results:**
-- Structure Validation: {PASS/FAIL} ({completion_rate}%)
+**Quality Assessment:**
+- Structure Validation: {PASS/FAIL} ({rate}%)
 - Technical Quality Score: {score}/10
-  - Technical Extraction: {score}/10 ({completion_rate}%)
+  - Technical Extraction: {score}/10 ({rate}%)
   - Implementation Readiness: {score}/10
-- Complexity Indicators Detected: {count}/7
-  {List detected indicators if any}
+- Complexity Indicators: {count}/7
+  {List indicators}
 
-**Decision Results:**
+**Decisions:**
 - Architect Review: {REQUIRED/NOT_REQUIRED/BLOCKED} - {reasoning}
 - Test Design Level: {Simple/Standard/Comprehensive} - {reasoning}
-- Final Status: `{Blocked/AwaitingArchReview/AwaitingTestDesign/TestDesignComplete}`
-- Decision Reasoning: {explanation from decision tasks}
+- Final Status: `{status}`
+- Reasoning: {explanation}
 
-**Next Action:** {Based on status - what happens next}
-
----
-
-{Previous Change Log entries if any}
-```
-
-**Change Log Entry Details:**
-
-Include the following information from the quality assessment and decision tasks:
-- **Date/Time:** Current timestamp in YYYY-MM-DD HH:MM:SS format
-- **Structure Validation Result:** PASS/FAIL and completion percentage
-- **Technical Quality Score:** Overall score and component scores
-- **Technical Extraction Rate:** Completion percentage (important for decision logic)
-- **Complexity Indicators:** Count and list of detected indicators
-- **Decision Results:** Outputs from all three decision tasks with reasoning
-- **Next Action:** Clear description of what should happen next
-
-**Example Change Log Entry:**
-
-```markdown
-## Change Log
-
-### 2024-01-15 14:30:22 - SM Story Creation
-
-**Action:** Initial story creation and quality assessment
-
-**Quality Assessment Results:**
-- Structure Validation: PASS (100%)
-- Technical Quality Score: 8.2/10
-  - Technical Extraction: 8.5/10 (92%)
-  - Implementation Readiness: 7.9/10
-- Complexity Indicators Detected: 2/7
-  - API contract changes (new user registration endpoint)
-  - Database schema modifications (user table updates)
-
-**Decision Results:**
-- Architect Review: REQUIRED - High quality but high complexity requires architectural validation
-- Test Design Level: Standard (deferred until after Architect approval)
-- Final Status: `AwaitingArchReview`
-- Decision Reasoning: Story requires Architect review before proceeding to test design phase
-
-**Next Action:** Architect should execute `review-story {epicNum}.{storyNum}` to validate architectural decisions
+**Next Action:** {what happens next}
 
 ---
 ```
 
-### 10. Output Handoff Message Based on Final Status
+Include: timestamp (YYYY-MM-DD HH:MM:SS), validation result, quality scores, extraction rate, complexity indicators, decision outputs with reasoning, next action.
 
-**The decision tasks automatically determine the final status. Output the appropriate handoff message:**
+### 10. Output Handoff Message
 
-**Generate Handoff Message Based on Status:**
+Generate message from `sm-story-status` decision task `next_action`:
 
-1. **Read the final status** from the story status decision result (Step 8)
-2. **Read the next_action** from the decision task output
-3. **Generate the appropriate handoff message** based on the decision task recommendations
+**Status-Based Messages:**
 
-**Handoff Message Logic:**
+- `Blocked`: "Story blocked - SM must revise and resubmit"
+- `AwaitingArchReview`: "Next: Architect execute 'review-story {epicNum}.{storyNum}'. Note: Test design level ({level}) deferred until approval"
+- `AwaitingTestDesign`: "Next: QA execute 'test-design {epicNum}.{storyNum}'. Level: {level}"
+  - If security-sensitive: Add "'risk-profile {epicNum}.{storyNum}'. Level: Comprehensive (security-sensitive)"
+- `TestDesignComplete`: "Next: Dev execute 'implement-story {epicNum}.{storyNum}'. Note: Simple level - test design not required"
+- `Approved`: "Next: Dev execute 'implement-story {epicNum}.{storyNum}'"
 
-Use the `next_action` field from the `sm-story-status` decision task to generate the handoff message.
+Actions:
+1. Add message to Story file "Next Steps" section
+2. Display prominently to user
 
-**If Status = `Blocked`:**
-```
-Story blocked - SM must revise and resubmit
-```
+### 11. Summary
 
-**If Status = `AwaitingArchReview`:**
-```
-Next: Architect please execute command 'review-story {epicNum}.{storyNum}'
-Note: Test design level has been determined ({test_design_level}) but will be applied after Architect approval
-```
+Two-phase quality assessment with decision-based status complete.
 
-**If Status = `AwaitingTestDesign`:**
+**Process:**
+1. Phase 1 (Structure): 100% required, else `Blocked`
+2. Phase 2 (Technical): ≥80% extraction required, else `Blocked`. Score (0-10): Technical Extraction 50%, Implementation Readiness 50%. Detect 7 complexity indicators
+3. Decisions: `sm-architect-review-needed`, `sm-test-design-level`, `sm-story-status`
+4. Handoff message
 
-Base message:
-```
-Next: QA please execute command 'test-design {epicNum}.{storyNum}'
-Test Design Level: {test_design_level}
-```
+**Status Outcomes:**
+- `Blocked`: SM revise and re-run
+- `AwaitingArchReview`: Architect execute `review-story {epicNum}.{storyNum}`
+- `AwaitingTestDesign`: QA execute test design per level
+- `TestDesignComplete`: Dev execute `implement-story {epicNum}.{storyNum}`
 
-**Additional message if security sensitive** (test_design_level = "Comprehensive" OR securitySensitive = true):
-```
-Next: QA please execute command 'test-design {epicNum}.{storyNum}' and 'risk-profile {epicNum}.{storyNum}'
-Test Design Level: Comprehensive (security-sensitive)
-```
-
-**If Status = `TestDesignComplete`:**
-```
-Next: Dev please execute command 'implement-story {epicNum}.{storyNum}'
-Note: Test design level is Simple - test design not required
-```
-
-**If Status = `Approved`:**
-```
-Next: Dev please execute command 'implement-story {epicNum}.{storyNum}'
-```
-
-**Update Story File with Handoff Message:**
-
-Add the handoff message to the end of the Story file in a "Next Steps" section for easy reference.
-
-**Output Handoff Message to Console:**
-
-Display the handoff message prominently to the user so they know exactly what to do next.
-
-### 11. Summary and Completion
-
-**The two-phase quality assessment with decision-based status determination is now complete.**
-
-**Summary of Process:**
-
-1. **Phase 1 (Structure Validation):** Gate condition requiring 100% completion
-   - If failed: Status = `Blocked`, process stops
-   - If passed: Proceed to Phase 2
-
-2. **Phase 2 (Technical Quality Assessment):** Scoring and complexity detection
-   - Technical Extraction: 50% weight (≥80% completion required)
-   - Implementation Readiness: 50% weight
-   - If Technical Extraction < 80%: Status = `Blocked`, process stops
-   - Calculate Technical Quality Score (0-10)
-   - Detect 7 complexity indicators
-
-3. **Decision-Based Status Determination:** Three decision tasks determine final status
-   - **Decision 1:** Architect Review Needed (`sm-architect-review-needed`)
-   - **Decision 2:** Test Design Level (`sm-test-design-level`)
-   - **Decision 3:** Final Story Status (`sm-story-status`)
-
-4. **Handoff Message:** Output appropriate message based on decision results
-
-**Final Status Outcomes:**
-
-- **`Blocked`:** SM must revise Story and re-run quality check
-- **`AwaitingArchReview`:** Architect should execute `review-story {epicNum}.{storyNum}`
-- **`AwaitingTestDesign`:** QA should execute test design tasks based on level
-- **`TestDesignComplete`:** Dev can begin implementation with `implement-story {epicNum}.{storyNum}`
-
-**Quality Assurance:**
-This decision-based approach ensures:
-- Structure is validated before assessing technical quality
-- Technical extraction meets minimum threshold (80%)
-- Complexity is properly detected and considered
-- Status is determined by reusable decision logic (see `{root}/data/decisions/`)
-- Consistent decision-making across all story creation workflows
-- Clear handoff messages guide the next steps
-
-**Note:** This approach uses the centralized decision-making framework, reducing token usage and improving maintainability by externalizing decision rules to YAML configuration files.
+**Benefits:** Structure validated first, ≥80% extraction threshold, complexity detected, reusable decision logic (`{root}/data/decisions/`), consistent workflows, clear handoffs, centralized framework reduces tokens.

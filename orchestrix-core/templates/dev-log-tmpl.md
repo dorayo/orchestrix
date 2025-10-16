@@ -1,242 +1,154 @@
 # Dev Log: {{storyId}} - {{storyTitle}}
 
-**Started:** {{startTimestamp}}  
-**Agent Model:** {{agentModel}}  
-**Story ID:** {{storyId}}
+**Started:** {{startTimestamp}} | **Agent:** {{agentModel}} | **Story:** {{storyId}}
 
 ---
 
 ## Story Context
 
-[[LLM: Provide a brief summary of the story being implemented, including its purpose, key requirements, and any important context from the SM Design document.]]
+[[LLM: Summarize story purpose, key requirements, SM Design context]]
 
-**Story Title:** {{storyTitle}}  
-**Story ID:** {{storyId}}  
-**SM Design Reference:** {{smDesignPath}}
+**Title:** {{storyTitle}} | **ID:** {{storyId}} | **SM Design:** {{smDesignPath}}
 
 ---
 
-## Test Strategy Summary
+## Test Strategy
 
-[[LLM: Document the overall testing approach for this story, including test design level, priority distribution, and key areas of focus.]]
+[[LLM: Document test approach, design level, priority distribution, focus areas]]
 
-**Test Design Level:** {{testDesignLevel}}  
-**Test Priority Distribution:**
-- P0 (Critical): {{p0Count}} tests
-- P1 (Important): {{p1Count}} tests
-- P2 (Nice-to-have): {{p2Count}} tests
+**Level:** {{testDesignLevel}}  
+**Priority Distribution:** P0: {{p0Count}} | P1: {{p1Count}} | P2: {{p2Count}}
 
-**Priority Testing Areas:**
-{{priorityAreas}}
-
-**Risk Coverage:**
-{{riskCoverage}}
+**Focus Areas:** {{priorityAreas}}  
+**Risk Coverage:** {{riskCoverage}}
 
 ---
 
 ## Phase 1: Setup & Foundation
 
-[[LLM: Document all setup activities, including environment preparation, dependency installation, and foundational code structure. For each subtask, include implementation details, key decisions, and any issues encountered.]]
+[[LLM: Document setup: environment, dependencies, foundation code, decisions, issues]]
 
-### Subtask Logs
+### {{subtaskId}}: {{subtaskTitle}}
+**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
 
-#### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}}  
-**Started:** {{subtaskStartTime}}  
-**Completed:** {{subtaskEndTime}}
-
-**Implementation Details:**
-{{implementationDetails}}
-
-**Key Decisions:**
-{{keyDecisions}}
-
-**Issues Encountered:**
-{{issuesEncountered}}
+**Implementation:** {{implementationDetails}}  
+**Decisions:** {{keyDecisions}}  
+**Issues:** {{issuesEncountered}}
 
 ---
 
 ## Phase 2: Core Implementation
 
-[[LLM: Document the main implementation work, including core functionality, business logic, and primary features. For each subtask, capture what was built, how it was implemented, and any significant technical decisions.]]
+[[LLM: Document core functionality, business logic, features, technical decisions]]
 
-### Subtask Logs
+### {{subtaskId}}: {{subtaskTitle}}
+**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
 
-#### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}}  
-**Started:** {{subtaskStartTime}}  
-**Completed:** {{subtaskEndTime}}
-
-**Implementation Details:**
-{{implementationDetails}}
-
-**Key Decisions:**
-{{keyDecisions}}
-
-**Issues Encountered:**
-{{issuesEncountered}}
+**Implementation:** {{implementationDetails}}  
+**Decisions:** {{keyDecisions}}  
+**Issues:** {{issuesEncountered}}
 
 ---
 
 ## Phase 3: Testing & Validation
 
-[[LLM: Document all testing activities, including test implementation, test execution results, and any bugs found and fixed. Include coverage metrics and validation outcomes.]]
+[[LLM: Document tests, execution results, bugs, coverage, validation]]
 
-### Subtask Logs
+### {{subtaskId}}: {{subtaskTitle}}
+**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
 
-#### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}}  
-**Started:** {{subtaskStartTime}}  
-**Completed:** {{subtaskEndTime}}
-
-**Implementation Details:**
-{{implementationDetails}}
-
-**Test Results:**
-{{testResults}}
-
-**Issues Encountered:**
-{{issuesEncountered}}
+**Implementation:** {{implementationDetails}}  
+**Results:** {{testResults}}  
+**Issues:** {{issuesEncountered}}
 
 ---
 
 ## Phase 4: Integration & Finalization
 
-[[LLM: Document integration work, final adjustments, documentation updates, and any cleanup activities. Include verification that all requirements are met.]]
+[[LLM: Document integration, adjustments, docs, cleanup, requirement verification]]
 
-### Subtask Logs
+### {{subtaskId}}: {{subtaskTitle}}
+**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
 
-#### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}}  
-**Started:** {{subtaskStartTime}}  
-**Completed:** {{subtaskEndTime}}
-
-**Implementation Details:**
-{{implementationDetails}}
-
-**Key Decisions:**
-{{keyDecisions}}
-
-**Issues Encountered:**
-{{issuesEncountered}}
+**Implementation:** {{implementationDetails}}  
+**Decisions:** {{keyDecisions}}  
+**Issues:** {{issuesEncountered}}
 
 ---
 
 ## Resumption Guide
 
-[[LLM: If work is paused or interrupted, provide clear guidance for resuming. Include current status, immediate next steps, critical context, and any blockers.]]
+[[LLM: If paused, provide status, next steps, context, blockers]]
 
-**Current Status:** {{currentStatus}}
+**Status:** {{currentStatus}}
 
 **Next Steps:**
 1. {{nextStep1}}
 2. {{nextStep2}}
 3. {{nextStep3}}
 
-**Key Context to Remember:**
-{{keyContext}}
-
-**Recent Decisions:**
-{{recentDecisions}}
-
-**Open Issues/Blockers:**
-{{openIssues}}
+**Context:** {{keyContext}}  
+**Recent Decisions:** {{recentDecisions}}  
+**Blockers:** {{openIssues}}
 
 ---
 
 ## Feedback to QA
 
-[[LLM: Document any feedback for the QA Agent regarding test design issues, missing test scenarios, or concerns about test coverage. This feedback will be reviewed by QA during their next review cycle.]]
+[[LLM: Document test design issues, missing scenarios, coverage concerns for QA review]]
 
-### Feedback Item {{feedbackNumber}}
+### Item {{feedbackNumber}}
 
-**Feedback Type:** {{feedbackType}}  
-**Severity:** {{severity}}  
-**Timestamp:** {{feedbackTimestamp}}
+**Type:** {{feedbackType}} | **Severity:** {{severity}} | **Time:** {{feedbackTimestamp}}
 
-**Description:**
-{{feedbackDescription}}
-
-**Affected Test Scenarios:**
-{{affectedScenarios}}
-
-**Suggested Action:**
-{{suggestedAction}}
-
+**Description:** {{feedbackDescription}}  
+**Affected Scenarios:** {{affectedScenarios}}  
+**Suggested Action:** {{suggestedAction}}  
 **Status:** {{feedbackStatus}}
 
 ---
 
 ## Feedback to SM
 
-[[LLM: Document any feedback for the SM Agent regarding unclear Acceptance Criteria, ambiguous requirements, or blocking issues. If AC is unclear or ambiguous, set Story Status = Blocked and output Handoff message to SM.]]
+[[LLM: Document unclear AC, ambiguous requirements, blockers. If blocking, set Status=Blocked, output Handoff to SM]]
 
-### Feedback Item {{feedbackNumber}}
+### Item {{feedbackNumber}}
 
-**Feedback Type:** {{feedbackType}}  
-**Severity:** {{severity}}  
-**Timestamp:** {{feedbackTimestamp}}
+**Type:** {{feedbackType}} | **Severity:** {{severity}} | **Time:** {{feedbackTimestamp}}
 
-**Description:**
-{{feedbackDescription}}
-
-**Affected Requirements:**
-{{affectedRequirements}}
-
-**Blocking Implementation:** {{isBlocking}}
-
-**Suggested Clarification:**
-{{suggestedClarification}}
-
+**Description:** {{feedbackDescription}}  
+**Affected Requirements:** {{affectedRequirements}}  
+**Blocking:** {{isBlocking}}  
+**Suggested Clarification:** {{suggestedClarification}}  
 **Status:** {{feedbackStatus}}
 
 ---
 
 ## Deviations from SM Design
 
-[[LLM: Document any intentional deviations from the SM Design document. Include the reason for each deviation, its impact, and whether it requires architecture review.]]
+[[LLM: Document intentional deviations: reason, impact, arch review needed]]
 
-### Deviation {{deviationNumber}}: {{deviationTitle}}
+### {{deviationNumber}}: {{deviationTitle}}
 
-**Description:**
-{{deviationDescription}}
-
-**Reason:**
-{{deviationReason}}
-
-**Impact:**
-{{deviationImpact}}
-
-**Alternative Approach:**
-{{alternativeApproach}}
-
-**Requires Architecture Review:** {{requiresArchReview}}
+**Description:** {{deviationDescription}}  
+**Reason:** {{deviationReason}}  
+**Impact:** {{deviationImpact}}  
+**Alternative:** {{alternativeApproach}}  
+**Arch Review Required:** {{requiresArchReview}}
 
 ---
 
 ## Final Summary
 
-[[LLM: Provide a comprehensive summary of the entire implementation, including duration, files modified, testing outcomes, achievements, challenges faced, and any technical debt incurred.]]
+[[LLM: Summarize implementation: duration, files, tests, achievements, challenges, tech debt]]
 
-**Total Duration:** {{totalDuration}}  
-**Completed:** {{completionTimestamp}}
+**Duration:** {{totalDuration}} | **Completed:** {{completionTimestamp}}
 
-**Files Modified:**
-{{filesModified}}
+**Files Modified:** {{filesModified}}
 
-**Testing Summary:**
-- Total Tests: {{totalTests}}
-- Tests Passing: {{passingTests}}
-- Coverage: {{coveragePercentage}}%
+**Testing:** Total: {{totalTests}} | Passing: {{passingTests}} | Coverage: {{coveragePercentage}}%
 
-**Key Achievements:**
-{{keyAchievements}}
-
-**Challenges Overcome:**
-{{challengesOvercome}}
-
-**Technical Debt Incurred:**
-{{technicalDebt}}
-
-**Recommendations for Future Work:**
-{{futureRecommendations}}
+**Achievements:** {{keyAchievements}}  
+**Challenges:** {{challengesOvercome}}  
+**Tech Debt:** {{technicalDebt}}  
+**Future Work:** {{futureRecommendations}}

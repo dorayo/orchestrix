@@ -1,139 +1,138 @@
-# Architect Technical Review Checklist (Streamlined)
+# Architect Technical Review Checklist
 
-## Overview
-This checklist focuses on architecture-specific concerns for Stories that have already passed SM quality validation. The Architect review complements (not duplicates) SM validation by focusing on system-level architectural considerations.
+# ABBREVIATIONS (AC=Acceptance Criteria, Arch=Architecture, Perf=Performance, Sec=Security, Std=Standard, Comp=Comprehensive, Req=Required, Docs=Documents, Refs=References, Mgmt=Management)
 
-**Note**: SM Agent has already validated technical accuracy basics (tech stack compliance, naming conventions, file structure, documentation format). This review focuses exclusively on architectural concerns.
+[[LLM: Focus on system-level arch concerns. SM already validated tech stack, naming, file structure, docs format. Review complements (not duplicates) SM validation]]
 
 ## Prerequisites
-- [ ] SM quality validation completed (score available)
-- [ ] Story status is "Draft" or "Approved"
-- [ ] Complexity indicators documented (if applicable)
-- [ ] Architecture documentation accessible
-- [ ] SM validation results available for reference
 
-## Architecture-Specific Review (10 Points Total)
+| Check | Status |
+|-------|--------|
+| SM quality validation done | [ ] |
+| Story status Draft/Approved | [ ] |
+| Complexity indicators documented | [ ] |
+| Arch docs accessible | [ ] |
+| SM validation results available | [ ] |
 
-### 1. Architectural Pattern Compliance (3 Points)
-**Focus**: Does the Story follow established architectural patterns appropriately?
+---
 
-- [ ] **Pattern Consistency**: Implementation approach follows established architectural patterns documented in architecture docs
-- [ ] **Pattern Appropriateness**: Chosen patterns are suitable for the use case and context
-- [ ] **No Anti-Patterns**: No architectural anti-patterns or violations introduced
-- [ ] **Pattern Documentation**: Pattern usage is properly documented and justified
+# ARCHITECTURE REVIEW (10 Points)
 
-**Scoring**:
-- 3 points: Excellent pattern compliance, appropriate choices, well-documented
-- 2 points: Good compliance with minor pattern concerns
-- 1 point: Pattern issues present but not critical
-- 0 points: Significant pattern violations or inappropriate choices
+[[LLM: Score each category. Total ≥7 → Approved, <7 → Revise]]
 
-**Score**: ___/3 points
-**Issues Found**: ________________
+## 1. Pattern Compliance (3 pts)
 
-### 2. System Integration Analysis (2 Points)
-**Focus**: Are cross-component and cross-service integrations sound?
+| Item | Status |
+|------|--------|
+| Follows established arch patterns | [ ] |
+| Pattern appropriate for use case | [ ] |
+| No anti-patterns introduced | [ ] |
+| Pattern usage documented | [ ] |
 
-- [ ] **Integration Approach**: Integration strategy is architecturally sound
-- [ ] **Cross-Service Dependencies**: Dependencies on other services are properly identified and manageable
-- [ ] **Integration Risks**: Potential integration risks are identified and mitigated
-- [ ] **Communication Patterns**: Inter-component communication follows established patterns
+**Score:** ___/3 | **Issues:** ___
 
-**Scoring**:
-- 2 points: Integration approach is sound with proper risk mitigation
-- 1 point: Integration acceptable with minor concerns
-- 0 points: Integration approach has significant risks or issues
+**Scoring:** 3=Excellent, 2=Good/minor concerns, 1=Issues not critical, 0=Significant violations
 
-**Score**: ___/2 points
-**Issues Found**: ________________
+---
 
-### 3. Scalability & Performance (2 Points)
-**Focus**: Will the implementation scale and perform acceptably?
+## 2. System Integration (2 pts)
 
-- [ ] **Scalability**: Approach scales appropriately with expected load and growth
-- [ ] **Performance Implications**: Performance impact is acceptable and documented
-- [ ] **Resource Usage**: Resource consumption (memory, CPU, I/O) is reasonable
-- [ ] **No Bottlenecks**: No obvious performance bottlenecks introduced
+| Item | Status |
+|------|--------|
+| Integration strategy sound | [ ] |
+| Cross-service deps identified | [ ] |
+| Integration risks mitigated | [ ] |
+| Communication patterns followed | [ ] |
 
-**Scoring**:
-- 2 points: Excellent scalability and performance considerations
-- 1 point: Acceptable with minor performance concerns
-- 0 points: Significant scalability or performance issues
+**Score:** ___/2 | **Issues:** ___
 
-**Score**: ___/2 points
-**Issues Found**: ________________
+**Scoring:** 2=Sound w/ risk mitigation, 1=Acceptable/minor concerns, 0=Significant risks
 
-### 4. Security Architecture (2 Points)
-**Focus**: Does the implementation maintain security architecture integrity?
+---
 
-- [ ] **Security Alignment**: Security approach aligns with overall security architecture
-- [ ] **Risk Assessment**: Security risks are properly identified and addressed
-- [ ] **Sensitive Data Handling**: Sensitive data handling follows security guidelines
-- [ ] **Security Boundaries**: Security boundaries and access controls are appropriate
+## 3. Scalability & Perf (2 pts)
 
-**Scoring**:
-- 2 points: Excellent security architecture alignment
-- 1 point: Acceptable with minor security considerations
-- 0 points: Security concerns or violations present
+| Item | Status |
+|------|--------|
+| Scales w/ expected load | [ ] |
+| Perf impact acceptable | [ ] |
+| Resource usage reasonable | [ ] |
+| No obvious bottlenecks | [ ] |
 
-**Score**: ___/2 points
-**Issues Found**: ________________
+**Score:** ___/2 | **Issues:** ___
 
-### 5. Technical Feasibility (1 Point)
-**Focus**: Is the approach technically sound at the system level?
+**Scoring:** 2=Excellent considerations, 1=Acceptable/minor concerns, 0=Significant issues
 
-- [ ] **System-Level Feasibility**: Approach is technically feasible within the system architecture
-- [ ] **No Architectural Blockers**: No architectural constraints prevent implementation
-- [ ] **Complexity Appropriate**: System-level complexity is manageable
-- [ ] **Dependencies Viable**: All architectural dependencies are viable
+---
 
-**Scoring**:
-- 1 point: Technically feasible at system level
-- 0 points: Architectural feasibility concerns or blockers
+## 4. Security Arch (2 pts)
 
-**Score**: ___/1 point
-**Issues Found**: ________________
+| Item | Status |
+|------|--------|
+| Aligns w/ security arch | [ ] |
+| Security risks addressed | [ ] |
+| Sensitive data handling compliant | [ ] |
+| Security boundaries appropriate | [ ] |
 
-## Review Summary
+**Score:** ___/2 | **Issues:** ___
 
-### Total Score
-**Architecture Review Score**: ___/10 points
+**Scoring:** 2=Excellent alignment, 1=Acceptable/minor considerations, 0=Concerns present
 
-### Outcome Decision
-Based on the total score and identified issues:
+---
 
-- [ ] **Approved** (Score ≥7): Story is architecturally sound and ready for development
-  - Update Story status to "Approved"
-  - Document approval and any advisory notes
-  
-- [ ] **Revise** (Score <7): Architectural issues require revision
-  - Update Story status to "Blocked"
-  - Provide specific revision requirements to SM Agent
-  - Document all issues that need addressing
-  
-- [ ] **Escalate**: Requires human architect review
-  - Complex architectural decisions beyond agent scope
-  - Conflicting architectural requirements
-  - Novel patterns requiring human judgment
+## 5. Technical Feasibility (1 pt)
 
-**Selected Outcome**: ________________
+| Item | Status |
+|------|--------|
+| System-level feasibility confirmed | [ ] |
+| No arch blockers | [ ] |
+| System complexity manageable | [ ] |
+| Arch dependencies viable | [ ] |
 
-### Findings Summary
-**Key Architectural Concerns**: ________________
+**Score:** ___/1 | **Issues:** ___
 
-**Recommendations**: ________________
+**Scoring:** 1=Feasible, 0=Concerns/blockers
 
-**Advisory Notes** (for Approved stories): ________________
+---
 
-**Revision Requirements** (for Revise outcome): ________________
+# REVIEW SUMMARY
 
-**Escalation Reason** (for Escalate outcome): ________________
+## Total Score
 
-## Review Metadata
-- **Reviewed By**: Architect Agent
-- **Review Date**: ________________
-- **SM Quality Score** (reference): ___/10
-- **Complexity Indicators** (reference): ________________
-- **Review Duration**: ________________ minutes
+**Arch Review Score:** ___/10
 
- 
+## Outcome Decision
+
+| Outcome | Criteria | Action |
+|---------|----------|--------|
+| **Approved** | Score ≥7 | Status="Approved", document approval+notes |
+| **Revise** | Score <7 | Status="Blocked", provide revision reqs to SM |
+| **Escalate** | Complex/novel/conflicting | Human architect review needed |
+
+**Selected:** ___ | **Reasoning:** ___
+
+---
+
+## Findings
+
+**Key Concerns:** ___
+
+**Recommendations:** ___
+
+**Advisory Notes** (Approved): ___
+
+**Revision Reqs** (Revise): ___
+
+**Escalation Reason** (Escalate): ___
+
+---
+
+## Metadata
+
+| Field | Value |
+|-------|-------|
+| Reviewed By | Architect Agent |
+| Review Date | ___ |
+| SM Quality Score (ref) | ___/10 |
+| Complexity Indicators (ref) | ___ |
+| Review Duration | ___ min |

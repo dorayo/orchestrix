@@ -1,214 +1,178 @@
 # test-design
 
-Create comprehensive test scenarios with appropriate test level recommendations for story implementation.
+Design test strategy: what to test, at which level, and why.
 
 ## Inputs
 
 ```yaml
 required:
-  - story_id: '{epic}.{story}' # e.g., "1.3"
-  - story_path: '{devStoryLocation}/{epic}.{story}.*.md' # Path from core-config.yaml
-  - story_title: '{title}' # If missing, derive from story file H1
-  - story_slug: '{slug}' # If missing, derive from title (lowercase, hyphenated)
+  - story_id: '{epic}.{story}'
+  - story_path: '{devStoryLocation}/{epic}.{story}.*.md'
+  - story_title: '{title}' # Derive from H1 if missing
+  - story_slug: '{slug}' # Derive from title if missing
 ```
 
 ## Purpose
 
-Design a complete test strategy that identifies what to test, at which level (unit/integration/e2e), and why. This ensures efficient test coverage without redundancy while maintaining appropriate test boundaries.
+Identify test scenarios, assign levels (unit/integration/e2e), and priorities (P0-P3) for efficient coverage without redundancy.
 
 ## Dependencies
 
 ```yaml
 data:
-  - test-levels-framework.md # Unit/Integration/E2E decision criteria
-  - test-priorities-matrix.md # P0/P1/P2/P3 classification system
+  - test-levels-framework.md
+  - test-priorities-matrix.md
 ```
 
 ## Process
 
 ### 1. Analyze Story Requirements
 
-Break down each acceptance criterion into testable scenarios. For each AC:
-
-- Identify the core functionality to test
-- Determine data variations needed
-- Consider error conditions
-- Note edge cases
+Per AC, identify: core functionality, data variations, error conditions, edge cases.
 
 ### 2. Apply Test Level Framework
 
-**Reference:** Load `test-levels-framework.md` for detailed criteria
+Load `test-levels-framework.md`.
 
-Quick rules:
-
-- **Unit**: Pure logic, algorithms, calculations
-- **Integration**: Component interactions, DB operations
-- **E2E**: Critical user journeys, compliance
+- **Unit**: Logic, algorithms, calculations
+- **Integration**: Component interactions, DB ops
+- **E2E**: Critical journeys, compliance
 
 ### 3. Assign Priorities
 
-**Reference:** Load `test-priorities-matrix.md` for classification
-
-Quick priority assignment:
+Load `test-priorities-matrix.md`.
 
 - **P0**: Revenue-critical, security, compliance
-- **P1**: Core user journeys, frequently used
-- **P2**: Secondary features, admin functions
-- **P3**: Nice-to-have, rarely used
+- **P1**: Core journeys, frequent use
+- **P2**: Secondary features, admin
+- **P3**: Nice-to-have, rare use
 
 ### 4. Design Test Scenarios
-
-For each identified test need, create:
 
 ```yaml
 test_scenario:
   id: '{epic}.{story}-{LEVEL}-{SEQ}'
-  requirement: 'AC reference'
+  requirement: 'AC ref'
   priority: P0|P1|P2|P3
   level: unit|integration|e2e
-  description: 'What is being tested'
-  justification: 'Why this level was chosen'
-  mitigates_risks: ['RISK-001'] # If risk profile exists
+  description: 'What tested'
+  justification: 'Why level'
+  mitigates_risks: ['RISK-001']
 ```
 
 ### 5. Validate Coverage
 
-Ensure:
-
-- Every AC has at least one test
-- No duplicate coverage across levels
-- Critical paths have multiple levels
-- Risk mitigations are addressed
+- Every AC has ≥1 test
+- No duplicate coverage
+- Critical paths multi-level
+- Risks addressed
 
 ## Outputs
 
 ### Output 1: Test Design Document
 
-**Save to:** `qa.qaLocation/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md`
+**Save:** `qa.qaLocation/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md`
 
 ```markdown
-# Test Design: Story {epic}.{story}
+# Test Design: {epic}.{story}
 
-Date: {date}
-Designer: Quinn (Test Architect)
+{date} | Quinn
 
-## Test Strategy Overview
+## Overview
 
-- Total test scenarios: X
-- Unit tests: Y (A%)
-- Integration tests: Z (B%)
-- E2E tests: W (C%)
-- Priority distribution: P0: X, P1: Y, P2: Z
+Total: X | Unit: Y (A%) | Int: Z (B%) | E2E: W (C%)
+Priority: P0: X, P1: Y, P2: Z
 
-## Test Scenarios by Acceptance Criteria
+## Scenarios by AC
 
 ### AC1: {description}
 
-#### Scenarios
+| ID           | Lvl | Pri | Test              | Why              |
+| ------------ | --- | --- | ----------------- | ---------------- |
+| 1.3-UNIT-001 | U   | P0  | Validate input    | Pure validation  |
+| 1.3-INT-001  | I   | P0  | Service processes | Multi-component  |
+| 1.3-E2E-001  | E   | P1  | User journey      | Critical path    |
 
-| ID           | Level       | Priority | Test                      | Justification            |
-| ------------ | ----------- | -------- | ------------------------- | ------------------------ |
-| 1.3-UNIT-001 | Unit        | P0       | Validate input format     | Pure validation logic    |
-| 1.3-INT-001  | Integration | P0       | Service processes request | Multi-component flow     |
-| 1.3-E2E-001  | E2E         | P1       | User completes journey    | Critical path validation |
-
-[Continue for all ACs...]
+[Continue for all ACs]
 
 ## Risk Coverage
 
-[Map test scenarios to identified risks if risk profile exists]
+[Map to risks if profile exists]
 
-## Recommended Execution Order
+## Execution Order
 
-1. P0 Unit tests (fail fast)
-2. P0 Integration tests
-3. P0 E2E tests
-4. P1 tests in order
-5. P2+ as time permits
+1. P0 Unit
+2. P0 Int
+3. P0 E2E
+4. P1
+5. P2+
 ```
 
 ### Output 2: Gate YAML Block
 
-Generate for inclusion in quality gate:
-
 ```yaml
 test_design:
   scenarios_total: X
-  by_level:
-    unit: Y
-    integration: Z
-    e2e: W
-  by_priority:
-    p0: A
-    p1: B
-    p2: C
-  coverage_gaps: [] # List any ACs without tests
+  by_level: {unit: Y, integration: Z, e2e: W}
+  by_priority: {p0: A, p1: B, p2: C}
+  coverage_gaps: []
 ```
 
 ### Output 3: Update Story File
 
-Update the Story file at `{devStoryLocation}/{epic}.{story}.*.md`:
+Update `{devStoryLocation}/{epic}.{story}.*.md`:
 
-**QA Test Design Metadata Section:**
+**QA Test Design Metadata:**
 ```markdown
 ## QA Test Design Metadata
 
-- **Test Design Level:** {Simple|Standard|Comprehensive}
-- **Test Design Status:** Complete
-- **Test Design Document:** qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
-- **Risk Profile Document:** {path if risk-profile was executed}
+- **Level:** {Simple|Standard|Comprehensive}
+- **Status:** Complete
+- **Document:** qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+- **Risk Profile:** {path if exists}
 ```
 
-**Status Field:**
-- Update Story Status to: `TestDesignComplete`
+**Status:** `TestDesignComplete`
 
 **Change Log:**
-- Append entry:
 ```markdown
-### {YYYY-MM-DD HH:MM} - QA Test Design Complete
-- Test design document created: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
-- Test scenarios identified: {count}
-- P0 tests: {count}, P1 tests: {count}, P2 tests: {count}
-- Status updated to: TestDesignComplete
+### {YYYY-MM-DD HH:MM} - Test Design Complete
+- Doc: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+- Scenarios: {total} (P0: {p0}, P1: {p1}, P2: {p2})
+- Status: TestDesignComplete
 ```
 
 ### Output 4: Handoff Message
 
-Print to console:
 ```text
-✅ Test Design Complete for Story {epic}.{story}
+✅ Test Design Complete: {epic}.{story}
 
-📋 Test Design Document: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
-📊 Test Scenarios: {total} ({unit} unit, {integration} integration, {e2e} e2e)
-🎯 Priority Distribution: P0: {count}, P1: {count}, P2: {count}
+📋 qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+📊 {total} scenarios ({unit}U, {int}I, {e2e}E) | P0:{p0} P1:{p1} P2:{p2}
 
-Next: Dev please execute command 'implement-story {epic}.{story}'
+Next: Dev execute 'implement-story {epic}.{story}'
 ```
 
 ### Output 5: Trace References
 
-Print for use by trace-requirements task:
-
 ```text
-Test design matrix: qa.qaLocation/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
-P0 tests identified: {count}
+Test design: qa.qaLocation/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+P0: {count}
 ```
 
 ## Quality Checklist
 
-Before finalizing, verify:
+- [ ] Every AC covered
+- [ ] Levels appropriate
+- [ ] No duplicates
+- [ ] Priorities align with risk
+- [ ] IDs follow convention
+- [ ] Scenarios atomic
 
-- [ ] Every AC has test coverage
-- [ ] Test levels are appropriate (not over-testing)
-- [ ] No duplicate coverage across levels
-- [ ] Priorities align with business risk
-- [ ] Test IDs follow naming convention
-- [ ] Scenarios are atomic and independent
+## Principles
 
-## Key Principles
-
-- **Shift left**: Prefer unit over integration, integration over E2E
-- **Risk-based**: Focus on what could go wrong
-- **Efficient coverage**: Test once at the right level
-- **Maintainability**: Consider long-term test maintenance
-- **Fast feedback**: Quick tests run first
+- **Shift left**: Unit > Int > E2E
+- **Risk-based**: Focus failures
+- **Efficient**: Test once, right level
+- **Maintainable**: Long-term cost
+- **Fast feedback**: Quick first
