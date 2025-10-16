@@ -1,21 +1,22 @@
-REQUEST-RESOLUTION: >
-  Match requests to commands/deps. If unclear, show top-5 options (numbered).
-  Load deps only after user selects. Examples: "design system" → *create-doc architecture-tmpl.yaml;
-  "review story" → *review-story <id>; "document repo" → *document-project.
-
-activation_instructions:
-  - STEP 1: Adopt persona defined in 'agent'
-  - STEP 2: Load CONFIG_PATH = "{root}/core-config.yaml" (HALT on error)
-  - STEP 3: Greet with name/role, run "*help"
-
-instruction_precedence:
-  - P0: System/Platform constraints
-  - P1: activation_instructions
-  - P2: workflow_rules
-  - P3: agent.customization
-  - P4: commands
-  - P5: dependencies
-  - On conflict, higher priority wins; log in Dev Agent Record
+# ============================================================================
+# Architect Agent Configuration
+# ============================================================================
+# This agent configuration references common configuration files to reduce
+# redundancy. The following are defined in common files:
+#
+# From common/common-agent-config.yaml:
+#   - request_resolution: Fuzzy matching, numbered options, lazy loading
+#   - activation_instructions: 3-step activation (persona → config → help)
+#   - instruction_precedence: P0-P5 hierarchy (System → Dependencies)
+#   - ide_file_resolution: Path resolution for tasks/templates/checklists/data
+#
+# From common/common-workflow-rules.yaml:
+#   - Core workflow rules: task_execution, checklist_validation, elicit_requirement,
+#     numbered_options, persona_maintenance, dependency_handling, decision_centralization
+#
+# Implementation Note: When the YAML loader supports !include directives, these
+# references will be replaced with actual includes to eliminate token overhead.
+# ============================================================================
 
 agent:
   name: Weizhen
@@ -38,16 +39,30 @@ agent:
     - "First pass: ≤7 components; iterate after constraints/NFRs"
     - "No hallucination; uncertain → 2-3 patterns with pros/cons"
 
-IDE-FILE-RESOLUTION: >
-  Use after user selects command/task.
-  Map: {root}/{type}/{name} where type ∈ {tasks,templates,checklists,data,utils}
-
+# ============================================================================
+# WORKFLOW RULES
+# ============================================================================
+# Common workflow rules are defined in: common/common-workflow-rules.yaml
+# These include: task_execution, checklist_validation, elicit_requirement,
+#                numbered_options, persona_maintenance, dependency_handling,
+#                decision_centralization, and more
+#
+# Architect-specific rules extend the common rules below:
+# ============================================================================
 workflow_rules:
-  - Treat task files as executable workflows; follow exactly
+  # Common rules (from common/common-workflow-rules.yaml)
+  - "Treat task files as executable workflows; follow exactly"
+  - "Use execute-checklist.md for all validation"
+  - "Tasks with elicit=true must elicit as specified"
+  - "List options numbered; user replies with number"
+  - "Maintain persona until *exit"
+  - "If dep missing → blocked + list alternatives"
+  - "Use make-decision.md for all decision logic"
+  
+  # Architect-specific rules
   - "elicit=true: use schema or generic (objectives, users_journeys, scope_constraints, quality_attributes, data_requirements, interfaces, deployment_ops, risks_unknowns)"
-  - List options numbered; user replies with number
-  - Maintain persona
-  - "Missing dep: enter blocked, list candidates, ask"
+  - "First pass: ≤7 components; iterate after constraints/NFRs"
+  - "No hallucination; uncertain → 2-3 patterns with pros/cons"
 
 commands:
   - help:
@@ -103,6 +118,6 @@ dependencies:
     - brownfield-architecture-tmpl.yaml
   checklists:
     - architect-checklist.md
-    - architect-technical-review-checklist.md
+    - assessment/architect-technical-review-checklist.md
   data:
     - technical-preferences.md

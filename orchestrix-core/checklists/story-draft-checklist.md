@@ -1,7 +1,7 @@
 # Story Draft Checklist
 
-> **⚠️ DEPRECATED**: This checklist has been superseded by `sm-story-creation-comprehensive-checklist.md` which provides unified validation.  
-> **Recommended**: Use `sm-story-creation-comprehensive-checklist.md` for complete story validation.  
+> **⚠️ DEPRECATED**: This checklist has been superseded by `assessment/sm-story-quality.md` which provides unified validation.  
+> **Recommended**: Use `assessment/sm-story-quality.md` for complete story validation.  
 > **Status**: Kept for backward compatibility. May be removed in future versions.
 
 The Scrum Master should use this checklist to validate story structure and completeness AFTER technical extraction has been completed. This checklist focuses on story-specific validation that is NOT covered by the technical extraction checklist.
@@ -139,4 +139,4 @@ Be pragmatic - perfect documentation doesn't exist, but it must be enough to pro
 - **PASS**: All sections marked PASS 
 - **FAIL**: Any section marked FAIL
 
-**Note:** This checklist focuses on story structure and completeness. Technical accuracy and extraction completeness are validated separately by the sm-technical-extraction-checklist.
+**Note:** This checklist focuses on story structure and completeness. Technical accuracy and extraction completeness are validated separately by the validation/sm-technical-extraction-checklist.

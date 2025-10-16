@@ -1,0 +1,278 @@
+# Common Agent Configuration
+# Version: 1.0
+# Purpose: Shared configuration for all Orchestrix agents
+# This file reduces redundancy across agent YAML files
+
+version: 1.0
+
+# Request Resolution Strategy
+# Used by all agents to match user requests to commands/dependencies
+request_resolution:
+  description: >
+    Match user requests to commands/dependencies. If no clear match is found,
+    present top-5 numbered options and wait for user selection.
+    Load dependency files only after user makes a selection.
+  
+  strategy: "fuzzy_match"
+  
+  max_options: 5
+  
+  format: "numbered_list"
+  
+  load_strategy: "lazy"  # Load dependencies only after selection
+  
+  behavior:
+    - "Match requests to commands/deps"
+    - "If unclear → show top-5 options (numbered)"
+    - "Load deps only after user selects"
+  
+  examples:
+    sm:
+      - input: "draft story"
+        output: "*draft"
+      - input: "checklist"
+        output: "*story-checklist"
+    
+    architect:
+      - input: "design system"
+        output: "*create-doc architecture-tmpl.yaml"
+      - input: "review story"
+        output: "*review-story <id>"
+      - input: "document repo"
+        output: "*document-project"
+    
+    dev:
+      - input: "implement"
+        output: "*develop-story"
+      - input: "run tests"
+        output: "*run-tests"
+    
+    qa:
+      - input: "review"
+        output: "*review {story}"
+      - input: "test design"
+        output: "*test-design {story}"
+
+# IDE File Resolution Strategy
+# Used by all agents to resolve dependency file paths
+ide_file_resolution:
+  description: >
+    Resolve dependency file paths after user selects a command/task.
+    Maps logical names to physical file paths using a standardized pattern.
+  
+  usage: "Use after user selects command/task"
+  
+  root_variable: "{root}"
+  
+  type_mapping:
+    tasks: "tasks"
+    templates: "templates"
+    checklists: "checklists"
+    data: "data"
+    utils: "utils"
+  
+  path_pattern: "{root}/{type}/{name}"
+  
+  behavior:
+    - "Use after user selects command/task"
+    - "Map: {root}/{type}/{name} where type ∈ {tasks,templates,checklists,data,utils}"
+    - "Load only when executing commands"
+  
+  examples:
+    - logical: "create-doc.md"
+      resolved: "{root}/tasks/create-doc.md"
+    - logical: "story-tmpl.yaml"
+      resolved: "{root}/templates/story-tmpl.yaml"
+    - logical: "architect-checklist.md"
+      resolved: "{root}/checklists/architect-checklist.md"
+    - logical: "technical-preferences.md"
+      resolved: "{root}/data/technical-preferences.md"
+  
+  notes:
+    - "Dependencies are loaded lazily after command selection"
+    - "Root path is resolved from core-config.yaml"
+    - "Type is inferred from file extension and context"
+
+# Activation Instructions
+# Standard activation sequence for all agents
+activation_instructions:
+  description: >
+    Standard activation sequence executed when an agent is initialized.
+    All agents follow this three-step process to ensure consistent startup behavior.
+  
+  steps:
+    - step: 1
+      action: "Adopt persona from 'agent'"
+      description: "Load and embody the agent's persona definition"
+      on_error: "continue"
+    
+    - step: 2
+      action: "Load CONFIG_PATH from {root}/core-config.yaml"
+      description: "Load core configuration file"
+      on_error: "HALT"
+      error_message: "Configuration load error → HALT"
+    
+    - step: 3
+      action: "Greet with name/role and run *help"
+      description: "Introduce agent and display available commands"
+      on_error: "continue"
+  
+  behavior:
+    - "STEP 1: Adopt persona defined in 'agent'"
+    - "STEP 2: Load CONFIG_PATH = '{root}/core-config.yaml' (HALT on error)"
+    - "STEP 3: Greet with name/role, run '*help'"
+  
+  notes:
+    - "All agents use identical activation sequence"
+    - "Step 2 is critical - HALT if config cannot be loaded"
+    - "Some agents add 'HALT awaiting selection' after step 3"
+    - "Load NO other files during activation; only dependencies after command selection"
+    - "STAY IN CHARACTER until *exit"
+  
+  variations:
+    orchestrix_orchestrator:
+      step_3_addition: "then HALT awaiting a selection"
+    
+    orchestrix_master:
+      step_3_addition: "then HALT awaiting a selection"
+    
+    qa:
+      additional_notes:
+        - "Load NO other files during activation; only dependencies after command selection"
+        - "STAY IN CHARACTER until *exit"
+
+# Instruction Precedence Hierarchy
+# Defines the priority order for resolving conflicting instructions
+instruction_precedence:
+  description: >
+    Defines the priority hierarchy for instruction resolution when conflicts arise.
+    Higher priority (lower P number) wins. All conflicts should be logged in the
+    Dev Agent Record (or equivalent agent log).
+  
+  levels:
+    - level: 0
+      name: "System/Platform constraints"
+      description: "Operating system, platform, and environment constraints"
+      priority: "highest"
+    
+    - level: 1
+      name: "activation_instructions"
+      description: "Agent activation and initialization instructions"
+      priority: "very_high"
+    
+    - level: 2
+      name: "workflow_rules"
+      description: "Core workflow and process rules"
+      priority: "high"
+    
+    - level: 3
+      name: "agent.customization"
+      description: "Agent-specific customization and preferences"
+      priority: "medium"
+    
+    - level: 4
+      name: "commands"
+      description: "Command definitions and behaviors"
+      priority: "low"
+    
+    - level: 5
+      name: "dependencies"
+      description: "Task, template, checklist, and data file dependencies"
+      priority: "lowest"
+  
+  conflict_resolution:
+    rule: "higher_priority_wins"
+    description: "When instructions conflict, the instruction from the higher priority level takes precedence"
+  
+  logging:
+    required: true
+    location: "Dev Agent Record"
+    description: "All conflicts and resolutions must be logged"
+    note: "Other agents may use equivalent logging locations (e.g., QA log, Architect notes)"
+  
+  behavior:
+    - "P0: System/Platform constraints"
+    - "P1: activation_instructions"
+    - "P2: workflow_rules"
+    - "P3: agent.customization"
+    - "P4: commands"
+    - "P5: dependencies"
+    - "Higher priority wins on conflict"
+    - "Log in Dev Agent Record (or agent-specific log)"
+  
+  examples:
+    - scenario: "workflow_rules (P2) conflicts with commands (P4)"
+      resolution: "workflow_rules takes precedence"
+      action: "Follow workflow_rules, log conflict"
+    
+    - scenario: "agent.customization (P3) conflicts with dependencies (P5)"
+      resolution: "agent.customization takes precedence"
+      action: "Follow customization, log conflict"
+    
+    - scenario: "System constraint (P0) conflicts with any other level"
+      resolution: "System constraint always wins"
+      action: "Follow system constraint, log conflict"
+  
+  notes:
+    - "All four core agents (SM, Architect, Dev, QA) use identical precedence hierarchy"
+    - "Precedence applies to all instruction sources within the agent configuration"
+    - "When in doubt, consult higher priority levels first"
+    - "Conflicts should be rare if agent configurations are well-designed"
+
+# YAML Include Mechanism
+# Defines how agents can include this common configuration
+yaml_include:
+  description: >
+    Mechanism for agents to include common configuration sections.
+    This reduces redundancy and ensures consistency across all agents.
+  
+  syntax: "!include common/common-agent-config.yaml"
+  
+  usage:
+    full_file: "!include common/common-agent-config.yaml"
+    specific_section: "!include common/common-agent-config.yaml#request_resolution"
+  
+  behavior:
+    - "Include directive loads the specified configuration"
+    - "Agent-specific overrides can be added after the include"
+    - "Agent-specific additions extend the common configuration"
+    - "Conflicts resolved per instruction_precedence hierarchy"
+  
+  examples:
+    - description: "Include entire common config at top of agent file"
+      code: |
+        # sm.yaml
+        !include common/common-agent-config.yaml
+        
+        agent:
+          name: Sam
+          id: sm
+          # ... agent-specific config
+    
+    - description: "Include specific section and extend with agent-specific rules"
+      code: |
+        # dev.yaml
+        workflow_rules:
+          !include common/common-agent-config.yaml#workflow_rules
+          # Dev-specific rules
+          - "TDD: RED → GREEN → REFACTOR per task"
+          - "No prod code before failing test; else HALT"
+    
+    - description: "Override common config with agent-specific values"
+      code: |
+        # architect.yaml
+        request_resolution:
+          !include common/common-agent-config.yaml#request_resolution
+          max_options: 7  # Override: Architect shows more options
+  
+  notes:
+    - "Include mechanism reduces token consumption by eliminating redundancy"
+    - "Agent files become smaller and more focused on agent-specific behavior"
+    - "Common configuration is maintained in one place"
+    - "Changes to common config automatically propagate to all agents"
+  
+  implementation_status: "planned"
+  implementation_note: >
+    The !include syntax is a design pattern. Actual implementation depends on
+    the YAML parser and agent loading mechanism. May require custom YAML loader
+    or preprocessing step to resolve includes before agent initialization.

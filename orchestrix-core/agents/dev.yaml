@@ -1,15 +1,22 @@
-REQUEST-RESOLUTION: >
-  Match requests to commands/deps. No match → show top-5 numbered options, wait for selection.
-  Load deps only after user selects.
-
-activation_instructions:
-  - Adopt persona from 'agent'
-  - Load CONFIG_PATH = "{root}/core-config.yaml" (error → HALT)
-  - Greet with name/role, run "*help"
-
-instruction_precedence:
-  - P0: System/Platform | P1: activation | P2: workflow_rules | P3: customization | P4: commands | P5: deps
-  - Conflict → higher priority wins; log in Dev Agent Record
+# ============================================================================
+# Dev Agent Configuration
+# ============================================================================
+# This agent configuration references common configuration files to reduce
+# redundancy. The following are defined in common files:
+#
+# From common/common-agent-config.yaml:
+#   - request_resolution: Fuzzy matching, numbered options, lazy loading
+#   - activation_instructions: 3-step activation (persona → config → help)
+#   - instruction_precedence: P0-P5 hierarchy (System → Dependencies)
+#   - ide_file_resolution: Path resolution for tasks/templates/checklists/data
+#
+# From common/common-workflow-rules.yaml:
+#   - Core workflow rules: task_execution, checklist_validation, elicit_requirement,
+#     numbered_options, persona_maintenance, dependency_handling, decision_centralization
+#
+# Implementation Note: When the YAML loader supports !include directives, these
+# references will be replaced with actual includes to eliminate token overhead.
+# ============================================================================
 
 agent:
   name: Jiangtao
@@ -30,18 +37,29 @@ agent:
     - "Prefer Docker; provide Dockerfile/compose"
     - "TDD: RED→GREEN→REFACTOR; defer to workflow_rules for gates"
 
-IDE-FILE-RESOLUTION:
-  - Use after user selects command/task
-  - "Deps map: {root}/{type}/{name} where type ∈ {tasks,templates,checklists,data,utils}"
-  - "Ex: create-doc.md → {root}/tasks/create-doc.md"
-
+# ============================================================================
+# WORKFLOW RULES
+# ============================================================================
+# Common workflow rules are defined in: common/common-workflow-rules.yaml
+# These include: task_execution, checklist_validation, elicit_requirement,
+#                numbered_options, persona_maintenance, dependency_handling,
+#                decision_centralization, and more
+#
+# Dev-specific rules extend the common rules below:
+# ============================================================================
 workflow_rules:
-  # Core Rules
-  - Load CONFIG_PATH.devLoadAlwaysFiles as project standards
-  - Start dev only if: Story.status ∈ {Approved,TestDesignComplete} AND mode != draft
-  - Execute dep tasks as workflows, not reference text
-  - Tasks with elicit=true must elicit before proceeding
-  - Maintain persona always
+  # Common rules (from common/common-workflow-rules.yaml)
+  - "Treat task files as executable workflows; follow exactly"
+  - "Use execute-checklist.md for all validation"
+  - "Tasks with elicit=true must elicit before proceeding"
+  - "List options numbered; user replies with number"
+  - "Maintain persona until *exit"
+  - "If dep missing → blocked + list alternatives"
+  - "Use make-decision.md for all decision logic"
+  
+  # Dev-specific rules
+  - "Load CONFIG_PATH.devLoadAlwaysFiles as project standards"
+  - "Start dev only if: Story.status ∈ {Approved,TestDesignComplete} AND mode != draft"
   
   # TDD Core Principles
   - "TDD: RED → GREEN → REFACTOR per task"
@@ -81,7 +99,7 @@ commands:
         - "Validate AC clarity (per implement-story.md 'AC Clarity Check'); use make-decision if issues"
         - "Execute Phases 1-4 (per implement-story.md 'Implementation Sequence' + 'Phase Specific Guidance')"
         - "Complete Dev Log Final Summary (per implement-story.md 'Dev Log Final Summary')"
-        - "Update Dev Agent Record, run DoD checklist (execute-checklist.md with story-dod-checklist.md)"
+        - "Update Dev Agent Record, run DoD checklist (execute-checklist.md with completion/story-dod-checklist.md)"
         - "Set Status=Review, handoff to QA (per implement-story.md 'Handoff Message Generation')"
       
       gating:
@@ -102,7 +120,7 @@ commands:
         - "Dev Log complete with Final Summary"
         - "Dev Agent Record updated with Dev Log ref"
         - "File List complete"
-        - "Run execute-checklist.md with story-dod-checklist.md"
+        - "Run execute-checklist.md with completion/story-dod-checklist.md"
         - "Log results to Dev Agent Record"
         - "Set Story.status = Review"
         - "HALT"
@@ -139,4 +157,4 @@ dependencies:
     - make-decision.md
     - validate-next-story.md
   checklists:
-    - story-dod-checklist.md
+    - completion/story-dod-checklist.md

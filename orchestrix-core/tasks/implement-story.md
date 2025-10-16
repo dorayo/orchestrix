@@ -272,7 +272,7 @@ quality_gates:
     - Change Log updated
     
   dod_checklist:
-    - Execute story-dod-checklist.md
+    - Execute completion/story-dod-checklist.md
     - Verify 100% completion
     - Document exceptions
     - Mark complete only if passes

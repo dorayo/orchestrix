@@ -1445,11 +1445,11 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           sequence: [
             'Load story file and analyze requirements',
             'Execute develop-story workflow: Read task → Implement → Test → Validate → Update progress',
-            'Run execute-checklist with story-dod-checklist.md',
+            'Run execute-checklist with completion/story-dod-checklist.md',
             'Update story status to "Ready for Review"'
           ],
           dependencies: ['execute-checklist.md', 'validate-next-story.md'],
-          checklist: 'story-dod-checklist.md'
+          checklist: 'completion/story-dod-checklist.md'
         },
         'testing_validation': {
           sequence: [
@@ -1492,10 +1492,10 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           sequence: [
             'Load story and analyze technical accuracy',
             'Execute review-story-technical-accuracy.md task',
-            'Run execute-checklist with architect-technical-review-checklist.md'
+            'Run execute-checklist with assessment/architect-technical-review-checklist.md'
           ],
           dependencies: ['review-story-technical-accuracy.md', 'execute-checklist.md'],
-          checklist: 'architect-technical-review-checklist.md'
+          checklist: 'assessment/architect-technical-review-checklist.md'
         },
         'project_documentation': {
           sequence: [
@@ -1518,10 +1518,10 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           sequence: [
             'Execute create-next-story.md task',
             'Generate comprehensive story with acceptance criteria',
-            'Run execute-checklist with sm-story-creation-comprehensive-checklist.md'
+            'Run execute-checklist with assessment/sm-story-quality.md'
           ],
           dependencies: ['create-next-story.md', 'execute-checklist.md'],
-          checklist: 'sm-story-creation-comprehensive-checklist.md'
+          checklist: 'assessment/sm-story-quality.md'
         },
         'story_validation': {
           sequence: [
@@ -2317,7 +2317,7 @@ generateConstraintsSection(metadata, agentId) {
     'sm': [
       'You are NOT allowed to implement stories or modify code EVER!',
       'Stories MUST achieve >80% technical extraction completion rate',
-      'MANDATORY: Execute sm-story-creation-comprehensive-checklist during story creation'
+      'MANDATORY: Execute assessment/sm-story-quality.md during story creation'
     ],
     'qa': [
       'ONLY update QA Results section of story files',
@@ -2738,7 +2738,7 @@ generateSmWorkflow(metadata) {
 3. Execute create-next-story.md task
 4. Generate story using story-tmpl.yaml
 5. Extract ALL technical details from architecture
-6. Run sm-story-creation-comprehensive-checklist
+6. Run assessment/sm-story-quality.md
 7. Verify >80% completion rate
 8. If pass → Save to docs/stories/
 9. If fail → Enhance technical details and retry
@@ -3126,7 +3126,7 @@ generateQualitySection(metadata, agentId) {
     'sm': `\n## Quality Standards & Validation
 
 **Mandatory Validations**:
-- sm-story-creation-comprehensive-checklist for EVERY story
+- assessment/sm-story-quality.md for EVERY story
 - Minimum 80% technical extraction score
 - Quality score ≥7/10 for approval
 
@@ -3770,7 +3770,7 @@ parseListSection(text) {
       'sm': [
         'You are NOT allowed to implement stories or modify code EVER!',
         'Stories MUST achieve >80% technical extraction completion rate',
-        'MANDATORY: Execute sm-story-creation-comprehensive-checklist during story creation'
+        'MANDATORY: Execute assessment/sm-story-quality.md during story creation'
       ],
       'qa': [
         'ONLY update QA Results section of story files',
@@ -3878,7 +3878,7 @@ parseListSection(text) {
 3. Execute create-next-story.md task
 4. Generate story using story-tmpl.yaml
 5. Extract ALL technical details
-6. Run sm-story-creation-comprehensive-checklist
+6. Run assessment/sm-story-quality.md
 7. Verify >80% completion rate
 8. If pass → Save to docs/stories/
 9. If fail → Enhance and retry
@@ -4004,7 +4004,7 @@ parseListSection(text) {
       return `\n## Quality Standards & Validation
 
   **Mandatory Validations**:
-  - sm-story-creation-comprehensive-checklist for EVERY story
+  - assessment/sm-story-quality.md for EVERY story
   - Minimum 80% technical extraction score
   - Quality score ≥7/10 for approval
 
@@ -5063,7 +5063,7 @@ parseListSection(text) {
           '80% technical extraction',
           'create-next-story',
           'NOT allowed to implement stories',
-          'sm-story-creation-comprehensive-checklist',
+          'assessment/sm-story-quality.md',
           'docs/prd/',
           'docs/architecture/'
         ]

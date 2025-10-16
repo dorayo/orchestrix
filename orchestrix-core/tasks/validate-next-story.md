@@ -17,7 +17,7 @@ This task provides a business-focused validation perspective to ensure:
 - Optional quality gate for high-priority epics
 
 **When NOT to Use:**
-- SM technical validation (use sm-technical-extraction-checklist instead)
+- SM technical validation (use validation/sm-technical-extraction-checklist instead)
 - Dev implementation readiness (use validate-story-quality instead)
 - Architect technical review (use review-story-technical-accuracy instead)
 
@@ -97,7 +97,7 @@ This task provides a business-focused validation perspective to ensure:
 
 **Validation Flow:**
 ```
-SM Technical Validation (sm-technical-extraction-checklist)
+SM Technical Validation (validation/sm-technical-extraction-checklist)
          ↓
 SM Quality Scoring (validate-story-quality)
          ↓

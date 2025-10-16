@@ -98,7 +98,7 @@ Focus on architecture-specific concerns (SM already validated tech stack, naming
 
 ### Phase 5: Score & Decision
 
-18. **Calculate Score** (max 10, ref: `architect-technical-review-checklist.md`):
+18. **Calculate Score** (max 10, ref: `assessment/architect-technical-review-checklist.md`):
     - Architectural Pattern Compliance: 3pts
     - System Integration: 2pts
     - Scalability & Performance: 2pts
@@ -235,7 +235,7 @@ Based on final status:
 - Consider system context/maintainability
 - Recommend doc updates if outdated
 - Append to Story file (no separate files)
-- Use `architect-technical-review-checklist.md` for scoring
+- Use `assessment/architect-technical-review-checklist.md` for scoring
 - Use `make-decision` with `architect-review-result` decision type
 - Update Status based on decision + test_design_level
 - Mark issues as Critical/High/Medium/Low for SM auto-approval logic 

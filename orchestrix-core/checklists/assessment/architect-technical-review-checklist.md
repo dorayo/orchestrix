@@ -1,8 +1,34 @@
 # Architect Technical Review Checklist
 
-# ABBREVIATIONS (AC=Acceptance Criteria, Arch=Architecture, Perf=Performance, Sec=Security, Std=Standard, Comp=Comprehensive, Req=Required, Docs=Documents, Refs=References, Mgmt=Management)
+---
+metadata:
+  type: assessment
+  threshold: 70%
+  on_fail: continue_with_score
+  purpose: "System-level architecture review focusing on pattern compliance, integration, scalability, security, and technical feasibility"
+  used_by:
+    - review-story-technical-accuracy.md
+    - review-story-technical-auto.md
+  estimated_tokens: 600
+  version: 1.1
+---
 
-[[LLM: Focus on system-level arch concerns. SM already validated tech stack, naming, file structure, docs format. Review complements (not duplicates) SM validation]]
+## LLM INSTRUCTIONS
+
+**Review Scope:** System-level architecture (SM already validated tech stack, naming, file structure, docs format)
+
+**Execution:**
+1. Complete Prerequisites
+2. Score 5 Architecture Review categories (0-10 total)
+3. Count critical issues
+4. Use make-decision.md with architect-review-result decision type
+5. Document Findings
+
+**Scoring:** Full=Excellent/no concerns, Partial=Minor concerns, Zero=Significant issues
+
+---
+
+# ABBREVIATIONS (AC=Acceptance Criteria, Arch=Architecture, Perf=Performance, Sec=Security)
 
 ## Prerequisites
 
@@ -18,8 +44,6 @@
 
 # ARCHITECTURE REVIEW (10 Points)
 
-[[LLM: Score each category. Total ≥7 → Approved, <7 → Revise]]
-
 ## 1. Pattern Compliance (3 pts)
 
 | Item | Status |
@@ -30,8 +54,6 @@
 | Pattern usage documented | [ ] |
 
 **Score:** ___/3 | **Issues:** ___
-
-**Scoring:** 3=Excellent, 2=Good/minor concerns, 1=Issues not critical, 0=Significant violations
 
 ---
 
@@ -46,8 +68,6 @@
 
 **Score:** ___/2 | **Issues:** ___
 
-**Scoring:** 2=Sound w/ risk mitigation, 1=Acceptable/minor concerns, 0=Significant risks
-
 ---
 
 ## 3. Scalability & Perf (2 pts)
@@ -60,8 +80,6 @@
 | No obvious bottlenecks | [ ] |
 
 **Score:** ___/2 | **Issues:** ___
-
-**Scoring:** 2=Excellent considerations, 1=Acceptable/minor concerns, 0=Significant issues
 
 ---
 
@@ -76,8 +94,6 @@
 
 **Score:** ___/2 | **Issues:** ___
 
-**Scoring:** 2=Excellent alignment, 1=Acceptable/minor considerations, 0=Concerns present
-
 ---
 
 ## 5. Technical Feasibility (1 pt)
@@ -91,25 +107,28 @@
 
 **Score:** ___/1 | **Issues:** ___
 
-**Scoring:** 1=Feasible, 0=Concerns/blockers
-
 ---
 
 # REVIEW SUMMARY
 
-## Total Score
+**Arch Review Score:** ___/10  
+**Critical Issues Count:** ___  
+**Review Round:** ___
 
-**Arch Review Score:** ___/10
+---
 
-## Outcome Decision
+## Decision
 
-| Outcome | Criteria | Action |
-|---------|----------|--------|
-| **Approved** | Score ≥7 | Status="Approved", document approval+notes |
-| **Revise** | Score <7 | Status="Blocked", provide revision reqs to SM |
-| **Escalate** | Complex/novel/conflicting | Human architect review needed |
+**Use make-decision.md:**
+- Decision type: `architect-review-result`
+- Inputs:
+  - architecture_score: [score from above]
+  - critical_issues: [count from above]
+  - review_round: [current iteration number]
 
-**Selected:** ___ | **Reasoning:** ___
+**Decision file:** `data/decisions/architect-review-result.yaml`
+
+The decision determines: Approved | RequiresRevision | Escalated
 
 ---
 
@@ -119,11 +138,7 @@
 
 **Recommendations:** ___
 
-**Advisory Notes** (Approved): ___
-
-**Revision Reqs** (Revise): ___
-
-**Escalation Reason** (Escalate): ___
+**Notes:** ___
 
 ---
 
@@ -133,6 +148,5 @@
 |-------|-------|
 | Reviewed By | Architect Agent |
 | Review Date | ___ |
-| SM Quality Score (ref) | ___/10 |
-| Complexity Indicators (ref) | ___ |
+| SM Quality Score | ___/10 |
 | Review Duration | ___ min |

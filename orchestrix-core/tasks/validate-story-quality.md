@@ -1,7 +1,7 @@
 # validate-story-quality
 
 > **⚠️ DEPRECATED**: This task has been superseded by the unified checklist system.  
-> **Recommended**: Use `execute-checklist.md` with `sm-story-creation-comprehensive-checklist.md` for complete story validation.  
+> **Recommended**: Use `execute-checklist.md` with `assessment/sm-story-quality.md` for complete story validation.  
 > **Status**: Kept for backward compatibility. May be removed in future versions.
 
 Self-validation task for story quality exclusively for SM Agents to ensure that the created story meets strict quality standards.
@@ -14,7 +14,7 @@ After the SM Agent completes story creation, conduct comprehensive quality valid
 
 * The story file has been created (status: Draft)
 * The SM Agent has completed the `create-next-story` task
-* `sm-technical-extraction-checklist` has been executed and meets the minimum standards
+* `validation/sm-technical-extraction-checklist` has been executed and meets the minimum standards
 
 ## Validation Process
 
@@ -28,7 +28,7 @@ After the SM Agent completes story creation, conduct comprehensive quality valid
 
 **CRITICAL**: Review the technical extraction checklist completion:
 
-- Locate the `sm-technical-extraction-checklist` results from story creation
+- Locate the `validation/sm-technical-extraction-checklist` results from story creation
 - **Mandatory Requirements:**
   - Completion rate MUST be > 80% (Done items / Total applicable items)
   - All technical details in Dev Notes MUST have corresponding checklist verification
@@ -217,7 +217,7 @@ This validation process enforces the following quality gates:
 ### 9.1 Collect Validation Results
 
 **Input Sources:**
-1. **Technical Extraction Score** (from sm-technical-extraction-checklist)
+1. **Technical Extraction Score** (from validation/sm-technical-extraction-checklist)
    - Completion Rate: ___% (must be >80%)
    - Critical Issues: ___
 

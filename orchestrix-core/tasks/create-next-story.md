@@ -88,7 +88,7 @@ Requirements:
 
 ### 5. Technical Extraction Verification (MANDATORY)
 
-Execute `{root}/checklists/sm-technical-extraction-checklist.md`:
+Execute `{root}/checklists/validation/sm-technical-extraction-checklist.md`:
 
 1. Complete ALL sections
 2. Mark: [x] Done, [ ] Not Done, [N/A] Not Applicable
@@ -152,7 +152,7 @@ Execute enhanced verification:
 
 ### 8. Quality Check & Status Decision
 
-Execute `{root}/tasks/execute-checklist.md` with `{root}/checklists/sm-story-creation-comprehensive-checklist.md`
+Execute `{root}/tasks/execute-checklist.md` with `{root}/checklists/assessment/sm-story-quality.md`
 
 #### Status Transition Validation
 
