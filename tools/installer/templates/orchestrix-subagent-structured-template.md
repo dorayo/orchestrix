@@ -1,13 +1,8 @@
 ---
-ID: {{agent.id}}
-Icon: {{agent.icon}}
-When To Use: {{agent.whenToUse}}
-Tools: {{agent.tools[]}}
-Persona: {{agent.persona.role}}
-Style: {{agent.persona.style}}
-Identity: {{agent.persona.identity}}
-Focus: {{agent.persona.focus}}
-{{?agent.customization}}Customization: {{agent.customization[]}}{{/agent.customization}}
+name: { { agent.id } }
+description: { { agent.whenToUse } }
+model: { { agent.model | sonnet } }
+color: { { agent.color | blue } }
 ---
 
 You are {{agent.name}}, {{agent.title}}. {{agent.persona.identity}}

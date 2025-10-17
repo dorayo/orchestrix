@@ -461,7 +461,13 @@ class IdeSetup {
     ];
     
     // Also check expansion pack directories
-    const expansionDirs = glob.sync(".*/agents", { cwd: installDir });
+    // Exclude IDE configuration directories
+    const expansionDirs = glob.sync(".*/agents", { cwd: installDir }).filter(dir => {
+      const dirName = path.basename(path.dirname(dir));
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      return !ideConfigDirs.includes(dirName);
+    });
+    
     for (const expDir of expansionDirs) {
       possiblePaths.push(path.join(installDir, expDir, `${agentId}.yaml`));
       possiblePaths.push(path.join(installDir, expDir, `${agentId}.md`));
@@ -501,7 +507,13 @@ class IdeSetup {
     }
     
     // Also check for expansion pack agents in dot folders
-    const expansionDirs = glob.sync(".*/agents", { cwd: installDir });
+    // Exclude IDE configuration directories (.claude, .cursor, .windsurf, .trae, etc.)
+    const expansionDirs = glob.sync(".*/agents", { cwd: installDir }).filter(dir => {
+      const dirName = path.basename(path.dirname(dir));
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      return !ideConfigDirs.includes(dirName);
+    });
+    
     for (const expDir of expansionDirs) {
       const fullExpDir = path.join(installDir, expDir);
       
@@ -631,7 +643,13 @@ class IdeSetup {
     }
     
     // Also check for expansion pack tasks in dot folders
-    const expansionDirs = glob.sync(".*/tasks", { cwd: installDir });
+    // Exclude IDE configuration directories
+    const expansionDirs = glob.sync(".*/tasks", { cwd: installDir }).filter(dir => {
+      const dirName = path.basename(path.dirname(dir));
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      return !ideConfigDirs.includes(dirName);
+    });
+    
     for (const expDir of expansionDirs) {
       const fullExpDir = path.join(installDir, expDir);
       const expTaskFiles = glob.sync("*.md", { cwd: fullExpDir });
@@ -664,7 +682,13 @@ class IdeSetup {
     // Also check expansion pack directories
     
     // Check dot folder expansion packs
-    const expansionDirs = glob.sync(".*/tasks", { cwd: installDir });
+    // Exclude IDE configuration directories
+    const expansionDirs = glob.sync(".*/tasks", { cwd: installDir }).filter(dir => {
+      const dirName = path.basename(path.dirname(dir));
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      return !ideConfigDirs.includes(dirName);
+    });
+    
     for (const expDir of expansionDirs) {
       possiblePaths.push(path.join(installDir, expDir, `${taskId}.md`));
     }
@@ -1971,21 +1995,29 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     
     await fileManager.ensureDirectory(subagentsDir);
     
+    let successCount = 0;
+    
     for (const agentId of agents) {
       const agentPath = await this.findAgentPath(agentId, installDir);
       
       if (agentPath) {
-        const agentContent = await fileManager.readFile(agentPath);
-        const subagentPath = path.join(subagentsDir, `${agentId}.md`);
-        
-        // 使用增强的模板系统
-        const subagentContent = await this.generateEnhancedSubagentContent(agentId, agentContent, installDir);
-        
-        await fileManager.writeFile(subagentPath, subagentContent);
+        try {
+          const agentContent = await fileManager.readFile(agentPath);
+          const subagentPath = path.join(subagentsDir, `${agentId}.md`);
+          
+          // 使用增强的模板系统
+          const subagentContent = await this.generateEnhancedSubagentContent(agentId, agentContent, installDir);
+          
+          await fileManager.writeFile(subagentPath, subagentContent);
+          successCount++;
+        } catch (error) {
+          // 跳过无法处理的 agent（如用户自定义的文件）
+          console.warn(chalk.yellow(`⚠️  Skipping ${agentId}: ${error.message}`));
+        }
       }
     }
     
-    return agents.length;
+    return successCount;
   }
 
 
@@ -2067,7 +2099,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
     
     try {
       const parsed = yaml.load(yamlContent);
-      return {
+      const metadata = {
         agent: parsed.agent || {},
         persona: parsed.persona || {},
         core_principles: parsed.core_principles || parsed.persona?.core_principles || [],
@@ -2080,8 +2112,17 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         name: parsed.agent?.name || agentId,
         title: parsed.agent?.title || agentId.charAt(0).toUpperCase() + agentId.slice(1),
         role: parsed.persona?.role || 'AI Assistant',
-        style: parsed.persona?.style || 'Professional'
+        style: parsed.persona?.style || 'Professional',
+        // Claude Code specific fields
+        model: this.getAgentModel(agentId),
+        color: this.getAgentColor(agentId)
       };
+      
+      // Merge model and color into agent object for template access
+      metadata.agent.model = metadata.model;
+      metadata.agent.color = metadata.color;
+      
+      return metadata;
     } catch (error) {
       console.warn(`YAML parsing failed for ${agentId}: ${error.message}, falling back to regex extraction`);
       return this.extractAgentMetadata(agentContent); // Fallback to regex method
@@ -2091,13 +2132,15 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   // 获取默认元数据结构
   getDefaultMetadata(agentId) {
     const title = agentId.charAt(0).toUpperCase() + agentId.slice(1);
-    return {
+    const metadata = {
       agent: {
         name: title,
         title: title,
         id: agentId,
         whenToUse: 'general assistance and task execution',
-        tools: this.getAgentPermissions(agentId).join(', ')
+        tools: this.getAgentPermissions(agentId).join(', '),
+        model: this.getAgentModel(agentId),
+        color: this.getAgentColor(agentId)
       },
       persona: {
         role: 'AI Assistant',
@@ -2123,8 +2166,45 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       commands: [],
       dependencies: {},
       customization: [],
-      tools: this.getAgentPermissions(agentId)
+      tools: this.getAgentPermissions(agentId),
+      model: this.getAgentModel(agentId),
+      color: this.getAgentColor(agentId)
     };
+    return metadata;
+  }
+  
+  // Get recommended model for each agent type
+  getAgentModel(agentId) {
+    const modelMap = {
+      'orchestrix-master': 'opus',
+      'orchestrix-orchestrator': 'opus',
+      'qa': 'opus',
+      'sm': 'opus',
+      'architect': 'sonnet',
+      'analyst': 'sonnet',
+      'pm': 'sonnet',
+      'dev': 'sonnet-3.7',
+      'po': 'sonnet-3.7',
+      'ux-expert': 'sonnet-3.7'
+    };
+    return modelMap[agentId] || 'sonnet';
+  }
+  
+  // Get color for each agent type
+  getAgentColor(agentId) {
+    const colorMap = {
+      'orchestrix-master': 'purple',
+      'orchestrix-orchestrator': 'pink',
+      'qa': 'red',
+      'sm': 'orange',
+      'architect': 'cyan',
+      'analyst': 'blue',
+      'pm': 'green',
+      'dev': 'teal',
+      'po': 'yellow',
+      'ux-expert': 'magenta'
+    };
+    return colorMap[agentId] || 'blue';
   }
 
   // 增强的metadata提取，确保捕获所有信息
@@ -5196,10 +5276,15 @@ parseListSection(text) {
         return this.resolveArrayTemplate(path, data);
       }
       
-      // Handle conditional paths with | separator
+      // Handle conditional paths with | separator (fallback/default values)
       if (path.includes(' | ')) {
         const paths = path.split(' | ').map(p => p.trim());
         for (const p of paths) {
+          // Check if this is a plain value (not a path)
+          if (!p.includes('.') && !p.includes('[')) {
+            // This is a default value, return it directly
+            return p;
+          }
           const value = this.resolveTemplatePath(p, data, agentId);
           if (value && value !== '') {
             return value;
