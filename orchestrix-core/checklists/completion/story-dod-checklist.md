@@ -6,11 +6,6 @@ metadata:
   threshold: 95%
   on_fail: document_gaps
   purpose: "Developer self-assessment before marking story as Review"
-  used_by:
-    - implement-story.md
-    - validate-compilation-auto.md
-  estimated_tokens: 1200
-  version: 1.1
 ---
 
 ## LLM Instructions

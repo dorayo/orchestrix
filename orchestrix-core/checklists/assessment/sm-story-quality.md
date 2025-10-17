@@ -6,26 +6,19 @@ metadata:
   threshold: 80%
   on_fail: continue_with_score
   purpose: "Quality assessment for SM story creation with structure validation gate and technical quality scoring"
-  used_by:
-    - create-next-story.md
-    - validate-story-quality.md
-  estimated_tokens: 1500
-  version: 1.1
 ---
 
 ## LLM EXECUTION INSTRUCTIONS
 
-| Step | Action | Condition | Outcome |
-|------|--------|-----------|---------|
-| 1 | Structure Validation | Gate=100% | Fail → Blocked, STOP |
-| 2 | Technical Quality | P1=100% | S2<80% → Blocked |
-| 3 | Quality Score | P1=100% AND S2≥80% | (S2×0.50)+(S3×0.50) |
-| 4 | Complexity Detection | P2 done | 7 indicators |
-| 5 | Decisions | All passed | make-decision.md: Arch→Test→Status |
+**Execution Flow**:
+1. Structure Validation (Gate=100%) → Fail = Blocked, STOP
+2. Technical Quality (P1=100%) → S2<80% = Blocked
+3. Quality Score (P1=100% AND S2≥80%) → (S2×0.50)+(S3×0.50)
+4. Complexity Detection (P2 done) → 7 indicators
 
-**Rules:** P1 fail → Blocked, STOP | P2<80% → Blocked | Decisions in data/decisions/
+**Rules**: P1 fail → Blocked, STOP | P2<80% → Blocked
 
-**Abbrev:** AC=Acceptance Criteria, Q=Quality, C=Complexity, S=Section, P=Phase, Arch=Architect
+**Abbrev**: AC=Acceptance Criteria, Q=Quality, C=Complexity, S=Section, P=Phase
 
 ---
 
@@ -133,50 +126,34 @@ metadata:
 
 ---
 
-# DECISION EXECUTION
+## CHECKLIST OUTPUT
 
-**Prereqs:** [ ] P1=100% | [ ] P2≥80% | [ ] Quality Score: ___/10
+This checklist returns the following data for use by the calling task:
 
-**Execute via make-decision.md in order:**
+```yaml
+structure_validation:
+  passed: true/false
+  score_percentage: 0-100
+  
+technical_quality:
+  section_2_score: 0-100  # Technical Extraction
+  section_3_score: 0-100  # Implementation Readiness
+  passed_threshold: true/false  # ≥80%
+  
+quality_score:
+  final_score: 0-10
+  calculation: "(S2 × 0.50) + (S3 × 0.50)"
+  
+complexity_indicators:
+  api_changes: true/false
+  db_schema: true/false
+  new_patterns: true/false
+  cross_service: true/false
+  security: true/false
+  performance: true/false
+  core_docs: true/false
+  total_count: 0-7
+  security_sensitive: true/false
+```
 
-### 1. Architect Review
-
-**File:** `data/decisions/sm-architect-review-needed.yaml`
-
-**Inputs:** quality_score, complexity_indicators
-
-**Result:** `___` (REQUIRED/NOT_REQUIRED/BLOCKED)
-
----
-
-### 2. Test Design Level
-
-**File:** `data/decisions/sm-test-design-level.yaml`
-
-**Inputs:** complexity_indicators, quality_score, security_sensitive
-
-**Result:** `___` (Simple/Standard/Comprehensive)
-
----
-
-### 3. Story Status
-
-**File:** `data/decisions/sm-story-status.yaml`
-
-**Inputs:** architect_review_result, test_design_level
-
-**Results:**
-- **Status:** `___`
-- **Next Action:** `___`
-- **Reasoning:** `___`
-
----
-
-## Next Steps
-
-| Next Action | Task |
-|-------------|------|
-| handoff_to_architect | review-story-technical-accuracy |
-| handoff_to_qa_test_design | test-design |
-| handoff_to_dev | implement-story |
-| sm_revise_story | SM revise and re-run |
+**Note**: Decision execution (architect review, test design level, story status) is handled by the calling task, not by this checklist.

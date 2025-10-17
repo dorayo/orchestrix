@@ -6,10 +6,6 @@ metadata:
   threshold: 80%
   on_fail: HALT
   purpose: "Gate-based validation ensuring SM Agent accurately extracts technical information from architecture documents when creating stories"
-  used_by:
-    - create-next-story.md
-  estimated_tokens: 2500
-  version: 1.0
 ---
 
 > **⚠️ DEPRECATED**: This checklist has been superseded by `assessment/sm-story-quality.md` which provides unified validation.  

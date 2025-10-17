@@ -1,378 +1,129 @@
 # QA Decision: Test Design Update Required
-# Determines if QA test design needs to be updated after SM revision
-
 decision_type: qa-test-design-update
 
 description: >
-  Evaluate SM revision type, Acceptance Criteria changes, and test design 
-  existence to determine if QA test design needs to be updated, reviewed, 
-  or marked as still valid after SM makes revisions to a Story.
+  Determine if QA test design needs update after SM revision based on
+  revision type, AC changes, and test design level changes.
 
 inputs:
   - name: sm_revision_type
     type: string
-    description: Type of revision made by SM
     required: true
     enum: [ACCEPTANCE_CRITERIA_CHANGED, DEV_NOTES_ONLY, TECHNICAL_DETAILS_ONLY, SCOPE_CHANGED, REQUIREMENTS_CLARIFIED]
-    
   - name: ac_changed
     type: boolean
-    description: Whether Acceptance Criteria were modified in the revision
     required: true
-    
   - name: test_design_exists
     type: boolean
-    description: Whether QA test design has already been completed
     required: true
-    
   - name: test_design_level
     type: string
-    description: Current test design level (Simple, Standard, Comprehensive)
     required: false
     enum: [Simple, Standard, Comprehensive]
-    
   - name: new_test_design_level
     type: string
-    description: Test design level after SM revision (if changed)
     required: false
     enum: [Simple, Standard, Comprehensive]
-    
   - name: scope_impact
     type: string
-    description: Impact level of scope changes on testing
     required: false
     enum: [MINOR, MODERATE, MAJOR]
     default: MINOR
 
 rules:
-  # Rule 1: AC changed + Test design exists → Full update required
-  - condition: "ac_changed == true AND test_design_exists == true"
+  # UPDATE_REQUIRED: AC changed or test level upgraded
+  - condition: "ac_changed == true OR (test_design_level == 'Simple' AND new_test_design_level IN ['Standard', 'Comprehensive'])"
     result: UPDATE_REQUIRED
-    reasoning: "Acceptance Criteria changes require QA to review and update test design to ensure all modified requirements are properly tested. Test scenarios must be aligned with new AC."
+    reasoning: "AC changes or test level upgrade requires test design update"
     next_action: "update_test_design"
     metadata:
       update_type: "FULL_REVIEW"
-      requires_qa_action: true
       urgency: "high"
-      affected_areas: ["test_scenarios", "acceptance_criteria_coverage"]
-      add_revision_history: true
-      notify_qa: true
-    
-  # Rule 2: AC changed + No test design → Trigger test design
-  - condition: "ac_changed == true AND test_design_exists == false"
-    result: UPDATE_REQUIRED
-    reasoning: "Acceptance Criteria changes before test design completion require QA to incorporate changes into initial test design. This ensures test design reflects current requirements."
-    next_action: "create_test_design_with_changes"
-    metadata:
-      update_type: "INCORPORATE_CHANGES"
-      requires_qa_action: true
-      urgency: "high"
-      affected_areas: ["initial_test_design"]
-      add_revision_history: false
-      notify_qa: true
-    
-  # Rule 3: Test design level changed from Simple to Standard/Comprehensive
-  - condition: "test_design_level == 'Simple' AND (new_test_design_level == 'Standard' OR new_test_design_level == 'Comprehensive')"
-    result: UPDATE_REQUIRED
-    reasoning: "Test design level increased from Simple to Standard/Comprehensive after SM revision. QA test design is now required where it wasn't before."
-    next_action: "create_test_design"
-    metadata:
-      update_type: "LEVEL_UPGRADE"
-      requires_qa_action: true
-      urgency: "high"
-      affected_areas: ["test_design_creation"]
-      test_design_level_changed: true
-      previous_level: "Simple"
-      notify_qa: true
-    
-  # Rule 4: Test design level changed from Standard/Comprehensive to Simple
-  - condition: "(test_design_level == 'Standard' OR test_design_level == 'Comprehensive') AND new_test_design_level == 'Simple'"
-    result: NO_UPDATE_NEEDED
-    reasoning: "Test design level decreased from Standard/Comprehensive to Simple after SM revision. Existing test design can be archived as it's no longer required for simplified Story."
-    next_action: "archive_test_design"
-    metadata:
-      update_type: "LEVEL_DOWNGRADE"
-      requires_qa_action: false
-      urgency: "low"
-      affected_areas: ["test_design_archival"]
-      test_design_level_changed: true
-      previous_level: test_design_level
-      notify_qa: true
-    
-  # Rule 5: Scope changed (MAJOR) + Test design exists → Full update required
+  
+  # UPDATE_REQUIRED: Major scope change
   - condition: "sm_revision_type == 'SCOPE_CHANGED' AND scope_impact == 'MAJOR' AND test_design_exists == true"
     result: UPDATE_REQUIRED
-    reasoning: "Major scope changes require comprehensive test design review to ensure test coverage aligns with new scope. Significant test scenarios may need to be added or removed."
+    reasoning: "Major scope changes require comprehensive test design review"
     next_action: "update_test_design"
     metadata:
       update_type: "SCOPE_REVISION"
-      requires_qa_action: true
       urgency: "high"
-      affected_areas: ["test_scenarios", "scope_coverage", "edge_cases"]
-      add_revision_history: true
-      notify_qa: true
-    
-  # Rule 6: Scope changed (MODERATE) + Test design exists → Targeted update
+  
+  # UPDATE_REQUIRED: Moderate scope change
   - condition: "sm_revision_type == 'SCOPE_CHANGED' AND scope_impact == 'MODERATE' AND test_design_exists == true"
     result: UPDATE_REQUIRED
-    reasoning: "Moderate scope changes require targeted test design updates to cover modified functionality. QA should review affected test scenarios and update as needed."
+    reasoning: "Moderate scope changes require targeted test design updates"
     next_action: "update_test_design"
     metadata:
       update_type: "TARGETED_UPDATE"
-      requires_qa_action: true
       urgency: "medium"
-      affected_areas: ["affected_test_scenarios"]
-      add_revision_history: true
-      notify_qa: true
-    
-  # Rule 7: Requirements clarified + Test design exists → Review for applicability
-  - condition: "sm_revision_type == 'REQUIREMENTS_CLARIFIED' AND test_design_exists == true"
+  
+  # REVIEW_REQUIRED: Requirements clarified or dev notes changed
+  - condition: "sm_revision_type IN ['REQUIREMENTS_CLARIFIED', 'DEV_NOTES_ONLY'] AND test_design_exists == true"
     result: REVIEW_REQUIRED
-    reasoning: "Requirements clarification may affect test design interpretation. QA should review test design to ensure it aligns with clarified requirements and update if necessary."
+    reasoning: "Clarifications may affect test design, review needed"
     next_action: "review_test_design"
     metadata:
       update_type: "CLARIFICATION_REVIEW"
-      requires_qa_action: true
       urgency: "medium"
-      affected_areas: ["requirement_interpretation", "test_scenarios"]
-      add_revision_history: false
-      notify_qa: true
-    
-  # Rule 8: Dev notes only + Test design exists → Review for technical impact
-  - condition: "sm_revision_type == 'DEV_NOTES_ONLY' AND test_design_exists == true"
+  
+  # REVIEW_REQUIRED: Technical details or minor scope change
+  - condition: "(sm_revision_type == 'TECHNICAL_DETAILS_ONLY' OR scope_impact == 'MINOR') AND test_design_exists == true"
     result: REVIEW_REQUIRED
-    reasoning: "Dev notes changes may contain technical implementation details that affect testing approach. QA should review to determine if test design remains applicable."
-    next_action: "review_test_design"
-    metadata:
-      update_type: "TECHNICAL_REVIEW"
-      requires_qa_action: true
-      urgency: "low"
-      affected_areas: ["technical_approach", "implementation_details"]
-      add_revision_history: false
-      notify_qa: true
-    
-  # Rule 9: Technical details only + Test design exists → Quick review
-  - condition: "sm_revision_type == 'TECHNICAL_DETAILS_ONLY' AND test_design_exists == true"
-    result: REVIEW_REQUIRED
-    reasoning: "Technical details changes should be reviewed to ensure they don't impact test scenarios. If test design remains valid, mark as 'Reviewed - No Changes'."
+    reasoning: "Minor changes, quick review to confirm test design validity"
     next_action: "review_test_design"
     metadata:
       update_type: "QUICK_REVIEW"
-      requires_qa_action: true
       urgency: "low"
-      affected_areas: ["technical_implementation"]
-      add_revision_history: false
       can_mark_no_changes: true
-      notify_qa: true
-    
-  # Rule 10: Dev notes only + No test design → No action needed
-  - condition: "sm_revision_type == 'DEV_NOTES_ONLY' AND test_design_exists == false"
+  
+  # NO_UPDATE_NEEDED: Test level downgraded
+  - condition: "test_design_level IN ['Standard', 'Comprehensive'] AND new_test_design_level == 'Simple'"
     result: NO_UPDATE_NEEDED
-    reasoning: "Dev notes changes before test design creation don't require QA action. Changes will be incorporated when QA creates test design."
+    reasoning: "Test level downgraded, archive existing test design"
+    next_action: "archive_test_design"
+    metadata:
+      update_type: "LEVEL_DOWNGRADE"
+      urgency: "low"
+  
+  # NO_UPDATE_NEEDED: No test design yet
+  - condition: "test_design_exists == false AND ac_changed == false"
+    result: NO_UPDATE_NEEDED
+    reasoning: "No test design yet, changes will be incorporated when created"
     next_action: "no_action"
     metadata:
       update_type: "NONE"
-      requires_qa_action: false
       urgency: "none"
-      affected_areas: []
-      notify_qa: false
-    
-  # Rule 11: Technical details only + No test design → No action needed
-  - condition: "sm_revision_type == 'TECHNICAL_DETAILS_ONLY' AND test_design_exists == false"
-    result: NO_UPDATE_NEEDED
-    reasoning: "Technical details changes before test design creation don't require QA action. QA will use latest Story version when creating test design."
-    next_action: "no_action"
-    metadata:
-      update_type: "NONE"
-      requires_qa_action: false
-      urgency: "none"
-      affected_areas: []
-      notify_qa: false
-    
-  # Rule 12: Scope changed (MINOR) + Test design exists → Optional review
-  - condition: "sm_revision_type == 'SCOPE_CHANGED' AND scope_impact == 'MINOR' AND test_design_exists == true"
-    result: REVIEW_REQUIRED
-    reasoning: "Minor scope changes should be reviewed to determine if test design needs updates. Changes may be minimal or require no action."
-    next_action: "review_test_design"
-    metadata:
-      update_type: "OPTIONAL_REVIEW"
-      requires_qa_action: true
-      urgency: "low"
-      affected_areas: ["minor_scope_changes"]
-      add_revision_history: false
-      can_mark_no_changes: true
-      notify_qa: true
 
 output:
   update_required:
     type: enum
     values: [UPDATE_REQUIRED, REVIEW_REQUIRED, NO_UPDATE_NEEDED]
-    description: Whether test design update is required, review is needed, or no action needed
-    
   reasoning:
     type: string
-    description: Explanation of why this decision was made
-    
   next_action:
     type: string
-    description: Next action for QA to take (update_test_design, review_test_design, create_test_design, create_test_design_with_changes, archive_test_design, no_action)
-    
   metadata:
     type: object
-    description: Additional metadata about the update decision
     properties:
-      update_type:
-        type: string
-        description: Type of update required (FULL_REVIEW, TARGETED_UPDATE, CLARIFICATION_REVIEW, TECHNICAL_REVIEW, QUICK_REVIEW, SCOPE_REVISION, LEVEL_UPGRADE, LEVEL_DOWNGRADE, INCORPORATE_CHANGES, OPTIONAL_REVIEW, NONE)
-      requires_qa_action:
-        type: boolean
-        description: Whether QA needs to take action
-      urgency:
-        type: string
-        description: Urgency level (high, medium, low, none)
-      affected_areas:
-        type: array
-        description: Areas of test design affected by the revision
-        items:
-          type: string
-      add_revision_history:
-        type: boolean
-        description: Whether to add revision history entry to test design
-      notify_qa:
-        type: boolean
-        description: Whether to notify QA about the revision
-      can_mark_no_changes:
-        type: boolean
-        description: Whether QA can mark as "Reviewed - No Changes" if applicable
-      test_design_level_changed:
-        type: boolean
-        description: Whether test design level changed
-      previous_level:
-        type: string
-        description: Previous test design level (if changed)
+      update_type: {type: string}
+      urgency: {type: string}
+      can_mark_no_changes: {type: boolean}
 
 metadata:
   version: "1.0.0"
-  last_updated: "2025-01-15"
+  last_updated: "2025-01-17"
   owner: "QA Agent"
-  related_requirements:
-    - "6.2"
-    - "6.4"
-    - "6.8"
+  related_requirements: ["6.2", "6.4", "6.8"]
   usage_context: >
-    Called by QA Agent when SM makes revisions to a Story to determine if 
-    existing test design needs to be updated, reviewed, or remains valid.
-    This decision supports the workflow where Architect may request SM 
-    revisions, and those revisions may impact test design.
-    
-    The decision considers:
-    - Type of SM revision (AC changes, dev notes, technical details, scope, clarifications)
-    - Whether Acceptance Criteria were modified
-    - Whether test design already exists
-    - Test design level changes (Simple ↔ Standard/Comprehensive)
-    - Scope impact level (minor, moderate, major)
-    
-    COORDINATION NOTE: When result is UPDATE_REQUIRED, QA should:
-    - Mark test design with "Requires Review" flag in QA Test Design Metadata
-    - Review affected test scenarios based on metadata.affected_areas
-    - Update test design to reflect SM revisions
-    - Add "Revision History" section if metadata.add_revision_history is true
-    - Record revision reason and changes in revision history
-    - Set test design status back to complete after updates
-    
-    When result is REVIEW_REQUIRED, QA should:
-    - Review test design for applicability with SM revisions
-    - Determine if updates are needed or if test design remains valid
-    - If valid, mark as "Reviewed - No Changes" in test design metadata
-    - If updates needed, follow UPDATE_REQUIRED workflow
-    - Document review outcome in test design metadata
-    
-    When result is NO_UPDATE_NEEDED, QA should:
-    - No action required from QA
-    - Test design remains valid or doesn't exist yet
-    - Continue with normal workflow
-    
-    IMPORTANT: This decision is specifically for determining test design 
-    updates after SM revisions. For initial test design level determination, 
-    SM uses sm-test-design-level decision instead.
+    Called by QA when SM revises Story. UPDATE_REQUIRED: Update test design and add
+    revision history. REVIEW_REQUIRED: Review and mark as valid or update. NO_UPDATE_NEEDED:
+    No action required.
 
 examples:
-  - input:
-      sm_revision_type: "ACCEPTANCE_CRITERIA_CHANGED"
-      ac_changed: true
-      test_design_exists: true
-      test_design_level: "Standard"
-      new_test_design_level: "Standard"
-      scope_impact: "MODERATE"
-    output:
-      update_required: UPDATE_REQUIRED
-      reasoning: "Acceptance Criteria changes require QA to review and update test design to ensure all modified requirements are properly tested. Test scenarios must be aligned with new AC."
-      next_action: "update_test_design"
-      
-  - input:
-      sm_revision_type: "DEV_NOTES_ONLY"
-      ac_changed: false
-      test_design_exists: true
-      test_design_level: "Standard"
-      scope_impact: "MINOR"
-    output:
-      update_required: REVIEW_REQUIRED
-      reasoning: "Dev notes changes may contain technical implementation details that affect testing approach. QA should review to determine if test design remains applicable."
-      next_action: "review_test_design"
-      
-  - input:
-      sm_revision_type: "TECHNICAL_DETAILS_ONLY"
-      ac_changed: false
-      test_design_exists: false
-      scope_impact: "MINOR"
-    output:
-      update_required: NO_UPDATE_NEEDED
-      reasoning: "Technical details changes before test design creation don't require QA action. QA will use latest Story version when creating test design."
-      next_action: "no_action"
-      
-  - input:
-      sm_revision_type: "SCOPE_CHANGED"
-      ac_changed: true
-      test_design_exists: true
-      test_design_level: "Comprehensive"
-      new_test_design_level: "Comprehensive"
-      scope_impact: "MAJOR"
-    output:
-      update_required: UPDATE_REQUIRED
-      reasoning: "Major scope changes require comprehensive test design review to ensure test coverage aligns with new scope. Significant test scenarios may need to be added or removed."
-      next_action: "update_test_design"
-      
-  - input:
-      sm_revision_type: "REQUIREMENTS_CLARIFIED"
-      ac_changed: false
-      test_design_exists: true
-      test_design_level: "Standard"
-      scope_impact: "MINOR"
-    output:
-      update_required: REVIEW_REQUIRED
-      reasoning: "Requirements clarification may affect test design interpretation. QA should review test design to ensure it aligns with clarified requirements and update if necessary."
-      next_action: "review_test_design"
-      
-  - input:
-      sm_revision_type: "ACCEPTANCE_CRITERIA_CHANGED"
-      ac_changed: true
-      test_design_exists: false
-      test_design_level: "Standard"
-      new_test_design_level: "Standard"
-      scope_impact: "MODERATE"
-    output:
-      update_required: UPDATE_REQUIRED
-      reasoning: "Acceptance Criteria changes before test design completion require QA to incorporate changes into initial test design. This ensures test design reflects current requirements."
-      next_action: "create_test_design_with_changes"
-      
-  - input:
-      sm_revision_type: "SCOPE_CHANGED"
-      ac_changed: false
-      test_design_exists: true
-      test_design_level: "Standard"
-      new_test_design_level: "Simple"
-      scope_impact: "MAJOR"
-    output:
-      update_required: NO_UPDATE_NEEDED
-      reasoning: "Test design level decreased from Standard/Comprehensive to Simple after SM revision. Existing test design can be archived as it's no longer required for simplified Story."
-      next_action: "archive_test_design"
+  - input: {sm_revision_type: "ACCEPTANCE_CRITERIA_CHANGED", ac_changed: true, test_design_exists: true}
+    output: {update_required: UPDATE_REQUIRED, next_action: "update_test_design"}
+  - input: {sm_revision_type: "DEV_NOTES_ONLY", ac_changed: false, test_design_exists: true}
+    output: {update_required: REVIEW_REQUIRED, next_action: "review_test_design"}
+  - input: {sm_revision_type: "TECHNICAL_DETAILS_ONLY", ac_changed: false, test_design_exists: false}
+    output: {update_required: NO_UPDATE_NEEDED, next_action: "no_action"}

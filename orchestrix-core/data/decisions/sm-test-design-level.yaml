@@ -1,207 +1,98 @@
 # SM Decision: Test Design Level
-# Determines the appropriate test design level (Simple/Standard/Comprehensive) based on Story complexity and quality
-
 decision_type: sm-test-design-level
 
 description: >
-  Evaluate Story complexity indicators, quality score, and security sensitivity to determine 
-  the appropriate test design level. This decision determines whether QA test design is 
-  required and at what level of detail.
+  Determine test design level (Simple/Standard/Comprehensive) based on Story
+  complexity, quality, and security sensitivity.
 
 inputs:
   - name: complexity_indicators
     type: number
-    description: Number of complexity indicators present (0-7)
     required: true
-    
   - name: quality_score
     type: number
-    description: Story quality score from SM checklist (0-10)
     required: true
-    
   - name: security_sensitive
     type: boolean
-    description: Whether the Story involves security-critical functionality
     required: true
 
 rules:
-  # Rule 1: Simple - High quality + No complexity + No security
+  # Simple: High quality + No complexity + No security
   - condition: "quality_score >= 8.5 AND complexity_indicators == 0 AND security_sensitive == false"
     result: Simple
-    reasoning: "High quality Story with no complexity indicators and no security concerns requires minimal test design. Dev can implement with standard unit tests only."
+    reasoning: "High quality with no complexity, minimal test design needed"
     next_status: TestDesignComplete
     next_action: "skip_qa_test_design"
     metadata:
       test_design_required: false
-      qa_involvement: "review_only"
       test_levels: ["unit"]
-    
-  # Rule 2: Standard - High quality + Low complexity (1 indicator) + No security
-  - condition: "quality_score >= 8.0 AND complexity_indicators == 1 AND security_sensitive == false"
+  
+  # Standard: High quality + Low complexity OR medium quality
+  - condition: "(quality_score >= 7.0 AND complexity_indicators <= 2 AND security_sensitive == false)"
     result: Standard
-    reasoning: "High quality Story with single complexity indicator requires standard test design to validate the complexity point. QA should design integration tests."
+    reasoning: "Good quality with low/moderate complexity, standard test design needed"
     next_status: AwaitingTestDesign
     next_action: "handoff_to_qa_test_design"
     metadata:
       test_design_required: true
-      qa_involvement: "test_design"
       test_levels: ["unit", "integration"]
-    
-  # Rule 3: Standard - Medium-high quality + Low complexity
-  - condition: "quality_score >= 7.0 AND quality_score < 8.5 AND complexity_indicators <= 1"
-    result: Standard
-    reasoning: "Medium-high quality Story with low complexity requires standard test design to ensure quality. QA should design integration tests for key scenarios."
-    next_status: AwaitingTestDesign
-    next_action: "handoff_to_qa_test_design"
-    metadata:
-      test_design_required: true
-      qa_involvement: "test_design"
-      test_levels: ["unit", "integration"]
-    
-  # Rule 4: Standard - Moderate complexity (2 indicators) + Good quality
-  - condition: "quality_score >= 7.0 AND complexity_indicators == 2 AND security_sensitive == false"
-    result: Standard
-    reasoning: "Good quality Story with moderate complexity requires standard test design. QA should design integration tests covering component interactions."
-    next_status: AwaitingTestDesign
-    next_action: "handoff_to_qa_test_design"
-    metadata:
-      test_design_required: true
-      qa_involvement: "test_design"
-      test_levels: ["unit", "integration"]
-    
-  # Rule 5: Comprehensive - High complexity (3+ indicators)
+  
+  # Comprehensive: High complexity (3+ indicators)
   - condition: "complexity_indicators >= 3"
     result: Comprehensive
-    reasoning: "High complexity Story requires comprehensive test design including E2E tests. QA must design tests at all levels to validate complex interactions."
+    reasoning: "High complexity requires comprehensive test design including E2E"
     next_status: AwaitingTestDesign
     next_action: "handoff_to_qa_test_design"
     metadata:
       test_design_required: true
-      qa_involvement: "comprehensive_test_design"
       test_levels: ["unit", "integration", "e2e"]
       priority: "high"
-    
-  # Rule 6: Comprehensive - Security sensitive (any complexity)
+  
+  # Comprehensive: Security sensitive (any complexity)
   - condition: "security_sensitive == true"
     result: Comprehensive
-    reasoning: "Security-sensitive Story requires comprehensive test design regardless of complexity. QA must design security-focused tests including penetration and edge case scenarios."
+    reasoning: "Security-sensitive requires comprehensive test design with security focus"
     next_status: AwaitingTestDesign
     next_action: "handoff_to_qa_test_design"
     metadata:
       test_design_required: true
-      qa_involvement: "comprehensive_test_design"
       test_levels: ["unit", "integration", "e2e", "security"]
       priority: "critical"
       security_focus: true
-    
-  # Rule 7: Standard - Default fallback for medium quality + moderate complexity
-  - condition: "quality_score >= 6.0 AND complexity_indicators <= 2"
-    result: Standard
-    reasoning: "Medium quality Story with moderate complexity requires standard test design. QA should design integration tests to validate functionality."
-    next_status: AwaitingTestDesign
-    next_action: "handoff_to_qa_test_design"
-    metadata:
-      test_design_required: true
-      qa_involvement: "test_design"
-      test_levels: ["unit", "integration"]
 
 output:
   test_design_level:
     type: enum
     values: [Simple, Standard, Comprehensive]
-    description: Test design level indicating the depth and breadth of testing required
-    
   reasoning:
     type: string
-    description: Explanation of why this test design level was selected
-    
   next_status:
     type: string
-    description: Story status to set based on test design level (TestDesignComplete or AwaitingTestDesign)
-    
   next_action:
     type: string
-    description: Next action to take (skip_qa_test_design or handoff_to_qa_test_design)
-    
   metadata:
     type: object
-    description: Additional metadata about test design requirements
     properties:
-      test_design_required:
-        type: boolean
-        description: Whether QA test design is required
-      qa_involvement:
-        type: string
-        description: Level of QA involvement (review_only, test_design, comprehensive_test_design)
-      test_levels:
-        type: array
-        description: Required test levels (unit, integration, e2e, security)
-      priority:
-        type: string
-        description: Test priority level (optional, only for high/critical)
-      security_focus:
-        type: boolean
-        description: Whether security testing is required (optional)
+      test_design_required: {type: boolean}
+      test_levels: {type: array}
+      priority: {type: string}
+      security_focus: {type: boolean}
 
 metadata:
   version: "1.0.0"
-  last_updated: "2025-01-14"
+  last_updated: "2025-01-17"
   owner: "SM Agent"
-  related_requirements:
-    - "6.2"
-    - "6.4"
-    - "6.5"
+  related_requirements: ["6.2", "6.4", "6.5"]
   usage_context: >
-    Called by SM Agent after Architect review decision (or immediately if no Architect 
-    review needed) in create-next-story and revise-story-from-architect-feedback tasks. 
-    This decision determines whether QA test design is required and at what level.
-    
-    COORDINATION NOTE: This decision should be made AFTER Architect review decision.
-    - If Architect review is required, defer this decision until after Architect approval
-    - If no Architect review needed, make this decision immediately
-    
-    The test design level influences:
-    - Whether QA test design phase is needed (Simple = skip, Standard/Comprehensive = required)
-    - The depth of testing required (unit only vs. integration vs. comprehensive)
-    - The Story status (TestDesignComplete vs. AwaitingTestDesign)
+    Called by SM after Architect review decision. Simple: Skip QA test design.
+    Standard/Comprehensive: Handoff to QA for test design.
 
 examples:
-  - input:
-      complexity_indicators: 0
-      quality_score: 9.0
-      security_sensitive: false
-    output:
-      test_design_level: Simple
-      reasoning: "High quality Story with no complexity indicators and no security concerns requires minimal test design. Dev can implement with standard unit tests only."
-      next_status: TestDesignComplete
-      next_action: "skip_qa_test_design"
-      
-  - input:
-      complexity_indicators: 1
-      quality_score: 8.5
-      security_sensitive: false
-    output:
-      test_design_level: Standard
-      reasoning: "High quality Story with single complexity indicator requires standard test design to validate the complexity point. QA should design integration tests."
-      next_status: AwaitingTestDesign
-      next_action: "handoff_to_qa_test_design"
-      
-  - input:
-      complexity_indicators: 2
-      quality_score: 7.5
-      security_sensitive: true
-    output:
-      test_design_level: Comprehensive
-      reasoning: "Security-sensitive Story requires comprehensive test design regardless of complexity. QA must design security-focused tests including penetration and edge case scenarios."
-      next_status: AwaitingTestDesign
-      next_action: "handoff_to_qa_test_design"
-      
-  - input:
-      complexity_indicators: 4
-      quality_score: 8.0
-      security_sensitive: false
-    output:
-      test_design_level: Comprehensive
-      reasoning: "High complexity Story requires comprehensive test design including E2E tests. QA must design tests at all levels to validate complex interactions."
-      next_status: AwaitingTestDesign
-      next_action: "handoff_to_qa_test_design"
+  - input: {complexity_indicators: 0, quality_score: 9.0, security_sensitive: false}
+    output: {test_design_level: Simple, next_status: TestDesignComplete}
+  - input: {complexity_indicators: 1, quality_score: 8.5, security_sensitive: false}
+    output: {test_design_level: Standard, next_status: AwaitingTestDesign}
+  - input: {complexity_indicators: 4, quality_score: 8.0, security_sensitive: false}
+    output: {test_design_level: Comprehensive, next_status: AwaitingTestDesign}
+  - input: {complexity_indicators: 1, quality_score: 7.5, security_sensitive: true}
+    output: {test_design_level: Comprehensive, next_status: AwaitingTestDesign}

@@ -1,218 +1,96 @@
 # SM Decision: Story Status
-# Determines the final Story status based on Architect review result and test design level
-
 decision_type: sm-story-status
 
 description: >
-  Determine the final Story status by combining Architect review result and test design level.
-  This decision coordinates the handoff between Architect review and QA test design phases,
-  ensuring the correct status is set based on both dimensions.
+  Determine final Story status by combining Architect review result and test design level.
 
 inputs:
   - name: architect_review_result
     type: string
-    description: Result from Architect review (REQUIRED, NOT_REQUIRED, APPROVED, REQUIRES_REVISION, BLOCKED)
     required: true
-    
   - name: test_design_level
     type: string
-    description: Test design level from test design decision (Simple, Standard, Comprehensive)
     required: true
 
 rules:
-  # Rule 1: Architect review required → Wait for Architect (defer test design decision)
+  # Architect review required → Wait for Architect
   - condition: "architect_review_result == 'REQUIRED'"
     result: AwaitingArchReview
-    reasoning: "Architect review is required. Story status set to AwaitingArchReview. Test design level decision will be applied after Architect approval."
+    reasoning: "Architect review required, defer test design decision"
     next_status: AwaitingArchReview
     next_action: "handoff_to_architect"
     metadata:
       test_design_deferred: true
-      pending_test_design_level: "{{test_design_level}}"
-    
-  # Rule 2: Architect review not required + Simple test design → Ready for Dev
-  - condition: "architect_review_result == 'NOT_REQUIRED' AND test_design_level == 'Simple'"
+  
+  # No Architect review + Simple test → Ready for Dev
+  - condition: "(architect_review_result IN ['NOT_REQUIRED', 'APPROVED']) AND test_design_level == 'Simple'"
     result: TestDesignComplete
-    reasoning: "No Architect review needed and test design is Simple. Story can proceed directly to Dev implementation with standard unit tests."
+    reasoning: "No Architect review needed and Simple test design, proceed to Dev"
     next_status: TestDesignComplete
     next_action: "handoff_to_dev"
     metadata:
-      architect_review_skipped: true
       qa_test_design_skipped: true
       test_levels: ["unit"]
-    
-  # Rule 3: Architect review not required + Standard/Comprehensive test design → QA test design needed
-  - condition: "architect_review_result == 'NOT_REQUIRED' AND (test_design_level == 'Standard' OR test_design_level == 'Comprehensive')"
+  
+  # No Architect review + Standard/Comprehensive → QA test design
+  - condition: "(architect_review_result IN ['NOT_REQUIRED', 'APPROVED']) AND test_design_level IN ['Standard', 'Comprehensive']"
     result: AwaitingTestDesign
-    reasoning: "No Architect review needed but test design level is {{test_design_level}}. Story status set to AwaitingTestDesign for QA to design tests."
+    reasoning: "Test design level is {{test_design_level}}, QA test design needed"
     next_status: AwaitingTestDesign
     next_action: "handoff_to_qa_test_design"
     metadata:
-      architect_review_skipped: true
       test_design_level: "{{test_design_level}}"
-    
-  # Rule 4: Architect approved + Simple test design → Ready for Dev
-  - condition: "architect_review_result == 'APPROVED' AND test_design_level == 'Simple'"
-    result: TestDesignComplete
-    reasoning: "Architect review approved and test design is Simple. Story can proceed directly to Dev implementation with standard unit tests."
-    next_status: TestDesignComplete
-    next_action: "handoff_to_dev"
-    metadata:
-      architect_review_completed: true
-      qa_test_design_skipped: true
-      test_levels: ["unit"]
-    
-  # Rule 5: Architect approved + Standard/Comprehensive test design → QA test design needed
-  - condition: "architect_review_result == 'APPROVED' AND (test_design_level == 'Standard' OR test_design_level == 'Comprehensive')"
-    result: AwaitingTestDesign
-    reasoning: "Architect review approved but test design level is {{test_design_level}}. Story status set to AwaitingTestDesign for QA to design tests."
-    next_status: AwaitingTestDesign
-    next_action: "handoff_to_qa_test_design"
-    metadata:
-      architect_review_completed: true
-      test_design_level: "{{test_design_level}}"
-    
-  # Rule 6: Architect requires revision → SM must revise
+  
+  # Architect requires revision
   - condition: "architect_review_result == 'REQUIRES_REVISION'"
     result: RequiresRevision
-    reasoning: "Architect requires Story revision. SM must address Architect feedback and revise Story. Test design level will be re-evaluated after revision."
+    reasoning: "Architect requires revision, SM must address feedback"
     next_status: RequiresRevision
     next_action: "sm_revise_story"
     metadata:
-      architect_feedback_pending: true
       test_design_deferred: true
-    
-  # Rule 7: Blocked (from Architect review decision) → SM must improve quality
+  
+  # Blocked
   - condition: "architect_review_result == 'BLOCKED'"
     result: Blocked
-    reasoning: "Story quality too low. SM must revise Story to improve quality before any review can proceed."
+    reasoning: "Story quality too low, SM must improve"
     next_status: Blocked
     next_action: "sm_revise_story"
     metadata:
       quality_issue: true
-      test_design_deferred: true
 
 output:
   story_status:
     type: enum
     values: [AwaitingArchReview, AwaitingTestDesign, TestDesignComplete, RequiresRevision, Blocked]
-    description: Final Story status based on Architect review result and test design level
-    
   reasoning:
     type: string
-    description: Explanation of why this status was set, including both Architect review and test design considerations
-    
   next_action:
     type: string
-    description: Next action to take (handoff_to_architect, handoff_to_qa_test_design, handoff_to_dev, sm_revise_story)
-    
   next_status:
     type: string
-    description: Story status to set (same as story_status for clarity)
-    
   metadata:
     type: object
-    description: Additional context about the decision
     properties:
-      architect_review_skipped:
-        type: boolean
-        description: Whether Architect review was skipped
-      architect_review_completed:
-        type: boolean
-        description: Whether Architect review was completed
-      architect_feedback_pending:
-        type: boolean
-        description: Whether Architect feedback needs to be addressed
-      qa_test_design_skipped:
-        type: boolean
-        description: Whether QA test design was skipped (Simple level)
-      test_design_deferred:
-        type: boolean
-        description: Whether test design decision is deferred until after Architect review
-      test_design_level:
-        type: string
-        description: Test design level (Standard or Comprehensive)
-      pending_test_design_level:
-        type: string
-        description: Test design level to apply after Architect approval
-      test_levels:
-        type: array
-        description: Required test levels when test design is Simple
-      quality_issue:
-        type: boolean
-        description: Whether Story has quality issues requiring revision
+      test_design_deferred: {type: boolean}
+      qa_test_design_skipped: {type: boolean}
+      test_design_level: {type: string}
+      test_levels: {type: array}
+      quality_issue: {type: boolean}
 
 metadata:
   version: "1.0.0"
-  last_updated: "2025-01-14"
+  last_updated: "2025-01-17"
   owner: "SM Agent"
-  related_requirements:
-    - "6.2"
-    - "6.4"
-    - "6.5"
+  related_requirements: ["6.2", "6.4", "6.5"]
   usage_context: >
-    Called by SM Agent after both Architect review decision and test design level decision
-    have been made. This decision combines both dimensions to determine the final Story status
-    and coordinate the handoff to the next agent.
-    
-    COORDINATION LOGIC:
-    1. If Architect review is REQUIRED → Set status to AwaitingArchReview (defer test design)
-    2. If Architect review is NOT_REQUIRED or APPROVED:
-       - If test design is Simple → Set status to TestDesignComplete (skip QA test design)
-       - If test design is Standard/Comprehensive → Set status to AwaitingTestDesign
-    3. If Architect review is REQUIRES_REVISION or BLOCKED → Set corresponding status
-    
-    This decision ensures:
-    - Architect review happens before QA test design (when required)
-    - Simple test design stories skip QA test design phase
-    - Standard/Comprehensive test design stories go through QA test design phase
-    - Revision and blocking scenarios are handled correctly
+    Called by SM after Architect review and test design level decisions. Combines both
+    to determine final status and next agent handoff.
 
 examples:
-  - input:
-      architect_review_result: "REQUIRED"
-      test_design_level: "Standard"
-    output:
-      story_status: AwaitingArchReview
-      reasoning: "Architect review is required. Story status set to AwaitingArchReview. Test design level decision will be applied after Architect approval."
-      next_action: "handoff_to_architect"
-      
-  - input:
-      architect_review_result: "NOT_REQUIRED"
-      test_design_level: "Simple"
-    output:
-      story_status: TestDesignComplete
-      reasoning: "No Architect review needed and test design is Simple. Story can proceed directly to Dev implementation with standard unit tests."
-      next_action: "handoff_to_dev"
-      
-  - input:
-      architect_review_result: "NOT_REQUIRED"
-      test_design_level: "Standard"
-    output:
-      story_status: AwaitingTestDesign
-      reasoning: "No Architect review needed but test design level is Standard. Story status set to AwaitingTestDesign for QA to design tests."
-      next_action: "handoff_to_qa_test_design"
-      
-  - input:
-      architect_review_result: "APPROVED"
-      test_design_level: "Simple"
-    output:
-      story_status: TestDesignComplete
-      reasoning: "Architect review approved and test design is Simple. Story can proceed directly to Dev implementation with standard unit tests."
-      next_action: "handoff_to_dev"
-      
-  - input:
-      architect_review_result: "APPROVED"
-      test_design_level: "Comprehensive"
-    output:
-      story_status: AwaitingTestDesign
-      reasoning: "Architect review approved but test design level is Comprehensive. Story status set to AwaitingTestDesign for QA to design tests."
-      next_action: "handoff_to_qa_test_design"
-      
-  - input:
-      architect_review_result: "REQUIRES_REVISION"
-      test_design_level: "Standard"
-    output:
-      story_status: RequiresRevision
-      reasoning: "Architect requires Story revision. SM must address Architect feedback and revise Story. Test design level will be re-evaluated after revision."
-      next_action: "sm_revise_story"
+  - input: {architect_review_result: "REQUIRED", test_design_level: "Standard"}
+    output: {story_status: AwaitingArchReview, next_action: "handoff_to_architect"}
+  - input: {architect_review_result: "NOT_REQUIRED", test_design_level: "Simple"}
+    output: {story_status: TestDesignComplete, next_action: "handoff_to_dev"}
+  - input: {architect_review_result: "APPROVED", test_design_level: "Comprehensive"}
+    output: {story_status: AwaitingTestDesign, next_action: "handoff_to_qa_test_design"}

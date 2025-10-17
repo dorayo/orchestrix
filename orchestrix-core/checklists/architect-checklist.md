@@ -2,49 +2,19 @@
 
 This checklist serves as a comprehensive framework for the Architect to validate the technical design and architecture before development execution. The Architect should systematically work through each item, ensuring the architecture is robust, scalable, secure, and aligned with the product requirements.
 
-[[LLM: INITIALIZATION INSTRUCTIONS - REQUIRED ARTIFACTS
+[[LLM: INITIALIZATION INSTRUCTIONS
 
-Before proceeding with this checklist, ensure you have access to:
+**Required Artifacts**: architecture.md, prd.md, frontend-architecture.md (if UI project), API docs, tech stack specs
 
-1. architecture.md - The primary architecture document (check docs/architecture.md)
-2. prd.md - Product Requirements Document for requirements alignment (check docs/prd.md)
-3. frontend-architecture.md or fe-architecture.md - If this is a UI project (check docs/frontend-architecture.md)
-4. Any system diagrams referenced in the architecture
-5. API documentation if available
-6. Technology stack details and version specifications
+**Project Type**: Detect frontend/backend/fullstack; skip [[FRONTEND ONLY]] sections for backend-only projects
 
-IMPORTANT: If any required documents are missing or inaccessible, immediately ask the user for their location or content before proceeding.
+**Validation Approach**: Deep analysis with evidence; cite specific sections; question assumptions; assess risks
 
-PROJECT TYPE DETECTION:
-First, determine the project type by checking:
-
-- Does the architecture include a frontend/UI component?
-- Is there a frontend-architecture.md document?
-- Does the PRD mention user interfaces or frontend requirements?
-
-If this is a backend-only or service-only project:
-
-- Skip sections marked with [[FRONTEND ONLY]]
-- Focus extra attention on API design, service architecture, and integration patterns
-- Note in your final report that frontend sections were skipped due to project type
-
-VALIDATION APPROACH:
-For each section, you must:
-
-1. Deep Analysis - Don't just check boxes, thoroughly analyze each item against the provided documentation
-2. Evidence-Based - Cite specific sections or quotes from the documents when validating
-3. Critical Thinking - Question assumptions and identify gaps, not just confirm what's present
-4. Risk Assessment - Consider what could go wrong with each architectural decision
-
-EXECUTION MODE:
-Ask the user if they want to work through the checklist:
-
-- Section by section (interactive mode) - Review each section, present findings, get confirmation before proceeding
-- All at once (comprehensive mode) - Complete full analysis and present comprehensive report at end]]
+**Execution Mode**: Ask user preference - section by section (interactive) or all at once (comprehensive)]]
 
 ## 1. REQUIREMENTS ALIGNMENT
 
-[[LLM: Before evaluating this section, take a moment to fully understand the product's purpose and goals from the PRD. What is the core problem being solved? Who are the users? What are the critical success factors? Keep these in mind as you validate alignment. For each item, don't just check if it's mentioned - verify that the architecture provides a concrete technical solution.]]
+[[LLM: Understand product purpose from PRD; verify architecture provides concrete technical solutions, not just mentions]]
 
 ### 1.1 Functional Requirements Coverage
 
@@ -72,7 +42,7 @@ Ask the user if they want to work through the checklist:
 
 ## 2. ARCHITECTURE FUNDAMENTALS
 
-[[LLM: Architecture clarity is crucial for successful implementation. As you review this section, visualize the system as if you were explaining it to a new developer. Are there any ambiguities that could lead to misinterpretation? Would an AI agent be able to implement this architecture without confusion? Look for specific diagrams, component definitions, and clear interaction patterns.]]
+[[LLM: Visualize as if explaining to new developer; check for ambiguities; verify AI agent could implement without confusion]]
 
 ### 2.1 Architecture Clarity
 
@@ -108,7 +78,7 @@ Ask the user if they want to work through the checklist:
 
 ## 3. TECHNICAL STACK & DECISIONS
 
-[[LLM: Technology choices have long-term implications. For each technology decision, consider: Is this the simplest solution that could work? Are we over-engineering? Will this scale? What are the maintenance implications? Are there security vulnerabilities in the chosen versions? Verify that specific versions are defined, not ranges.]]
+[[LLM: Assess simplicity, scalability, maintenance, security; verify specific versions (not ranges)]]
 
 ### 3.1 Technology Selection
 
@@ -198,7 +168,7 @@ Ask the user if they want to work through the checklist:
 
 ## 5. RESILIENCE & OPERATIONAL READINESS
 
-[[LLM: Production systems fail in unexpected ways. As you review this section, think about Murphy's Law - what could go wrong? Consider real-world scenarios: What happens during peak load? How does the system behave when a critical service is down? Can the operations team diagnose issues at 3 AM? Look for specific resilience patterns, not just mentions of "error handling".]]
+[[LLM: Think Murphy's Law; consider peak load, service failures, 3AM debugging; look for specific patterns]]
 
 ### 5.1 Error Handling & Resilience
 
@@ -234,7 +204,7 @@ Ask the user if they want to work through the checklist:
 
 ## 6. SECURITY & COMPLIANCE
 
-[[LLM: Security is not optional. Review this section with a hacker's mindset - how could someone exploit this system? Also consider compliance: Are there industry-specific regulations that apply? GDPR? HIPAA? PCI? Ensure the architecture addresses these proactively. Look for specific security controls, not just general statements.]]
+[[LLM: Hacker mindset; check compliance (GDPR/HIPAA/PCI); verify specific controls, not general statements]]
 
 ### 6.1 Authentication & Authorization
 
@@ -270,7 +240,7 @@ Ask the user if they want to work through the checklist:
 
 ## 7. IMPLEMENTATION GUIDANCE
 
-[[LLM: Clear implementation guidance prevents costly mistakes. As you review this section, imagine you're a developer starting on day one. Do they have everything they need to be productive? Are coding standards clear enough to maintain consistency across the team? Look for specific examples and patterns.]]
+[[LLM: Day-one developer perspective; verify productivity readiness; check for specific examples and patterns]]
 
 ### 7.1 Coding Standards & Practices
 
@@ -316,7 +286,7 @@ Ask the user if they want to work through the checklist:
 
 ## 8. DEPENDENCY & INTEGRATION MANAGEMENT
 
-[[LLM: Dependencies are often the source of production issues. For each dependency, consider: What happens if it's unavailable? Is there a newer version with security patches? Are we locked into a vendor? What's our contingency plan? Verify specific versions and fallback strategies.]]
+[[LLM: Check unavailability scenarios, security patches, vendor lock-in, contingency plans; verify versions and fallbacks]]
 
 ### 8.1 External Dependencies
 
@@ -344,7 +314,7 @@ Ask the user if they want to work through the checklist:
 
 ## 9. AI AGENT IMPLEMENTATION SUITABILITY
 
-[[LLM: This architecture may be implemented by AI agents. Review with extreme clarity in mind. Are patterns consistent? Is complexity minimized? Would an AI agent make incorrect assumptions? Remember: explicit is better than implicit. Look for clear file structures, naming conventions, and implementation patterns.]]
+[[LLM: Extreme clarity for AI agents; consistent patterns, minimal complexity, explicit over implicit]]
 
 ### 9.1 Modularity for AI Agents
 
@@ -398,41 +368,14 @@ Ask the user if they want to work through the checklist:
 - [ ] Manual testing procedures defined
 - [ ] Automated testing approach outlined
 
-[[LLM: FINAL VALIDATION REPORT GENERATION
+[[LLM: FINAL REPORT
 
-Now that you've completed the checklist, generate a comprehensive validation report that includes:
+Generate comprehensive validation report with:
+1. Executive Summary (readiness, risks, strengths, project type)
+2. Section Analysis (pass rates, gaps, skipped sections)
+3. Risk Assessment (top 5 risks, mitigations, timeline impact)
+4. Recommendations (must-fix, should-fix, nice-to-have)
+5. AI Implementation Readiness (concerns, clarifications needed)
+6. Frontend Assessment (if applicable)
 
-1. Executive Summary
-   - Overall architecture readiness (High/Medium/Low)
-   - Critical risks identified
-   - Key strengths of the architecture
-   - Project type (Full-stack/Frontend/Backend) and sections evaluated
-
-2. Section Analysis
-   - Pass rate for each major section (percentage of items passed)
-   - Most concerning failures or gaps
-   - Sections requiring immediate attention
-   - Note any sections skipped due to project type
-
-3. Risk Assessment
-   - Top 5 risks by severity
-   - Mitigation recommendations for each
-   - Timeline impact of addressing issues
-
-4. Recommendations
-   - Must-fix items before development
-   - Should-fix items for better quality
-   - Nice-to-have improvements
-
-5. AI Implementation Readiness
-   - Specific concerns for AI agent implementation
-   - Areas needing additional clarification
-   - Complexity hotspots to address
-
-6. Frontend-Specific Assessment (if applicable)
-   - Frontend architecture completeness
-   - Alignment between main and frontend architecture docs
-   - UI/UX specification coverage
-   - Component design clarity
-
-After presenting the report, ask the user if they would like detailed analysis of any specific section, especially those with warnings or failures.]]
+Ask user if detailed analysis of specific sections needed.]]

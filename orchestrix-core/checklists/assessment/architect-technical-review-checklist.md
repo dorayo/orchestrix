@@ -6,11 +6,6 @@ metadata:
   threshold: 70%
   on_fail: continue_with_score
   purpose: "System-level architecture review focusing on pattern compliance, integration, scalability, security, and technical feasibility"
-  used_by:
-    - review-story-technical-accuracy.md
-    - review-story-technical-auto.md
-  estimated_tokens: 600
-  version: 1.1
 ---
 
 ## LLM INSTRUCTIONS

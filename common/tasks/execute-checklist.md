@@ -9,7 +9,6 @@ If the user asks or does not specify a specific checklist, list the checklists a
 ## Instructions
 
 1. **Initial Assessment**
-
    - If user or the task being run provides a checklist name:
      - Try fuzzy matching (e.g. "architecture checklist" -> "architect-checklist")
      - If multiple matches found, ask user to clarify
@@ -21,15 +20,17 @@ If the user asks or does not specify a specific checklist, list the checklists a
      - Section by section (interactive mode - very time consuming)
      - All at once (YOLO mode - recommended for checklists, there will be a summary of sections at the end to discuss)
 
-2. **Document and Artifact Gathering**
+2. **Parse Checklist Metadata**
 
+   Parse YAML front matter to extract: `type` (validation|assessment|completion), `threshold`, `on_fail`, `purpose`
+
+3. **Document and Artifact Gathering**
    - Each checklist will specify its required documents/artifacts at the beginning
    - Follow the checklist's specific instructions for what to gather, generally a file can be resolved in the docs folder, if not or unsure, halt and ask or confirm with the user.
 
-3. **Checklist Processing**
+4. **Checklist Processing**
 
    If in interactive mode:
-
    - Work through each section of the checklist one at a time
    - For each section:
      - Review all items in the section following instructions for that section embedded in the checklist
@@ -38,39 +39,56 @@ If the user asks or does not specify a specific checklist, list the checklists a
      - Get user confirmation before proceeding to next section or if any thing major do we need to halt and take corrective action
 
    If in YOLO mode:
-
    - Process all sections at once
    - Create a comprehensive report of all findings
    - Present the complete analysis to the user
 
-4. **Validation Approach**
+5. **Validation Approach**
 
    For each checklist item:
-
    - Read and understand the requirement
    - Look for evidence in the documentation that satisfies the requirement
    - Consider both explicit mentions and implicit coverage
    - Aside from this, follow all checklist llm instructions
    - Mark items as:
-     - ✅ PASS: Requirement clearly met
-     - ❌ FAIL: Requirement not met or insufficient coverage
-     - ⚠️ PARTIAL: Some aspects covered but needs improvement
+     - ✅ PASS/FULL/DONE: Requirement clearly met
+     - ❌ FAIL/ZERO/NOT DONE: Requirement not met or insufficient coverage
+     - ⚠️ PARTIAL: Some aspects covered but needs improvement (assessment only)
      - N/A: Not applicable to this case
 
-5. **Section Analysis**
+6. **Section Analysis**
 
    For each section:
-
    - think step by step to calculate pass rate
    - Identify common themes in failed items
    - Provide specific recommendations for improvement
    - In interactive mode, discuss findings with user
    - Document any user decisions or explanations
 
-6. **Final Report**
+7. **Output Format**
+
+   Return structured result:
+
+   ```yaml
+   result:
+     type: validation|assessment|completion
+     status: pass|fail|partial|complete|incomplete
+     score: "X/Y (Z%)"
+     threshold: "80%"
+     threshold_met: true|false
+     details:
+       # validation: passed[], failed[], na[]
+       # assessment: categories[{name, weight, score, items{full[], partial[], zero[], na[]}}], overall{}
+       # completion: done[], not_done[], na[], gaps[{item, context, impact, recommendation}]
+     metadata:
+       checklist: "path/to/checklist.md"
+       executed_at: "ISO-8601-timestamp"
+     recommendations: [] # assessment: {critical[], high_priority[], medium_priority[], low_priority[]}
+   ```
+
+8. **Final Report**
 
    Prepare a summary that includes:
-
    - Overall checklist completion status
    - Pass rates by section
    - List of failed items with context

@@ -1,196 +1,57 @@
 # Common Workflow Rules
 # Shared across all Orchestrix agents (SM, Architect, Dev, QA)
-# Version: 1.0
-# Last Updated: 2025-10-16
+# These rules will be merged into the workflow_rules array of each agent
 
-version: 1.0
-
-description: >
-  Common workflow rules that apply to all agents in the Orchestrix system.
-  These rules establish consistent behavior patterns and execution protocols.
-  Agent-specific rules should extend (not replace) these common rules.
-
-# Core Workflow Rules
-# These rules are fundamental to all agent operations
-core_rules:
-  - id: "task_execution"
-    description: "Treat task files as executable workflows; follow exactly"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Ensures consistent task execution across all agents"
-    
-  - id: "checklist_validation"
-    description: "Use execute-checklist.md for all validation"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Centralizes validation logic in checklist system"
-    
-  - id: "elicit_requirement"
-    description: "Tasks with elicit=true must elicit before proceeding"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Ensures required information is gathered before execution"
-    
-  - id: "numbered_options"
-    description: "List options numbered; user replies with number"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "medium"
-    rationale: "Provides consistent user interaction pattern"
-    
-  - id: "persona_maintenance"
-    description: "Maintain persona until *exit"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Ensures consistent agent behavior throughout session"
-    
-  - id: "dependency_handling"
-    description: "If dep missing → blocked + list alternatives"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "medium"
-    rationale: "Provides clear error handling for missing dependencies"
-
-  - id: "decision_centralization"
-    description: "Use make-decision.md for all decision logic"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Centralizes decision logic in decision files"
-
-# Execution Protocol Rules
-# Rules governing how agents execute commands and tasks
-execution_rules:
-  - id: "command_selection_first"
-    description: "Execute only after command selected from *help"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Ensures user intent is clear before execution"
-    
-  - id: "lazy_dependency_loading"
-    description: "Load dependency files only after command selection"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "medium"
-    rationale: "Optimizes token usage by loading only needed files"
-    
-  - id: "halt_on_validation_failure"
-    description: "HALT if validation fails; document reason"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Prevents proceeding with invalid state"
-
-# Story Management Rules
-# Rules for reading and updating story files
-story_management_rules:
-  - id: "story_update_permissions"
-    description: "Each agent has specific story sections they can modify"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "critical"
-    rationale: "Prevents unauthorized modifications and maintains data integrity"
-    details:
-      sm_writable:
-        - "Story"
-        - "Acceptance Criteria"
-        - "Dev Notes"
-        - "Tasks/Subtasks"
-        - "Testing"
-        - "Quality Assessment Metadata"
-        - "Status"
-        - "Change Log"
-      architect_writable:
-        - "Architect Review Metadata"
-        - "Status"
-        - "Change Log"
-      dev_writable:
-        - "Tasks/Subtasks checkboxes"
-        - "Dev Agent Record"
-        - "Agent Model Used"
-        - "Dev Log Reference"
-        - "Implementation Summary"
-        - "File List"
-        - "Status"
-        - "Change Log"
-      qa_writable:
-        - "QA Results"
-        - "QA Test Design Metadata"
-        - "Status"
-        - "Change Log"
+workflow_rules:
+  # Core workflow rules - fundamental to all agent operations
+  - "Treat task files as executable workflows; follow exactly"
+  - "Use execute-checklist.md for all validation"
+  - "Tasks with elicit=true must elicit before proceeding"
+  - "List options numbered; user replies with number"
+  - "Maintain persona until *exit"
+  - "If dep missing → blocked + list alternatives"
+  - "Use make-decision.md for all decision logic"
   
-  - id: "change_log_append_only"
-    description: "Always append to Change Log; never overwrite"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "critical"
-    rationale: "Maintains complete audit trail"
-
-# Configuration Loading Rules
-# Rules for loading configuration and standards
-configuration_rules:
-  - id: "config_path_loading"
-    description: "Load CONFIG_PATH from core-config.yaml at activation"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "critical"
-    rationale: "Ensures all agents have access to system configuration"
-    on_error: "HALT"
-    
-  - id: "standards_loading"
-    description: "Load project standards as specified in CONFIG_PATH"
-    applies_to: ["sm", "architect", "dev", "qa"]
-    priority: "high"
-    rationale: "Ensures consistent application of project standards"
-
-# Agent-Specific Rule Extension Pattern
-# How agents should extend these common rules with their own specific rules
-extension_pattern:
-  description: >
-    Agents extend common rules by adding agent-specific rules in their YAML files.
-    Agent-specific rules should not contradict common rules.
-    Use the following pattern in agent YAML files:
+  # Execution protocol rules
+  - "Execute only after command selected from *help"
+  - "Load dependency files only after command selection"
+  - "HALT if validation fails; document reason"
   
-  example: |
-    workflow_rules:
-      !include common/common-workflow-rules.yaml
-      # Agent-specific rules below
-      - "Follow create-next-story procedure exactly"
-      - "Never implement code. Story prep only"
+  # Story management rules
+  - "Each agent has specific story sections they can modify (see story_update_permissions)"
+  - "Always append to Change Log; never overwrite"
   
-  guidelines:
-    - "Agent-specific rules are additive, not replacements"
-    - "If conflict arises, common rules take precedence unless explicitly overridden"
-    - "Document any overrides with clear rationale"
-    - "Keep agent-specific rules focused on unique agent responsibilities"
-  
-  override_syntax: |
-    # To override a common rule (use sparingly):
-    workflow_rules:
-      !include common/common-workflow-rules.yaml
-      overrides:
-        - rule_id: "task_execution"
-          override: "Custom execution pattern for this agent"
-          rationale: "Specific reason for override"
+  # Configuration loading rules
+  - "Load CONFIG_PATH from core-config.yaml at activation (HALT on error)"
+  - "Load project standards as specified in CONFIG_PATH"
 
-# Rule Categories for Reference
-# Helps agents understand which rules apply to different scenarios
-rule_categories:
-  critical:
-    description: "Rules that must never be violated"
-    rules: ["story_update_permissions", "change_log_append_only", "config_path_loading"]
-  
-  high_priority:
-    description: "Rules that should be followed unless exceptional circumstances"
-    rules: ["task_execution", "checklist_validation", "elicit_requirement", "persona_maintenance", "decision_centralization", "command_selection_first", "halt_on_validation_failure", "standards_loading"]
-  
-  medium_priority:
-    description: "Rules that improve consistency and user experience"
-    rules: ["numbered_options", "dependency_handling", "lazy_dependency_loading"]
-
-# Usage Notes
-usage_notes:
-  - "All agents MUST include this file via !include in their YAML configuration"
-  - "Common rules reduce redundancy and ensure consistent behavior"
-  - "Agent-specific rules should focus on unique agent responsibilities"
-  - "Review this file when adding new agents to the system"
-  - "Update version number when making changes"
-
-# Maintenance
-maintenance:
-  review_frequency: "quarterly"
-  owner: "Architecture Team"
-  last_review: "2025-10-16"
-  next_review: "2026-01-16"
+# Story Update Permissions
+# Defines which sections each agent can modify
+story_update_permissions:
+  sm_writable:
+    - "Story"
+    - "Acceptance Criteria"
+    - "Dev Notes"
+    - "Tasks/Subtasks"
+    - "Testing"
+    - "Quality Assessment Metadata"
+    - "Status"
+    - "Change Log"
+  architect_writable:
+    - "Architect Review Metadata"
+    - "Status"
+    - "Change Log"
+  dev_writable:
+    - "Tasks/Subtasks checkboxes"
+    - "Dev Agent Record"
+    - "Agent Model Used"
+    - "Dev Log Reference"
+    - "Implementation Summary"
+    - "File List"
+    - "Status"
+    - "Change Log"
+  qa_writable:
+    - "QA Results"
+    - "QA Test Design Metadata"
+    - "Status"
+    - "Change Log"
