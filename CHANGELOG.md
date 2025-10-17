@@ -1,3 +1,10 @@
+## [6.0.2](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.1...v6.0.2) (2025-10-17)
+
+
+### Bug Fixes
+
+* 修复 checklist 路径引用问题 ([0ab3890](https://github.com/dorayo/ORCHESTRIX/commit/0ab3890f40b7156013a986c91f39ecb178793387))
+
 ## [6.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.0...v6.0.1) (2025-10-17)
 
 
