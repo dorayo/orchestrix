@@ -487,8 +487,10 @@ class IdeSetup {
     
     if (await fileManager.pathExists(agentsDir)) {
       // Support both YAML and MD files, prioritize YAML
-      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir });
-      const mdFiles = glob.sync("*.md", { cwd: agentsDir });
+      // Filter out .src.yaml files as they contain $include directives and need to be compiled first
+      // Also filter out README files
+      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir }).filter(file => !file.endsWith('.src.yaml') && !file.toUpperCase().startsWith('README'));
+      const mdFiles = glob.sync("*.md", { cwd: agentsDir }).filter(file => !file.toUpperCase().startsWith('README'));
       
       // Extract IDs from YAML files first
       const yamlIds = yamlFiles.map((file) => path.basename(file, ".yaml"));
@@ -504,8 +506,9 @@ class IdeSetup {
       const fullExpDir = path.join(installDir, expDir);
       
       // Support both YAML and MD files for expansion packs too
-      const expYamlFiles = glob.sync("*.yaml", { cwd: fullExpDir });
-      const expMdFiles = glob.sync("*.md", { cwd: fullExpDir });
+      // Filter out .src.yaml files and README files
+      const expYamlFiles = glob.sync("*.yaml", { cwd: fullExpDir }).filter(file => !file.endsWith('.src.yaml') && !file.toUpperCase().startsWith('README'));
+      const expMdFiles = glob.sync("*.md", { cwd: fullExpDir }).filter(file => !file.toUpperCase().startsWith('README'));
       
       // Extract IDs from YAML files first
       const expYamlIds = expYamlFiles.map((file) => path.basename(file, ".yaml"));
@@ -530,8 +533,9 @@ class IdeSetup {
     
     if (await fileManager.pathExists(agentsDir)) {
       // Support both YAML and MD files, prioritize YAML
-      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir });
-      const mdFiles = glob.sync("*.md", { cwd: agentsDir });
+      // Filter out .src.yaml files and README files
+      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir }).filter(file => !file.endsWith('.src.yaml') && !file.toUpperCase().startsWith('README'));
+      const mdFiles = glob.sync("*.md", { cwd: agentsDir }).filter(file => !file.toUpperCase().startsWith('README'));
       
       // Extract IDs from YAML files first
       const yamlIds = yamlFiles.map((file) => path.basename(file, ".yaml"));
@@ -2165,7 +2169,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       return agentContent;
     } else {
       // MD file with YAML block - extract it
-      const { extractYamlFromAgent } = require('../../lib/yaml-utils');
+      const { extractYamlFromAgent } = require('../../../tools/lib/yaml-utils');
       return extractYamlFromAgent(agentContent);
     }
   }
