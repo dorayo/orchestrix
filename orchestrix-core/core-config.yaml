@@ -34,7 +34,7 @@ qa:
       tasks: []
     standard:
       maxComplexity: 2
-      minQualityScore: 7.0
+      minQualityScore: 7
       tasks:
         - test-design
     comprehensive:
@@ -44,3 +44,4 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
+version: 6.0.0

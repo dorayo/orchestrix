@@ -1,3 +1,32 @@
+# [6.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v5.2.0...v6.0.0) (2025-10-17)
+
+
+### Bug Fixes
+
+* documentation and inconsistency ([6ea1750](https://github.com/dorayo/ORCHESTRIX/commit/6ea17507d960b7e9f84bb1bdcc847f5ecf48c870))
+
+
+### Code Refactoring
+
+* **agents:** Phase 1 - extract common config and reorganize checklists ([e106ab8](https://github.com/dorayo/ORCHESTRIX/commit/e106ab89ea6bdd2eb1f8079e202a6d5328f3616c))
+* **core:** 架构优化与内容分层重构 ([2b54b84](https://github.com/dorayo/ORCHESTRIX/commit/2b54b84c32810413c662d73b92036ca916bb7024))
+
+
+### Features
+
+* cross-agent coordination enhancement with decision system ([71bae22](https://github.com/dorayo/ORCHESTRIX/commit/71bae22e6c6cab19995e8f7a9ff23cdeee3287ac))
+* **installer:** improve agent configuration handling and compilation ([7f221e8](https://github.com/dorayo/ORCHESTRIX/commit/7f221e81beafca5a894c04fc6ed5c023d6633d81))
+
+
+### BREAKING CHANGES
+
+* **core:** agent 配置文件结构调整，引入 .src.yaml 源文件
+* **agents:** Checklist file paths have changed. Update any external references to use new paths:
+  - architect-technical-review-checklist.md → checklists/assessment/
+  - sm-story-creation-comprehensive-checklist.md → checklists/assessment/sm-story-quality.md
+  - story-dod-checklist.md → checklists/completion/
+  - sm-technical-extraction-checklist.md → checklists/validation/
+
 # [5.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v5.1.4...v5.2.0) (2025-09-09)
 
 
