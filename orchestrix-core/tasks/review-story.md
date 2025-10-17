@@ -173,7 +173,29 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 ### Handoff Message
 
-- **Architecture Escalation:** `Architecture concerns detected. Next: Architect execute 'review-escalation {story_id}'`
-- **Gate Escalation:** Use `result.next_action` from decision
-- **Complete:** `Story completed! Gate: {result.result}. {result.reasoning}`
-- **Review:** Use `result.next_action` from decision
+Based on the review outcome, output the appropriate handoff message:
+
+- **Architecture Escalation:**
+  ```
+  Next: Architect please execute command `review-escalation {story_id}`
+  ```
+
+- **Gate PASS (next_action = mark_story_complete):**
+  ```
+  Story completed! Gate: PASS. {result.reasoning}
+  ```
+
+- **Gate CONCERNS/FAIL (next_action = handoff_to_dev_fix):**
+  ```
+  Next: Dev please execute command `review-qa {story_id}`
+  ```
+
+- **Gate FAIL with rework (next_action = handoff_to_dev_rework):**
+  ```
+  Next: Dev please execute command `review-qa {story_id}` - Major rework required
+  ```
+
+- **Escalate to Architect (next_action = escalate_to_architect):**
+  ```
+  Next: Architect please execute command `review-escalation {story_id}` - No improvement after multiple reviews
+  ```
