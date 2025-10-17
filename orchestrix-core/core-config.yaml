@@ -44,4 +44,4 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
-version: 6.0.0
+version: 6.0.1

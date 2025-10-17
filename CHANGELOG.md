@@ -1,3 +1,11 @@
+## [6.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.0...v6.0.1) (2025-10-17)
+
+
+### Bug Fixes
+
+* **claude-code:** fix subagent frontmatter format and improve error handling ([26cb96b](https://github.com/dorayo/ORCHESTRIX/commit/26cb96b7e586afa07d012f7200defffe9de14bae))
+* 修复 SM 决策流程逻辑 bug - 职责分离 ([43bb481](https://github.com/dorayo/ORCHESTRIX/commit/43bb481a2e2ab90fd703b03ba387ceea52a2e749))
+
 # [6.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v5.2.0...v6.0.0) (2025-10-17)
 
 
