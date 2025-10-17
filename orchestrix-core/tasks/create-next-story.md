@@ -77,16 +77,19 @@ Run via `{root}/tasks/make-decision.md`:
 - Type: `sm-architect-review-needed`
 - Context: `quality_score`, `complexity_indicators`
 - Store result as `architect_review_decision`
+- Extract: `architect_review_result` = `architect_review_decision.result`
 
 **B. Test Design Level:**
 - Type: `sm-test-design-level`
 - Context: `complexity_indicators`, `quality_score`, `security_sensitive`
 - Store result as `test_design_decision`
+- Extract: `test_design_level` = `test_design_decision.result`
 
 **C. Story Status:**
 - Type: `sm-story-status`
-- Context: `architect_review_result`, `test_design_level`
-- Apply: Set story status to `result.next_status`
+- Context: `architect_review_result` (from 8A), `test_design_level` (from 8B)
+- Store result as `story_status_decision`
+- Apply: Set story status to `story_status_decision.next_status`
 
 ### 9. Record Change Log
 

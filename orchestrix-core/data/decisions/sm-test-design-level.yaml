@@ -21,8 +21,8 @@ rules:
   - condition: "quality_score >= 8.5 AND complexity_indicators == 0 AND security_sensitive == false"
     result: Simple
     reasoning: "High quality with no complexity, minimal test design needed"
-    next_status: TestDesignComplete
-    next_action: "skip_qa_test_design"
+    next_status: null
+    next_action: "determine_final_status"
     metadata:
       test_design_required: false
       test_levels: ["unit"]
@@ -31,8 +31,8 @@ rules:
   - condition: "(quality_score >= 7.0 AND complexity_indicators <= 2 AND security_sensitive == false)"
     result: Standard
     reasoning: "Good quality with low/moderate complexity, standard test design needed"
-    next_status: AwaitingTestDesign
-    next_action: "handoff_to_qa_test_design"
+    next_status: null
+    next_action: "determine_final_status"
     metadata:
       test_design_required: true
       test_levels: ["unit", "integration"]
@@ -41,8 +41,8 @@ rules:
   - condition: "complexity_indicators >= 3"
     result: Comprehensive
     reasoning: "High complexity requires comprehensive test design including E2E"
-    next_status: AwaitingTestDesign
-    next_action: "handoff_to_qa_test_design"
+    next_status: null
+    next_action: "determine_final_status"
     metadata:
       test_design_required: true
       test_levels: ["unit", "integration", "e2e"]
@@ -52,8 +52,8 @@ rules:
   - condition: "security_sensitive == true"
     result: Comprehensive
     reasoning: "Security-sensitive requires comprehensive test design with security focus"
-    next_status: AwaitingTestDesign
-    next_action: "handoff_to_qa_test_design"
+    next_status: null
+    next_action: "determine_final_status"
     metadata:
       test_design_required: true
       test_levels: ["unit", "integration", "e2e", "security"]
@@ -61,15 +61,20 @@ rules:
       security_focus: true
 
 output:
-  test_design_level:
+  result:
     type: enum
     values: [Simple, Standard, Comprehensive]
+    description: Test design level determination
   reasoning:
     type: string
+    description: Explanation of test design level decision
   next_status:
     type: string
+    nullable: true
+    description: Always null - final status determined by sm-story-status decision
   next_action:
     type: string
+    description: Always "determine_final_status" to trigger story status decision
   metadata:
     type: object
     properties:
@@ -89,10 +94,10 @@ metadata:
 
 examples:
   - input: {complexity_indicators: 0, quality_score: 9.0, security_sensitive: false}
-    output: {test_design_level: Simple, next_status: TestDesignComplete}
+    output: {result: Simple, next_action: "determine_final_status", next_status: null}
   - input: {complexity_indicators: 1, quality_score: 8.5, security_sensitive: false}
-    output: {test_design_level: Standard, next_status: AwaitingTestDesign}
+    output: {result: Standard, next_action: "determine_final_status", next_status: null}
   - input: {complexity_indicators: 4, quality_score: 8.0, security_sensitive: false}
-    output: {test_design_level: Comprehensive, next_status: AwaitingTestDesign}
+    output: {result: Comprehensive, next_action: "determine_final_status", next_status: null}
   - input: {complexity_indicators: 1, quality_score: 7.5, security_sensitive: true}
-    output: {test_design_level: Comprehensive, next_status: AwaitingTestDesign}
+    output: {result: Comprehensive, next_action: "determine_final_status", next_status: null}
