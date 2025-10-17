@@ -66,7 +66,7 @@ class FileManager {
 
       // Use root replacement if rootValue is provided and file needs it
       const needsRootReplacement = rootValue && (file.endsWith('.md') || file.endsWith('.yaml') || file.endsWith('.yml'));
-      
+
       let success = false;
       if (needsRootReplacement) {
         success = await this.copyFileWithRootReplacement(sourcePath, destPath, rootValue);
@@ -195,12 +195,12 @@ class FileManager {
 
     for (const file of manifest.files) {
       const filePath = path.join(installDir, file.path);
-      
+
       // Skip checking the manifest file itself - it will always be different due to timestamps
       if (file.path.endsWith('install-manifest.yaml')) {
         continue;
       }
-      
+
       if (!(await this.pathExists(filePath))) {
         result.missing.push(file.path);
       } else {
@@ -293,24 +293,24 @@ class FileManager {
 
   async modifyCoreConfig(installDir, config) {
     const coreConfigPath = path.join(installDir, '.orchestrix-core', 'core-config.yaml');
-    
+
     try {
       // Read the existing core-config.yaml
       const coreConfigContent = await fs.readFile(coreConfigPath, 'utf8');
       const coreConfig = yaml.load(coreConfigContent);
-      
+
       // Modify sharding settings if provided
       if (config.prdSharded !== undefined) {
         coreConfig.prd.prdSharded = config.prdSharded;
       }
-      
+
       if (config.architectureSharded !== undefined) {
         coreConfig.architecture.architectureSharded = config.architectureSharded;
       }
-      
+
       // Write back the modified config
       await fs.writeFile(coreConfigPath, yaml.dump(coreConfig, { indent: 2 }));
-      
+
       return true;
     } catch (error) {
       await initializeModules();
@@ -324,16 +324,16 @@ class FileManager {
       // Read the source file content
       const fs = require('fs').promises;
       const content = await fs.readFile(source, 'utf8');
-      
+
       // Replace {root} with the specified root value
       const updatedContent = content.replace(/\{root\}/g, rootValue);
-      
+
       // Ensure directory exists
       await this.ensureDirectory(path.dirname(destination));
-      
+
       // Write the updated content
       await fs.writeFile(destination, updatedContent, 'utf8');
-      
+
       return true;
     } catch (error) {
       await initializeModules();
@@ -346,22 +346,22 @@ class FileManager {
     try {
       await initializeModules(); // Ensure chalk is initialized
       await this.ensureDirectory(destination);
-      
+
       // Get all files in source directory
-      const files = glob.sync('**/*', { 
-        cwd: source, 
-        nodir: true 
+      const files = glob.sync('**/*', {
+        cwd: source,
+        nodir: true
       });
-      
+
       let replacedCount = 0;
-      
+
       for (const file of files) {
         const sourcePath = path.join(source, file);
         const destPath = path.join(destination, file);
-        
+
         // Check if this file type should have {root} replacement
         const shouldReplace = fileExtensions.some(ext => file.endsWith(ext));
-        
+
         if (shouldReplace) {
           if (await this.copyFileWithRootReplacement(sourcePath, destPath, rootValue)) {
             replacedCount++;
@@ -371,11 +371,11 @@ class FileManager {
           await this.copyFile(sourcePath, destPath);
         }
       }
-      
+
       // if (replacedCount > 0) {
       //   console.log(chalk.dim(`  Processed ${replacedCount} files with {root} replacement`));
       // }
-      
+
       return true;
     } catch (error) {
       await initializeModules();

@@ -45,7 +45,7 @@
 - Dev Log complete with Final Summary
 - Dev Agent Record updated with Dev Log reference
 - File List complete
-- DoD checklist executed (execute-checklist.md with completion/story-dod-checklist.md)
+- DoD checklist executed ({root}/tasks/execute-checklist.md with {root}/checklists/completion/story-dod-checklist.md)
 - Results logged to Dev Agent Record
 - Story.status = Review
 - HALT after handoff
@@ -94,7 +94,8 @@ Use `make-decision.md`:
 
 ### 5. Complete
 - Add Dev Log Final Summary
-- Execute: execute-checklist.md (completion/story-dod-checklist.md)
+- Execute: {root}/tasks/execute-checklist.md
+  - Checklist: {root}/checklists/completion/story-dod-checklist.md
 - Update Dev Agent Record: model, summary, file_list, dev_log_reference, open_issues, dod_result
 - Change Log: Add entry
 - Status → Ready for Review
@@ -114,4 +115,4 @@ Warn if: open_issues, dev_feedback, DoD < 100%
 - contract-driven-phases.md, coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md
 - utils/load-architecture-context.md, make-decision.md, execute-checklist.md
 - data/decisions/dev-block-story.yaml, dev-escalate-architect.yaml
-- dev-log-tmpl.md, completion/story-dod-checklist.md
+- dev-log-tmpl.md, checklists/completion/story-dod-checklist.md

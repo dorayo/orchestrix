@@ -418,8 +418,8 @@ Additional Improvements:
 Run the same quality check process as initial Story creation:
 
 ```
-Execute: orchestrix-core/tasks/execute-checklist.md
-Checklist: orchestrix-core/checklists/assessment/sm-story-quality.md
+Execute: {root}/tasks/execute-checklist.md
+Checklist: {root}/checklists/assessment/sm-story-quality.md
 Story File: docs/stories/{epic-num}/{story-num}-{story-title}.md
 ```
 
