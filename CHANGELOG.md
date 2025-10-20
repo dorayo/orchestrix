@@ -1,3 +1,10 @@
+## [6.0.3](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.2...v6.0.3) (2025-10-20)
+
+
+### Bug Fixes
+
+* **installer:** resolve dev agent subagent generation and remove config redundancy ([902310f](https://github.com/dorayo/ORCHESTRIX/commit/902310f8233a2be55e6a77b96117bc6c4972b38a))
+
 ## [6.0.2](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.1...v6.0.2) (2025-10-17)
 
 
