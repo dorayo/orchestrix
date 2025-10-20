@@ -112,9 +112,11 @@ class IdeSetup {
         // Extract the complete YAML content from the agent file
         const yamlContent = extractYamlFromAgent(agentContent);
         if (yamlContent) {
+          // Clean the YAML content to remove redundant sections
+          let cleanedYaml = this.cleanYamlContent(yamlContent);
           // Replace {root} variables for Cursor rules
           // {root} should resolve to .orchestrix-core
-          let processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+          let processedYamlContent = cleanedYaml.replace(/\{root\}/g, '.orchestrix-core');
           mdcContent += processedYamlContent;
         } else {
           // If YAML extraction completely fails, provide meaningful error message
@@ -366,11 +368,9 @@ class IdeSetup {
         mdContent +=
           "CRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:\n\n";
         mdContent += "```yaml\n";
-        // Extract just the YAML content from the agent file
-        const yamlContent = extractYamlFromAgent(agentContent);
-        if (yamlContent) {
-          // Replace {root} variables for Windsurf rules
-          const processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+        // Extract and clean the YAML content from the agent file
+        const processedYamlContent = this.getCleanedYamlForIDE(agentContent, '.orchestrix-core');
+        if (processedYamlContent) {
           mdContent += processedYamlContent;
         } else {
           // If no YAML found, include the whole content minus the header
@@ -420,11 +420,9 @@ class IdeSetup {
         mdContent +=
           "CRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:\n\n";
         mdContent += "```yaml\n";
-        // Extract just the YAML content from the agent file
-        const yamlContent = extractYamlFromAgent(agentContent);
-        if (yamlContent) {
-          // Replace {root} variables for Trae rules
-          const processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+        // Extract and clean the YAML content from the agent file
+        const processedYamlContent = this.getCleanedYamlForIDE(agentContent, '.orchestrix-core');
+        if (processedYamlContent) {
           mdContent += processedYamlContent;
         }
         else {
@@ -966,11 +964,9 @@ class IdeSetup {
         mdContent +=
           "When the user types `@" + agentId + "`, adopt this persona and follow these guidelines:\n\n";
         mdContent += "```yaml\n";
-        // Extract just the YAML content from the agent file
-        const yamlContent = extractYamlFromAgent(agentContent);
-        if (yamlContent) {
-          // Replace {root} variables for Cline rules
-          const processedYamlContent = yamlContent.replace(/\{root\}/g, '.orchestrix-core');
+        // Extract and clean the YAML content from the agent file
+        const processedYamlContent = this.getCleanedYamlForIDE(agentContent, '.orchestrix-core');
+        if (processedYamlContent) {
           mdContent += processedYamlContent;
         } else {
           // If no YAML found, include the whole content minus the header
@@ -1064,10 +1060,10 @@ class IdeSetup {
         agentRuleContent +=
           "CRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:\n\n";
         agentRuleContent += "```yaml\n";
-        // Extract just the YAML content from the agent file
-        const yamlContent = extractYamlFromAgent(agentContent);
-        if (yamlContent) {
-          agentRuleContent += yamlContent;
+        // Extract and clean the YAML content from the agent file
+        const processedYamlContent = this.getCleanedYamlForIDE(agentContent, '.orchestrix-core');
+        if (processedYamlContent) {
+          agentRuleContent += processedYamlContent;
         }
         else {
           // If no YAML found, include the whole content minus the header
@@ -2023,17 +2019,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
 
 
   async generateEnhancedSubagentContent(agentId, agentContent, installDir) {
-    // 使用修复的结构化模板
-    const templatePath = path.join(__dirname, '..', 'templates', 'orchestrix-subagent-structured-template.md');
-    
-    // 确保增强模板存在
-    if (!await fileManager.fileExists(templatePath)) {
-      throw new Error(`Enhanced template not found: ${templatePath}`);
-    }
-    
     try {
-      const template = await fileManager.readFile(templatePath);
-      
       // Parse the YAML content to get structured data
       const yamlContent = this.getYamlContent(agentContent);
       if (!yamlContent) {
@@ -2043,8 +2029,8 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       const yaml = require('js-yaml');
       const agentData = yaml.load(yamlContent);
       
-      // Use the new structured template processor
-      const content = this.processStructuredTemplate(template, agentData, agentId);
+      // Generate subagent content directly without template
+      const content = this.generateSubagentContentDirect(agentData, agentId, yamlContent);
       
       return content;
       
@@ -2053,6 +2039,176 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       console.error(`Stack trace: ${error.stack}`);
       throw new Error(`SubAgent generation failed for ${agentId}: ${error.message}`);
     }
+  }
+
+  // Generate subagent content directly without template - OPTIMIZED for minimal redundancy
+  generateSubagentContentDirect(agentData, agentId, yamlContent) {
+    const agent = agentData.agent || {};
+    const persona = agentData.persona || {};
+    const model = this.getAgentModel(agentId);
+    const color = this.getAgentColor(agentId);
+    
+    // Clean the YAML content - remove redundant sections
+    const cleanedYaml = this.cleanYamlContent(yamlContent);
+    
+    // Build concise frontmatter
+    let content = `---
+name: ${agentId}
+description: ${agent.whenToUse || `Use for ${agentId} related tasks`}
+model: ${model}
+color: ${color}
+---
+
+You are **${agent.name || agentId}**, ${agent.title || agentId}. ${persona.identity || `Specialized in ${agentId} workflows`}
+
+## Activation Protocol
+
+**CRITICAL**: Read the complete YAML configuration below — it defines your entire persona, capabilities, and workflows.
+
+`;
+
+    // Add activation instructions (only if they exist and are meaningful)
+    if (agentData.activation_instructions && Array.isArray(agentData.activation_instructions)) {
+      content += `**Startup Sequence**:\n`;
+      agentData.activation_instructions.forEach((instruction, index) => {
+        content += `${index + 1}. ${instruction}\n`;
+      });
+      content += `\n`;
+    }
+
+    // The YAML block is the single source of truth
+    content += `## Complete Agent Configuration
+
+The following YAML contains your complete persona definition, including:
+- Core principles and workflow rules
+- Available commands and their specifications
+- Dependencies (tasks, templates, checklists, data)
+- File resolution patterns
+- Request resolution strategy
+
+\`\`\`yaml
+${cleanedYaml}
+\`\`\`
+
+`;
+
+    // Only add CRITICAL highlights that aren't obvious from YAML
+    const criticalNotes = this.generateCriticalNotes(agentData, agentId);
+    if (criticalNotes) {
+      content += `## Critical Reminders\n\n${criticalNotes}\n`;
+    }
+
+    // Add quick reference for commands (just the list, details are in YAML)
+    if (agentData.commands && Object.keys(agentData.commands).length > 0) {
+      content += `## Quick Command Reference\n\n`;
+      content += `Type \`*help\` to see the full command list. Key commands:\n`;
+      
+      const commandNames = Object.keys(agentData.commands).slice(0, 5); // Top 5 commands
+      commandNames.forEach(cmdName => {
+        if (cmdName !== 'help' && cmdName !== 'exit') {
+          const cmdConfig = agentData.commands[cmdName];
+          const desc = typeof cmdConfig === 'object' ? cmdConfig.description : cmdConfig;
+          if (desc) {
+            content += `- \`*${cmdName}\` — ${desc}\n`;
+          }
+        }
+      });
+      content += `\n`;
+    }
+
+    content += `---\n\n**Stay in ${agent.name || agentId} mode until explicitly told to exit.**\n`;
+
+    return content;
+  }
+
+  // Clean YAML content by removing redundant sections
+  cleanYamlContent(yamlContent) {
+    if (!yamlContent) return yamlContent;
+    
+    let cleaned = yamlContent;
+    
+    // Remove story_update_permissions section (it's in a separate data file)
+    // Match the entire section including all nested content
+    cleaned = cleaned.replace(/story_update_permissions:\s*\n(?:  \w+:\s*\n(?:    - [^\n]+\n)*)+/g, '');
+    
+    // Remove instruction_precedence section (overly complex, not needed)
+    // Match both simple and complex formats
+    cleaned = cleaned.replace(/instruction_precedence:\s*\n(?:  [\s\S]*?)(?=\n\w|\n$)/g, '');
+    
+    // Clean up multiple consecutive empty lines
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    
+    // Trim trailing whitespace from each line
+    cleaned = cleaned.split('\n').map(line => line.trimEnd()).join('\n');
+    
+    // Trim overall
+    cleaned = cleaned.trim();
+    
+    return cleaned;
+  }
+
+  // Helper method to get cleaned YAML for IDE integrations
+  getCleanedYamlForIDE(agentContent, rootReplacement = '.orchestrix-core') {
+    const yamlContent = extractYamlFromAgent(agentContent);
+    if (!yamlContent) return null;
+    
+    // Clean redundant sections
+    const cleaned = this.cleanYamlContent(yamlContent);
+    
+    // Replace {root} placeholder
+    return cleaned.replace(/\{root\}/g, rootReplacement);
+  }
+
+  // Generate only truly critical notes that need emphasis beyond YAML
+  generateCriticalNotes(agentData, agentId) {
+    const notes = [];
+    
+    // Agent-specific critical reminders
+    const criticalReminders = {
+      'dev': [
+        '🔴 **Test Integrity**: NEVER modify test expectations to make tests pass — fix implementation instead',
+        '📝 **Story Sections**: You may ONLY update Tasks/Subtasks checkboxes and Dev Agent Record section',
+        '🚫 **No Draft Work**: Do NOT start implementation on Draft stories without explicit approval'
+      ],
+      'sm': [
+        '🚫 **No Code**: You are NOT allowed to implement stories or modify code — EVER',
+        '📊 **Quality Gate**: Stories MUST achieve >80% technical extraction completion rate',
+        '✅ **Mandatory Check**: Execute assessment/sm-story-quality.md for EVERY story'
+      ],
+      'qa': [
+        '📝 **Story Sections**: ONLY update QA Results section — never modify other sections',
+        '🔍 **Focus**: Comprehensive validation including compilation, containers, functional, and integration testing',
+        '♻️ **Refactoring**: Actively improve code quality, don\'t just report issues'
+      ],
+      'architect': [
+        '🏗️ **Consistency**: Maintain architectural integrity across all designs',
+        '⚖️ **Standards**: All reviews must enforce established patterns',
+        '🎯 **Threshold**: Technical accuracy score must be ≥7/10'
+      ]
+    };
+    
+    const agentNotes = criticalReminders[agentId];
+    if (agentNotes) {
+      return agentNotes.join('\n');
+    }
+    
+    // Generic critical notes based on workflow rules
+    if (agentData.workflow_rules) {
+      const criticalRules = agentData.workflow_rules.filter(rule => 
+        typeof rule === 'string' && (
+          rule.includes('NEVER') || 
+          rule.includes('MUST') || 
+          rule.includes('CRITICAL') ||
+          rule.includes('HALT')
+        )
+      );
+      
+      if (criticalRules.length > 0) {
+        return criticalRules.slice(0, 3).map(rule => `⚠️ ${rule}`).join('\n');
+      }
+    }
+    
+    return '';
   }
 
   // 获取占位符的有意义默认值
@@ -2183,9 +2339,9 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
       'architect': 'sonnet',
       'analyst': 'sonnet',
       'pm': 'sonnet',
-      'dev': 'sonnet-3.7',
-      'po': 'sonnet-3.7',
-      'ux-expert': 'sonnet-3.7'
+      'dev': 'sonnet-4.5',
+      'po': 'sonnet',
+      'ux-expert': 'sonnet'
     };
     return modelMap[agentId] || 'sonnet';
   }

@@ -1,6 +1,3 @@
-# Common Agent Configuration
-# Shared configuration for all Orchestrix agents
-# These fields will be merged into each agent's configuration
 
 # Request Resolution Strategy
 request_resolution:
@@ -44,34 +41,3 @@ activation_instructions:
     - "STEP 1: Adopt persona defined in 'agent'"
     - "STEP 2: Load CONFIG_PATH = '{root}/core-config.yaml' (HALT on error)"
     - "STEP 3: Greet with name/role, run '*help'"
-
-# Instruction Precedence Hierarchy
-instruction_precedence:
-  levels:
-    - level: 0
-      name: "System/Platform constraints"
-      priority: "highest"
-    - level: 1
-      name: "activation_instructions"
-      priority: "very_high"
-    - level: 2
-      name: "workflow_rules"
-      priority: "high"
-    - level: 3
-      name: "agent.customization"
-      priority: "medium"
-    - level: 4
-      name: "commands"
-      priority: "low"
-    - level: 5
-      name: "dependencies"
-      priority: "lowest"
-  behavior:
-    - "P0: System/Platform constraints"
-    - "P1: activation_instructions"
-    - "P2: workflow_rules"
-    - "P3: agent.customization"
-    - "P4: commands"
-    - "P5: dependencies"
-    - "Higher priority wins on conflict"
-    - "Log in Dev Agent Record (or agent-specific log)"

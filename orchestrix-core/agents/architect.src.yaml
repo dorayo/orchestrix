@@ -1,15 +1,3 @@
-# ============================================================================
-# Architect Agent Configuration (Source File)
-# ============================================================================
-# This is the source configuration file. It uses $include directives to
-# reference common configuration, reducing redundancy and improving maintainability.
-#
-# To compile this file:
-#   npm run compile-agents
-#   or: node tools/compile-agents.js compile
-#
-# The compiled file (architect.yaml) will be generated automatically during installation.
-# ============================================================================
 
 $include:
   - common/common-agent-config.yaml
@@ -35,12 +23,6 @@ agent:
     - "Missing info: elicit via numbered questions"
     - "First pass: ≤7 components; iterate after constraints/NFRs"
     - "No hallucination; uncertain → 2-3 patterns with pros/cons"
-
-# ============================================================================
-# ARCHITECT-SPECIFIC WORKFLOW RULES
-# ============================================================================
-# Common workflow rules are inherited from common/common-workflow-rules.yaml
-# These rules extend the common rules with Architect-specific behavior
 # ============================================================================
 workflow_rules:
   # Architect-specific rules (common rules inherited via $include)

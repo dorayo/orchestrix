@@ -1,7 +1,3 @@
-# Common Workflow Rules
-# Shared across all Orchestrix agents (SM, Architect, Dev, QA)
-# These rules will be merged into the workflow_rules array of each agent
-
 workflow_rules:
   # Core workflow rules - fundamental to all agent operations
   - "Treat task files as executable workflows; follow exactly"
@@ -18,40 +14,10 @@ workflow_rules:
   - "HALT if validation fails; document reason"
   
   # Story management rules
-  - "Each agent has specific story sections they can modify (see story_update_permissions)"
+  - "Each agent has specific story sections they can modify (see .orchestrix-core/data/story-update-permissions.yaml)"
   - "Always append to Change Log; never overwrite"
   
   # Configuration loading rules
   - "Load CONFIG_PATH from core-config.yaml at activation (HALT on error)"
   - "Load project standards as specified in CONFIG_PATH"
 
-# Story Update Permissions
-# Defines which sections each agent can modify
-story_update_permissions:
-  sm_writable:
-    - "Story"
-    - "Acceptance Criteria"
-    - "Dev Notes"
-    - "Tasks/Subtasks"
-    - "Testing"
-    - "Quality Assessment Metadata"
-    - "Status"
-    - "Change Log"
-  architect_writable:
-    - "Architect Review Metadata"
-    - "Status"
-    - "Change Log"
-  dev_writable:
-    - "Tasks/Subtasks checkboxes"
-    - "Dev Agent Record"
-    - "Agent Model Used"
-    - "Dev Log Reference"
-    - "Implementation Summary"
-    - "File List"
-    - "Status"
-    - "Change Log"
-  qa_writable:
-    - "QA Results"
-    - "QA Test Design Metadata"
-    - "Status"
-    - "Change Log"
