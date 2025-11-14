@@ -1,0 +1,243 @@
+# API Contract Locking Configuration
+#
+# Prevents breaking changes to API contracts during active development.
+# Ensures all dependent stories reference stable API definitions.
+#
+# Stage: Stage 3 (Advanced Features)
+
+# Lock behavior
+locking:
+  enabled: true
+  lock_location: "docs/architecture/.api-contract-locks"  # Relative to product repo
+  lock_file_pattern: "api-contract-v{version}.lock"  # e.g., api-contract-v1.0.0.lock
+
+# Lock strategies
+lock_strategies:
+  - name: "version_based"
+    description: "Lock specific API contract version"
+    active: true
+    rules:
+      - "Once locked, version cannot be modified"
+      - "New changes must increment version"
+      - "Breaking changes require major version bump"
+
+  - name: "story_based"
+    description: "Lock when stories reference the contract"
+    active: true
+    rules:
+      - "Contract locked when first story created"
+      - "Unlock when all referencing stories Done"
+
+# Lock conditions
+lock_conditions:
+  # When to automatically lock
+  auto_lock_triggers:
+    - condition: "story_created_with_api_reference"
+      description: "Lock when a story references API endpoints"
+      priority: high
+
+    - condition: "epic_approved"
+      description: "Lock all API contracts in approved epic"
+      priority: medium
+
+  # When lock can be released
+  unlock_conditions:
+    - condition: "all_stories_done"
+      description: "All stories referencing this contract are Done"
+      required: true
+
+    - condition: "manual_override"
+      description: "Architect manually unlocks with reason"
+      required: false
+
+# Lock metadata
+lock_metadata:
+  schema_version: "1.0.0"
+  fields:
+    version:
+      type: string
+      description: "API contract version (semver)"
+      required: true
+      pattern: "^\\d+\\.\\d+\\.\\d+$"
+
+    locked_at:
+      type: timestamp
+      description: "When contract was locked (ISO 8601)"
+      required: true
+
+    locked_by:
+      type: string
+      description: "Who/what locked the contract"
+      required: true
+      enum:
+        - "architect_manual"
+        - "sm_auto_lock"
+        - "system_auto_lock"
+
+    contract_file:
+      type: string
+      description: "Path to locked contract file"
+      required: true
+
+    contract_hash:
+      type: string
+      description: "SHA-256 hash of contract content"
+      required: true
+
+    referencing_stories:
+      type: array
+      description: "Stories that reference this contract"
+      items:
+        story_id: string
+        repository: string
+        api_endpoints: array
+
+    breaking_changes_detected:
+      type: boolean
+      description: "Whether breaking changes were detected"
+      default: false
+
+    change_history:
+      type: array
+      description: "History of attempted changes while locked"
+      items:
+        timestamp: string
+        attempted_by: string
+        change_type: string
+        reason: string
+
+# Breaking change detection
+breaking_changes:
+  # What counts as breaking
+  definitions:
+    - type: "endpoint_removed"
+      description: "API endpoint removed"
+      severity: critical
+
+    - type: "request_field_removed"
+      description: "Required request field removed"
+      severity: critical
+
+    - type: "request_field_type_changed"
+      description: "Request field type changed"
+      severity: critical
+
+    - type: "response_field_removed"
+      description: "Response field removed"
+      severity: major
+
+    - type: "response_field_type_changed"
+      description: "Response field type changed"
+      severity: major
+
+    - type: "error_code_removed"
+      description: "Error code removed"
+      severity: major
+
+  # Non-breaking changes (allowed)
+  allowed_changes:
+    - type: "request_field_added_optional"
+      description: "Optional request field added"
+
+    - type: "response_field_added"
+      description: "New response field added"
+
+    - type: "error_code_added"
+      description: "New error code added"
+
+    - type: "documentation_updated"
+      description: "Documentation/description updated"
+
+# Lock enforcement
+enforcement:
+  # Block operations when contract is locked
+  blocked_operations:
+    - "modify_locked_contract"
+    - "delete_locked_endpoint"
+    - "change_locked_schema"
+
+  # Actions on violation
+  on_violation:
+    action: "block_and_alert"
+    alert_channels:
+      - "log_file"
+      - "console"
+      - "sync_status"  # Sync violation to product repo
+
+  # Override permissions
+  allow_override:
+    by_roles:
+      - "architect"
+    require_reason: true
+    log_all_overrides: true
+
+# Versioning
+versioning:
+  # Semantic versioning rules
+  semver_rules:
+    major_bump:
+      - "Breaking change detected"
+      - "Endpoint removed"
+      - "Required field removed or type changed"
+
+    minor_bump:
+      - "New endpoint added"
+      - "Optional field added"
+      - "Response field added"
+
+    patch_bump:
+      - "Documentation updated"
+      - "Bug fix in example"
+      - "Clarification added"
+
+  # Version lifecycle
+  version_lifecycle:
+    - state: "draft"
+      description: "Contract being written"
+      locked: false
+
+    - state: "locked"
+      description: "Contract in active use"
+      locked: true
+
+    - state: "deprecated"
+      description: "Contract marked for removal"
+      locked: true
+
+    - state: "archived"
+      description: "Contract no longer in use"
+      locked: false
+
+# Example lock file
+example_lock:
+  version: "1.0.0"
+  locked_at: "2025-11-14T08:00:00Z"
+  locked_by: "sm_auto_lock"
+  contract_file: "docs/architecture/api-contracts.md"
+  contract_hash: "a3b2c1d4e5f6g7h8i9j0k1l2m3n4o5p6"
+  referencing_stories:
+    - story_id: "1.1"
+      repository: "my-ecommerce-backend"
+      api_endpoints:
+        - "POST /api/auth/register"
+        - "POST /api/auth/login"
+    - story_id: "1.2"
+      repository: "my-ecommerce-web"
+      api_endpoints:
+        - "POST /api/auth/login"
+  breaking_changes_detected: false
+  change_history: []
+
+# Monitoring
+monitoring:
+  log_lock_operations: true
+  log_unlock_operations: true
+  log_violation_attempts: true
+  log_override_actions: true
+  log_file: ".ai/contract-lock-log.md"
+
+# Performance
+performance:
+  cache_contract_hashes: true
+  cache_ttl_seconds: 3600  # 1 hour
+  parallel_change_detection: true

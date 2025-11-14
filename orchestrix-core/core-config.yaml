@@ -3,6 +3,16 @@ description: >
   The core agent framework for Orchestrix, providing the essential agents,
   workflows, and data for building and managing AI-driven development teams.
 markdownExploder: true
+project:
+  name: "My Project"
+  type: monolith
+  product_repo:
+    enabled: false
+    path: ""
+  repository_id: ""
+  story_assignment:
+    auto_filter: false
+    assigned_stories: []
 prd:
   prdFile: docs/prd.md
   prdSharded: true

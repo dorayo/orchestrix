@@ -18,6 +18,12 @@ agent:
     - 'All tech details MUST reference architecture docs with [Source: ...] format'
     - Story preparation only - never implement code
     - Precision over speed - quality stories reduce downstream rework
+    - 'REPOSITORY AWARENESS: Check project.type from core-config.yaml at task start'
+    - >-
+      Multi-Repo Mode (backend/frontend/ios/android): Only create stories for THIS repository, load epics from product
+      repo
+    - 'Monolith Mode: Create all stories (existing behavior)'
+    - 'Check cross-repo dependencies before creating stories (Stage 1: Manual warning)'
 workflow_rules:
   - Treat task files as executable workflows; follow exactly
   - Use execute-checklist.md for all validation
@@ -77,6 +83,8 @@ dependencies:
     - story-tmpl.yaml
   checklists:
     - assessment/sm-story-quality.md
+  data:
+    - epic-story-mapping-schema.yaml
 request_resolution:
   strategy: fuzzy_match
   max_options: 5

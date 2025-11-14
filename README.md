@@ -73,11 +73,17 @@ graph LR
 
 ```mermaid
 graph LR
-    G[PO<br/>文档拆分] --> H[SM<br/>故事创建]
-    H --> I[Architect<br/>技术审核]
-    I --> J[Dev<br/>功能实现]
-    J --> K[QA<br/>代码审查]
-    K --> H
+    G[PO<br/>文档拆分] --> H[SM<br/>故事创建+质量评估]
+    H --> I{智能决策矩阵}
+    I -->|高质量+低复杂度| J[Dev<br/>功能实现]
+    I -->|需要审查| K[Architect<br/>技术审核]
+    K -->|通过| J
+    K -->|需修订| L[SM<br/>故事修订]
+    L -->|自动批准| J
+    L -->|第2轮审查| K
+    J --> M[QA<br/>代码审查]
+    M -->|通过| N[Done]
+    M -->|需修复| J
 ```
 
 > 流程细节请参考 [工作流程指南](docs/03-工作流程指南.md)。
@@ -117,6 +123,29 @@ graph LR
 *architect     # 切换到架构师
 *kb-mode       # 启用知识库模式
 ```
+
+### IDE核心命令
+
+**SM (Scrum Master)**:
+
+- `*draft` - 创建新故事
+- `*revise` - 根据反馈修订故事
+- `*story-checklist` - 执行质量验证
+
+**Architect**:
+
+- `*review-story {story_id}` - 技术审核故事
+- `*create-doc {template}` - 创建架构文档
+
+**Dev (Developer)**:
+
+- `*develop-story {story_id}` - 实现故事功能
+- `*review-qa {story_id}` - 应用QA反馈修复
+
+**QA**:
+
+- `*review {story_id}` - 执行代码审查
+- `*gate {story_id}` - 创建质量门决策
 
 ### CLI命令
 

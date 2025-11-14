@@ -143,9 +143,157 @@ compliance_checking:
     
   pattern_validation:
     - Backend: Check service/controller/model patterns
-    - Frontend: Validate component/hook/service patterns  
+    - Frontend: Validate component/hook/service patterns
     - API: Verify endpoint structure and response formats
     - Data: Check model definitions and relationships
+```
+
+## API Contract Validation (Multi-Repo Only)
+
+```yaml
+# Multi-repository API contract compliance checking
+# Only execute if project.type ∈ {backend, frontend, ios, android}
+
+api_contract_validation:
+  enabled_when: project.type IN [backend, frontend, ios, android]
+
+  initialization:
+    - Load core-config.yaml and check project.type
+    - If monolith or product-planning: SKIP this validation
+    - If multi-repo: Load story's epic YAML to get provides_apis/consumes_apis
+    - Load api-contracts.md from product repo (if exists)
+
+  for_backend_stories:
+    # Stories with provides_apis field
+    validation_steps:
+      1. Extract provides_apis list from story's epic definition
+         Example: ["POST /api/users", "GET /api/users/:id"]
+
+      2. For each API endpoint:
+         a. Verify endpoint exists in api-contracts.md
+            - If not found: CRITICAL ISSUE
+            - "API endpoint not documented in api-contracts.md"
+
+         b. Validate Request Schema:
+            - Load request schema from api-contracts.md
+            - Check story Dev Notes for request structure
+            - Verify all required fields present
+            - Verify field types match
+            - If mismatch: MAJOR ISSUE with details
+
+         c. Validate Response Schema:
+            - Load success response schema from api-contracts.md
+            - Check story Dev Notes for response structure
+            - Verify response structure matches
+            - If mismatch: MAJOR ISSUE with details
+
+         d. Validate Error Handling:
+            - Load error responses from api-contracts.md
+            - Verify story mentions handling all error cases
+            - If missing: MAJOR ISSUE listing missing error codes
+
+         e. Validate Security Requirements:
+            - Check if api-contracts.md specifies auth requirements
+            - Verify story mentions authentication implementation
+            - Check rate limiting if specified
+            - If missing: CRITICAL ISSUE
+
+  for_frontend_mobile_stories:
+    # Stories with consumes_apis field
+    validation_steps:
+      1. Extract consumes_apis list from story's epic definition
+
+      2. For each API endpoint:
+         a. Verify endpoint exists in api-contracts.md
+            - If not found: CRITICAL ISSUE
+
+         b. Check Request Payload Handling:
+            - Verify story mentions sending correct request structure
+            - If mismatch or missing: MAJOR ISSUE
+
+         c. Check Response Handling:
+            - Verify story mentions handling success response
+            - Verify story mentions handling all error codes
+            - If incomplete: MAJOR ISSUE "Incomplete error handling"
+
+         d. Validate Cross-Repo Dependencies:
+            - Load story dependencies from epic YAML
+            - For dependencies in different repo: Add NOTE
+            - "Cross-repo dependency: Story X in repo Y"
+            - "⚠️ Verify Story X is completed before starting"
+
+  scoring_impact:
+    # For multi-repo projects: 11-point scale (adds API contract compliance)
+    # For monolith: 10-point scale (existing)
+    api_contract_compliance_score:
+      weight: 1 point (only for multi-repo)
+      calculation:
+        - All APIs match contracts: 1 point
+        - Minor mismatches (naming): 0.5 points
+        - Major mismatches (missing fields, wrong types): 0 points
+
+      passing_threshold:
+        - Multi-repo: ≥8/11 (~73%)
+        - Monolith: ≥7/10 (70%)
+```
+
+**Example API Contract Issue (Backend Story)**:
+```markdown
+### Major Issue: Response Schema Mismatch
+
+**Location**: Dev Notes - Technical Approach
+
+**Problem**:
+Story plans to return:
+```json
+{
+  "userId": "123",
+  "userEmail": "user@example.com"
+}
+```
+
+But api-contracts.md specifies:
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "created_at": "timestamp"
+}
+```
+
+**Missing fields**: `id` (should be UUID not number), `created_at`
+**Extra/Wrong fields**: `userId`, `userEmail` (wrong naming)
+
+**Recommendation**:
+Update story to follow exact schema from api-contracts.md Section 2.1.
+Use `id` (UUID) instead of `userId` (number).
+Add `created_at` timestamp field.
+```
+
+**Example API Contract Issue (Frontend Story)**:
+```markdown
+### Major Issue: Incomplete Error Handling
+
+**Location**: Acceptance Criteria
+
+**Problem**:
+Story only mentions handling success case (200 OK).
+
+API contract specifies error responses:
+- 401 Unauthorized (invalid credentials)
+- 400 Bad Request (validation errors)
+- 500 Internal Server Error
+
+**Missing**:
+- No mention of displaying error messages to user
+- No handling of 401 (should redirect to login)
+- No handling of 400 (should show validation errors)
+
+**Recommendation**:
+Add acceptance criteria:
+- AC4: Display validation errors from 400 response
+- AC5: Redirect to login page on 401 response
+- AC6: Show generic error message on 500 response
 ```
 
 ## Issue Classification

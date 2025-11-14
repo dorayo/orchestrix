@@ -1,0 +1,282 @@
+# Epic Cross-Repo Story Mapping Schema
+# Defines the format for epic YAML files in product repository
+
+schema_version: "1.0.0"
+
+description: |
+  This schema defines the structure for Epic YAML files in multi-repository projects.
+  Epic YAML files map stories across different repositories (backend, frontend, ios, android, etc.)
+  and define cross-repository dependencies.
+
+epic:
+  type: object
+  required: [epic_id, title, description, stories]
+  properties:
+    epic_id:
+      type: integer
+      description: Unique epic identifier (1, 2, 3...)
+      minimum: 1
+      example: 1
+
+    title:
+      type: string
+      description: Short epic title
+      minLength: 5
+      maxLength: 100
+      example: "User Authentication"
+
+    description:
+      type: string
+      description: Detailed epic description explaining the business value and scope
+      minLength: 20
+      example: |
+        Implement complete user authentication system across all platforms.
+        Users can register with email/password, login to receive JWT token,
+        and logout to invalidate session.
+
+    target_repositories:
+      type: array
+      description: List of repositories involved in this epic
+      items:
+        type: string
+        enum: [backend, frontend, ios, android, flutter, react-native, monolith]
+      minItems: 1
+      example: [backend, frontend, ios]
+
+    stories:
+      type: array
+      description: List of stories in this epic
+      minItems: 1
+      items:
+        type: object
+        required: [id, title, repository, repository_type]
+        properties:
+          id:
+            type: string
+            description: Story ID (epic.story format)
+            pattern: "^\\d+\\.\\d+$"
+            example: "1.1"
+
+          title:
+            type: string
+            description: Story title (should include repository context)
+            minLength: 10
+            maxLength: 150
+            example: "Backend - User Registration API"
+
+          repository:
+            type: string
+            description: Repository name where this story will be implemented
+            example: "my-product-backend"
+
+          repository_type:
+            type: string
+            enum: [backend, frontend, ios, android, flutter, react-native, monolith]
+            description: Type of repository
+
+          dependencies:
+            type: array
+            description: Story IDs this story depends on (must be completed first)
+            items:
+              type: string
+              pattern: "^\\d+\\.\\d+$"
+            example: ["1.1"]
+
+          api_contracts:
+            type: array
+            description: API endpoints this story provides or consumes (deprecated - use provides_apis/consumes_apis)
+            items:
+              type: string
+            example: ["POST /api/users", "POST /api/auth/login"]
+
+          provides_apis:
+            type: array
+            description: APIs this story implements (for backend stories)
+            items:
+              type: string
+              pattern: "^(GET|POST|PUT|PATCH|DELETE) /.*$"
+            example: ["POST /api/users", "GET /api/users/:id"]
+
+          consumes_apis:
+            type: array
+            description: APIs this story consumes (for frontend/mobile stories)
+            items:
+              type: string
+              pattern: "^(GET|POST|PUT|PATCH|DELETE) /.*$"
+            example: ["POST /api/auth/login"]
+
+          deliverables:
+            type: array
+            description: Expected deliverables for this story
+            items:
+              type: string
+            minItems: 1
+            example:
+              - "User model and database schema"
+              - "Registration endpoint with validation"
+              - "Unit tests for user service"
+
+          acceptance_criteria_summary:
+            type: string
+            description: Brief summary of key acceptance criteria
+            example: |
+              User can register with email/password, login to get JWT token,
+              and logout to invalidate token. All endpoints follow api-contracts.md.
+
+          estimated_complexity:
+            type: string
+            enum: [simple, medium, complex]
+            description: Estimated story complexity
+            default: medium
+
+          priority:
+            type: string
+            enum: [P0, P1, P2, P3]
+            description: Story priority (P0 = critical, P3 = low)
+            default: P1
+
+# Example Epic YAML
+example_epic:
+  epic_id: 1
+  title: "User Authentication"
+  description: |
+    Implement complete user authentication system across all platforms.
+    Users can register, login, and logout. Backend provides JWT-based auth.
+
+  target_repositories: [backend, frontend, ios, android]
+
+  stories:
+    - id: "1.1"
+      title: "Backend - User Registration and Login API"
+      repository: "my-product-backend"
+      repository_type: backend
+      dependencies: []
+      provides_apis:
+        - "POST /api/users"
+        - "POST /api/auth/login"
+        - "POST /api/auth/logout"
+      consumes_apis: []
+      deliverables:
+        - "User model and database migration"
+        - "Registration endpoint with email validation"
+        - "Login endpoint with JWT generation"
+        - "Logout endpoint with token invalidation"
+        - "Unit tests (>80% coverage)"
+        - "Integration tests for auth flow"
+      acceptance_criteria_summary: |
+        User can register with email/password, login to get JWT token,
+        and logout to invalidate token. All endpoints follow api-contracts.md.
+      estimated_complexity: medium
+      priority: P0
+
+    - id: "1.2"
+      title: "Frontend - Login and Registration UI"
+      repository: "my-product-web"
+      repository_type: frontend
+      dependencies: ["1.1"]  # Must wait for backend API
+      provides_apis: []
+      consumes_apis:
+        - "POST /api/users"
+        - "POST /api/auth/login"
+      deliverables:
+        - "Login page component with form validation"
+        - "Registration page component"
+        - "JWT token storage in localStorage"
+        - "Auth context provider for React"
+        - "Unit tests for components"
+        - "E2E tests for login/registration flow"
+      acceptance_criteria_summary: |
+        User can access login page, enter credentials, and be redirected
+        to dashboard on success. Registration form validates inputs.
+      estimated_complexity: medium
+      priority: P0
+
+    - id: "1.3"
+      title: "iOS - Login and Registration Screens"
+      repository: "my-product-ios"
+      repository_type: ios
+      dependencies: ["1.1"]
+      provides_apis: []
+      consumes_apis:
+        - "POST /api/users"
+        - "POST /api/auth/login"
+      deliverables:
+        - "LoginViewController with form validation"
+        - "RegisterViewController"
+        - "JWT storage in Keychain"
+        - "AuthService for API calls"
+        - "Unit tests for ViewModels"
+        - "UI tests for login flow"
+      acceptance_criteria_summary: |
+        iOS user can login and register using native UI. Token stored securely.
+      estimated_complexity: medium
+      priority: P1
+
+    - id: "1.4"
+      title: "Android - Login and Registration Screens"
+      repository: "my-product-android"
+      repository_type: android
+      dependencies: ["1.1"]
+      provides_apis: []
+      consumes_apis:
+        - "POST /api/users"
+        - "POST /api/auth/login"
+      deliverables:
+        - "LoginActivity with form validation"
+        - "RegisterActivity"
+        - "JWT storage in SharedPreferences"
+        - "AuthRepository for API calls"
+        - "Unit tests for ViewModels"
+        - "Instrumented tests for login flow"
+      acceptance_criteria_summary: |
+        Android user can login and register using Material Design UI.
+      estimated_complexity: medium
+      priority: P1
+
+# Validation Rules
+validation_rules:
+  - name: "No Cyclic Dependencies"
+    description: "Stories cannot have circular dependencies"
+    severity: critical
+
+  - name: "All Dependencies Must Exist"
+    description: "All story IDs in dependencies array must reference valid stories in the same epic"
+    severity: critical
+
+  - name: "Backend Stories Should Not Depend on Frontend"
+    description: "Backend stories should not have dependencies on frontend/mobile stories"
+    severity: warning
+
+  - name: "API Contracts Must Match"
+    description: "All APIs in provides_apis and consumes_apis must be defined in api-contracts.md"
+    severity: major
+
+  - name: "Repository Type Must Match Repository Name"
+    description: "The repository_type should match the actual type of the repository"
+    severity: warning
+
+  - name: "Story IDs Must Be Unique"
+    description: "No two stories can have the same ID within an epic"
+    severity: critical
+
+  - name: "Story IDs Must Follow Pattern"
+    description: "Story IDs must follow the pattern 'epic.story' (e.g., '1.1', '1.2')"
+    severity: critical
+
+# Best Practices
+best_practices:
+  - "Keep epic scope focused - aim for 3-7 stories per epic"
+  - "Backend stories should be created first (no dependencies)"
+  - "Frontend/mobile stories should depend on backend stories"
+  - "Use clear, descriptive story titles that include repository context"
+  - "Define all APIs in api-contracts.md before creating stories"
+  - "Prioritize critical path stories (P0) that must be completed first"
+  - "Break down complex stories into smaller, manageable pieces"
+  - "Ensure deliverables are specific and measurable"
+
+# Change Log
+changelog:
+  - version: "1.0.0"
+    date: "2025-01-14"
+    changes: "Initial schema definition for multi-repo epic mapping"
+    author: "Orchestrix Team"

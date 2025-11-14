@@ -1,0 +1,170 @@
+# Story Status Synchronization Configuration
+#
+# Defines how story status changes in implementation repositories
+# are synchronized to the product-planning repository for cross-repo
+# dependency tracking.
+#
+# Stage: Stage 2 (Automation)
+
+# Sync settings
+sync:
+  enabled: true
+  sync_location: "docs/story-status"  # Relative to product repo root
+  sync_file_pattern: "{repository_id}-story-status.yaml"  # e.g., my-ecommerce-backend-story-status.yaml
+
+# Which status changes trigger sync
+sync_triggers:
+  - status: "Done"
+    priority: high
+    reason: "Unblocks dependent stories in other repositories"
+
+  - status: "Blocked"
+    priority: medium
+    reason: "May affect dependent stories in other repositories"
+
+  - status: "Escalated"
+    priority: high
+    reason: "Critical issue requiring cross-team awareness"
+
+  - status: "InProgress"
+    priority: low
+    reason: "Informational - story started"
+
+  - status: "Review"
+    priority: low
+    reason: "Informational - story under review"
+
+# Sync data format
+sync_data_format:
+  # Each sync file contains an array of story status records
+  version: "1.0.0"
+  schema:
+    repository_id:
+      type: string
+      description: "Repository ID (e.g., my-ecommerce-backend)"
+      required: true
+
+    repository_type:
+      type: string
+      description: "Repository type (backend, frontend, ios, android)"
+      required: true
+
+    last_updated:
+      type: timestamp
+      description: "Last sync timestamp (ISO 8601)"
+      required: true
+
+    stories:
+      type: array
+      description: "Array of story status records"
+      items:
+        story_id:
+          type: string
+          description: "Story ID (e.g., 1.1)"
+          required: true
+
+        story_title:
+          type: string
+          description: "Story title"
+          required: true
+
+        status:
+          type: string
+          description: "Current story status"
+          enum:
+            - Blocked
+            - AwaitingArchReview
+            - RequiresRevision
+            - Approved
+            - InProgress
+            - Review
+            - Done
+            - Escalated
+          required: true
+
+        status_updated_at:
+          type: timestamp
+          description: "When status was last changed (ISO 8601)"
+          required: true
+
+        story_file:
+          type: string
+          description: "Relative path to story file in repository"
+          required: true
+
+        epic_id:
+          type: integer
+          description: "Epic ID this story belongs to"
+          required: true
+
+        blocking_reason:
+          type: string
+          description: "Reason if status is Blocked (optional)"
+          required: false
+
+# Example sync file: docs/story-status/my-ecommerce-backend-story-status.yaml
+example:
+  repository_id: "my-ecommerce-backend"
+  repository_type: "backend"
+  last_updated: "2025-01-15T14:30:00Z"
+  stories:
+    - story_id: "1.1"
+      story_title: "Backend - User Registration and Login API"
+      status: "Done"
+      status_updated_at: "2025-01-15T14:25:00Z"
+      story_file: "docs/stories/1.1-backend-user-auth/story.md"
+      epic_id: 1
+
+    - story_id: "2.1"
+      story_title: "Backend - Product Data Model and CRUD APIs"
+      status: "InProgress"
+      status_updated_at: "2025-01-15T10:00:00Z"
+      story_file: "docs/stories/2.1-backend-product-apis/story.md"
+      epic_id: 2
+
+# Sync behavior
+sync_behavior:
+  # When to sync
+  sync_on_status_change: true  # Sync immediately when story status changes
+  sync_on_story_create: false  # Don't sync when story first created (status: Blocked)
+
+  # Conflict resolution
+  conflict_resolution:
+    strategy: "last_write_wins"  # Always use the latest status change
+    allow_manual_override: false  # Don't allow manual edits to sync files
+
+  # Error handling
+  error_handling:
+    on_sync_failure: "log_and_continue"  # Log error but don't block story workflow
+    retry_attempts: 3
+    retry_delay_seconds: 5
+
+# Security
+security:
+  # Validation
+  validate_repository_id: true  # Ensure repository_id matches config
+  validate_story_id_format: true  # Ensure story_id matches pattern (e.g., "1.1")
+
+  # Permissions
+  require_product_repo_access: true  # Must have write access to product repo
+
+# Performance
+performance:
+  # Caching
+  cache_sync_status: true  # Cache sync status for 5 minutes
+  cache_ttl_seconds: 300
+
+  # Batching (future enhancement)
+  batch_sync: false  # Currently sync one story at a time
+  batch_size: 10
+
+# Monitoring
+monitoring:
+  # Logging
+  log_sync_operations: true
+  log_file: ".ai/sync-log.md"
+  log_level: "info"  # debug, info, warn, error
+
+  # Metrics (future enhancement)
+  track_sync_latency: false
+  track_sync_failures: false

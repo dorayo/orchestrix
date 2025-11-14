@@ -230,6 +230,99 @@ class ConfigLoader {
     return path.join(this.getOrchestrixCorePath(), 'agent-teams', `${teamId}.yaml`);
   }
 
+  /**
+   * Resolve document paths for multi-repo configurations
+   * If product_repo is enabled, override document locations to point to product repo
+   * @param {Object} config - The core config object
+   * @returns {Object} - Config with resolved document paths
+   */
+  resolveDocumentPaths(config) {
+    if (!config) return config;
+
+    // Check if product repo is enabled
+    if (config.project?.product_repo?.enabled) {
+      const productPath = config.project.product_repo.path;
+
+      if (!productPath) {
+        console.warn('Warning: product_repo.enabled is true but path is not specified');
+        return config;
+      }
+
+      // Resolve relative path to absolute
+      const absoluteProductPath = path.isAbsolute(productPath)
+        ? productPath
+        : path.resolve(process.cwd(), productPath);
+
+      // Override document locations to point to product repo
+      return {
+        ...config,
+        document_locations: {
+          prd: path.join(absoluteProductPath, 'docs/prd.md'),
+          architecture: path.join(absoluteProductPath, 'docs/architecture'),
+          api_contracts: path.join(absoluteProductPath, 'docs/architecture/api-contracts.md'),
+          epics: path.join(absoluteProductPath, 'docs/epics'),
+          // Local paths for stories remain in implementation repo
+          devStoryLocation: config.devStoryLocation || 'docs/stories',
+        },
+        // Preserve other document locations from original config
+        prd: {
+          ...(config.prd || {}),
+          prdFile: path.join(absoluteProductPath, 'docs/prd.md'),
+        },
+        architecture: {
+          ...(config.architecture || {}),
+          architectureFile: path.join(absoluteProductPath, 'docs/architecture.md'),
+          architectureShardedLocation: path.join(absoluteProductPath, 'docs/architecture'),
+        },
+      };
+    }
+
+    return config;
+  }
+
+  /**
+   * Load and resolve core config with multi-repo path resolution
+   * @param {string} configPath - Path to core-config.yaml
+   * @returns {Object} - Resolved config object
+   */
+  async loadCoreConfig(configPath) {
+    try {
+      const configContent = await fs.readFile(configPath, 'utf8');
+      const config = yaml.load(configContent);
+
+      // Apply defaults for backward compatibility
+      if (!config.project) {
+        config.project = {};
+      }
+
+      // Default project type to monolith
+      if (!config.project.type) {
+        config.project.type = 'monolith';
+      }
+
+      // Default product_repo to disabled
+      if (!config.project.product_repo) {
+        config.project.product_repo = {
+          enabled: false,
+          path: ''
+        };
+      }
+
+      // Default story_assignment
+      if (!config.project.story_assignment) {
+        config.project.story_assignment = {
+          auto_filter: false,
+          assigned_stories: []
+        };
+      }
+
+      // Resolve document paths if product repo is enabled
+      return this.resolveDocumentPaths(config);
+    } catch (error) {
+      throw new Error(`Failed to load core config: ${error.message}`);
+    }
+  }
+
   async getTeamDependencies(teamId) {
     // Use DependencyResolver to dynamically parse team dependencies
     const DependencyResolver = require('../../lib/dependency-resolver');
