@@ -114,12 +114,14 @@ npx orchestrix install
 
 After installation, edit each repository's `core-config.yaml`:
 
+**⚠️ CRITICAL**: You **MUST** change `project.type` in each implementation repository!
+
 **Backend** (`my-app-backend/core-config.yaml`):
 
 ```yaml
 project:
   name: My App Backend # Include repo type for clarity
-  type: backend # ⚠️ REQUIRED
+  type: backend # ⚠️ MUST CHANGE from default 'monolith'
   product_repo:
     enabled: false # Will enable in Step 5
     path: ""
@@ -130,18 +132,29 @@ project:
 ```yaml
 project:
   name: My App Web
-  type: frontend # ⚠️ REQUIRED
+  type: frontend # ⚠️ MUST CHANGE from default 'monolith'
   product_repo:
     enabled: false
     path: ""
 ```
 
-**Mobile** (`my-app-ios/core-config.yaml`):
+**Native Mobile** (`my-app-ios/core-config.yaml`):
 
 ```yaml
 project:
   name: My App iOS
-  type: ios # ⚠️ REQUIRED (or 'android', 'mobile')
+  type: ios # ⚠️ MUST CHANGE (use 'ios' for native iOS, 'android' for native Android)
+  product_repo:
+    enabled: false
+    path: ""
+```
+
+**Cross-Platform Mobile** (if using Flutter/React Native):
+
+```yaml
+project:
+  name: My App Mobile
+  type: mobile # ⚠️ Use 'mobile' for Flutter/React Native
   product_repo:
     enabled: false
     path: ""
@@ -150,8 +163,29 @@ project:
 **💡 Configuration Tips**:
 
 - `project.name`: Descriptive name (used in docs, not for logic)
-- `project.type`: **REQUIRED** - Must be `backend`, `frontend`, `ios`, `android`, or `mobile`
+- `project.type`: **REQUIRED** - See table below for complete list
 - `product_repo.path`: Leave empty for now, configure later (Step 5)
+
+**Complete Type Reference**:
+
+| Type               | Use Case                          | Example                         |
+| ------------------ | --------------------------------- | ------------------------------- |
+| `backend`          | Backend/API implementation        | Node.js, Java, Python API       |
+| `frontend`         | Web frontend implementation       | React, Vue, Angular             |
+| `ios`              | iOS native implementation         | Swift/SwiftUI                   |
+| `android`          | Android native implementation     | Kotlin/Java                     |
+| `mobile` ⭐        | **Cross-platform mobile**         | **Flutter/React Native**        |
+| `shared`           | Shared library (optional)         | Common utilities across repos   |
+| `admin`            | Admin dashboard (optional)        | Separate admin UI from main web |
+| `product-planning` | Product repo (DO NOT use in impl) | Multi-repo coordinator          |
+| `monolith`         | Single-repo project (DO NOT use)  | Non multi-repo projects         |
+
+**Important Notes**:
+
+- For **Flutter or React Native**, use `type: mobile` (not `ios` or `android`)
+- For **native iOS**, use `type: ios`
+- For **native Android**, use `type: android`
+- `product-planning` and `monolith` are for Product/single repos, not implementation repos
 
 #### 1.1: Analyze Each Implementation Repository
 
@@ -219,12 +253,32 @@ implementation_repos:
   - path: ../my-app-web
     type: frontend
   - path: ../my-app-ios
-    type: ios
+    type: ios # Native iOS
+  - path: ../my-app-android
+    type: android # Native Android
+  # OR for cross-platform mobile:
+  # - path: ../my-app-mobile
+  #   type: mobile # Flutter/React Native
 ```
 
-**Repository Types**: `backend`, `frontend`, `ios`, `android`, `mobile`
+**Repository Types**:
 
-**💡 Tips**:
+- `backend`: Backend/API
+- `frontend`: Web frontend
+- `ios`: Native iOS (Swift)
+- `android`: Native Android (Kotlin/Java)
+- **`mobile`**: **Cross-platform (Flutter/React Native)** ⭐
+- `shared`: Shared library (optional)
+- `admin`: Admin dashboard (optional, if separate from main web)
+
+**💡 Type Selection Guide**:
+
+- **Native iOS app**: Use `type: ios`
+- **Native Android app**: Use `type: android`
+- **Flutter app**: Use `type: mobile` (single repo for both platforms)
+- **React Native app**: Use `type: mobile` (single repo for both platforms)
+
+**💡 Path Tips**:
 
 - Paths are relative to Product repository
 - Use `../` to go up one directory
