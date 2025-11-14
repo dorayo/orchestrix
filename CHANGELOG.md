@@ -1,3 +1,10 @@
+## [6.1.2](https://github.com/dorayo/ORCHESTRIX/compare/v6.1.1...v6.1.2) (2025-11-14)
+
+
+### Bug Fixes
+
+* **workflow:** enforce mandatory handoff messages and status updates ([1a4c8e1](https://github.com/dorayo/ORCHESTRIX/commit/1a4c8e1f903adf26da77aeddadaec285ebd5ef5e))
+
 ## [6.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v6.1.0...v6.1.1) (2025-11-14)
 
 
