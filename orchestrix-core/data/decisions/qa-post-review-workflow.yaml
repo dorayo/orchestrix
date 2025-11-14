@@ -1,0 +1,236 @@
+# QA Decision: Post-Review Workflow
+decision_type: qa-post-review-workflow
+
+description: >
+  Determine the next action after QA review is complete, including whether
+  to execute git commit, handoff to another agent, or escalate.
+
+inputs:
+  - name: gate_result
+    type: enum
+    values: [PASS, CONCERNS, FAIL, WAIVED]
+    required: true
+  - name: final_status
+    type: enum
+    values: [Done, Review, Escalated, Blocked]
+    required: true
+  - name: review_round
+    type: number
+    required: true
+  - name: issues_by_severity
+    type: object
+    required: true
+    properties:
+      critical: { type: number }
+      high: { type: number }
+      medium: { type: number }
+      low: { type: number }
+
+rules:
+  # PASS + Done: Story complete, execute git commit
+  - condition: "gate_result == 'PASS' AND final_status == 'Done'"
+    result:
+      workflow_action: finalize_commit
+      requires_git_commit: true
+      handoff_target: NONE
+      reasoning: "Story meets all quality criteria and is approved for commit"
+      next_command: "*finalize-commit {story_id}"
+      completion_status: complete
+    metadata:
+      priority: "critical"
+      automation_level: "automatic"
+      manual_intervention: false
+
+  # CONCERNS + Review: Issues found, needs Dev fixes
+  - condition: "gate_result == 'CONCERNS' AND final_status == 'Review'"
+    result:
+      workflow_action: handoff_to_dev_fix
+      requires_git_commit: false
+      handoff_target: DEV
+      reasoning: "Moderate issues found, targeted fixes needed before commit"
+      next_command: "*review-qa {story_id}"
+      completion_status: in_progress
+    metadata:
+      priority: "high"
+      automation_level: "automatic"
+      manual_intervention: false
+
+  # FAIL + Review: Major issues, needs Dev rework
+  - condition: "gate_result == 'FAIL' AND final_status == 'Review'"
+    result:
+      workflow_action: handoff_to_dev_rework
+      requires_git_commit: false
+      handoff_target: DEV
+      reasoning: "Critical issues found, significant rework required"
+      next_command: "*review-qa {story_id}"
+      completion_status: in_progress
+    metadata:
+      priority: "critical"
+      automation_level: "automatic"
+      manual_intervention: false
+      rework_required: true
+
+  # Escalated: Architecture review needed
+  - condition: "final_status == 'Escalated'"
+    result:
+      workflow_action: escalate_to_architect
+      requires_git_commit: false
+      handoff_target: ARCHITECT
+      reasoning: "Architectural concerns require expert review"
+      next_command: "*review {story_id}"
+      completion_status: blocked
+    metadata:
+      priority: "critical"
+      automation_level: "semi-automatic"
+      manual_intervention: true
+      escalation_reason: "architectural_concerns"
+
+  # PASS + Review: Approved but not marked Done (edge case)
+  - condition: "gate_result == 'PASS' AND final_status == 'Review'"
+    result:
+      workflow_action: status_mismatch_warning
+      requires_git_commit: false
+      handoff_target: QA
+      reasoning: "Gate is PASS but status is not Done - possible workflow error"
+      next_command: "Verify status transition logic"
+      completion_status: error
+    metadata:
+      priority: "high"
+      automation_level: "manual"
+      manual_intervention: true
+      error_type: "workflow_inconsistency"
+
+  # WAIVED: Manual override, commit at user's discretion
+  - condition: "gate_result == 'WAIVED'"
+    result:
+      workflow_action: manual_decision
+      requires_git_commit: false
+      handoff_target: HUMAN
+      reasoning: "Gate was waived by user, manual commit decision required"
+      next_command: "User should manually decide: *finalize-commit {story_id} or continue work"
+      completion_status: pending_user_input
+    metadata:
+      priority: "medium"
+      automation_level: "manual"
+      manual_intervention: true
+      waived_by: "user"
+
+  # Blocked: Story cannot proceed
+  - condition: "final_status == 'Blocked'"
+    result:
+      workflow_action: resolve_blocker
+      requires_git_commit: false
+      handoff_target: SM
+      reasoning: "Story is blocked, Scrum Master intervention required"
+      next_command: "SM should resolve blocking issues"
+      completion_status: blocked
+    metadata:
+      priority: "critical"
+      automation_level: "manual"
+      manual_intervention: true
+      blocker_type: "workflow"
+
+  # Default: Unexpected state
+  - condition: "true"
+    result:
+      workflow_action: unexpected_state
+      requires_git_commit: false
+      handoff_target: HUMAN
+      reasoning: "Unexpected workflow state - manual review required"
+      next_command: "Review story state and determine appropriate action"
+      completion_status: error
+    metadata:
+      priority: "high"
+      automation_level: "manual"
+      manual_intervention: true
+      error_type: "unexpected_workflow_state"
+
+output:
+  workflow_action:
+    type: string
+    description: "The workflow action to take (e.g., finalize_commit, handoff_to_dev_fix)"
+  requires_git_commit:
+    type: boolean
+    description: "Whether git commit should be executed"
+  handoff_target:
+    type: string
+    description: "Target agent for handoff (NONE, DEV, ARCHITECT, SM, HUMAN)"
+  reasoning:
+    type: string
+    description: "Explanation for the decision"
+  next_command:
+    type: string
+    description: "Suggested next command to execute"
+  completion_status:
+    type: string
+    description: "Overall story completion status (complete, in_progress, blocked, error)"
+  metadata:
+    type: object
+    properties:
+      priority: { type: string }
+      automation_level: { type: string }
+      manual_intervention: { type: boolean }
+      rework_required: { type: boolean }
+      escalation_reason: { type: string }
+      error_type: { type: string }
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-14"
+  owner: "QA Agent"
+  related_tasks:
+    - "qa-review-story.md"
+    - "finalize-story-commit.md"
+  usage_context: >
+    Called by QA at the end of review-story to determine the next workflow action.
+    Primary use case: Decide whether to execute finalize-story-commit or handoff to
+    another agent. This decision is based on gate result and final story status.
+
+examples:
+  - input:
+      gate_result: PASS
+      final_status: Done
+      review_round: 1
+      issues_by_severity: { critical: 0, high: 0, medium: 0, low: 1 }
+    output:
+      workflow_action: finalize_commit
+      requires_git_commit: true
+      handoff_target: NONE
+      next_command: "*finalize-commit {story_id}"
+      completion_status: complete
+
+  - input:
+      gate_result: CONCERNS
+      final_status: Review
+      review_round: 1
+      issues_by_severity: { critical: 0, high: 2, medium: 3, low: 1 }
+    output:
+      workflow_action: handoff_to_dev_fix
+      requires_git_commit: false
+      handoff_target: DEV
+      next_command: "*review-qa {story_id}"
+      completion_status: in_progress
+
+  - input:
+      gate_result: FAIL
+      final_status: Review
+      review_round: 1
+      issues_by_severity: { critical: 2, high: 1, medium: 0, low: 0 }
+    output:
+      workflow_action: handoff_to_dev_rework
+      requires_git_commit: false
+      handoff_target: DEV
+      next_command: "*review-qa {story_id}"
+      completion_status: in_progress
+
+  - input:
+      gate_result: FAIL
+      final_status: Escalated
+      review_round: 3
+      issues_by_severity: { critical: 0, high: 3, medium: 5, low: 2 }
+    output:
+      workflow_action: escalate_to_architect
+      requires_git_commit: false
+      handoff_target: ARCHITECT
+      next_command: "*review {story_id}"
+      completion_status: blocked

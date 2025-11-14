@@ -122,7 +122,35 @@ Validate status + sections → HALT if invalid
 
 **New**: Use dev-log-tmpl.md, init storyId/title/timestamp/model/test_strategy
 
-**Resume**: Parse Resumption Guide → continue from current_subtask
+**Resume** (CRITICAL for multi-session stories):
+
+1. **Load Dev Log** and locate Resumption Guide section
+
+2. **Read ENTIRE Resumption Guide**, especially:
+   - ⚠️⚠️⚠️ CRITICAL WORKFLOW RULES TO REMEMBER section
+   - All 8 workflow rules
+   - GATE 1 and GATE 2 requirements
+   - Handoff protocol
+
+3. **Reload Rules into Working Memory**:
+   - Acknowledge: "Resuming from Phase X, Subtask Y"
+   - Confirm: "Re-loaded 8 critical workflow rules"
+   - Confirm: "Understand GATE 1 (self-review) and GATE 2 (completion steps) required at end"
+   - Confirm: "Handoff message must be final output"
+
+4. **Verify Resumption Checklist** (in Resumption Guide):
+   - [ ] Read Resumption Guide completely
+   - [ ] Understand current phase and subtask
+   - [ ] Review critical workflow rules
+   - [ ] Understand GATE 1 and GATE 2
+   - [ ] Remember: Task NOT complete until handoff output
+   - [ ] Check if approaching completion
+   - [ ] Load architecture documents if needed
+   - [ ] Review previous session's decisions
+
+5. **Continue from current_subtask** with rules reinforced
+
+**Why this matters**: In story spanning 4+ sessions, LLM forgets rules. Explicitly re-loading them from Resumption Guide prevents rule decay.
 
 ### 3. Implement Tasks
 Per task/subtask:
@@ -133,6 +161,30 @@ Per task/subtask:
 5. Validate (tests + lint)
 6. Update: Mark [x], Dev Log, Resumption Guide, File List
 7. Phase done → Add Phase Summary
+
+**⚠️ CRITICAL: Before ANY pause/interruption**:
+
+**If you must stop or pause** (user says "continue", completing a phase, blocking issue, etc.):
+
+Execute: `{root}/tasks/utils/update-resumption-guide.md`
+
+**This preserves**:
+- Current progress and next steps
+- **8 critical workflow rules** (TDD, test integrity, completion gates)
+- **GATE 1 and GATE 2 requirements**
+- Handoff protocol
+- Resumption checklist
+
+**Why critical**: In multi-session stories (4+ interactions), LLM gradually forgets workflow rules. Resumption Guide forces rule preservation and reload on resume.
+
+**When to call**:
+- ✅ After completing a Phase (before user continues)
+- ✅ User says "pause" or "continue later"
+- ✅ Encountering blocking issue
+- ✅ After ≥3 subtasks in one session
+- ✅ ANY interruption in flow
+
+**Do NOT skip this** - Rule retention depends on it.
 
 ### 4. Errors
 Use `make-decision.md`:
