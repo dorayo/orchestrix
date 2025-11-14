@@ -24,6 +24,8 @@ required:
 1. Read/update `review_round` in Story `QA Review Metadata`:
    - If missing/0: Set to 1
    - Else: Increment by 1
+   - **IMPORTANT**: If story was previously Escalated and returned from Architect, review_round continues from last value (does NOT reset)
+   - Escalation is considered an intervention, not a reset of quality expectations
 2. Apply progressive standards based on round:
    - Round 1 (Strict): All criteria must be met
    - Round 2 (Moderate): 50% improvement required, no high severity issues
@@ -54,10 +56,12 @@ If detected, execute `make-decision` (type: `qa-escalate-architect`):
 - ESCALATE → Document, Status = Escalated, handoff Architect, exit
 - DOCUMENT → Document, continue
 
-### 3. Active Refactoring
+### 3. Code Review Only (No Modifications)
 
-- Refactor where safe, run tests after changes
-- Document in QA Results (WHY, HOW)
+- **IMPORTANT**: QA Agent must NOT modify any code files
+- Role: Review, analyze, and report - NOT refactor or fix
+- Document all findings in QA Results with specific locations
+- If refactoring needed: add to "Improvements Checklist" for Dev to address
 - Do NOT alter story beyond QA Results section
 
 ### 4. Standards & AC Validation
@@ -66,53 +70,67 @@ If detected, execute `make-decision` (type: `qa-escalate-architect`):
 - Validate each AC implemented with edge cases
 - Verify documentation and comments for complex logic
 
-## Output 1: Update Story - QA Results ONLY
+## Output 1: Create Detailed Review Report
 
-**Update ONLY "QA Results" and "QA Review Metadata" sections.**
+**Save to**: `{qa.qaReviewsLocation}/{story_id}-qa-r{review_round}.md`
 
-**QA Review Metadata:**
-- Update `review_round`, increment `total_reviews_conducted`
-- Append to `review-history`: round, date, reviewer, gate, issues, improvement %
+Use template: `{root}/templates/qa-review-tmpl.yaml`
 
-**QA Results:** Append new dated entry:
+**Include**:
+- Review summary with metrics
+- Complete code quality assessment
+- Architecture concerns
+- Compliance check results
+- Improvements checklist (completed + pending)
+- Security & performance findings
+- Issues breakdown by severity
+- Technical debt (if Round 3)
+- Gate decision reasoning
+- Review metadata
+
+### Output 2: Update Story - QA Review Metadata ONLY
+
+**QA Review Metadata section:**
+- Update `review_round` (increment by 1)
+- Increment `total_reviews_conducted`
+- Append to `review_history`:
+  ```yaml
+  - round: {{round_number}}
+    date: {{review_date}}
+    reviewer: {{reviewer_id}}
+    gate: {{gate_result}}
+    total_issues: {{total_issues}}
+    critical: {{critical_count}}
+    high: {{high_count}}
+    issues_from_previous: {{previous_issues}}
+    issues_resolved: {{resolved_count}}
+    improvement_percentage: {{improvement_pct}}
+    decision: {{decision}}
+  ```
+
+**QA Review Summary section:**
 
 ```markdown
-## QA Results
+## QA Review Summary
 
-### Review Date: [Date] - Round [N] - [Strict/Moderate/Pragmatic]
-**Reviewed By**: Quinn (Test Architect)
-**Issues from Previous**: [count] | **Resolved**: [count] | **Improvement**: [%]
+- **Total Reviews**: {{total_reviews}}
+- **Latest Review**: {{latest_review_date}}
+- **Latest Gate**: {{latest_gate}}
+- **Final Quality Score**: {{final_quality_score}}/100
+- **Total Issues Found**: {{cumulative_issues}}
+- **Total Issues Resolved**: {{cumulative_resolved}}
+- **Overall Improvement**: {{overall_improvement}}%
 
-### Code Quality Assessment
-[Overall assessment]
+### Review History
+- **Round {{round}}** ({{date}}): [QA Review R{{round}}](docs/qa/reviews/{{story_id}}-qa-r{{round}}.md) - {{gate}} - {{issues_count}} issues ({{improvement}}% improvement)
 
-### Architecture Concerns
-[Document concerns or state "None". If escalation required, note it.]
-
-### Refactoring Performed
-- **File**: [filename] - **Change**: [what] - **Why**: [reason]
-
-### Compliance Check
-- Coding Standards: [✓/✗] | Project Structure: [✓/✗] | Testing Strategy: [✓/✗] | All ACs Met: [✓/✗]
-
-### Improvements Checklist
-- [x] [Completed items]
-- [ ] [Items for Dev to address]
-
-### Security & Performance
-[Findings and actions]
-
-### Files Modified During Review
-[List if any - ask Dev to update File List]
-
-### Gate Status
-Gate: {STATUS} → qa.qaLocation/gates/{epic}.{story}-{slug}.yml
-
-### Technical Debt (Round 3 only)
-[Document if applicable: Issue, Impact, Severity, Follow-up Plan]
+### Final Gate
+- **Gate File**: [{{gate_file_name}}](docs/qa/gates/{{gate_file_name}})
+- **Gate Result**: {{final_gate}}
+- **Status Reason**: {{final_status_reason}}
 ```
 
-## Output 2: Create Gate File
+## Output 3: Create Gate File
 
 **Template:** `../templates/qa-gate-tmpl.yaml`
 **Path:** `qa.qaLocation/gates/{epic}.{story}-{slug}.yml` (from `core-config.yaml`)
@@ -161,15 +179,20 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 ## Completion
 
-1. Update QA Review Metadata and QA Results section
-2. Create gate file in `qa.qaLocation/gates`
-3. **Validate and Update Status:**
+1. Create detailed review report in `{qa.qaReviewsLocation}/{story_id}-qa-r{review_round}.md`
+2. Update Story: QA Review Metadata section
+3. Update Story: QA Review Summary section
+4. Create gate file in `qa.qaLocation/gates`
+5. **Update Story: Change Log** - Add table entry:
+   ```
+   | {{date}} {{time}} | QA | Review → {{next_status}} | Round {{round}}, Gate: {{gate}}, {{issues_count}} issues [QA R{{round}}](docs/qa/reviews/{{story_id}}-qa-r{{round}}.md) |
+   ```
+6. **Validate and Update Status:**
    - If architecture escalation: Status = Escalated, skip gate decision, proceed to handoff
    - Else: Use `result.next_status` from gate decision
    - Validate transition via `{root}/data/story-status-transitions.yaml`
    - If validation fails: HALT
-   - If succeeds: Update Status, log transition with reasoning
-4. If files modified: List in QA Results, ask Dev to update File List
+   - If succeeds: Update Status field
 
 ### Handoff Message
 

@@ -473,5 +473,5 @@ Before completing this task, verify:
 
 - Requirements: 6.1 (Decision-making framework), 6.3 (Error handling)
 - Design: Decision-making system architecture
-- Related Tasks: `execute-checklist.md`, `review-story.md`, `implement-story.md`
+- Related Tasks: `execute-checklist.md`, `qa-review-story.md`, `architect-review-story.md`, `implement-story.md`
 - Decision Rules: `{root}/data/decisions/README.md`

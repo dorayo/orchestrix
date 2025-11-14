@@ -1,0 +1,278 @@
+template:
+  id: qa-review-template
+  name: QA Review Report
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/qa/reviews/{{story_id}}-qa-r{{review_round}}.md
+    title: "QA Review: Story {{story_id}} - Round {{review_round}}"
+
+sections:
+  - id: header
+    title: Review Header
+    template: |
+      # QA Review Report
+
+      **Story**: {{story_id}} - {{story_title}}
+      **Review Round**: {{review_round}} of 3 ({{review_standard}} standards)
+      **Review Date**: {{review_date}}
+      **Reviewer**: {{reviewer_name}} ({{reviewer_role}})
+
+  - id: review-summary
+    title: Review Summary
+    template: |
+      ## Review Summary
+
+      - **Gate Result**: {{gate_result}}
+      - **Issues from Previous Round**: {{issues_from_previous}}
+      - **Issues Found This Round**: {{total_issues}}
+      - **Issues Resolved**: {{issues_resolved}}
+      - **Improvement**: {{improvement_percentage}}%
+      - **Quality Score**: {{quality_score}}/100
+      - **Next Status**: {{next_status}}
+
+  - id: code-quality-assessment
+    title: Code Quality Assessment
+    template: |
+      ## Code Quality Assessment
+
+      ### Overall Assessment
+
+      {{overall_assessment}}
+
+      ### Architecture Concerns
+
+      {{#if has_architecture_concerns}}
+      {{#each architecture_concerns}}
+      #### {{title}}
+
+      - **Severity**: {{severity}}
+      - **Description**: {{description}}
+      - **Impact**: {{impact}}
+      - **Recommendation**: {{recommendation}}
+
+      {{/each}}
+      {{else}}
+      ✅ No architecture concerns identified.
+      {{/if}}
+
+  - id: compliance-check
+    title: Compliance Check
+    template: |
+      ## Compliance Check
+
+      - **Coding Standards**: {{coding_standards_result}}
+      - **Project Structure**: {{project_structure_result}}
+      - **Testing Strategy**: {{testing_strategy_result}}
+      - **All ACs Met**: {{all_acs_met_result}}
+
+      {{#if compliance_details}}
+      ### Details
+
+      {{compliance_details}}
+      {{/if}}
+
+  - id: improvements-checklist
+    title: Improvements Checklist
+    template: |
+      ## Improvements Checklist
+
+      ### Completed Items ✅
+
+      {{#each completed_items}}
+      - [x] {{item}}
+      {{/each}}
+
+      ### Items for Dev to Address
+
+      {{#each pending_items}}
+      - [ ] **{{severity}}** - {{item}}
+        - Location: {{location}}
+        - Reason: {{reason}}
+        {{#if suggested_fix}}
+        - Suggested Fix: {{suggested_fix}}
+        {{/if}}
+      {{/each}}
+
+  - id: security-performance
+    title: Security & Performance
+    template: |
+      ## Security & Performance
+
+      ### Security Findings
+
+      {{#if security_findings}}
+      {{#each security_findings}}
+      - **{{severity}}** - {{finding}}
+        - Impact: {{impact}}
+        - Recommendation: {{recommendation}}
+      {{/each}}
+      {{else}}
+      ✅ No security issues identified.
+      {{/if}}
+
+      ### Performance Findings
+
+      {{#if performance_findings}}
+      {{#each performance_findings}}
+      - **{{severity}}** - {{finding}}
+        - Impact: {{impact}}
+        - Recommendation: {{recommendation}}
+      {{/each}}
+      {{else}}
+      ✅ No performance issues identified.
+      {{/if}}
+
+  - id: issues-breakdown
+    title: Issues Breakdown
+    template: |
+      ## Issues Breakdown by Severity
+
+      ### Critical Issues ({{critical_count}})
+
+      {{#each critical_issues}}
+      #### {{@index}}. {{title}}
+
+      - **Location**: {{location}}
+      - **Description**: {{description}}
+      - **Impact**: {{impact}}
+      - **Required Action**: {{required_action}}
+      - **Owner**: {{owner}}
+
+      {{/each}}
+
+      ### High Severity Issues ({{high_count}})
+
+      {{#each high_issues}}
+      #### {{@index}}. {{title}}
+
+      - **Location**: {{location}}
+      - **Description**: {{description}}
+      - **Required Action**: {{required_action}}
+
+      {{/each}}
+
+      ### Medium Severity Issues ({{medium_count}})
+
+      {{#if medium_issues}}
+      {{#each medium_issues}}
+      - **{{title}}** ({{location}}): {{description}}
+      {{/each}}
+      {{/if}}
+
+      ### Low Severity Issues ({{low_count}})
+
+      {{#if low_issues}}
+      {{#each low_issues}}
+      - {{title}} ({{location}})
+      {{/each}}
+      {{/if}}
+
+  - id: technical-debt
+    title: Technical Debt
+    condition: review_round >= 3
+    template: |
+      ## Technical Debt (Round 3 Acceptance)
+
+      {{#if technical_debt_items}}
+      The following technical debt items are accepted for this story and should be tracked for future resolution:
+
+      {{#each technical_debt_items}}
+      ### {{@index}}. {{issue}}
+
+      - **Impact**: {{impact}}
+      - **Severity**: {{severity}}
+      - **Follow-up Plan**: {{follow_up_plan}}
+      - **Tracking**: {{tracking_reference}}
+
+      {{/each}}
+      {{else}}
+      No technical debt accepted.
+      {{/if}}
+
+  - id: gate-decision
+    title: Gate Decision
+    template: |
+      ## Gate Decision
+
+      **Gate**: {{gate_result}}
+
+      ### Decision Reasoning
+
+      {{decision_reasoning}}
+
+      ### Progressive Standards Applied
+
+      - **Round {{review_round}}**: {{review_standard}} standards
+      {{#if round_1_standard}}
+      - Round 1: Strict (All criteria must be met)
+      {{/if}}
+      {{#if round_2_standard}}
+      - Round 2: Moderate (50% issue reduction, no high severity)
+      {{/if}}
+      {{#if round_3_standard}}
+      - Round 3: Pragmatic (No critical issues, acceptable tech debt)
+      {{/if}}
+
+      ### Gate File Reference
+
+      Detailed gate results: [{{gate_file_name}}](../../qa/gates/{{gate_file_name}})
+
+  - id: next-steps
+    title: Next Steps
+    template: |
+      ## Next Steps
+
+      {{#if gate_pass}}
+      **Status**: Story Complete ✅
+
+      - All acceptance criteria met
+      - Quality standards satisfied
+      - Ready for deployment
+
+      **Handoff**: Story marked as Done
+      {{/if}}
+
+      {{#if gate_fail}}
+      **Status**: Returned to Dev for Fixes
+
+      - **Priority**: {{priority_level}}
+      - **Expected Effort**: {{expected_effort}}
+      - **Focus Areas**: {{#each focus_areas}}{{this}}, {{/each}}
+
+      **Handoff**: Dev please execute command `review-qa {{story_id}}`
+      {{/if}}
+
+      {{#if gate_concerns}}
+      **Status**: Minor Issues, Targeted Fixes Needed
+
+      - **Issues to Address**: {{issues_count}}
+      - **Expected Effort**: {{expected_effort}}
+
+      **Handoff**: Dev please execute command `review-qa {{story_id}}`
+      {{/if}}
+
+      {{#if escalation}}
+      **Status**: Escalated to Architect
+
+      - **Reason**: {{escalation_reason}}
+      - **Concerns**: {{escalation_concerns}}
+
+      **Handoff**: Architect please execute command `review-escalation {{story_id}}`
+      {{/if}}
+
+  - id: metadata
+    title: Review Metadata
+    template: |
+      ## Review Metadata
+
+      - **Review Start**: {{review_start_time}}
+      - **Review End**: {{review_end_time}}
+      - **Duration**: {{review_duration}}
+      - **Files Reviewed**: {{files_reviewed_count}}
+      - **Tests Executed**: {{tests_executed_count}}
+      - **Test Pass Rate**: {{test_pass_rate}}%
+      - **Code Coverage**: {{code_coverage}}%
+      - **Previous Round Issues**: {{previous_round_issues}}
+      - **Current Round Issues**: {{current_round_issues}}
+      - **Resolution Rate**: {{resolution_rate}}%

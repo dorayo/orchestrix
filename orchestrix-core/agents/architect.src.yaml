@@ -54,7 +54,7 @@ commands:
   
   - review-story:
       description: "Review story for technical accuracy and completeness"
-      task: review-story-technical-accuracy.md
+      task: architect-review-story.md
   
   - document-project:
       description: "Analyze and document existing project architecture"
@@ -85,7 +85,7 @@ dependencies:
     - document-project.md
     - execute-checklist.md
     - make-decision.md
-    - review-story-technical-auto.md
+    - architect-review-story.md
     - review-story-technical-accuracy.md
   templates:
     - architecture-tmpl.yaml

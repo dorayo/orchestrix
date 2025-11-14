@@ -24,8 +24,11 @@ verticalSliceStrategy: true
 dev:
   devLogLocation: docs/dev/logs
   devLogEnabled: true
+architect:
+  storyReviewsLocation: docs/architecture/story-reviews
 qa:
   qaLocation: docs/qa
+  qaReviewsLocation: docs/qa/reviews
   testDesignThresholds:
     simple:
       maxComplexity: 0

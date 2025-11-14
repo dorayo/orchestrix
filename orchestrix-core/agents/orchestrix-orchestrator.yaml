@@ -154,7 +154,7 @@ dependencies:
     - create-doc-auto.md
     - create-story-auto.md
     - implement-story.md
-    - review-story-technical-auto.md
+    - architect-review-story.md
     - review-code-auto.md
     - shard-doc-auto.md
     - orchestrator-automation.md

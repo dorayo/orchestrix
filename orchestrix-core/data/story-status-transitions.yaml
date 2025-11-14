@@ -23,9 +23,9 @@ statuses:
   
   TestDesignComplete:
     desc: "Test design done, ready for dev"
-    agent: Dev
-    actions: ["Dev implements"]
-    to: [Approved, InProgress]
+    agent: QA
+    actions: ["Auto-transition to Approved"]
+    to: [Approved]
     
   RequiresRevision:
     desc: "Architect found issues, needs SM revision"
@@ -202,18 +202,11 @@ transitions:
   TestDesignComplete_to_Approved:
     from: TestDesignComplete
     to: Approved
-    agent: SM
+    agent: QA
     prereq:
-      test_reviewed: true
-    desc: "Test reviewed, ready for dev"
-  
-  TestDesignComplete_to_InProgress:
-    from: TestDesignComplete
-    to: InProgress
-    agent: Dev
-    prereq:
-      impl_started: true
-    desc: "Dev starts from test complete"
+      test_done: true
+      doc_created: true
+    desc: "Test design complete, auto-transition to Approved for Dev"
   
   # Dev transitions
   Approved_to_InProgress:
@@ -329,7 +322,7 @@ transitions:
 # Agent Permissions
 permissions:
   SM:
-    modify: [Blocked, RequiresRevision, TestDesignComplete]
+    modify: [Blocked, RequiresRevision]
     create: true
     init_status: true
     changes:
@@ -341,7 +334,6 @@ permissions:
       - RequiresRevision -> AwaitingTestDesign
       - RequiresRevision -> Approved
       - RequiresRevision -> Blocked
-      - TestDesignComplete -> Approved
   
   Architect:
     modify: [AwaitingArchReview, Escalated]
@@ -366,11 +358,12 @@ permissions:
       - InProgress -> Blocked
   
   QA:
-    modify: [AwaitingTestDesign, Review]
+    modify: [AwaitingTestDesign, TestDesignComplete, Review]
     create: false
     init_status: false
     changes:
       - AwaitingTestDesign -> TestDesignComplete
+      - TestDesignComplete -> Approved
       - Review -> Done
       - Review -> InProgress
       - Review -> Escalated

@@ -128,18 +128,20 @@ Update `{devStoryLocation}/{epic}.{story}.*.md`:
 
 - **Level:** {Simple|Standard|Comprehensive}
 - **Status:** Complete
+- **Test Design Status:** Complete
 - **Document:** qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 - **Risk Profile:** {path if exists}
 ```
 
-**Status:** `TestDesignComplete`
+**Status:** `Approved`
 
 **Change Log:**
 ```markdown
-### {YYYY-MM-DD HH:MM} - Test Design Complete
-- Doc: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+### {YYYY-MM-DD HH:MM} - Test Design Complete, Story Approved
+- Test Design Doc: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 - Scenarios: {total} (P0: {p0}, P1: {p1}, P2: {p2})
-- Status: TestDesignComplete
+- Status: TestDesignComplete → Approved (auto-transition by QA)
+- Ready for Dev implementation
 ```
 
 ### Output 4: Handoff Message

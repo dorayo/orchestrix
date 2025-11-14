@@ -229,10 +229,22 @@ sections:
   - id: change-log
     title: Change Log
     type: table
-    columns: [Date, Version, Description, Author]
-    instruction: Track changes made to this story document
+    columns: [Date, Agent, Status Transition, Details/Link]
+    instruction: |
+      Track all status transitions and key events in this story's lifecycle.
+      Use table format for quick scanning. Include links to detailed reports when applicable.
+      Format: YYYY-MM-DD HH:MM | Agent | From → To | Brief detail + [Link](path) if applicable
     owner: scrum-master
-    editors: [scrum-master, dev-agent, qa-agent, ux-expert]
+    editors: [scrum-master, architect-agent, dev-agent, qa-agent]
+    template: |
+      ## Change Log
+
+      | Date | Agent | Status Transition | Details/Link |
+      |------|-------|-------------------|--------------|
+      | {{creation_date}} | SM | Created → {{initial_status}} | Story created |
+      {{#each change_log_entries}}
+      | {{date}} | {{agent}} | {{from_status}} → {{to_status}} | {{details}} {{#if link}}[{{link_text}}]({{link}}){{/if}} |
+      {{/each}}
     
   - id: dev-agent-record
     title: Dev Agent Record
@@ -717,17 +729,37 @@ sections:
             type: text
             instruction: Dev Agent's proposed alternative technical approach
     
-  - id: architect-review-results
-    title: Architect Review Results
+  - id: architect-review-summary
+    title: Architect Review Summary
     instruction: |
-      Results from Architect Agent architectural review of the Story.
-      This section is appended by the Architect Agent when review is performed.
-      Multiple reviews can be appended with timestamps.
-      
-      See architect-review-gate-tmpl.yaml for detailed format specification.
+      Summary of Architect reviews with references to detailed reports.
+      Detailed review reports are stored in separate files for better organization.
+      This section provides quick access to review outcomes and links to full reports.
     required: false
     owner: architect-agent
     editors: [architect-agent]
+    template: |
+      ## Architect Review Summary
+
+      {{#if no_reviews}}
+      No architect reviews conducted yet.
+      {{else}}
+      - **Total Reviews**: {{total_reviews}}
+      - **Latest Review**: {{latest_review_date}}
+      - **Latest Score**: {{latest_score}}/10
+      - **Latest Decision**: {{latest_decision}}
+      - **Critical Issues (Latest)**: {{latest_critical_count}}
+
+      ### Review Documents
+      {{#each review_documents}}
+      - Round {{round}}: [Arch Review R{{round}}]({{document_path}}) - Score: {{score}}/10 - Decision: {{decision}} - {{date}}
+      {{/each}}
+      {{/if}}
+
+      {{#if skipped_warning}}
+      > ⚠️ **Warning**: Architect review was RECOMMENDED but skipped by user.
+      > Reason: {{skip_reason}}
+      {{/if}}
     
   - id: qa-review-metadata
     title: QA Review Metadata
@@ -795,11 +827,37 @@ sections:
             Follow-up Plan: {{follow_up_plan}}
             Accepted By: {{accepted_by}}
     
-  - id: qa-results
-    title: QA Results
+  - id: qa-review-summary
+    title: QA Review Summary
     instruction: |
-      Results from QA Agent QA review of the completed story implementation.
-      Detailed QA Gate files are stored in docs/qa/gates/ directory.
-      This section contains summary and links to detailed reports.
+      Summary of QA reviews with references to detailed reports.
+      Detailed review reports are stored in separate files (docs/qa/reviews/).
+      Gate files are stored in docs/qa/gates/.
+      This section provides quick access to review outcomes and links to full reports.
+    required: false
     owner: qa-agent
     editors: [qa-agent]
+    template: |
+      ## QA Review Summary
+
+      {{#if no_reviews}}
+      No QA reviews conducted yet.
+      {{else}}
+      - **Total Reviews**: {{total_reviews}}
+      - **Latest Review**: {{latest_review_date}}
+      - **Latest Gate**: {{latest_gate}}
+      - **Final Quality Score**: {{final_quality_score}}/100
+      - **Total Issues Found**: {{total_issues_found}}
+      - **Total Issues Resolved**: {{total_issues_resolved}}
+      - **Overall Improvement**: {{overall_improvement}}%
+
+      ### Review History
+      {{#each review_history}}
+      - **Round {{round}}** ({{date}}): [QA Review R{{round}}]({{document_path}}) - {{gate}} - {{issues_count}} issues ({{improvement}}% improvement) {{#if waiver}}⚠️ WAIVED{{/if}}
+      {{/each}}
+
+      ### Final Gate
+      - **Gate File**: [{{gate_file_name}}]({{gate_file_path}})
+      - **Gate Result**: {{final_gate}}
+      - **Status Reason**: {{final_status_reason}}
+      {{/if}}

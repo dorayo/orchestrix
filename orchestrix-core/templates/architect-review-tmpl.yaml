@@ -1,0 +1,165 @@
+template:
+  id: architect-review-template
+  name: Architect Review Report
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/architecture/story-reviews/{{story_id}}-arch-review-r{{review_round}}.md
+    title: "Architect Review: Story {{story_id}} - Round {{review_round}}"
+
+sections:
+  - id: header
+    title: Review Header
+    template: |
+      # Architect Technical Review Report
+
+      **Story**: {{story_id}} - {{story_title}}
+      **Review Round**: {{review_round}}
+      **Review Date**: {{review_date}}
+      **Reviewer**: {{reviewer_name}} ({{reviewer_role}})
+      **Architecture Version**: {{architecture_version}}
+
+  - id: overall-assessment
+    title: Overall Assessment
+    template: |
+      ## Overall Assessment
+
+      - **Technical Accuracy Score**: {{technical_score}}/10
+      - **Recommendation**: {{recommendation}}
+      - **Critical Issues**: {{critical_issues_count}}
+      - **Major Issues**: {{major_issues_count}}
+      - **Minor Issues**: {{minor_issues_count}}
+      - **Next Status**: {{next_status}}
+
+  - id: detailed-analysis
+    title: Detailed Analysis
+    template: |
+      ## Detailed Analysis
+
+      ### Technical Compliance ({{tech_compliance_score}}/5)
+
+      - **Tech Stack Compliance**: {{tech_stack_result}} - {{tech_stack_details}}
+      - **Naming Conventions**: {{naming_result}} - {{naming_details}}
+      - **Project Structure**: {{structure_result}} - {{structure_details}}
+      - **API Design**: {{api_design_result}} - {{api_design_details}}
+      - **Data Models**: {{data_model_result}} - {{data_model_details}}
+
+      ### Architecture Alignment ({{arch_alignment_score}}/3)
+
+      - **Backend Patterns**: {{backend_result}} - {{backend_details}}
+      - **Frontend Patterns**: {{frontend_result}} - {{frontend_details}}
+      - **Integration Patterns**: {{integration_result}} - {{integration_details}}
+
+      ### Implementation Feasibility ({{impl_feasibility_score}}/2)
+
+      - **Dependency Completeness**: {{dependency_result}} - {{dependency_details}}
+      - **Technical Feasibility**: {{feasibility_result}} - {{feasibility_details}}
+
+  - id: issues-identified
+    title: Issues Identified
+    template: |
+      ## Issues Identified
+
+      ### Critical Issues (Must Fix) - {{critical_issues_count}}
+
+      {{#each critical_issues}}
+      #### Issue {{@index}}: {{title}}
+
+      - **Location**: {{location}}
+      - **Description**: {{description}}
+      - **Impact**: {{impact}}
+      - **Recommended Fix**: {{fix}}
+      - **Source Reference**: {{source_ref}}
+
+      {{/each}}
+
+      {{#if major_issues}}
+      ### Major Issues (Should Fix) - {{major_issues_count}}
+
+      {{#each major_issues}}
+      #### Issue {{@index}}: {{title}}
+
+      - **Location**: {{location}}
+      - **Description**: {{description}}
+      - **Impact**: {{impact}}
+      - **Recommended Fix**: {{fix}}
+
+      {{/each}}
+      {{/if}}
+
+      {{#if minor_issues}}
+      ### Minor Issues (Consider Fixing) - {{minor_issues_count}}
+
+      {{#each minor_issues}}
+      - **{{title}}** ({{location}}): {{description}}
+      {{/each}}
+      {{/if}}
+
+  - id: recommendations
+    title: Recommendations
+    template: |
+      ## Recommendations
+
+      ### Immediate Actions Required
+
+      {{#each immediate_actions}}
+      - {{action}}
+      {{/each}}
+
+      ### Suggested Improvements
+
+      {{#each suggested_improvements}}
+      - {{improvement}}
+      {{/each}}
+
+      {{#if architecture_guidance}}
+      ### Architecture Guidance
+
+      {{architecture_guidance}}
+      {{/if}}
+
+  - id: next-steps
+    title: Next Steps
+    template: |
+      ## Next Steps
+
+      {{#if decision_approved}}
+      **Status Decision**: Story Approved ✅
+
+      - All critical issues resolved or acceptable
+      - Technical accuracy meets standards
+      - Ready for test design/development
+
+      **Handoff**: {{handoff_message}}
+      {{/if}}
+
+      {{#if decision_requires_revision}}
+      **Status Decision**: Requires Revision ⚠️
+
+      - {{revision_reason}}
+      - SM must address {{critical_issues_count}} critical and {{major_issues_count}} major issues
+      - Focus areas: {{focus_areas}}
+
+      **Handoff**: SM please execute command `revise-story {{story_id}}`
+      {{/if}}
+
+      {{#if decision_escalated}}
+      **Status Decision**: Escalated 🚨
+
+      - {{escalation_reason}}
+      - Requires senior architect or human intervention
+
+      **Handoff**: Escalated to {{escalation_target}}
+      {{/if}}
+
+  - id: metadata
+    title: Review Metadata
+    template: |
+      ## Review Metadata
+
+      - **Review Start**: {{review_start_time}}
+      - **Review End**: {{review_end_time}}
+      - **Duration**: {{review_duration}}
+      - **Architecture Documents Reviewed**: {{#each arch_docs_reviewed}}{{this}}, {{/each}}
+      - **Complexity Indicators Detected**: {{complexity_indicators}}
+      - **Test Design Level**: {{test_design_level}}

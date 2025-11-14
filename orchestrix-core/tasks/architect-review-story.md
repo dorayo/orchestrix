@@ -1,37 +1,35 @@
-# Review Story Technical Accuracy (Auto-Execution)
+# Architect Review Story - Technical Accuracy
 
-## 🤖 AUTO-EXECUTION MODE (Claude Code SubAgent Default)
+## Mission
 
-**Mission**: Conduct comprehensive technical accuracy review of SM-created story, fully automated
+Conduct comprehensive technical accuracy review of SM-created story against architecture standards.
 
-### Immediate Action Protocol:
-1. **Auto-Load Story**: Read specified story file from docs/stories/
-2. **Auto-Load Architecture**: Load relevant architecture documents based on story type
-3. **Auto-Analyze Technical**: Validate all technical components against architecture
-4. **Auto-Score Quality**: Calculate technical accuracy score (1-10 scale)
-5. **Auto-Generate Report**: Create detailed technical review report
-6. **Auto-Update Status**: Set story status based on review results
-7. **Auto-Save Results**: Update story file with review findings
+### Execution Steps:
+1. Load story file from docs/stories/
+2. Load relevant architecture documents based on story type
+3. Validate all technical components against architecture
+4. Calculate technical accuracy score (0-10 scale)
+5. Generate detailed review report
+6. Update story status based on review results
+7. Save results to story file and external report
 
-### Non-Negotiable Requirements:
-- ✅ MUST load all relevant architecture documents for story type
-- ✅ MUST validate tech stack, naming, structure, API, data model compliance
-- ✅ MUST generate technical accuracy score ≥7/10 to pass
-- ✅ MUST identify critical/major/minor issues with specific locations
-- ✅ MUST provide actionable recommendations for improvements
-- ✅ MUST check test design level from Story metadata
-- ✅ MUST update story status to AwaitingTestDesign/Approved/Requires_Revision/Blocked based on score and test design level
+### Requirements:
+- ✅ Load all relevant architecture documents for story type
+- ✅ Validate tech stack, naming, structure, API, data model compliance
+- ✅ Generate technical accuracy score (≥7/10 to pass)
+- ✅ Identify critical/major/minor issues with specific locations
+- ✅ Provide actionable recommendations
+- ✅ Check test design level from Story metadata
+- ✅ Update story status appropriately (AwaitingTestDesign/Approved/RequiresRevision/Escalated)
 
-### Auto-Halt Conditions:
-- ❌ Story file not found → Report missing story, halt
-- ❌ Architecture documents missing → Report incomplete architecture, halt
-- ❌ Story malformed or incomplete → Report structure issues, halt
+### Halt Conditions:
+- ❌ Story file not found
+- ❌ Required architecture documents missing
+- ❌ Story malformed or incomplete
 
 ---
 
-## 🎯 AUTOMATED INTELLIGENCE LAYER
-
-### Architecture Context Auto-Loading:
+## Architecture Context Loading
 ```yaml
 # Smart architecture document loading based on story type
 architecture_loading:
@@ -54,7 +52,7 @@ architecture_loading:
     - docs/architecture/core-workflows.md
     - docs/architecture/data-models.md
     
-  story_type_detection: Auto-detect from story content and Dev Notes
+  story_type_detection: Detect from story content and Dev Notes
 ```
 
 ### Technical Validation Engine:
@@ -82,9 +80,10 @@ validation_engine:
     - Database interactions match database-schema.md
 ```
 
-### Quality Scoring System:
+## Quality Scoring System
+
 ```yaml
-# Automated technical accuracy scoring (10-point scale)
+# Technical accuracy scoring (10-point scale)
 scoring_criteria:
   tech_stack_compliance: 1 point (all technologies valid and current)
   naming_convention_adherence: 1 point (follows coding standards)
@@ -107,7 +106,7 @@ scoring_thresholds:
 
 ## 🔧 EXECUTION LOGIC
 
-### Story Analysis Auto-Process:
+## Story Analysis Process
 ```yaml
 # Comprehensive story technical analysis
 story_analysis:
@@ -122,7 +121,7 @@ story_analysis:
   5. Validate against loaded architecture documents
 ```
 
-### Technical Compliance Auto-Check:
+## Technical Compliance Check
 ```yaml
 # Systematic validation against architecture standards
 compliance_checking:
@@ -143,9 +142,10 @@ compliance_checking:
     - Data: Check model definitions and relationships
 ```
 
-### Issue Classification Auto-System:
+## Issue Classification
+
 ```yaml
-# Automatic issue severity classification
+# Issue severity classification
 issue_classification:
   critical_issues: (blocking - must fix)
     - Incompatible technology versions
@@ -178,7 +178,7 @@ test_design_routing:
   4. If review fails: Set Status to RequiresRevision or Escalated
 ```
 
-### Report Auto-Generation:
+## Report Generation
 ```yaml
 # Structured technical review report generation
 report_generation:
@@ -202,7 +202,7 @@ report_generation:
 
 ---
 
-## ⚡ AUTO-VALIDATION CHECKPOINTS
+## Validation Checkpoints
 
 ### Pre-Review Validation:
 ```bash
@@ -232,69 +232,71 @@ report_generation:
 
 ---
 
-## 📊 AUTOMATED REPORTING FORMAT
+## 📊 OUTPUT FILES
 
-### Technical Review Report Auto-Template:
-```markdown
-## Technical Accuracy Review Report
+### Output 1: Detailed Review Report
 
-**Story ID**: {{story_id}}
-**Review Date**: {{current_date}}
-**Reviewer**: Architect Agent (Auto)
-**Architecture Version**: {{architecture_version}}
+**Save to**: `{architect.storyReviewsLocation}/{story_id}-arch-review-r{review_round}.md`
 
-### Overall Assessment
-- **Technical Accuracy Score**: {{score}}/10
-- **Recommendation**: {{PASS/CONDITIONAL_PASS/FAIL}}
-- **Story Status**: {{Approved/Requires_Revision/Blocked}}
+Use template: `{root}/templates/architect-review-tmpl.yaml`
 
-### Detailed Analysis
+**Include**:
+- Complete technical analysis
+- All issues (Critical, Major, Minor) with details
+- Architecture guidance and recommendations
+- Metadata (review duration, docs reviewed, etc.)
 
-#### Technical Compliance ({{tech_score}}/5)
-- Tech Stack: {{✅/❌}} {{details}}
-- Naming Conventions: {{✅/❌}} {{details}}  
-- Project Structure: {{✅/❌}} {{details}}
-- API Design: {{✅/❌}} {{details}}
-- Data Models: {{✅/❌}} {{details}}
+### Output 2: Update Story File
 
-#### Architecture Alignment ({{arch_score}}/3)
-- Backend Patterns: {{✅/❌}} {{details}}
-- Frontend Patterns: {{✅/❌}} {{details}}
-- Integration Patterns: {{✅/❌}} {{details}}
+**Update Story section**: `Architect Review Metadata`
 
-#### Implementation Feasibility ({{impl_score}}/2)  
-- Dependency Completeness: {{✅/❌}} {{details}}
-- Technical Feasibility: {{✅/❌}} {{details}}
-
-### Issues Identified
-
-#### Critical Issues (Must Fix) - {{critical_count}}
-{{auto_generated_critical_issues_list}}
-
-#### Major Issues (Should Fix) - {{major_count}}
-{{auto_generated_major_issues_list}}
-
-#### Minor Issues (Consider) - {{minor_count}}  
-{{auto_generated_minor_issues_list}}
-
-### Auto-Generated Recommendations
-{{specific_actionable_recommendations}}
-
-### Next Steps
-- {{auto_generated_next_steps_based_on_score_and_test_design_level}}
-
-### Handoff Message
-- If Status = AwaitingTestDesign: "Next: QA please execute command `test-design {story_id}`"
-- If Status = Approved: "Next: Dev please execute command `implement-story {story_id}`"
-- If Status = RequiresRevision: "Next: SM please execute command `revise {story_id}`"
-- If Status = Escalated: "Story escalated - requires human intervention"
+```yaml
+review_round: {{current_round}}
+total_reviews_conducted: {{total_count}}
+review_history:
+  - round: {{current_round}}
+    date: {{review_date}}
+    reviewer: {{reviewer_id}}
+    score: {{review_score}}
+    decision: {{decision}}
+    critical_issues: {{critical_count}}
+    key_findings: {{brief_summary}}
 ```
+
+**Update Story section**: `Architect Review Summary`
+
+```markdown
+- **Total Reviews**: {{total_reviews}}
+- **Latest Review**: {{latest_review_date}}
+- **Latest Score**: {{latest_score}}/10
+- **Latest Decision**: {{latest_decision}}
+- **Critical Issues (Latest)**: {{latest_critical_count}}
+
+### Review Documents
+- Round {{round}}: [Arch Review R{{round}}](docs/architecture/story-reviews/{{story_id}}-arch-review-r{{round}}.md) - Score: {{score}}/10 - Decision: {{decision}} - {{date}}
+```
+
+**Update Story section**: `Change Log`
+
+Add entry:
+```
+| {{date}} {{time}} | Architect | AwaitingArchReview → {{next_status}} | Score: {{score}}/10, {{critical_count}} critical issues [Review R{{round}}](docs/architecture/story-reviews/{{story_id}}-arch-review-r{{round}}.md) |
+```
+
+**Update Story**: `Status` field to {{next_status}}
+
+### Output 3: Handoff Message
+
+Based on decision:
+- **Approved**: "Next: {{#if test_design_needed}}QA please execute command `test-design {story_id}`{{else}}Dev please execute command `implement-story {story_id}`{{/if}}"
+- **RequiresRevision**: "Next: SM please execute command `revise-story {story_id}` - {{critical_count}} critical, {{major_count}} major issues"
+- **Escalated**: "Story escalated - requires senior architect/human intervention"
 
 ---
 
 ## 🔄 ERROR HANDLING & FALLBACK
 
-### Common Issues Auto-Resolution:
+### Common Issues Resolution:
 ```yaml
 error_handling:
   missing_architecture_docs:
@@ -316,11 +318,11 @@ error_handling:
 ### Quality Assurance Fallback:
 - **Insufficient Architecture**: Continue review with available docs, flag completeness
 - **Scoring Edge Cases**: Use conservative scoring, document uncertainty
-- **Complex Integrations**: Flag for manual architect review if complexity exceeds auto-analysis
+- **Complex Integrations**: Flag for manual architect review if complexity is high
 - **Template Compliance**: Verify story follows story-tmpl.yaml structure
 
 ### Manual Override Options:
-- **Complex Stories**: Flag for detailed manual review when auto-analysis insufficient
+- **Complex Stories**: Flag for detailed manual review when analysis is insufficient
 - **Architecture Updates**: Recommend manual architect review if architecture changes needed
 - **Integration Complexity**: Escalate stories with complex cross-system integrations
 
@@ -328,7 +330,7 @@ error_handling:
 
 ## 🎯 SUCCESS CRITERIA
 
-### Auto-Review Success Indicators:
+### Review Success Indicators:
 - ✅ Technical accuracy score generated with justification
 - ✅ All architecture compliance checks completed
 - ✅ Issues classified with specific locations and recommendations
@@ -336,7 +338,7 @@ error_handling:
 - ✅ Actionable feedback provided for next agent
 
 ### Quality Gates:
-- **Score ≥7/10 + Test Design Level = Simple**: Auto-approve for development (Status = Approved)
+- **Score ≥7/10 + Test Design Level = Simple**: Approve for development (Status = Approved)
 - **Score ≥7/10 + Test Design Level ∈ {Standard, Comprehensive}**: Transition to QA test design (Status = AwaitingTestDesign)
 - **Score 5-6/10**: Requires minor fixes, conditional pass  
 - **Score <5/10**: Major revision required, blocked status

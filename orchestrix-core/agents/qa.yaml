@@ -64,7 +64,7 @@ commands:
       task: nfr-assess.md
   - review:
       description: Adaptive, risk-aware comprehensive review
-      task: review-story.md
+      task: qa-review-story.md
   - risk-profile:
       description: Generate risk assessment matrix
       task: risk-profile.md
@@ -82,7 +82,7 @@ dependencies:
   tasks:
     - qa-gate.md
     - nfr-assess.md
-    - review-story.md
+    - qa-review-story.md
     - risk-profile.md
     - test-design.md
     - trace-requirements.md
