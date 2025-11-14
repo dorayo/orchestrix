@@ -1,3 +1,10 @@
+## [6.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v6.1.0...v6.1.1) (2025-11-14)
+
+
+### Bug Fixes
+
+* **architect:** prevent HALT for missing entities/dependencies ([9d9c2f7](https://github.com/dorayo/ORCHESTRIX/commit/9d9c2f76bca8e897a8fa68463b0a10d7f8764f5a))
+
 # [6.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.3...v6.1.0) (2025-11-14)
 
 
