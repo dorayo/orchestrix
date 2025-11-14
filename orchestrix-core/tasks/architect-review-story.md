@@ -22,10 +22,16 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 - ✅ Check test design level from Story metadata
 - ✅ Update story status appropriately (AwaitingTestDesign/Approved/RequiresRevision/Escalated)
 
-### Halt Conditions:
-- ❌ Story file not found
-- ❌ Required architecture documents missing
-- ❌ Story malformed or incomplete
+### Halt Conditions (ONLY when review cannot proceed):
+- ❌ Story file not found or cannot be read
+- ❌ Story completely malformed (unparseable, no structure)
+
+### Record as Issues (DO NOT Halt):
+- ⚠️ Architecture documents missing → Continue with available docs, flag as Major Issue
+- ⚠️ Story incomplete or missing sections → Record as Critical Issue, set RequiresRevision
+- ⚠️ Missing entities/dependencies → Record as Major Issue, set RequiresRevision
+- ⚠️ Outdated references → Record as Major Issue, set RequiresRevision
+- ⚠️ Technical conflicts → Record with appropriate severity, decide status based on score
 
 ---
 
@@ -147,24 +153,29 @@ compliance_checking:
 ```yaml
 # Issue severity classification
 issue_classification:
-  critical_issues: (blocking - must fix)
+  critical_issues: (blocking - must fix before approval)
     - Incompatible technology versions
-    - Non-existent architecture references
     - Impossible technical requirements
     - Major architectural pattern violations
-    
-  major_issues: (should fix)
+    - Story fundamentally incomplete (missing all ACs or Tasks)
+
+  major_issues: (must fix, but can complete review)
+    - Missing entities/dependencies (e.g., User entity not defined)
+    - Non-existent architecture references (e.g., referencing missing docs)
+    - Missing important dependencies or integrations
     - Naming convention violations
-    - Missing important dependencies
     - Suboptimal architecture patterns
     - Incomplete integration specifications
-    
-  minor_issues: (consider fixing)
+    - Outdated references to architecture sections
+
+  minor_issues: (recommend fixing)
     - Style guide variations
     - Optional optimizations
     - Documentation improvements
     - Performance considerations
 ```
+
+**IMPORTANT**: Missing entities, dependencies, or architecture references should be recorded as Major Issues and reported in the review. The Architect should COMPLETE the review, calculate a score (which will be lower due to issues), and set status to RequiresRevision. NEVER halt the review process for these issues.
 
 ### Test Design Level Check:
 ```yaml
@@ -296,35 +307,85 @@ Based on decision:
 
 ## 🔄 ERROR HANDLING & FALLBACK
 
-### Common Issues Resolution:
+### Handling Common Issues (DO NOT Halt)
+
 ```yaml
 error_handling:
   missing_architecture_docs:
     detection: Required architecture file not found
-    action: Note missing context, continue with available docs
-    report: Flag architecture completeness issue
-    
+    action: Continue review with available docs
+    report: Add as Major Issue - "Architecture documentation incomplete"
+    impact: Lower architecture_score, flag for SM to complete docs
+
+  missing_entities_dependencies:
+    detection: Story references entities/models that don't exist (e.g., User entity)
+    action: Complete review, record all missing references
+    report: Add as Major Issue - "Missing entity definition: {entity_name}"
+    impact: Lower data_model_score, set status RequiresRevision
+    severity: Major
+
   outdated_references:
     detection: Story references non-existent architecture sections
-    action: Mark as documentation reference error
-    severity: Major issue requiring SM Agent fix
-    
+    action: Record specific missing sections
+    report: Add as Major Issue - "References outdated section: {section_name}"
+    impact: Lower documentation_score
+    severity: Major
+
   ambiguous_story_type:
     detection: Cannot determine Backend/Frontend/Full-stack
     action: Load all architecture documents as safety measure
-    report: Request story type clarification
+    report: Add as Minor Issue - "Story type unclear, please specify"
+    impact: Minimal, request clarification
+
+  incomplete_story_sections:
+    detection: Missing ACs, Tasks, or Dev Notes
+    action: Complete review, identify all missing sections
+    report: Add as Critical Issue - "Missing required section: {section_name}"
+    impact: Lower completeness_score significantly
+    severity: Critical
 ```
 
-### Quality Assurance Fallback:
-- **Insufficient Architecture**: Continue review with available docs, flag completeness
-- **Scoring Edge Cases**: Use conservative scoring, document uncertainty
-- **Complex Integrations**: Flag for manual architect review if complexity is high
-- **Template Compliance**: Verify story follows story-tmpl.yaml structure
+### Fallback Strategy:
+- **Missing Architecture Docs**: Continue with available docs, note gaps as Major Issues
+- **Missing Dependencies**: Record all missing items, complete review, set RequiresRevision
+- **Scoring with Issues**: Lower score based on severity (Critical: -2pts, Major: -1pt, Minor: -0.5pt)
+- **Complex Integrations**: Flag for additional manual review but still complete current review
+- **Uncertainty**: Use conservative scoring, document assumptions
 
-### Manual Override Options:
-- **Complex Stories**: Flag for detailed manual review when analysis is insufficient
-- **Architecture Updates**: Recommend manual architect review if architecture changes needed
-- **Integration Complexity**: Escalate stories with complex cross-system integrations
+### When to Actually Halt:
+1. **Story file not found**: Cannot review what doesn't exist
+2. **Completely unparseable**: File is corrupted or not markdown
+3. **No identifiable structure**: Cannot extract any sections
+
+**Everything else**: Complete the review, record issues, calculate score, set appropriate status.
+
+### Example: Handling Missing Entity
+
+**Scenario**: Story references "User entity" but it's not defined in data-models.md
+
+**WRONG Approach** ❌:
+```
+Error: User entity not found in architecture
+HALT review process
+Return error to user
+```
+
+**CORRECT Approach** ✅:
+```
+1. Continue review of all other aspects
+2. Record issue:
+   - Type: Major Issue
+   - Title: "Missing entity definition: User"
+   - Description: "Story references User entity in AC2 and Task 3.1, but User entity is not defined in data-models.md"
+   - Location: "AC2, Task 3.1"
+   - Impact: "Cannot validate data model compliance"
+   - Recommendation: "SM should define User entity in data-models.md or remove references"
+3. Lower data_model_score by 1 point (missing entity)
+4. Complete full review, generate report
+5. Calculate final score (e.g., 6.5/10 due to missing entity)
+6. Set status: RequiresRevision
+7. Handoff: "SM please execute 'revise-story {id}' - Missing entity definitions"
+```
 
 ---
 
