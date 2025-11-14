@@ -90,9 +90,72 @@ Use this guide when you want to add **significant features** or make **substanti
 
 **Goal**: Create a unified understanding of the current multi-repository system integration.
 
+#### 1.0: Install Orchestrix in Each Implementation Repository
+
+**⚠️ IMPORTANT**: Each implementation repository needs Orchestrix installed before analysis.
+
+**In each implementation repository**:
+
+```bash
+# Backend repo
+cd my-app-backend
+npx orchestrix install
+
+# Frontend repo
+cd ../my-app-web
+npx orchestrix install
+
+# Mobile repo
+cd ../my-app-ios
+npx orchestrix install
+```
+
+**Configure Each Repository**:
+
+After installation, edit each repository's `core-config.yaml`:
+
+**Backend** (`my-app-backend/core-config.yaml`):
+
+```yaml
+project:
+  name: My App Backend # Include repo type for clarity
+  type: backend # ⚠️ REQUIRED
+  product_repo:
+    enabled: false # Will enable in Step 5
+    path: ""
+```
+
+**Frontend** (`my-app-web/core-config.yaml`):
+
+```yaml
+project:
+  name: My App Web
+  type: frontend # ⚠️ REQUIRED
+  product_repo:
+    enabled: false
+    path: ""
+```
+
+**Mobile** (`my-app-ios/core-config.yaml`):
+
+```yaml
+project:
+  name: My App iOS
+  type: ios # ⚠️ REQUIRED (or 'android', 'mobile')
+  product_repo:
+    enabled: false
+    path: ""
+```
+
+**💡 Configuration Tips**:
+
+- `project.name`: Descriptive name (used in docs, not for logic)
+- `project.type`: **REQUIRED** - Must be `backend`, `frontend`, `ios`, `android`, or `mobile`
+- `product_repo.path`: Leave empty for now, configure later (Step 5)
+
 #### 1.1: Analyze Each Implementation Repository
 
-**In each implementation repository** (backend, frontend, mobile, etc.):
+**In each implementation repository**:
 
 ```bash
 cd my-app-backend
@@ -426,50 +489,88 @@ docs/
 
 ### Step 5: Create Repository-Specific Architectures
 
-**For each implementation repository**, create detailed architecture:
+**For each implementation repository**, configure Product repo link and create detailed architecture:
 
-#### Backend Repository:
+#### Step 5.1: Configure Product Repo Link (Each Repo)
+
+**⚠️ REQUIRED**: Before creating implementation architectures, link each repo to Product repo.
+
+**Backend Repository** (`my-app-backend/core-config.yaml`):
+
+```yaml
+project:
+  name: My App Backend
+  type: backend
+  product_repo:
+    enabled: true # ⚠️ Enable the link
+    path: ../my-app-product # ⚠️ Relative path to Product repo
+```
+
+**Frontend Repository** (`my-app-web/core-config.yaml`):
+
+```yaml
+project:
+  name: My App Web
+  type: frontend
+  product_repo:
+    enabled: true
+    path: ../my-app-product
+```
+
+**Mobile Repository** (`my-app-ios/core-config.yaml`):
+
+```yaml
+project:
+  name: My App iOS
+  type: ios
+  product_repo:
+    enabled: true
+    path: ../my-app-product
+```
+
+**💡 Path Configuration**:
+
+- Use **relative path** from implementation repo to Product repo
+- Example: If repos are siblings (`/projects/my-app-backend` and `/projects/my-app-product`), use `../my-app-product`
+- Verify with: `ls $PRODUCT_REPO_PATH` should show Product repo contents
+
+#### Step 5.2: Create Implementation Architectures
+
+**Backend Repository**:
 
 ```bash
 cd my-app-backend
-
-# Configure product_repo link
-# Edit core-config.yaml:
-# product_repo:
-#   path: ../my-app-product
-
 @architect *create-backend-architecture
+# Reads: ../my-app-product/docs/architecture/system-architecture.md
 # Output: docs/architecture.md (backend-specific)
 ```
 
-#### Frontend Repository:
+**Frontend Repository**:
 
 ```bash
 cd my-app-web
-
-# Configure product_repo link
 @architect *create-frontend-architecture
+# Reads: ../my-app-product/docs/architecture/system-architecture.md
 # Output: docs/architecture.md (frontend-specific)
 ```
 
-#### Mobile Repository:
+**Mobile Repository**:
 
 ```bash
 cd my-app-ios
-
-# Configure product_repo link
 @architect *create-mobile-architecture
+# Reads: ../my-app-product/docs/architecture/system-architecture.md
 # Output: docs/architecture.md (ios-specific)
 ```
 
 **What This Does**:
 
-- Reads system-architecture.md from Product repo
+- Reads system-architecture.md from Product repo (via `product_repo.path`)
 - Extracts relevant parts for this specific repository
 - Generates detailed implementation architecture
 - Includes improved coding standards from Step 3
 
-### Step 5.5: Shard Implementation Architectures (Each Repo)
+#### Step 5.3: Shard Implementation Architectures (Each Repo)
 
 **After creating implementation architectures**, shard them in each repository:
 
@@ -746,14 +847,20 @@ Define API versioning strategy:
 #### Step 1: System Analysis
 
 ```bash
-# Analyze each repo
+# Install Orchestrix in each repo
 cd ecommerce-backend
+npx orchestrix install
+# Edit core-config.yaml: type: backend, product_repo.enabled: false
 @architect *document-project
 
 cd ../ecommerce-web
+npx orchestrix install
+# Edit core-config.yaml: type: frontend, product_repo.enabled: false
 @architect *document-project
 
 cd ../ecommerce-ios
+npx orchestrix install
+# Edit core-config.yaml: type: ios, product_repo.enabled: false
 @architect *document-project
 
 # Create Product repo
@@ -868,18 +975,30 @@ EOF
 #### Step 4-7: Implementation
 
 ```bash
-# Shard docs
+# Shard system docs (in Product repo)
 @po *shard
 
-# Create repo-specific architectures
+# Configure product_repo.path in each implementation repo
 cd ../ecommerce-backend
+# Edit core-config.yaml:
+#   product_repo.enabled: true
+#   product_repo.path: ../ecommerce-product
 @architect *create-backend-architecture
+@po *shard  # Shard backend architecture
 
 cd ../ecommerce-web
+# Edit core-config.yaml:
+#   product_repo.enabled: true
+#   product_repo.path: ../ecommerce-product
 @architect *create-frontend-architecture
+@po *shard  # Shard frontend architecture
 
 cd ../ecommerce-ios
+# Edit core-config.yaml:
+#   product_repo.enabled: true
+#   product_repo.path: ../ecommerce-product
 @architect *create-mobile-architecture
+@po *shard  # Shard mobile architecture
 
 # Create stories and implement
 cd ../ecommerce-backend
