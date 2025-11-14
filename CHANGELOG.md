@@ -1,3 +1,85 @@
+# [8.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v7.2.0...v8.0.0) (2025-11-14)
+
+
+* feat(brownfield)!: implement 3-step enhancement workflow with improved standards ([fb622f9](https://github.com/dorayo/ORCHESTRIX/commit/fb622f96a6f6b173679cc9f744eca19e2962b4d9))
+
+
+### BREAKING CHANGES
+
+* document-project task now outputs to docs/existing-system-analysis.md
+instead of docs/brownfield-architecture.md. The document is now explicitly an intermediate
+analysis document rather than the final architecture.
+
+This commit implements a comprehensive refactoring of the brownfield enhancement workflow
+to address a critical design flaw: existing code with poor standards should not dictate
+standards for new code.
+
+## Core Changes
+
+### 1. Brownfield 3-Step Workflow
+- **Step 1**: @architect *document-project → docs/existing-system-analysis.md
+  - Captures real state of existing system (as-is, including poor practices)
+  - Intermediate document, not loaded by Dev agents
+  - Input for Steps 2 and 3
+
+- **Step 2**: @pm *create-doc brownfield-prd-tmpl.yaml → docs/prd.md
+  - Defines enhancement requirements based on existing system analysis
+  - REQUIRED prerequisite: existing-system-analysis.md
+
+- **Step 3**: @architect *create-doc brownfield-architecture-tmpl.yaml → docs/architecture.md
+  - Designs enhancement architecture with IMPROVED standards
+  - REQUIRED prerequisites: prd.md + existing-system-analysis.md
+  - This is the final architecture that Dev follows (can improve upon poor existing practices)
+
+### 2. PO Shard Command Unification
+- Removed: *shard-doc and *shard-documents commands
+- Added: unified *shard command
+- Automatically shards both PRD and Architecture documents
+- Uses md-tree CLI tool when available for fast architecture sharding
+
+### 3. Task and Template Updates
+- document-project.md: Output path and document role clarified
+- brownfield-prd-tmpl.yaml: Explicit prerequisite validation added
+- brownfield-architecture-tmpl.yaml: Emphasis on improved standards for new code
+- po-shard-documents.md: Enhanced to handle both PRD and Architecture sharding
+
+### 4. Documentation
+- NEW: docs/BROWNFIELD_ENHANCEMENT_GUIDE.md (comprehensive 500+ line guide)
+  - Complete 3-step workflow explanation
+  - Document roles and purposes
+  - Best practices and common scenarios
+
+- UPDATED: docs/MULTI_REPO_BROWNFIELD_GUIDE.md
+  - Added link to new enhancement guide
+  - Clarified this is for multi-repo system documentation
+
+- UPDATED: README.md
+  - Reorganized documentation section with Brownfield/Greenfield categories
+  - Added links to new guides
+
+### 5. Cleanup
+- Removed 17 temporary fix and test documents
+- Cleaned up root and docs directories
+
+## Document Role Clarity
+
+| Document | Path | Role | Sharded? | Dev Loads? |
+|----------|------|------|----------|------------|
+| Existing System Analysis | docs/existing-system-analysis.md | Intermediate (as-is) | No | No |
+| PRD | docs/prd.md | Requirements | Yes | No |
+| Architecture | docs/architecture.md | Final (improved) | Yes | Yes |
+
+## Migration Guide
+
+If you were using document-project before:
+1. The output file is now docs/existing-system-analysis.md (not brownfield-architecture.md)
+2. This is an intermediate document for planning, not for development
+3. Follow the 3-step workflow to create the final docs/architecture.md
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 # [7.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v7.1.0...v7.2.0) (2025-11-14)
 
 
