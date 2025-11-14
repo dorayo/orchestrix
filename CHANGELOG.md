@@ -1,3 +1,10 @@
+# [6.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.3...v6.1.0) (2025-11-14)
+
+
+### Features
+
+* **workflow:** optimize story workflow and reduce file size by 85% ([1e3ab4f](https://github.com/dorayo/ORCHESTRIX/commit/1e3ab4f66c80e61d98ad7751dfae541a575bb2ca))
+
 ## [6.0.3](https://github.com/dorayo/ORCHESTRIX/compare/v6.0.2...v6.0.3) (2025-10-20)
 
 
