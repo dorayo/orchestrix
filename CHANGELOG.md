@@ -1,3 +1,10 @@
+# [7.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v7.1.0...v7.2.0) (2025-11-14)
+
+
+### Features
+
+* **subagent:** add Decision Evaluator SubAgent for automated decision execution ([5c88ce0](https://github.com/dorayo/ORCHESTRIX/commit/5c88ce0b50277b1bad6b8a7f5947c8ac0fcc1b64))
+
 # [7.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v7.0.0...v7.1.0) (2025-11-14)
 
 
