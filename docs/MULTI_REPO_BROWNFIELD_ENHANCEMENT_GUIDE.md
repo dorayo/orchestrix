@@ -133,13 +133,23 @@ npx orchestrix install
 
 #### 1.3: Configure Implementation Repositories
 
+**Step 1: Set Project Type**
+
 Edit `core-config.yaml` in Product repository:
 
 ```yaml
 project:
   name: My App
-  type: product-planning # REQUIRED
+  type: product-planning # ⚠️ MUST be 'product-planning' for multi-repo
+```
 
+**Step 2: Configure Implementation Repositories**
+
+In the same `core-config.yaml`, uncomment and configure the `implementation_repos` section:
+
+```yaml
+# Multi-Repository Configuration (for Product repositories only)
+# Uncomment and configure when project.type is 'product-planning'
 implementation_repos:
   - path: ../my-app-backend
     type: backend
@@ -150,6 +160,12 @@ implementation_repos:
 ```
 
 **Repository Types**: `backend`, `frontend`, `ios`, `android`, `mobile`
+
+**💡 Tips**:
+
+- Paths are relative to Product repository
+- Use `../` to go up one directory
+- Example: If Product repo is at `/projects/my-app-product` and backend is at `/projects/my-app-backend`, use `../my-app-backend`
 
 #### 1.4: Aggregate System Analysis
 
@@ -366,36 +382,47 @@ This requires changes in all 3 repositories. Shall I proceed?
 
 Once you have the enhanced system architecture, proceed with standard Orchestrix development workflow:
 
-### Step 4: Shard Documents
+### Step 4: Shard System Documents (Product Repo Only)
 
 **Agent**: `@po`
 **Command**: `*shard`
+**Location**: **Product repository** (not implementation repos)
 
 ```bash
+# In Product repository
 @po *shard
 ```
 
 **What This Does**:
 
-- Shards `docs/prd.md` → `docs/prd/epic-*.yaml`
-- Shards `docs/architecture/system-architecture.md` → Multiple architecture files
-- Prepares documents for Dev agents to consume
+- ✅ Shards `docs/prd.md` → `docs/prd/epic-*.yaml` (multi-repo format)
+- ✅ Shards `docs/architecture/system-architecture.md` → Multiple system-level architecture files
+- ⚠️ **Does NOT** shard implementation repository architectures (those are sharded separately in each repo)
 
-**Output**:
+**Important Clarifications**:
+
+1. **What gets sharded here**: Only **system-level** documents in Product repo
+2. **What does NOT get sharded**: Implementation repository architectures (backend/frontend/mobile)
+3. **Why separate**: System architecture coordinates all repos; implementation architectures detail execution
+4. **Timing**: Run this **after** creating system-architecture.md, **before** creating implementation architectures
+
+**Output** (in Product repo):
 
 ```
 docs/
 ├── prd/
-│   ├── epic-1.yaml
+│   ├── epic-1.yaml           # ⭐ Multi-repo epic format (cross-repo dependencies)
 │   └── epic-2.yaml
 └── architecture/
-    ├── 00-architecture-overview.md
-    ├── 01-tech-stack.md
-    ├── 02-repository-topology.md
-    ├── 03-api-contracts.md
-    ├── 04-integration-strategy.md
-    └── ...
+    ├── 00-system-overview.md      # ⭐ System-level coordination docs
+    ├── 01-repository-topology.md  # Which repos exist, how they relate
+    ├── 02-api-contracts.md        # Cross-repo API contracts
+    ├── 03-integration-strategy.md # Auth, data formats, error handling
+    ├── 04-deployment.md           # Deployment coordination
+    └── 05-cross-cutting-concerns.md # Security, performance, observability
 ```
+
+**Next**: Create detailed implementation architectures for each repository (Step 5)
 
 ### Step 5: Create Repository-Specific Architectures
 
@@ -441,6 +468,72 @@ cd my-app-ios
 - Extracts relevant parts for this specific repository
 - Generates detailed implementation architecture
 - Includes improved coding standards from Step 3
+
+### Step 5.5: Shard Implementation Architectures (Each Repo)
+
+**After creating implementation architectures**, shard them in each repository:
+
+#### In Backend Repository:
+
+```bash
+cd my-app-backend
+
+# Shard backend architecture
+@po *shard
+# Output: docs/architecture/*.md (backend-specific sections)
+```
+
+#### In Frontend Repository:
+
+```bash
+cd my-app-web
+
+# Shard frontend architecture
+@po *shard
+# Output: docs/architecture/*.md (frontend-specific sections)
+```
+
+#### In Mobile Repository:
+
+```bash
+cd my-app-ios
+
+# Shard mobile architecture
+@po *shard
+# Output: docs/architecture/*.md (ios-specific sections)
+```
+
+**What Gets Sharded**:
+
+```
+# Backend repo after sharding
+docs/architecture/
+├── 00-architecture-overview.md
+├── 01-tech-stack.md
+├── 02-source-tree.md
+├── 03-coding-standards.md        # ⭐ Dev auto-loads
+├── 04-component-architecture.md  # Controllers, services, repos
+├── 05-database-schema.md         # Tables, relationships
+├── 06-api-endpoints.md           # Detailed API specs
+└── 07-testing-strategy.md
+
+# Frontend repo after sharding
+docs/architecture/
+├── 00-architecture-overview.md
+├── 01-tech-stack.md
+├── 02-source-tree.md
+├── 03-coding-standards.md        # ⭐ Dev auto-loads
+├── 04-component-architecture.md  # React components, state
+├── 05-routing.md                 # Routes, navigation
+├── 06-api-integration.md         # API client, hooks
+└── 07-testing-strategy.md
+```
+
+**Why This Step Matters**:
+
+- Dev agents **automatically load** sharded architecture files (especially `coding-standards.md`, `tech-stack.md`, `source-tree.md`)
+- Makes architecture easier to consume (smaller files)
+- Each repository has its own detailed implementation guidance
 
 ### Step 6: Create Stories
 

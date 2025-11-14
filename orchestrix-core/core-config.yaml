@@ -13,6 +13,18 @@ project:
   story_assignment:
     auto_filter: false
     assigned_stories: []
+
+# Multi-Repository Configuration (for Product repositories only)
+# Uncomment and configure when project.type is 'product-planning'
+# implementation_repos:
+#   - path: ../my-project-backend
+#     type: backend
+#   - path: ../my-project-web
+#     type: frontend
+#   - path: ../my-project-ios
+#     type: ios
+#   - path: ../my-project-android
+#     type: android
 prd:
   prdFile: docs/prd.md
   prdSharded: true
