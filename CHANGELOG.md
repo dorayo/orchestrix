@@ -1,3 +1,17 @@
+# [7.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v7.0.0...v7.1.0) (2025-11-14)
+
+
+### Bug Fixes
+
+* **dev:** enforce completion steps to prevent premature task termination ([c7cc9d1](https://github.com/dorayo/ORCHESTRIX/commit/c7cc9d14190fc8df1f7e6a433cd4c8d0223163f9))
+* **dev:** implement rule retention system for multi-session stories ([2b5b785](https://github.com/dorayo/ORCHESTRIX/commit/2b5b78547c4734edc900b1ba2c396a77f28182fd))
+
+
+### Features
+
+* **dev:** implement comprehensive quality gate system ([09ff38f](https://github.com/dorayo/ORCHESTRIX/commit/09ff38f06ccb01f67eea0af4929426dc105e3aca))
+* **qa:** implement automatic git commit in QA review workflow ([a7a450f](https://github.com/dorayo/ORCHESTRIX/commit/a7a450f4f5a2baf4fd1cc882e134edafc47e775e))
+
 # [7.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v6.1.2...v7.0.0) (2025-11-14)
 
 
