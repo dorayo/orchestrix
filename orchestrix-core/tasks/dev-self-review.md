@@ -13,10 +13,18 @@ Comprehensive self-review before marking story as Review. This is a MANDATORY ga
 
 ## Validation
 
-1. Verify Dev agent identity
-2. Confirm Story Status = InProgress
-3. Validate all prerequisites met
-4. If validation fails: HALT with detailed error message
+**Execute**: `{root}/tasks/utils/validate-agent-permission.md`
+
+**Input**:
+```yaml
+agent_id: dev
+story_path: {story_path}
+action: self_review
+```
+
+**On FAIL**: HALT with error message and guidance
+
+**On PASS**: Proceed with self-review process
 
 ## Process
 

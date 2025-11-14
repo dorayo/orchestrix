@@ -32,26 +32,25 @@ optional:
   - Risk Profile: `{qa_root}/assessments/{epic}.{story}-risk-*.md`
   - NFR Assessment: `{qa_root}/assessments/{epic}.{story}-nfr-*.md`
 
-## Agent Permission Check
+## Agent Permission Check (MANDATORY)
 
-**CRITICAL**: Before proceeding with fixes, verify Dev agent has the required permissions:
+**Execute**: `{root}/tasks/utils/validate-agent-permission.md`
 
-1. **Verify Agent Identity:**
-   - Confirm you are the Dev agent
-   - Reference `{root}/data/story-status-transitions.yaml`
+**Input**:
+```yaml
+agent_id: dev
+story_path: {story_path}
+action: apply_qa_fixes
+```
 
-2. **Check Modification Permission:**
-   - Verify Dev has permission to modify stories in `InProgress` status
-   - Reference `can_modify_in_statuses` in agent_permissions
-   - Verify Dev can perform status changes:
-     - InProgress -> Review
-     - Approved -> InProgress (when starting implementation)
+**On FAIL**:
+- Output error_message and guidance
+- Show responsible_agent for current status
+- HALT - Do NOT proceed with fixes
 
-3. **If permission check fails:**
-   - Log error: "Dev agent does not have permission to modify this story"
-   - Reference the responsible agent from story-status-transitions.yaml
-   - HALT and inform user of the permission violation
-   - Do NOT proceed with fixes
+**On PASS**:
+- Log permission validation success
+- Proceed with QA fixes
 
 ## Prerequisites
 
@@ -59,33 +58,6 @@ optional:
 - Lint and test commands available:
   - `deno lint`
   - `deno test -A`
-
-## Status Transition Validation
-
-Before proceeding with fixes, validate that Dev is authorized to work on this Story:
-
-1. **Check Current Story Status:**
-   - Read the Story's `Status` field
-   - Verify status is `InProgress`
-   - If status is not `InProgress`, HALT and inform user:
-     ```
-     ERROR: Invalid status for Dev fixes
-     Current Status: {current_status}
-     Expected Status: InProgress
-     
-     Dev can only apply fixes to stories with status 'InProgress'.
-     Current responsible agent: {responsible_agent_from_config}
-     ```
-
-2. **Validate Agent Permission:**
-   - Reference `{root}/data/story-status-transitions.yaml`
-   - Confirm Dev has permission to modify stories in `InProgress` status
-   - Verify Dev can transition to target status: `Review`
-
-3. **If validation fails:**
-   - Log error with details from `story-status-transitions.yaml` error_messages
-   - HALT and provide guidance on correct workflow
-   - Do NOT proceed with fixes
 
 ## Process (Do not skip steps)
 

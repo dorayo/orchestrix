@@ -211,81 +211,25 @@ This completion phase has **TWO MANDATORY GATES** that must be executed in order
 
 #### GATE 1: SELF-REVIEW GATE (Quality) ✅
 
-**Execute**: `{root}/tasks/dev-self-review.md`
+**Execute**: `{root}/tasks/dev-self-review.md` (see file for detailed criteria)
 
-This validates implementation quality:
-- Implementation gate checklist (must pass ≥95%)
-- Architecture compliance validation
-- API contract validation (multi-repo)
-- Test integrity validation
-- DoD checklist (100% of critical items)
-- Implementation rounds analysis
+**Validates**: Implementation gate ≥95%, architecture compliance, API contracts, test integrity, DoD critical items
 
-**Possible Outcomes**:
-
-**A) PASS**:
-```
-✅ SELF-REVIEW PASSED
-[Self-review report with scores]
-
-⚠️ IMPORTANT: Self-review PASSED
-→ You MUST now return to implement-story.md
-→ Execute GATE 2: Completion Steps Checklist
-→ DO NOT consider task complete until handoff message output
-```
-
-**Action**: Continue to GATE 2 below
-
-**B) FAIL**:
-```
-❌ SELF-REVIEW FAILED
-[Detailed failure report]
-```
-
-**Action**: HALT, fix issues, re-run *develop-story, DO NOT proceed to GATE 2
-
-**C) ESCALATE**:
-```
-🚨 ESCALATED
-[Escalation report]
-```
-
-**Action**: Status = Escalated, handoff to Architect, EXIT task immediately
+**Outcomes**: PASS → Continue to GATE 2 | FAIL → HALT, fix issues | ESCALATE → Exit to Architect
 
 ---
 
 #### GATE 2: COMPLETION STEPS CHECKLIST (Execution) ✅
 
-**⚠️ CRITICAL**: Only execute this if GATE 1 = PASS
+**⚠️ CRITICAL**: Only execute if GATE 1 = PASS
 
-**Execute**: `{root}/tasks/execute-checklist.md`
+**Execute**: `{root}/tasks/execute-checklist.md` with `{root}/checklists/validation/dev-completion-steps.md`
 
-**Checklist**: `{root}/checklists/validation/dev-completion-steps.md`
+**Verifies** (25 items, 100% required): Dev Log Final Summary, Dev Agent Record (7 fields), Change Log entry, Status = "Review", handoff message ready
 
-**This checklist verifies you completed (100% required)**:
-1. ✅ Dev Log Final Summary written
-2. ✅ Self-review executed and passed
-3. ✅ Dev Agent Record updated (7 fields)
-4. ✅ Change Log entry added
-5. ✅ Status field updated to "Review"
-6. ✅ Handoff message prepared and ready
+**Execution Mode**: STRICT - HALT if <100%, proceed to handoff if 100%
 
-**Execution Mode**: STRICT
-- Threshold: 100% (25/25 items)
-- On Fail: HALT immediately with missing items list
-- On Pass: Proceed to handoff output
-
-**The checklist will guide you through**:
-- What to update
-- How to format
-- What to verify
-- When to output handoff
-
-**⚠️ DO NOT SKIP THIS CHECKLIST**:
-- This prevents premature task termination
-- Ensures all administrative steps complete
-- Guarantees handoff message output
-- Required for audit compliance
+**⚠️ DO NOT SKIP** - Prevents premature termination, guarantees handoff output
 
 ---
 
@@ -293,35 +237,12 @@ This validates implementation quality:
 
 **After GATE 2 checklist shows 100% completion**:
 
-**You MUST output this EXACT message format**:
+**Template**: Use `{root}/templates/dev-handoff-message-tmpl.md`
 
-```
-✅ IMPLEMENTATION COMPLETE
-Story: {id} → Status: Review
-Round: {N} | Gate: {score}% | Tests: {count} | Files: {count}
-Dev Log: {path}
-
-Self-Review Results:
-✅ Implementation Gate: {score}% (≥95% required)
-✅ Architecture Compliance: PASS
-✅ API Contract Compliance: {PASS|N_A}
-✅ Test Integrity: PASS
-✅ DoD Critical Items: 100%
-
-⚠️ Warnings: {list any: open_issues, dev_feedback, minor issues OR "none"}
-
-🎯 HANDOFF TO QA:
-*review {story_id}
-```
-
-**CRITICAL RULES FOR HANDOFF**:
-1. ✅ Handoff message is your FINAL output
-2. ✅ Command `*review {story_id}` is LAST LINE
-3. ✅ Nothing comes after handoff command
-4. ✅ Message must be clearly visible
-5. ❌ Do NOT add explanations after handoff
-6. ❌ Do NOT say "task complete" after handoff
-7. ❌ Do NOT continue to other topics
+**Key Rules**:
+- Handoff message is your FINAL output
+- Command `*review {story_id}` is LAST LINE
+- Nothing comes after handoff command
 
 ---
 

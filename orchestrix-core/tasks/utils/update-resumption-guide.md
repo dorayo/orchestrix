@@ -49,123 +49,16 @@ Locate: `## Resumption Guide` section
 
 ### 2. Generate Resumption Content
 
-**Template**:
+**Template**: Use `{root}/templates/dev-resumption-guide-tmpl.md`
 
-```markdown
-## Resumption Guide
+**Fill in these placeholders**:
+- `{timestamp}`: Current date/time
+- `{phase}`: Current phase number (1-4)
+- `{subtask}`: Current subtask identifier
+- `{session_number}`: Session count since story started
+- Progress summaries, next steps, technical context, blocking issues, decisions
 
-**Last Updated**: {timestamp}
-**Current Phase**: {phase}
-**Current Subtask**: {subtask}
-**Session**: {session_number}
-
-### Where We Are
-
-{brief summary of progress}
-
-**Completed**:
-- Phase {X}: {summary}
-- Subtasks {list}: {summary}
-
-**In Progress**:
-- Current: {subtask_id} - {description}
-- Status: {percentage}% complete
-
-### What to Do Next
-
-**Immediate Next Steps**:
-1. {next_step_1}
-2. {next_step_2}
-3. {next_step_3}
-
-**Technical Context**:
-- {key_technical_detail_1}
-- {key_technical_detail_2}
-
-**Blocking Issues** (if any):
-- {blocking_issue_1}
-
-**Decisions Made This Session**:
-- {decision_1}
-- {decision_2}
-
----
-
-### ⚠️⚠️⚠️ CRITICAL WORKFLOW RULES TO REMEMBER ⚠️⚠️⚠️
-
-**YOU MUST REMEMBER THESE RULES WHEN YOU RESUME**:
-
-1. ✅ **TDD Flow**: RED → GREEN → REFACTOR
-   - No production code before failing test
-   - Tests are authoritative, never weaken
-
-2. ✅ **Dev Log Maintenance**:
-   - Append-only, never overwrite
-   - Update after EVERY subtask completion
-   - Final Summary required before marking complete
-
-3. ✅ **Test Integrity**:
-   - NEVER modify test expectations to make tests pass
-   - Fix implementation, not tests
-   - Document any test changes with business justification
-
-4. ✅ **Architecture Compliance**:
-   - Validate against architecture docs
-   - Follow naming conventions
-   - Use approved technologies only
-
-5. ✅ **API Contracts** (if multi-repo):
-   - Request/response schemas must match exactly
-   - Error handling for all contract error codes
-   - Validate before marking complete
-
-6. ✅ **COMPLETION REQUIREMENTS** (When all tasks done):
-
-   **GATE 1**: Execute `dev-self-review.md`
-   - Implementation gate ≥95%
-   - Architecture compliance
-   - API contract compliance
-   - Test integrity
-   - DoD critical items 100%
-
-   **GATE 2**: Execute `dev-completion-steps.md` checklist
-   - 25 items, 100% required
-   - Update Dev Agent Record (7 fields)
-   - Update Change Log
-   - Update Status to "Review"
-   - Output handoff message as FINAL action
-
-   ⚠️ DO NOT SKIP GATE 2 EVEN IF GATE 1 PASSES
-   ⚠️ Task is NOT complete until handoff message output
-
-7. ✅ **Status Management**:
-   - Only Dev can modify story in InProgress status
-   - Must validate transitions via validate-agent-permission.md
-   - Status = "Review" ONLY after both gates pass
-
-8. ✅ **Handoff Protocol**:
-   - Handoff message must be FINAL output
-   - Command `*review {story_id}` must be LAST LINE
-   - Nothing after handoff command
-
----
-
-### Resumption Checklist
-
-When you resume, verify:
-- [ ] Read this Resumption Guide completely
-- [ ] Understand current phase and subtask
-- [ ] Review critical workflow rules above
-- [ ] Understand what GATE 1 and GATE 2 are
-- [ ] Remember: Task NOT complete until handoff output
-- [ ] Check if approaching completion (need gates?)
-- [ ] Load architecture documents if needed
-- [ ] Review previous session's decisions
-
-**Then proceed with next steps.**
-
----
-```
+**Critical**: The template includes the 8 critical workflow rules and GATE reminders - these MUST be included EVERY TIME for LLM memory retention.
 
 ### 3. Update Dev Log
 
