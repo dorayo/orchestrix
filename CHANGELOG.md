@@ -1,3 +1,10 @@
+## [8.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v8.1.0...v8.1.1) (2025-11-14)
+
+
+### Bug Fixes
+
+* **multi-repo:** add implementation_repos config and clarify sharding ([02a187a](https://github.com/dorayo/ORCHESTRIX/commit/02a187ad7731868dcd2e5d1c3f56caa427b137d6))
+
 # [8.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.0.0...v8.1.0) (2025-11-14)
 
 
