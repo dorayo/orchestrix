@@ -14,11 +14,16 @@ Generate a **system-level architecture document** for multi-repository projects.
 - ✅ Defines WHAT repositories exist and HOW they integrate
 - ❌ Does NOT include component designs, database schemas, or code patterns (those belong in each repo's detailed architecture)
 
+**MODE DETECTION**: This task supports both Greenfield and Brownfield projects:
+- **Greenfield Mode**: New project from scratch, architecture guides new implementation
+- **Brownfield Mode**: Enhancement of existing system, architecture incorporates existing constraints + improvements
+
 ## Prerequisites
 
 **Required Documents**:
 - ✅ PRD exists at `docs/prd.md`
 - ✅ Front-End Spec exists at `docs/front-end-spec.md` (if UI components are involved)
+- ⚠️ **Brownfield Mode** (if applicable): `docs/existing-system-integration.md` (multi-repo) or `docs/existing-system-analysis.md` (single-repo)
 
 **Project Configuration**:
 - ✅ Project type is `product-planning` in `core-config.yaml`
@@ -30,7 +35,7 @@ Generate a **system-level architecture document** for multi-repository projects.
 
 ## Validation
 
-Before starting, validate prerequisites:
+Before starting, validate prerequisites and detect mode:
 
 ```bash
 # Check if PRD exists
@@ -38,6 +43,20 @@ if [ ! -f "docs/prd.md" ]; then
   echo "❌ ERROR: PRD not found at docs/prd.md"
   echo "👉 Action: Create PRD first using PM agent: @pm *create-doc prd"
   exit 1
+fi
+
+# Detect mode: Greenfield vs Brownfield
+MODE="greenfield"
+if [ -f "docs/existing-system-integration.md" ]; then
+  MODE="brownfield-multi"
+  echo "🔍 MODE DETECTED: Brownfield Multi-Repository Enhancement"
+  echo "   Analysis source: docs/existing-system-integration.md"
+elif [ -f "docs/existing-system-analysis.md" ]; then
+  MODE="brownfield-single"
+  echo "🔍 MODE DETECTED: Brownfield Single-Repository Enhancement"
+  echo "   Analysis source: docs/existing-system-analysis.md"
+else
+  echo "🔍 MODE DETECTED: Greenfield (New Project)"
 fi
 
 # Check project type
@@ -50,47 +69,105 @@ if [ "$PROJECT_TYPE" != "product-planning" ]; then
   if [ "$response" != "y" ]; then exit 1; fi
 fi
 
-echo "✅ Prerequisites validated. Proceeding with system architecture generation..."
+echo "✅ Prerequisites validated. Proceeding with $MODE system architecture generation..."
 ```
 
 ---
 
 ## Task Instructions
 
-### Step 1: Load Context Documents
+### Step 1: Load Context Documents and Detect Mode
 
-Load and analyze the following documents to understand system requirements:
+Load and analyze documents based on detected mode:
 
-**Required Documents**:
+**Step 1.1: Mode Detection**
+
+Check which analysis document exists to determine mode:
+- If `docs/existing-system-integration.md` exists → **Brownfield Multi-Repo Mode**
+- If `docs/existing-system-analysis.md` exists → **Brownfield Single-Repo Mode**
+- Otherwise → **Greenfield Mode**
+
+**Step 1.2: Load Documents**
+
+**All Modes**:
 1. **PRD** (`docs/prd.md`)
    - Functional requirements
    - Technical assumptions
    - Epic and Story list
-2. **Front-End Spec** (`docs/front-end-spec.md`)
+2. **Front-End Spec** (`docs/front-end-spec.md`) (if exists)
    - UI/UX requirements
-   - Platform scope (Web/iOS/Android)
+   - Platform scope
    - Design system
 
-**Analysis Focus**:
-- What are the main functional areas? (Auth, Users, Products, Orders, etc.)
-- What platforms are needed? (Web, iOS, Android, Backend API)
-- Are there any third-party integrations? (Payment, Storage, Auth providers)
-- What's the expected scale and performance requirements?
+**Brownfield Multi-Repo Mode (Additional)**:
+3. **Existing System Integration Analysis** (`docs/existing-system-integration.md`)
+   - Repository Topology (existing repos)
+   - Cross-Repository API Contracts (existing APIs)
+   - Integration Patterns (current auth, data formats)
+   - Technical Debt (system-level issues)
+
+**Brownfield Single-Repo Mode (Additional)**:
+3. **Existing System Analysis** (`docs/existing-system-analysis.md`)
+   - Tech Stack (current technologies)
+   - Technical Debt (known issues)
+   - Coding Standards (current practices)
+
+**Step 1.3: Analysis Focus**
+
+**Greenfield Mode**:
+- What are the main functional areas?
+- What platforms are needed?
+- What's the expected scale?
+
+**Brownfield Mode**:
+- What are the main functional areas? (NEW features from PRD)
+- What platforms exist? (from analysis document)
+- What constraints must be respected? (from technical debt)
+- What improvements should be incorporated? (from recommendations)
 
 **Elicit User Confirmation**:
+
+**Greenfield**:
 ```
 📖 I've loaded the PRD and Front-End Spec. Based on my analysis:
+
+**Mode**: Greenfield (New Project)
 
 **Main Functional Areas**:
 - [List 3-5 main feature categories from PRD]
 
 **Platforms Identified**:
-- [List platforms: Backend API, Web App, iOS App, Android App, etc.]
+- [List platforms: Backend API, Web App, iOS App, etc.]
 
 **Third-Party Services**:
-- [List external dependencies: Stripe, AWS S3, Firebase, etc.]
+- [List external dependencies]
 
-Does this match your understanding? Any missing areas?
+Does this match your understanding?
+```
+
+**Brownfield Multi-Repo**:
+```
+📖 I've loaded the PRD, Front-End Spec, and Existing System Integration Analysis.
+
+**Mode**: Brownfield Multi-Repository Enhancement
+
+**Existing Repositories** (from integration analysis):
+- [List existing repos with their current tech stacks]
+
+**New/Enhanced Functional Areas** (from PRD):
+- [List enhancements to be implemented]
+
+**Existing Constraints** (from integration analysis):
+- Technical Debt: [Key issues to address]
+- Current Integration Patterns: [Auth, data formats]
+- API Alignment: [Current state]
+
+**Enhancement Strategy**:
+- Architecture will incorporate existing constraints
+- Will define IMPROVEMENTS to current practices
+- Will maintain compatibility where necessary
+
+Does this analysis correctly capture your existing system and planned enhancements?
 ```
 
 ---

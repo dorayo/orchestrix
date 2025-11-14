@@ -41,17 +41,18 @@ commands:
         - "[4] *create-frontend-architecture — generate detailed frontend architecture (Frontend/Web repo)"
         - "[5] *create-mobile-architecture — generate detailed mobile architecture (iOS/Android/Flutter/RN repo)"
         - "--- Brownfield (Existing Projects) ---"
-        - "[6] *aggregate-system-architecture — aggregate from existing repos (Product repo)"
-        - "[7] *extract-api-contracts — extract API docs from backend code (Backend repo)"
+        - "[6] *aggregate-system-analysis — aggregate analysis from repos (Product repo, Step 1)"
+        - "[7] *aggregate-system-architecture — aggregate architecture from repos (Product repo, legacy)"
+        - "[8] *extract-api-contracts — extract API docs from backend code (Backend repo)"
         - "--- Other Commands ---"
-        - "[8] *research {topic} — deep research"
-        - "[9] *review-story {story_id} — review story"
-        - "[10] *document-project — document architecture"
-        - "[11] *execute-checklist {checklist} — run checklist"
-        - "[12] *doc-out — output document"
-        - "[13] *yolo — toggle Yolo Mode"
-        - "[14] *explain — explain action"
-        - "[15] *exit — exit"
+        - "[9] *research {topic} — deep research"
+        - "[10] *review-story {story_id} — review story"
+        - "[11] *document-project — document architecture"
+        - "[12] *execute-checklist {checklist} — run checklist"
+        - "[13] *doc-out — output document"
+        - "[14] *yolo — toggle Yolo Mode"
+        - "[15] *explain — explain action"
+        - "[16] *exit — exit"
 
   - create-doc:
       description: "Generate architecture document from template"
@@ -110,8 +111,26 @@ commands:
         - Deployment (App Store/Google Play, CI/CD)
         Prerequisites: system-architecture.md must exist in Product repository
 
+  - aggregate-system-analysis:
+      description: "Aggregate system analysis from existing implementation repositories (Brownfield Enhancement Step 1)"
+      task: aggregate-system-analysis.md
+      context: |
+        Use this command in Product repository for BROWNFIELD ENHANCEMENT projects.
+        This is STEP 1 of the 3-step Brownfield Enhancement workflow:
+        - Step 1 (this): Aggregate analysis → existing-system-integration.md
+        - Step 2: Create PRD → prd.md (using *create-doc brownfield-prd)
+        - Step 3: Design architecture → system-architecture.md (using *create-system-architecture)
+
+        This command aggregates existing-system-analysis.md from implementation repos:
+        - Reads existing-system-analysis.md from each implementation repo
+        - Extracts cross-repository integration information
+        - Identifies API contracts and alignment issues
+        - Detects integration gaps and inconsistencies
+        - Aggregates into existing-system-integration.md
+        - Provides foundation for creating Brownfield PRD
+
   - aggregate-system-architecture:
-      description: "Aggregate system architecture from existing implementation repositories (Brownfield)"
+      description: "Aggregate system architecture from existing implementation repositories (Brownfield - Legacy)"
       task: aggregate-system-architecture.md
       context: |
         Use this command in Product repository for BROWNFIELD projects (existing codebases).
@@ -122,7 +141,9 @@ commands:
         - Detects integration patterns (auth, data formats, error handling)
         - Aggregates into system-architecture.md
         - Documents gaps, inconsistencies, and recommendations
-        Opposite of create-system-architecture (which is top-down greenfield)
+
+        NOTE: For Brownfield Enhancement, use *aggregate-system-analysis instead (3-step workflow).
+        This task is for documentation-only purposes (not enhancement planning).
 
   - extract-api-contracts:
       description: "Extract and document API contracts from backend code"
@@ -175,6 +196,7 @@ dependencies:
     - create-backend-architecture.md
     - create-frontend-architecture.md
     - create-mobile-architecture.md
+    - aggregate-system-analysis.md
     - aggregate-system-architecture.md
     - extract-api-contracts.md
     - create-deep-research-prompt.md

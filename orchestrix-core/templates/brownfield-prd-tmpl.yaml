@@ -22,20 +22,27 @@ sections:
       1. **Assess Enhancement Complexity**: If this is a simple feature addition or bug fix that could be completed in 1-2 focused development sessions, STOP and recommend: "For simpler changes, consider using the brownfield-create-epic or brownfield-create-story task with the Product Owner instead. This full PRD process is designed for substantial enhancements that require architectural planning and multiple coordinated stories."
 
       2. **REQUIRED PREREQUISITE - Existing System Analysis**:
-         - **MUST have**: docs/existing-system-analysis.md (created via @architect *document-project)
+         - **Multi-Repo Detection**: Check if core-config.yaml contains `implementation_repos:` key
+           * If YES: Multi-repository mode → **MUST have**: docs/existing-system-integration.md (created via @architect *aggregate-system-analysis)
+           * If NO: Single-repository mode → **MUST have**: docs/existing-system-analysis.md (created via @architect *document-project)
          - **Why required**: This PRD defines ENHANCEMENTS to the existing system. You need to understand the current state first.
-         - **If missing**: HALT and instruct: "Please run '@architect *document-project' first to create docs/existing-system-analysis.md. This provides the necessary context about the existing system before defining enhancements."
+         - **If missing**:
+           * Multi-repo: HALT and instruct: "Please run '@architect *aggregate-system-analysis' first to create docs/existing-system-integration.md. This aggregates analysis from all implementation repositories."
+           * Single-repo: HALT and instruct: "Please run '@architect *document-project' first to create docs/existing-system-analysis.md. This provides the necessary context about the existing system before defining enhancements."
 
       3. **Project Context Validation**:
-         - Load and review docs/existing-system-analysis.md
+         - **Auto-detect mode**: Check core-config.yaml for implementation_repos
+         - **Load and review**:
+           * Multi-repo mode: docs/existing-system-integration.md (aggregated analysis)
+           * Single-repo mode: docs/existing-system-analysis.md (repository analysis)
          - Verify understanding of current tech stack, architecture, and constraints
          - If IDE access available, validate analysis against actual codebase
 
-      4. **Deep Assessment Requirement**: You MUST thoroughly understand the existing project (from existing-system-analysis.md) before making ANY enhancement suggestions. Every recommendation must consider existing constraints and patterns.
+      4. **Deep Assessment Requirement**: You MUST thoroughly understand the existing project (from analysis document) before making ANY enhancement suggestions. Every recommendation must consider existing constraints and patterns.
 
       Gather comprehensive information about the existing project. This section must be completed before proceeding with requirements.
 
-      CRITICAL: Throughout this process, explicitly reference findings from existing-system-analysis.md. For every enhancement suggestion, explain: "Based on the existing system analysis showing [constraint/pattern], I recommend [enhancement] because [rationale]. Does this align with your goals?"
+      CRITICAL: Throughout this process, explicitly reference findings from the analysis document. For every enhancement suggestion, explain: "Based on the existing system analysis showing [constraint/pattern], I recommend [enhancement] because [rationale]. Does this align with your goals?"
 
       Do not proceed with any recommendations until the user has validated your understanding of the existing system.
     sections:
@@ -46,25 +53,37 @@ sections:
           - id: analysis-source
             title: Analysis Source
             instruction: |
-              Reference the existing system analysis document:
-              - Primary source: docs/existing-system-analysis.md (REQUIRED)
+              Reference the existing system analysis document (auto-detected):
+              - Primary source:
+                * Multi-repo mode: docs/existing-system-integration.md (aggregated from all repos)
+                * Single-repo mode: docs/existing-system-analysis.md (current repository)
               - Supplementary: IDE-based validation (if available)
               - Additional context: User-provided information
+
+              Auto-detect by checking core-config.yaml for `implementation_repos:` key.
           - id: current-state
             title: Current Project State
             instruction: |
-              Extract summary from docs/existing-system-analysis.md:
-              - Reference "High Level Architecture" and "Technical Summary" sections
-              - Note key technologies from "Tech Stack" section
-              - Highlight constraints from "Technical Debt and Known Issues" section
+              Extract summary from analysis document (auto-detected):
+              - **Multi-repo mode**: Extract from docs/existing-system-integration.md
+                * Reference "Repository Topology" section
+                * Note "Cross-Repository API Contracts"
+                * Highlight "Technical Debt (System-Level)" section
+              - **Single-repo mode**: Extract from docs/existing-system-analysis.md
+                * Reference "High Level Architecture" and "Technical Summary" sections
+                * Note key technologies from "Tech Stack" section
+                * Highlight constraints from "Technical Debt and Known Issues" section
               - Brief description of what the project currently does and its primary purpose
       - id: documentation-analysis
         title: Available Documentation Analysis
         instruction: |
-          Review docs/existing-system-analysis.md (REQUIRED prerequisite):
-          - Note: "Using existing system analysis from docs/existing-system-analysis.md"
-          - Reference key sections: Tech Stack, Source Tree, Coding Standards, Technical Debt
-          - Check "Gaps and Recommendations" section for missing documentation
+          Review analysis document (REQUIRED prerequisite, auto-detected):
+          - **Multi-repo mode**: docs/existing-system-integration.md
+            * Note: "Using aggregated system integration analysis"
+            * Reference: Repository Topology, API Contracts, Integration Patterns
+          - **Single-repo mode**: docs/existing-system-analysis.md
+            * Note: "Using existing system analysis"
+            * Reference: Tech Stack, Source Tree, Coding Standards, Technical Debt
 
           Additionally check for other existing documentation in the project:
         sections:
