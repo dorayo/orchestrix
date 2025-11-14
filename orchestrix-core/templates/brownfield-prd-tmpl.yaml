@@ -15,20 +15,28 @@ sections:
   - id: intro-analysis
     title: Intro Project Analysis and Context
     instruction: |
-      IMPORTANT - SCOPE ASSESSMENT REQUIRED:
-      
+      IMPORTANT - SCOPE AND PREREQUISITES:
+
       This PRD is for SIGNIFICANT enhancements to existing projects that require comprehensive planning and multiple stories. Before proceeding:
-      
+
       1. **Assess Enhancement Complexity**: If this is a simple feature addition or bug fix that could be completed in 1-2 focused development sessions, STOP and recommend: "For simpler changes, consider using the brownfield-create-epic or brownfield-create-story task with the Product Owner instead. This full PRD process is designed for substantial enhancements that require architectural planning and multiple coordinated stories."
-      
-      2. **Project Context**: Determine if we're working in an IDE with the project already loaded or if the user needs to provide project information. If project files are available, analyze existing documentation in the docs folder. If insufficient documentation exists, recommend running the document-project task first.
-      
-      3. **Deep Assessment Requirement**: You MUST thoroughly analyze the existing project structure, patterns, and constraints before making ANY suggestions. Every recommendation must be grounded in actual project analysis, not assumptions.
-      
+
+      2. **REQUIRED PREREQUISITE - Existing System Analysis**:
+         - **MUST have**: docs/existing-system-analysis.md (created via @architect *document-project)
+         - **Why required**: This PRD defines ENHANCEMENTS to the existing system. You need to understand the current state first.
+         - **If missing**: HALT and instruct: "Please run '@architect *document-project' first to create docs/existing-system-analysis.md. This provides the necessary context about the existing system before defining enhancements."
+
+      3. **Project Context Validation**:
+         - Load and review docs/existing-system-analysis.md
+         - Verify understanding of current tech stack, architecture, and constraints
+         - If IDE access available, validate analysis against actual codebase
+
+      4. **Deep Assessment Requirement**: You MUST thoroughly understand the existing project (from existing-system-analysis.md) before making ANY enhancement suggestions. Every recommendation must consider existing constraints and patterns.
+
       Gather comprehensive information about the existing project. This section must be completed before proceeding with requirements.
-      
-      CRITICAL: Throughout this analysis, explicitly confirm your understanding with the user. For every assumption you make about the existing project, ask: "Based on my analysis, I understand that [assumption]. Is this correct?"
-      
+
+      CRITICAL: Throughout this process, explicitly reference findings from existing-system-analysis.md. For every enhancement suggestion, explain: "Based on the existing system analysis showing [constraint/pattern], I recommend [enhancement] because [rationale]. Does this align with your goals?"
+
       Do not proceed with any recommendations until the user has validated your understanding of the existing system.
     sections:
       - id: existing-project-overview
@@ -38,40 +46,43 @@ sections:
           - id: analysis-source
             title: Analysis Source
             instruction: |
-              Indicate one of the following:
-              - Document-project output available at: {{path}}
-              - IDE-based fresh analysis
-              - User-provided information
+              Reference the existing system analysis document:
+              - Primary source: docs/existing-system-analysis.md (REQUIRED)
+              - Supplementary: IDE-based validation (if available)
+              - Additional context: User-provided information
           - id: current-state
             title: Current Project State
             instruction: |
-              - If document-project output exists: Extract summary from "High Level Architecture" and "Technical Summary" sections
-              - Otherwise: Brief description of what the project currently does and its primary purpose
+              Extract summary from docs/existing-system-analysis.md:
+              - Reference "High Level Architecture" and "Technical Summary" sections
+              - Note key technologies from "Tech Stack" section
+              - Highlight constraints from "Technical Debt and Known Issues" section
+              - Brief description of what the project currently does and its primary purpose
       - id: documentation-analysis
         title: Available Documentation Analysis
         instruction: |
-          If document-project was run:
-          - Note: "Document-project analysis available - using existing technical documentation"
-          - List key documents created by document-project
-          - Skip the missing documentation check below
-          
-          Otherwise, check for existing documentation:
+          Review docs/existing-system-analysis.md (REQUIRED prerequisite):
+          - Note: "Using existing system analysis from docs/existing-system-analysis.md"
+          - Reference key sections: Tech Stack, Source Tree, Coding Standards, Technical Debt
+          - Check "Gaps and Recommendations" section for missing documentation
+
+          Additionally check for other existing documentation in the project:
         sections:
           - id: available-docs
             title: Available Documentation
             type: checklist
             items:
-              - Tech Stack Documentation [[LLM: If from document-project, check ✓]]
-              - Source Tree/Architecture [[LLM: If from document-project, check ✓]]
-              - Coding Standards [[LLM: If from document-project, may be partial]]
-              - API Documentation [[LLM: If from document-project, check ✓]]
-              - External API Documentation [[LLM: If from document-project, check ✓]]
-              - UX/UI Guidelines [[LLM: May not be in document-project]]
-              - Technical Debt Documentation [[LLM: If from document-project, check ✓]]
+              - Tech Stack Documentation [[LLM: Check ✓ from existing-system-analysis.md]]
+              - Source Tree/Architecture [[LLM: Check ✓ from existing-system-analysis.md]]
+              - Coding Standards [[LLM: Check ✓ from existing-system-analysis.md]]
+              - API Documentation [[LLM: Check ✓ if present in existing-system-analysis.md]]
+              - External API Documentation [[LLM: Check ✓ if present in existing-system-analysis.md]]
+              - UX/UI Guidelines [[LLM: May not be in existing-system-analysis.md]]
+              - Technical Debt Documentation [[LLM: Check ✓ from existing-system-analysis.md]]
               - "Other: {{other_docs}}"
             instruction: |
-              - If document-project was already run: "Using existing project analysis from document-project output."
-              - If critical documentation is missing and no document-project: "I recommend running the document-project task first..."
+              Using existing system analysis from docs/existing-system-analysis.md as primary source.
+              Mark items as available (✓) if covered in existing-system-analysis.md.
       - id: enhancement-scope
         title: Enhancement Scope Definition
         instruction: Work with user to clearly define what type of enhancement this is. This is critical for scoping and approach.

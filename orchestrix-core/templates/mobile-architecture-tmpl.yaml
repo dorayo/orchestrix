@@ -1,0 +1,424 @@
+template:
+  id: mobile-architecture-template-v1
+  name: Mobile Architecture Document
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/architecture.md
+    title: "{{project_name}} Mobile Architecture Document"
+
+workflow:
+  mode: interactive
+  elicitation: advanced-elicitation
+
+sections:
+  - id: system-architecture-context
+    title: System Architecture Context (Multi-Repo Projects)
+    condition: project has product_repo configured
+    instruction: |
+      **FOR MULTI-REPOSITORY PROJECTS**:
+
+      This detailed mobile architecture document MUST align with the system-level architecture from the Product repository.
+
+      **Step 1: Check for System Architecture**
+
+      ```bash
+      PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+      SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
+
+      if [ -f "$SYSTEM_ARCH" ]; then
+        echo "✅ System architecture found at $SYSTEM_ARCH"
+      else
+        echo "⚠️ System architecture not found - proceeding without system-level constraints"
+        echo "Recommendation: Create system-architecture.md in Product repo first"
+      fi
+      ```
+
+      **Step 2: Load and Analyze System Architecture** (if it exists)
+
+      Read the system-architecture.md file and extract mobile-specific constraints:
+
+      **Key Information to Extract**:
+      - **Repository Role**: This mobile app's role in the overall system
+      - **API Contracts Summary**: Which APIs THIS mobile app can consume (CRITICAL - app can ONLY call APIs listed here)
+      - **Authentication Mechanism**: Token type (JWT), storage location (Keychain/KeyStore), refresh strategy
+      - **Data Format Standards**: JSON structure, date format (ISO 8601), pagination style (offset/cursor)
+      - **Error Handling Standard**: Error response format, how to display errors to users
+      - **Performance Requirements**: App startup time, screen transition time, API response handling
+      - **Security Requirements**: Secure token storage, certificate pinning, biometric auth
+      - **Deployment Architecture**: App Store/Google Play, CI/CD strategy, app versioning
+
+      **Step 3: Document System Architecture Alignment**
+
+      Present to user:
+      ```
+      📖 **System Architecture Context**
+
+      I've loaded the system-level architecture from Product repository.
+
+      **This Mobile App's Role** (from system-architecture.md):
+      - Repository Name: {{mobile_repo_name}}
+      - Platform: {{platform}} (iOS/Android/Flutter/React Native)
+      - Responsibility: {{mobile_responsibility}}
+
+      **APIs This Mobile App Can Consume** (from system-architecture.md):
+      [List all API categories and endpoints]
+
+      **Key Constraints from System Architecture**:
+      - Authentication: {{auth_mechanism}} (storage: Keychain/KeyStore)
+      - Data Format: {{data_format_standards}}
+      - Error Handling: {{error_display_standard}}
+      - Performance Targets: {{performance_requirements}}
+      - Deployment: {{deployment_platform}}
+
+      This detailed mobile architecture will align with and expand upon these system-level decisions.
+      ```
+
+      **Step 4: Validation Requirements**
+
+      Throughout the mobile architecture design, ensure:
+
+      **API Consumption Validation** (CRITICAL):
+      - [ ] All API calls consume ONLY APIs defined in system-architecture.md
+      - [ ] No API calls to endpoints not in system-architecture.md
+      - [ ] If new APIs are needed, STOP and request system-architecture.md update first
+
+      **Integration Validation**:
+      - [ ] Authentication mechanism (token storage, refresh) matches system-architecture.md exactly
+      - [ ] Data format expectations (JSON parsing, date handling, pagination) match backend's format
+      - [ ] Error handling displays errors per system-architecture.md standard (error codes, messages)
+      - [ ] Performance targets (app startup, screen transitions) are documented and achievable
+
+      **Security Validation**:
+      - [ ] Token storage uses Keychain (iOS) or KeyStore (Android) per system-architecture.md
+      - [ ] Certificate pinning implemented as specified
+      - [ ] Biometric authentication (if required) implemented correctly
+      - [ ] No sensitive data in UserDefaults/SharedPreferences
+
+      **CRITICAL RULE**: If this mobile architecture needs to call APIs NOT listed in system-architecture.md:
+      1. ❌ STOP immediately - do not proceed
+      2. 🚨 Flag this to the user: "Mobile app needs API X, but it's not in system-architecture.md"
+      3. ✅ Wait for user to either:
+         - Update system-architecture.md to include the API (and ensure backend implements it), OR
+         - Remove the need for that API from mobile app
+      4. ▶️ Resume architecture design once alignment is confirmed
+
+      This ensures mobile-backend alignment and prevents runtime API errors.
+    elicit: true
+    sections:
+      - id: changelog
+        title: Change Log
+        type: table
+        columns: [Date, Version, Description, Author]
+        instruction: Track document versions and changes
+
+  - id: mobile-tech-stack
+    title: Mobile Tech Stack
+    instruction: Define the mobile technology stack based on platform choice (iOS Native, Android Native, Flutter, React Native).
+    elicit: true
+    sections:
+      - id: platform-selection
+        title: Platform Selection
+        instruction: |
+          Document the chosen mobile platform and rationale:
+          - iOS Native (Swift + SwiftUI/UIKit)
+          - Android Native (Kotlin + Jetpack Compose/XML)
+          - Flutter (Dart)
+          - React Native (JavaScript/TypeScript)
+      - id: tech-stack-table
+        title: Technology Stack Table
+        type: table
+        columns: [Category, Technology, Version, Purpose, Rationale]
+        instruction: Fill in appropriate technology choices based on the selected platform and project requirements.
+        rows:
+          - ["Language", "{{language}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["UI Framework", "{{ui_framework}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Architecture Pattern", "{{arch_pattern}}", "N/A", "{{purpose}}", "{{why_chosen}}"]
+          - ["State Management", "{{state_management}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Navigation", "{{navigation_lib}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Networking", "{{networking_lib}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Local Storage", "{{local_storage}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Dependency Injection", "{{di_framework}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Testing", "{{test_framework}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Analytics", "{{analytics}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+          - ["Crash Reporting", "{{crash_reporting}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+
+  - id: app-architecture
+    title: App Architecture
+    instruction: Define the architectural pattern based on the chosen platform. Common patterns include MVVM, MVI, Clean Architecture, or Redux-like patterns.
+    elicit: true
+    sections:
+      - id: architecture-pattern
+        title: Architecture Pattern
+        instruction: |
+          Describe the chosen architecture pattern and its layers:
+
+          **iOS (Swift)**:
+          - MVVM (Model-View-ViewModel) with Combine
+          - Clean Architecture with SwiftUI
+          - VIPER (View-Interactor-Presenter-Entity-Router)
+
+          **Android (Kotlin)**:
+          - MVVM with ViewModel + LiveData/StateFlow
+          - MVI (Model-View-Intent) with Kotlin Flows
+          - Clean Architecture with Jetpack Compose
+
+          **Flutter (Dart)**:
+          - BLoC (Business Logic Component) pattern
+          - Provider pattern
+          - Riverpod pattern
+
+          **React Native (TypeScript)**:
+          - Redux + Redux Toolkit
+          - MobX
+          - Context API + Hooks
+      - id: architecture-diagram
+        title: Architecture Diagram
+        type: mermaid
+        mermaid_type: graph
+        instruction: Create a Mermaid diagram showing the layered architecture (UI Layer → Business Logic Layer → Data Layer).
+
+  - id: screen-structure
+    title: Screen Structure
+    instruction: Define the screen/page structure based on user flows from the front-end spec or PRD. Map screens to features.
+    elicit: true
+    sections:
+      - id: screen-list
+        title: Screen List
+        type: table
+        columns: [Screen Name, Purpose, Required Auth, Key Components]
+        instruction: List all screens in the mobile app with their purposes and authentication requirements.
+      - id: navigation-flow
+        title: Navigation Flow
+        type: mermaid
+        mermaid_type: graph
+        instruction: Create a Mermaid diagram showing how users navigate between screens (e.g., SplashScreen → LoginScreen → HomeScreen → ProductDetailScreen).
+
+  - id: state-management
+    title: State Management
+    instruction: Define state management patterns based on the chosen platform and architecture.
+    elicit: true
+    sections:
+      - id: state-types
+        title: State Types
+        instruction: |
+          Identify different types of state in the mobile app:
+
+          **Global State** (shared across screens):
+          - Authentication state (user, token, isAuthenticated)
+          - App configuration (theme, language, settings)
+          - Cart or other cross-screen data
+
+          **Screen State** (local to a screen):
+          - Form inputs
+          - Loading states
+          - Error messages
+          - UI state (selected tab, scroll position)
+
+          **Server State** (data from backend APIs):
+          - Products list
+          - User profile
+          - Orders history
+      - id: state-management-template
+        title: State Management Template
+        instruction: Provide a state management code template appropriate for the chosen platform.
+        type: code
+        language: "{{language}}"
+
+  - id: api-integration
+    title: API Integration
+    instruction: Define API integration patterns based on the chosen platform. CRITICAL: Ensure all API calls reference APIs from system-architecture.md.
+    elicit: true
+    sections:
+      - id: api-client-config
+        title: API Client Configuration
+        instruction: Show how to configure the HTTP client for the chosen platform, including authentication interceptors/middleware and error handling.
+        type: code
+        language: "{{language}}"
+      - id: api-service-template
+        title: API Service Template
+        instruction: Provide an API service template that follows the platform's conventions. Include proper types, error handling, and async patterns.
+        type: code
+        language: "{{language}}"
+      - id: api-validation
+        title: API Contract Validation
+        instruction: |
+          **CRITICAL VALIDATION**: Document all APIs this mobile app will call and verify they are defined in system-architecture.md.
+
+          **Authentication & User APIs**:
+          - POST /api/auth/login → ✅ Defined in system-architecture.md
+          - POST /api/auth/register → ✅ Defined in system-architecture.md
+          - POST /api/auth/refresh → ✅ Defined in system-architecture.md
+          ... (list all APIs)
+
+          **No undefined APIs called** ✅
+
+  - id: local-data-management
+    title: Local Data Management
+    instruction: Define local storage and caching strategy based on the chosen platform.
+    elicit: true
+    sections:
+      - id: local-storage-strategy
+        title: Local Storage Strategy
+        instruction: |
+          Document local data storage approach based on platform:
+
+          **iOS**:
+          - UserDefaults for simple key-value pairs (settings, preferences)
+          - Keychain for sensitive data (tokens, passwords)
+          - Core Data / Realm / SQLite for complex data models
+          - File System for documents and media
+
+          **Android**:
+          - SharedPreferences for simple key-value pairs
+          - Android KeyStore for sensitive data
+          - Room Database (SQLite) / Realm for complex data models
+          - File System for documents and media
+
+          **Flutter**:
+          - shared_preferences for simple key-value pairs
+          - flutter_secure_storage for sensitive data
+          - sqflite / Hive / Isar for complex data models
+
+          **React Native**:
+          - AsyncStorage for simple key-value pairs
+          - react-native-keychain for sensitive data
+          - Realm / WatermelonDB for complex data models
+      - id: caching-strategy
+        title: Caching Strategy
+        instruction: Document caching strategy for API responses (cache duration, cache invalidation, offline support).
+
+  - id: security
+    title: Security
+    instruction: Define security implementation for the mobile app, including token storage, certificate pinning, and biometric authentication.
+    elicit: true
+    sections:
+      - id: token-storage
+        title: Secure Token Storage
+        instruction: |
+          **iOS**: Store tokens in Keychain with appropriate access control:
+          - Access Level: kSecAttrAccessibleAfterFirstUnlock
+          - Use TouchID/FaceID for additional protection (if required)
+
+          **Android**: Store tokens in Android KeyStore:
+          - Use EncryptedSharedPreferences for encrypted storage
+          - Use BiometricPrompt for additional protection (if required)
+
+          **Flutter**: Use flutter_secure_storage
+
+          **React Native**: Use react-native-keychain
+        type: code
+        language: "{{language}}"
+      - id: certificate-pinning
+        title: Certificate Pinning
+        instruction: Document certificate pinning implementation to prevent man-in-the-middle attacks (if required by system-architecture.md).
+      - id: biometric-auth
+        title: Biometric Authentication
+        instruction: Document biometric authentication implementation (TouchID/FaceID, Fingerprint/Face Unlock) if required.
+
+  - id: offline-support
+    title: Offline Support
+    instruction: Define offline capabilities and sync strategy (if applicable).
+    elicit: true
+    sections:
+      - id: offline-capabilities
+        title: Offline Capabilities
+        instruction: Document which features work offline (e.g., viewing cached products, drafting orders).
+      - id: sync-strategy
+        title: Sync Strategy
+        instruction: Document how local changes sync with backend when connection is restored (conflict resolution, retry logic).
+
+  - id: push-notifications
+    title: Push Notifications
+    condition: project requires push notifications
+    instruction: Define push notification implementation using Firebase Cloud Messaging (FCM) or Apple Push Notification Service (APNS).
+    elicit: true
+    sections:
+      - id: notification-setup
+        title: Notification Setup
+        instruction: Document FCM/APNS configuration and permission handling.
+      - id: notification-handling
+        title: Notification Handling
+        instruction: Document how to handle notifications (foreground, background, terminated state) and deep linking.
+
+  - id: testing-strategy
+    title: Testing Strategy
+    instruction: Define mobile testing approach based on the chosen platform.
+    elicit: true
+    sections:
+      - id: unit-tests
+        title: Unit Tests
+        instruction: |
+          Document unit testing approach for business logic:
+          - iOS: XCTest
+          - Android: JUnit + Mockito
+          - Flutter: flutter_test
+          - React Native: Jest
+        type: code
+        language: "{{language}}"
+      - id: ui-tests
+        title: UI Tests
+        instruction: |
+          Document UI testing approach:
+          - iOS: XCUITest
+          - Android: Espresso
+          - Flutter: integration_test
+          - React Native: Detox
+      - id: testing-best-practices
+        title: Testing Best Practices
+        type: numbered-list
+        items:
+          - "**Unit Tests**: Test ViewModels/Presenters/BLoCs in isolation"
+          - "**Widget/Component Tests**: Test UI components with mocked dependencies"
+          - "**Integration Tests**: Test complete user flows"
+          - "**Coverage Goals**: Aim for 70-80% code coverage"
+          - "**Mock Network Calls**: Use mock API responses for predictable tests"
+
+  - id: deployment
+    title: Deployment
+    instruction: Define deployment strategy for App Store (iOS) and Google Play (Android).
+    elicit: true
+    sections:
+      - id: app-versioning
+        title: App Versioning
+        instruction: Document versioning strategy (semantic versioning, build numbers).
+      - id: build-configuration
+        title: Build Configuration
+        instruction: Document build configurations (Debug, Release, Staging) and environment variables.
+      - id: cicd-pipeline
+        title: CI/CD Pipeline
+        instruction: Document CI/CD pipeline for automated builds and deployments (Fastlane, GitHub Actions, Bitrise, etc.).
+      - id: app-store-release
+        title: App Store Release Process
+        instruction: Document steps for releasing to App Store Connect and Google Play Console (screenshots, descriptions, metadata).
+
+  - id: monitoring-and-analytics
+    title: Monitoring & Analytics
+    instruction: Define monitoring and analytics strategy for the mobile app.
+    elicit: true
+    sections:
+      - id: crash-reporting
+        title: Crash Reporting
+        instruction: Document crash reporting setup (Firebase Crashlytics, Sentry, Bugsnag).
+      - id: analytics-tracking
+        title: Analytics Tracking
+        instruction: Document analytics setup (Firebase Analytics, Mixpanel, Amplitude) and key events to track.
+      - id: performance-monitoring
+        title: Performance Monitoring
+        instruction: Document performance monitoring (app startup time, screen rendering, network requests).
+
+  - id: mobile-developer-standards
+    title: Mobile Developer Standards
+    sections:
+      - id: critical-coding-rules
+        title: Critical Coding Rules
+        instruction: List essential rules that prevent common mobile development mistakes, including both universal rules and platform-specific ones.
+        elicit: true
+      - id: quick-reference
+        title: Quick Reference
+        instruction: |
+          Create a platform-specific cheat sheet with:
+          - Common commands (run, build, test, deploy)
+          - Key import patterns
+          - File naming conventions
+          - Project-specific patterns and utilities

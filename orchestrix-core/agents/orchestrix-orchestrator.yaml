@@ -156,7 +156,6 @@ dependencies:
     - implement-story.md
     - architect-review-story.md
     - review-code-auto.md
-    - shard-doc-auto.md
     - orchestrator-automation.md
     - kb-mode-interaction.md
   data:

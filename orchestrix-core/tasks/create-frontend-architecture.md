@@ -1,0 +1,582 @@
+# Create Frontend Architecture
+
+## Purpose
+
+Generate a **detailed frontend architecture document** for a frontend implementation repository (Web). This document provides implementation-level technical details for frontend development, referencing and aligning with system-level architecture from the Product repository.
+
+**IMPORTANT**: This is a DETAILED implementation architecture, NOT a system-level coordination document. It:
+- ✅ Includes component designs, state management patterns, routing setup, and implementation details
+- ✅ References and aligns with the system-architecture.md and front-end-spec.md from Product repository
+- ✅ Validates that frontend ONLY consumes APIs defined in system-architecture.md
+- ✅ Uses `front-end-architecture-tmpl.yaml` template for output format
+- ❌ Does NOT duplicate system-level coordination concerns (those are in system-architecture.md)
+
+## Prerequisites
+
+**Required Documents**:
+- ✅ System Architecture exists at `../product-repo/docs/architecture/system-architecture.md` (or configured path)
+- ✅ Front-End Spec exists at `../product-repo/docs/front-end-spec.md` (or configured path)
+- ✅ PRD exists at `../product-repo/docs/prd.md` (or configured path)
+
+**Project Configuration**:
+- ✅ Project type is `frontend` in `core-config.yaml`
+- ✅ `product_repo.path` is configured in `core-config.yaml` pointing to Product repository
+- ✅ Running in Frontend implementation repository (not Product repo)
+
+**Recommended Environment**:
+- 🌐 **Web interface** (e.g., claude.ai/code with Gemini 1M+ tokens) - Recommended for comprehensive context
+- 💻 IDE (Claude Code, Cursor, etc.) - Acceptable but may hit context limits
+
+## Validation
+
+Before starting, validate prerequisites:
+
+```bash
+# Check project type
+PROJECT_TYPE=$(grep "type:" core-config.yaml | awk '{print $2}')
+if [ "$PROJECT_TYPE" != "frontend" ]; then
+  echo "❌ ERROR: Project type is '$PROJECT_TYPE', expected 'frontend'"
+  echo "This task should run in Frontend implementation repository"
+  exit 1
+fi
+
+# Check if product repo path is configured
+PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+if [ -z "$PRODUCT_REPO_PATH" ]; then
+  echo "❌ ERROR: product_repo.path not configured in core-config.yaml"
+  echo "Add this to core-config.yaml:"
+  echo "product_repo:"
+  echo "  path: ../my-project-product  # Adjust path to your Product repo"
+  exit 1
+fi
+
+# Check if system architecture exists
+SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
+if [ ! -f "$SYSTEM_ARCH" ]; then
+  echo "❌ ERROR: System architecture not found at $SYSTEM_ARCH"
+  echo "👉 Action: Create system architecture first in Product repository"
+  echo "@architect *create-system-architecture"
+  exit 1
+fi
+
+# Check if front-end spec exists
+FRONTEND_SPEC="$PRODUCT_REPO_PATH/docs/front-end-spec.md"
+if [ ! -f "$FRONTEND_SPEC" ]; then
+  echo "⚠️ WARNING: Front-End Spec not found at $FRONTEND_SPEC"
+  echo "This is recommended but not required. Proceeding without UI/UX specifications."
+fi
+
+echo "✅ Prerequisites validated. Proceeding with frontend architecture generation..."
+```
+
+---
+
+## Task Instructions
+
+### Step 1: Load System Architecture Context
+
+Load the system-level architecture as a CONSTRAINT for this detailed architecture.
+
+**Step 1.1: Load System Architecture**
+
+```bash
+# Read system architecture
+PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
+```
+
+Read and analyze the system architecture document.
+
+**Focus Areas**:
+1. **Repository Topology**: Understand this frontend's role in the overall system
+2. **API Contracts Summary**: Identify which APIs THIS frontend can consume
+3. **Integration Strategy**: Authentication mechanism, data format standards, error handling conventions
+4. **Deployment Architecture**: Where and how this frontend deploys
+5. **Cross-Cutting Concerns**: Security, performance, observability requirements
+
+**Step 1.2: Extract Frontend-Specific Constraints**
+
+From the system architecture, extract:
+- **APIs to Consume**: List of endpoints this frontend can call (CRITICAL)
+- **Authentication Requirements**: JWT format, token storage, token refresh strategy
+- **Data Format Standards**: JSON structure, date format (ISO 8601), pagination style (offset/cursor)
+- **Error Handling Standard**: Error response format, HTTP status codes, display patterns
+- **Performance Requirements**: Page load time, Time to Interactive, Core Web Vitals targets
+- **Security Requirements**: XSS protection, CSRF protection, secure token storage
+
+**Elicit User Confirmation**:
+```
+📖 I've loaded the system architecture from Product repository.
+
+**This Frontend Repository's Role**:
+- Repository Name: {{frontend_repo_name}}
+- Platform: Web
+- Primary Responsibility: {{frontend_responsibility}}
+
+**APIs This Frontend Can Consume** (from system-architecture.md):
+[List all API categories and endpoints with clear formatting]
+
+**Integration Constraints**:
+- Authentication: {{auth_mechanism}} (token storage: {{token_storage}})
+- Data Format: {{data_format_standards}}
+- Error Handling: {{error_standard}}
+
+**Performance Requirements**:
+- Page Load Time: {{load_time_target}}
+- Core Web Vitals: {{cwv_targets}}
+
+Does this match your understanding? Ready to proceed with detailed frontend architecture?
+```
+
+---
+
+### Step 2: Load Front-End Spec and PRD Context
+
+Load the Front-End Spec to understand UI/UX requirements and PRD for functional requirements.
+
+**Step 2.1: Load Front-End Spec**
+
+```bash
+# Read Front-End Spec
+FRONTEND_SPEC="$PRODUCT_REPO_PATH/docs/front-end-spec.md"
+```
+
+**Analysis Focus**:
+- What are the core user flows? (Registration, Login, Product Browsing, Checkout, etc.)
+- What screens/pages are needed?
+- What's the design system? (colors, typography, spacing, components)
+- What are the interaction patterns? (modals, drawers, tabs, infinite scroll)
+
+**Step 2.2: Load PRD Context**
+
+```bash
+# Read PRD
+PRD_PATH="$PRODUCT_REPO_PATH/docs/prd.md"
+```
+
+**Analysis Focus**:
+- What are the main features/epics for frontend?
+- What are the user stories for this platform (target_platform = frontend)?
+- What are the UI-specific non-functional requirements? (accessibility, responsiveness, performance)
+
+**Step 2.3: Map User Flows to Pages and Components**
+
+Cross-reference Front-End Spec user flows with PRD stories:
+- For each user flow, identify required pages/screens
+- For each page, identify required components (pages, layouts, shared, feature components)
+- For each component, identify state management needs
+- For each page, identify API calls needed
+
+**Elicit User Confirmation**:
+```
+🎨 I've analyzed the Front-End Spec and PRD.
+
+**Core User Flows Identified**:
+1. {{flow_1}} → Pages: {{pages_1}}
+2. {{flow_2}} → Pages: {{pages_2}}
+3. {{flow_3}} → Pages: {{pages_3}}
+
+**Total Pages/Screens**: {{page_count}}
+**Estimated Components**: {{component_estimate}}
+
+**Design System**:
+- Primary Color: {{primary_color}}
+- UI Framework: {{ui_framework}} (Material-UI, Ant Design, Chakra UI, etc.)
+- Responsive Breakpoints: {{breakpoints}}
+
+Does this match your vision? Ready to design component architecture?
+```
+
+---
+
+### Step 3: Validate API Consumption (CRITICAL)
+
+**CRITICAL VALIDATION**: Ensure frontend ONLY calls APIs defined in system-architecture.md.
+
+Based on the pages and components identified in Step 2, list ALL API calls this frontend will make:
+
+**API Consumption Analysis**:
+```
+⚠️ **API Contract Validation**
+
+I've analyzed the APIs this frontend will call based on identified pages and features:
+
+**Authentication & User APIs**:
+- POST /api/auth/login → ✅ Defined in system-architecture.md
+- POST /api/auth/register → ✅ Defined in system-architecture.md
+- POST /api/auth/refresh → ✅ Defined in system-architecture.md
+- GET /api/users/:id → ✅ Defined in system-architecture.md
+
+**Product APIs**:
+- GET /api/products → ✅ Defined in system-architecture.md
+- GET /api/products/:id → ✅ Defined in system-architecture.md
+
+**Order APIs**:
+- POST /api/orders → ✅ Defined in system-architecture.md
+- GET /api/orders → ✅ Defined in system-architecture.md
+
+**Shopping Cart APIs**:
+- GET /api/cart → ❌ NOT in system-architecture.md
+- POST /api/cart/items → ❌ NOT in system-architecture.md
+
+**❌ VALIDATION FAILED**: Frontend needs 2 Cart APIs not defined in system-architecture.md
+
+**Action Required**:
+1. Option A: Update system-architecture.md to include Cart APIs (and ensure backend implements them)
+2. Option B: Remove Cart feature from frontend or implement it client-side only
+
+Please choose how to proceed before I continue with architecture design.
+```
+
+**IF all APIs validated successfully**:
+```
+✅ **API Contract Validation PASSED**
+
+All {{api_count}} APIs this frontend will call are defined in system-architecture.md.
+No undefined API calls detected. Proceeding with architecture generation...
+```
+
+**CRITICAL RULE**: If validation fails, STOP and wait for user to resolve the mismatch before proceeding.
+
+---
+
+### Step 4: Design Component Architecture, State Management, and Routing
+
+**Step 4.1: Define Component Categories**
+
+Based on pages identified in Step 2, organize components into categories:
+- **Page Components**: One per route (LoginPage, HomePage, ProductListPage, etc.)
+- **Layout Components**: Reusable layouts (AppLayout, AuthLayout, etc.)
+- **Shared Components**: Reusable UI elements (Button, Input, Modal, Card, etc.)
+- **Feature Components**: Domain-specific (ProductCard, CartItem, OrderSummary, etc.)
+
+**Step 4.2: Define State Management Strategy**
+
+Identify state types:
+- **Global State**: Authentication, shopping cart, UI state (theme, language)
+- **Server State**: Products, orders, user profile (data from backend)
+- **Local State**: Form inputs, modal state, loading states
+
+Choose state management solution based on tech stack:
+- React: Context API + useReducer, Redux Toolkit, Zustand, or React Query
+- Vue: Pinia, Composition API
+- Ask user for preference if multiple valid options exist
+
+**Step 4.3: Define Routing Structure**
+
+Map pages to routes with:
+- Path (e.g., `/`, `/login`, `/products`, `/products/:id`)
+- Component name
+- Protected (yes/no)
+- Layout (AppLayout, AuthLayout)
+
+Define protected route strategy based on framework conventions.
+
+**Elicit User Confirmation**:
+```
+🧩 **Proposed Frontend Architecture Summary**:
+
+**Pages**: {{page_count}} (LoginPage, HomePage, ProductListPage, etc.)
+**Layouts**: {{layout_count}} (AppLayout, AuthLayout)
+**Shared Components**: {{shared_count}} (Button, Input, Modal, Card, etc.)
+**Feature Components**: {{feature_count}} (ProductCard, CartItem, etc.)
+
+**State Management**: {{state_solution}} ({{rationale}})
+**Routing**: {{route_count}} routes ({{protected_count}} protected)
+
+**API Integration**:
+- API Services: {{service_count}} (userService, productService, orderService, etc.)
+- Authentication: {{auth_strategy}} (token refresh, interceptors)
+
+Does this architecture structure make sense for your frontend?
+```
+
+---
+
+### Step 5: Generate Frontend Architecture Document Using Template
+
+Now generate the complete document using the `front-end-architecture-tmpl.yaml` template.
+
+**Step 5.1: Prepare Output Directory**
+
+```bash
+# Ensure docs directory exists
+mkdir -p docs
+
+# Set output path
+OUTPUT_PATH="docs/ui-architecture.md"  # or docs/architecture.md
+```
+
+**Step 5.2: Load Template and Fill Sections**
+
+Use the `front-end-architecture-tmpl.yaml` template to generate the document. The template defines the output format for:
+
+1. **System Architecture Context** - Present loaded constraints from Step 1
+2. **Frontend Tech Stack** - Framework, UI library, state management, routing, build tool, styling, testing
+3. **Project Structure** - Directory structure following framework conventions
+4. **Component Standards** - Component template and naming conventions
+5. **State Management** - Store structure and state management template
+6. **API Integration** - Service template and API client configuration (with auth interceptors)
+7. **Routing** - Route configuration with protected routes
+8. **Styling Guidelines** - Styling approach and global theme variables
+9. **Testing Requirements** - Component test template and best practices
+10. **Environment Configuration** - Required environment variables
+11. **Developer Standards** - Critical coding rules and quick reference
+
+**Fill each template section** with information collected in Steps 1-4:
+- Use actual framework names (React, Vue, Angular, etc.)
+- Use actual library names with versions (React Router v6, Zustand 4.x, etc.)
+- Use actual API endpoints from system-architecture.md
+- Use actual auth mechanism from system-architecture.md
+- Include all validated API calls from Step 3
+
+**Template Reference Pattern**:
+```markdown
+## Output Document Structure
+
+This task generates a frontend architecture document following the structure defined in:
+`orchestrix-core/templates/front-end-architecture-tmpl.yaml`
+
+The template sections will be filled with:
+- System constraints from system-architecture.md (Step 1)
+- UI/UX requirements from front-end-spec.md (Step 2)
+- Validated API contracts (Step 3)
+- Component architecture and state management decisions (Step 4)
+```
+
+---
+
+### Step 6: Validate Against System Architecture
+
+Perform final cross-validation to ensure alignment.
+
+**Validation Checklist**:
+```
+📋 **Final Validation Checklist**:
+
+**API Contract Alignment**:
+- [ ] All API calls consume ONLY APIs defined in system-architecture.md
+- [ ] No undefined API calls
+- [ ] API client configured with correct base URL from system-architecture.md
+
+**Authentication Alignment**:
+- [ ] Token storage mechanism matches system-architecture.md (localStorage/cookies)
+- [ ] Token refresh strategy matches system-architecture.md
+- [ ] Auth interceptors/middleware configured correctly
+
+**Data Format Alignment**:
+- [ ] JSON parsing expects structure from system-architecture.md
+- [ ] Date handling uses format from system-architecture.md (ISO 8601)
+- [ ] Pagination expects style from system-architecture.md (offset/cursor)
+
+**Error Handling Alignment**:
+- [ ] Error display matches system-architecture.md error format
+- [ ] HTTP status codes handled per system-architecture.md
+
+**Performance Requirements**:
+- [ ] Page load time target documented
+- [ ] Time to Interactive (TTI) target documented
+- [ ] Core Web Vitals targets documented
+
+**Security Implementation**:
+- [ ] XSS protection implemented
+- [ ] CSRF protection implemented (if required)
+- [ ] Token storage is secure per system-architecture.md
+
+**Deployment Alignment**:
+- [ ] Deployment platform matches system-architecture.md
+- [ ] Environment variables configured correctly
+- [ ] CI/CD strategy documented
+
+All checks passed? ✅
+```
+
+---
+
+### Step 7: Output Handoff
+
+Present the completed frontend architecture document and provide next steps.
+
+**Success Output**:
+```
+✅ FRONTEND ARCHITECTURE COMPLETE
+
+📄 Generated Document: docs/ui-architecture.md (or docs/architecture.md)
+
+📦 Frontend Repository: {{frontend_repo_name}}
+🖥️ Platform: Web
+📚 Framework: {{framework}} {{version}}
+
+🧩 Component Architecture:
+  - {{page_count}} Pages
+  - {{shared_component_count}} Shared Components
+  - {{feature_component_count}} Feature Components
+  - {{layout_count}} Layouts
+
+🔄 State Management:
+  - Solution: {{state_solution}}
+  - Global Stores: {{store_count}}
+  - Custom Hooks: {{hook_count}}
+
+🛤️ Routing:
+  - Total Routes: {{route_count}}
+  - Protected Routes: {{protected_count}}
+  - Public Routes: {{public_count}}
+
+🔌 API Integration:
+  - API Services: {{api_service_count}}
+  - Endpoints Consumed: {{endpoint_count}} (all from system-architecture.md ✅)
+  - Auth Strategy: {{auth_strategy}}
+
+🎨 UI/UX Implementation:
+  - Design System: {{design_system}}
+  - Styling Solution: {{styling_solution}}
+  - Responsive: {{breakpoint_count}} breakpoints
+
+---
+
+📋 **NEXT STEPS**:
+
+1. **Review Architecture Document**
+   - Verify all sections are complete
+   - Confirm alignment with system-architecture.md
+   - Validate component structure matches your vision
+
+2. **PO: Review and Approve** (if applicable)
+   - Validate against PRD requirements
+   - Confirm all user flows are covered
+
+3. **Dev: Begin Frontend Implementation**
+
+   **Setup Project**:
+   ```bash
+   # Initialize project (adjust based on your framework choice)
+   npx create-react-app {{project_name}} --template typescript
+   # or
+   npx create-next-app {{project_name}} --typescript
+   # or
+   npm create vue@latest {{project_name}} -- --typescript
+
+   # Install dependencies from architecture doc
+   npm install {{dependencies}}
+   npm install --save-dev {{dev_dependencies}}
+   ```
+
+   **Implementation Order** (follow Story priorities from PRD):
+   1. Set up project structure and configuration
+   2. Implement design system and shared components
+   3. Set up routing and layouts
+   4. Implement authentication pages (login, register)
+   5. Implement core pages per user flows
+   6. Add state management and API integration
+   7. Write unit and integration tests
+   8. Configure CI/CD pipeline
+
+4. **SM: Create Frontend Stories**
+   - Filter PRD stories where target_platform = frontend
+   - Reference this architecture.md in each Story
+   - Sequence stories by dependencies
+
+5. **QA: Test Frontend**
+   - Verify all user flows work end-to-end
+   - Test responsive design across devices
+   - Validate accessibility (WCAG AA)
+   - Performance testing (Lighthouse, Core Web Vitals)
+
+---
+
+🎉 **Frontend architecture is now the technical blueprint for UI development!**
+
+All frontend development will reference this document to ensure consistency with system architecture and design specifications.
+```
+
+---
+
+## Notes for Agent Execution
+
+- **Context Management**: This task requires significant context (system-architecture.md + front-end-spec.md + PRD + user interactions). Recommend using **Web interface with large context window** (Gemini 1M+).
+
+- **System Architecture is Constraint**: All API calls MUST be defined in system-architecture.md. If frontend needs an API not in system-arch, either add it to system-arch or remove it from frontend-arch.
+
+- **Front-End Spec is Blueprint**: UI components, design system, user flows MUST match front-end-spec.md.
+
+- **Template Reference**: This task uses `front-end-architecture-tmpl.yaml` for output format. Do NOT duplicate template content in this task file.
+
+- **Iterative Refinement**: Expect 2-4 rounds of user feedback, especially for:
+  - Component hierarchy (page breakdown, reusable components)
+  - State management strategy (global vs local state)
+  - Routing structure (protected routes, navigation patterns)
+
+- **API Validation is Critical**: Step 3 is the most important validation. If it fails, STOP and wait for user to resolve before proceeding.
+
+## Success Criteria
+
+- ✅ Frontend architecture document exists at `docs/ui-architecture.md` or `docs/architecture.md`
+- ✅ All API calls reference APIs from system-architecture.md (Step 3 validation passed)
+- ✅ Component architecture covers all pages from Front-End Spec
+- ✅ State management strategy is clear and appropriate for chosen framework
+- ✅ Routing structure covers all user flows
+- ✅ API integration pattern is defined with error handling and token refresh
+- ✅ Design system implementation matches Front-End Spec
+- ✅ Responsive design strategy is documented
+- ✅ Testing strategy is comprehensive (unit, integration, E2E)
+- ✅ Project folder structure follows framework conventions
+- ✅ User has approved the document
+- ✅ Next steps are clear for Dev agent
+
+## Error Handling
+
+**If system architecture is missing**:
+```
+❌ ERROR: System architecture not found
+
+Frontend architecture requires system-architecture.md from Product repository.
+
+Please ensure:
+1. Product repository path is correct in core-config.yaml
+2. System architecture exists at ../product-repo/docs/architecture/system-architecture.md
+
+If system architecture doesn't exist:
+cd ../my-project-product
+@architect *create-system-architecture
+
+After system architecture is ready, return here and run:
+@architect *create-frontend-architecture
+```
+
+**If API contracts are missing in system-architecture.md**:
+```
+⚠️ WARNING: System architecture lacks API Contracts Summary
+
+Frontend needs to know which APIs are available to consume.
+
+Please update system-architecture.md to include an "API Contracts Summary" section, then return here.
+```
+
+**If frontend tries to call undefined APIs** (Step 3 validation failure):
+```
+❌ ERROR: Frontend calls APIs not defined in system-architecture.md
+
+The following APIs are called by frontend but NOT in system-architecture.md:
+- {{undefined_api_1}}
+- {{undefined_api_2}}
+
+**Action Required**:
+1. If these APIs are necessary: Update system-architecture.md to include them (and ensure backend implements them)
+2. If these APIs are not necessary: Remove them from frontend architecture
+
+All frontend API calls MUST be pre-approved in system-architecture.md to ensure frontend-backend alignment.
+```
+
+## Related Tasks
+
+- **Prerequisites**: `create-system-architecture.md` (Product repo), `ux-create-front-end-spec.md` (Product repo)
+- **Parallel**: `create-backend-architecture.md`, `create-mobile-architecture.md`
+- **Next Steps**: `sm-create-next-story.md` (Story creation for frontend)
+
+## Version History
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 2.0.0 | 2025-01-14 | REFACTOR: Reduced from 902 to 250 lines, removed template duplication, focused on procedures only | Orchestrix Team |
+| 1.0.0 | 2025-01-14 | Initial creation for Phase 2 | Orchestrix Team |

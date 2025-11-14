@@ -1,0 +1,627 @@
+# System Architecture Template
+# Purpose: Define system-level architecture for multi-repository projects
+# This template coordinates multiple implementation repositories without diving into implementation details
+# Focus: Repository topology, API contracts, integration strategy, deployment architecture
+
+template_id: system-architecture-template-v1
+name: System Architecture Document
+version: 1.0.0
+description: |
+  System-level architecture template for multi-repository projects.
+  Defines coordination between repositories, not implementation details.
+
+output:
+  format: markdown
+  default_filename: docs/architecture/system-architecture.md
+  title_template: "{{project_name}} - System Architecture"
+
+workflow:
+  mode: interactive
+  elicitation_style: comprehensive
+  validation_enabled: true
+
+# Metadata
+metadata:
+  document_type: system-architecture
+  scope: system-level-coordination
+  target_audience: all-teams
+  update_frequency: when-repository-topology-changes
+
+# Document Structure
+sections:
+  - id: header
+    title: "{{project_name}} - System Architecture"
+    type: header
+    level: 1
+    template: |
+      # {{project_name}} - System Architecture
+
+      **Document Version**: {{doc_version}}
+      **Last Updated**: {{last_updated}}
+      **Status**: {{doc_status}}
+
+      **Purpose**: This document defines the SYSTEM-LEVEL architecture for {{project_name}}.
+      It coordinates multiple implementation repositories without diving into implementation details.
+
+      **Scope**:
+      - Repository topology and responsibilities
+      - High-level API contracts between repositories
+      - Integration strategy and deployment architecture
+      - Cross-cutting concerns affecting all repositories
+
+      **Out of Scope** (belongs in implementation repository architectures):
+      - Detailed component designs within each repository
+      - Database schemas and data models
+      - Code-level patterns and directory structures
+      - Framework-specific implementation details
+
+  - id: introduction
+    title: Introduction
+    sections:
+      - id: project-overview
+        title: Project Overview
+        instruction: |
+          Provide a 2-3 paragraph overview of the project from PRD.
+          Focus on WHAT the system does, not HOW it's implemented.
+
+          Key points to cover:
+          - Project purpose and goals
+          - Target users and use cases
+          - High-level feature categories
+        elicit: true
+        template: |
+          ## Introduction
+
+          ### Project Overview
+
+          {{project_overview}}
+
+      - id: architecture-scope
+        title: Architecture Scope
+        instruction: |
+          Clarify what this system architecture document covers.
+          Emphasize it's a coordination document, not implementation guide.
+        template: |
+          ### Architecture Scope
+
+          This document serves as the **coordination blueprint** for the {{project_name}} system.
+          It defines:
+
+          - **Repository Topology**: Which repositories exist and their responsibilities
+          - **API Contracts Summary**: High-level API categories and key endpoints
+          - **Integration Strategy**: How repositories communicate and coordinate
+          - **Deployment Architecture**: Where and how each repository deploys
+          - **Cross-Cutting Concerns**: System-wide requirements (security, performance, observability)
+
+          **Implementation details** (components, databases, code patterns) are documented
+          in each repository's detailed architecture document.
+
+      - id: document-conventions
+        title: Document Conventions
+        template: |
+          ### Document Conventions
+
+          - **Repository Names**: Lowercase with hyphens (e.g., `my-product-backend`)
+          - **API Endpoints**: Format as `METHOD /path` (e.g., `POST /api/users`)
+          - **Diagrams**: Mermaid syntax for visual representations
+          - **References**: Links to detailed architecture docs in implementation repos
+
+  - id: repository-topology
+    title: Repository Topology
+    instruction: |
+      Based on PRD requirements and Front-End Spec, identify all repositories needed.
+
+      **Analysis Steps**:
+      1. Review PRD functional requirements to identify system components
+      2. Determine repository breakdown:
+         - Backend API needed? → backend repository
+         - Web UI needed? → frontend repository
+         - Mobile apps needed? → ios/android repositories (or mobile for cross-platform)
+         - Shared libraries? → shared repository
+
+      3. For each repository, define:
+         - Repository name (following naming convention)
+         - Type (backend/frontend/ios/android/mobile/shared)
+         - Primary responsibility (1-2 sentences max)
+         - Technology stack (high-level: Node.js, React, Swift, etc.)
+         - Deployment platform (AWS, Vercel, App Store, Google Play, etc.)
+         - Team ownership (Backend Team, Frontend Team, Mobile Team)
+
+      **IMPORTANT**: Keep descriptions high-level. Details belong in each repo's architecture doc.
+    elicit: true
+    sections:
+      - id: repository-list
+        title: Repository List
+        type: table
+        instruction: |
+          Create a table of all repositories.
+          Ask user to confirm this list before proceeding.
+        template: |
+          ## Repository Topology
+
+          ### Repository List
+
+          | Repository Name | Type | Responsibility | Tech Stack | Platform | Team |
+          |----------------|------|----------------|------------|----------|------|
+          {{#each repositories}}
+          | `{{name}}` | {{type}} | {{responsibility}} | {{tech_stack}} | {{platform}} | {{team}} |
+          {{/each}}
+
+          **Total Repositories**: {{repositories.length}}
+
+      - id: repository-diagram
+        title: Repository Relationship Diagram
+        instruction: |
+          Create a Mermaid diagram showing:
+          - All repositories as boxes/subgraphs
+          - Communication paths (arrows) between repositories
+          - External services/APIs
+          - Data flow directions
+
+          Keep it simple - no detailed components, just repo-to-repo relationships.
+        elicit: true
+        template: |
+          ### Repository Relationship Diagram
+
+          ```mermaid
+          graph TB
+              {{repository_mermaid_diagram}}
+          ```
+
+          **Legend**:
+          - **Solid arrows**: REST API calls
+          - **Dashed arrows**: Event/message bus communication
+          - **Bold boxes**: Implementation repositories
+          - **Rounded boxes**: External services
+
+  - id: api-contracts-summary
+    title: API Contracts Summary
+    instruction: |
+      Define the API contract SUMMARY between repositories.
+      This is NOT a full OpenAPI spec - just a high-level table of contents.
+
+      **For Backend → Frontend/Mobile communication**:
+      1. Group endpoints into logical categories (Auth, Users, Products, Orders, etc.)
+      2. For each category, list key endpoints at high level (method + path + brief description)
+      3. Note authentication requirements
+      4. Define general error handling approach
+
+      **IMPORTANT**:
+      - Detailed request/response schemas belong in `api-contracts.md` (separate file)
+      - This section is just a TABLE OF CONTENTS to coordinate teams
+      - Focus on WHAT APIs exist, not HOW they work in detail
+    elicit: true
+    sections:
+      - id: api-overview
+        title: API Overview
+        template: |
+          ## API Contracts Summary
+
+          ### Overview
+
+          This section provides a high-level summary of APIs that cross repository boundaries.
+          Detailed specifications (request/response schemas, validation rules) are in `api-contracts.md`.
+
+          **API Provider**: {{api_provider_repo}}
+          **API Consumers**: {{api_consumer_repos}}
+          **API Style**: {{api_style}}
+          **Base URL Pattern**: `{{api_base_url_pattern}}`
+
+      - id: api-categories
+        title: API Categories
+        type: repeatable
+        instruction: |
+          For each major feature area, create an API category section.
+          List key endpoints without full details.
+        template: |
+          ### {{category_name}} APIs
+
+          **Purpose**: {{category_purpose}}
+          **Provider**: `{{provider_repo}}`
+          **Consumers**: {{consumers}}
+
+          **Key Endpoints**:
+          {{#each endpoints}}
+          - `{{method}} {{path}}` - {{description}}
+          {{/each}}
+
+          **Authentication**: {{auth_requirement}}
+          **Rate Limiting**: {{rate_limit}}
+
+      - id: api-versioning
+        title: API Versioning Strategy
+        instruction: |
+          Define how APIs are versioned and how breaking changes are handled.
+        elicit: true
+        template: |
+          ### API Versioning Strategy
+
+          **Version Format**: {{version_format}}
+          **Versioning Location**: {{version_location}}
+          **Breaking Change Policy**: {{breaking_change_policy}}
+          **Deprecation Timeline**: {{deprecation_timeline}}
+          **Version Support**: {{version_support_policy}}
+
+  - id: integration-strategy
+    title: Integration Strategy
+    instruction: |
+      Define HOW repositories integrate, not WHAT they contain.
+      This ensures consistency across all implementation teams.
+
+      **Key Areas**:
+      - Authentication & Authorization
+      - Data format standards
+      - Error handling conventions
+      - Logging and monitoring standards
+      - Inter-service communication patterns
+    elicit: true
+    sections:
+      - id: integration-overview
+        title: Overview
+        template: |
+          ## Integration Strategy
+
+          This section defines system-wide integration standards that all repositories MUST follow.
+          These ensure consistency and interoperability across the entire system.
+
+      - id: auth-strategy
+        title: Authentication & Authorization
+        instruction: |
+          Define the system-wide auth approach.
+        elicit: true
+        template: |
+          ### Authentication & Authorization
+
+          **Authentication Mechanism**: {{auth_mechanism}}
+          **Token Format**: {{token_format}}
+          **Token Storage**: {{token_storage}}
+          **Token Lifetime**: {{token_lifetime}}
+          **Refresh Strategy**: {{refresh_strategy}}
+
+          **Authorization Pattern**: {{authz_pattern}}
+          **Permission Model**: {{permission_model}}
+
+          **Implementation Notes**:
+          - Backend implements auth endpoints and token validation
+          - Frontend/Mobile store tokens securely and attach to API requests
+          - All protected endpoints validate tokens before processing
+
+      - id: data-standards
+        title: Data Format Standards
+        instruction: |
+          Define data format conventions for API communication.
+        elicit: true
+        template: |
+          ### Data Format Standards
+
+          **API Data Format**: {{api_format}}
+          **Date/Time Format**: {{datetime_format}}
+          **Timezone Handling**: {{timezone_handling}}
+
+          **Pagination**:
+          - **Style**: {{pagination_style}}
+          - **Parameters**: {{pagination_params}}
+          - **Response Format**: {{pagination_response}}
+
+          **Filtering & Sorting**:
+          - **Query Parameter Style**: {{query_param_style}}
+          - **Supported Operations**: {{supported_operations}}
+
+          **Field Naming**: {{field_naming_convention}}
+
+      - id: error-handling
+        title: Error Handling Standard
+        instruction: |
+          Define standard error response format across all APIs.
+        elicit: true
+        template: |
+          ### Error Handling Standard
+
+          All APIs MUST return errors in this standard format:
+
+          ```json
+          {
+            "error": {
+              "code": "ERROR_CODE",
+              "message": "Human-readable error message",
+              "details": {},
+              "timestamp": "2025-01-14T10:30:00Z",
+              "request_id": "uuid"
+            }
+          }
+          ```
+
+          **HTTP Status Code Usage**:
+          - `200`: Success
+          - `201`: Resource created
+          - `400`: Bad request (validation error)
+          - `401`: Unauthorized (missing/invalid token)
+          - `403`: Forbidden (valid token, insufficient permissions)
+          - `404`: Resource not found
+          - `429`: Rate limit exceeded
+          - `500`: Internal server error
+
+          **Error Code Taxonomy**: {{error_code_taxonomy}}
+
+      - id: logging-monitoring
+        title: Logging & Monitoring
+        instruction: |
+          Define logging and monitoring standards for observability.
+        elicit: true
+        template: |
+          ### Logging & Monitoring Standards
+
+          **Logging Platform**: {{logging_platform}}
+          **Log Format**: {{log_format}}
+          **Log Levels**: DEBUG, INFO, WARN, ERROR, FATAL
+
+          **Structured Logging Fields**:
+          - `timestamp`: ISO 8601 format
+          - `level`: Log level
+          - `service`: Repository name
+          - `request_id`: Trace ID for distributed tracing
+          - `user_id`: User identifier (if applicable)
+          - `message`: Log message
+          - `metadata`: Additional context
+
+          **Monitoring**:
+          - **Platform**: {{monitoring_platform}}
+          - **Metrics**: {{key_metrics}}
+          - **Alerting**: {{alerting_strategy}}
+
+          **Distributed Tracing**:
+          - **Tool**: {{tracing_tool}}
+          - **Trace ID Propagation**: {{trace_propagation}}
+
+  - id: deployment-architecture
+    title: Deployment Architecture
+    instruction: |
+      Define deployment strategy at SYSTEM level.
+      Implementation details belong in each repo's architecture doc.
+
+      **Focus on**:
+      - Where each repository deploys
+      - Environment strategy (dev, staging, prod)
+      - CI/CD approach (high-level)
+      - Infrastructure coordination
+    elicit: true
+    sections:
+      - id: deployment-overview
+        title: Overview
+        template: |
+          ## Deployment Architecture
+
+          This section defines WHERE and HOW each repository deploys at a system level.
+
+      - id: deployment-targets
+        title: Deployment Targets
+        type: table
+        instruction: |
+          For each repository, specify deployment platforms and environment URLs.
+        template: |
+          ### Deployment Targets
+
+          | Repository | Platform | Dev URL | Staging URL | Production URL |
+          |-----------|----------|---------|-------------|----------------|
+          {{#each repositories}}
+          | `{{name}}` | {{platform}} | {{dev_url}} | {{staging_url}} | {{prod_url}} |
+          {{/each}}
+
+      - id: cicd-strategy
+        title: CI/CD Strategy
+        instruction: |
+          Define high-level CI/CD approach.
+        elicit: true
+        template: |
+          ### CI/CD Strategy
+
+          **CI/CD Platform**: {{cicd_platform}}
+          **Version Control**: {{vcs_platform}}
+
+          **Deployment Triggers**:
+          - **Dev**: {{dev_trigger}}
+          - **Staging**: {{staging_trigger}}
+          - **Production**: {{prod_trigger}}
+
+          **Environment Promotion**: {{promotion_strategy}}
+
+          **Build & Test**:
+          - **Build Tool**: {{build_tool}}
+          - **Test Execution**: {{test_execution}}
+          - **Quality Gates**: {{quality_gates}}
+
+      - id: infrastructure-diagram
+        title: Infrastructure Diagram
+        instruction: |
+          Create Mermaid diagram showing deployment architecture with infrastructure components.
+        elicit: true
+        template: |
+          ### Infrastructure Diagram
+
+          ```mermaid
+          graph TB
+              {{infrastructure_mermaid_diagram}}
+          ```
+
+  - id: cross-cutting-concerns
+    title: Cross-Cutting Concerns
+    instruction: |
+      Define system-wide concerns that affect ALL repositories.
+      These ensure consistency and compliance across the entire system.
+    elicit: true
+    sections:
+      - id: concerns-overview
+        title: Overview
+        template: |
+          ## Cross-Cutting Concerns
+
+          This section defines system-wide requirements that all repositories MUST adhere to.
+
+      - id: security-requirements
+        title: Security Requirements
+        instruction: |
+          Define security standards for the entire system.
+        elicit: true
+        template: |
+          ### Security Requirements
+
+          **Authentication**: {{system_auth}}
+          **Authorization**: {{system_authz}}
+
+          **Data Encryption**:
+          - **In Transit**: {{encryption_transit}}
+          - **At Rest**: {{encryption_rest}}
+
+          **Compliance Standards**: {{compliance_standards}}
+          **Security Scanning**: {{security_tools}}
+          **Vulnerability Management**: {{vuln_management}}
+          **Secrets Management**: {{secrets_management}}
+
+          **Security Headers** (for web APIs):
+          {{security_headers}}
+
+      - id: performance-requirements
+        title: Performance Requirements
+        instruction: |
+          Define system-wide performance targets.
+        elicit: true
+        template: |
+          ### Performance Requirements
+
+          **Response Time SLAs**:
+          - API Endpoints: {{api_response_sla}}
+          - Web Page Load: {{web_page_load_sla}}
+          - Mobile App Launch: {{mobile_launch_sla}}
+
+          **Throughput Targets**: {{throughput_targets}}
+          **Concurrent Users**: {{concurrent_users}}
+          **Availability Target**: {{availability_target}}
+
+          **Performance Monitoring**:
+          - **Tool**: {{perf_monitoring_tool}}
+          - **Metrics**: {{perf_metrics}}
+
+      - id: observability
+        title: Observability Strategy
+        instruction: |
+          Define how the system is monitored and debugged.
+        elicit: true
+        template: |
+          ### Observability Strategy
+
+          **The Three Pillars**:
+
+          1. **Logging**:
+             - **Platform**: {{logging_platform}}
+             - **Retention**: {{log_retention}}
+
+          2. **Monitoring**:
+             - **Platform**: {{monitoring_platform}}
+             - **Dashboards**: {{dashboards}}
+
+          3. **Tracing**:
+             - **Platform**: {{tracing_platform}}
+             - **Sampling Rate**: {{trace_sampling}}
+
+          **Alerting Strategy**:
+          - **Channels**: {{alert_channels}}
+          - **Severity Levels**: {{alert_severity}}
+          - **On-Call Rotation**: {{oncall_rotation}}
+
+  - id: development-coordination
+    title: Development Coordination
+    instruction: |
+      Define how teams coordinate development across repositories.
+    elicit: true
+    sections:
+      - id: coordination-overview
+        title: Overview
+        template: |
+          ## Development Coordination
+
+          This section defines how multiple teams coordinate work across repositories.
+
+      - id: workflow-approach
+        title: Development Workflow
+        instruction: |
+          Define the development workflow type and approach.
+        elicit: true
+        template: |
+          ### Development Workflow
+
+          **Project Type**: {{project_type}}
+          **Workflow Style**: {{workflow_style}}
+
+          **Contract-First Development**: {{contract_first_enabled}}
+          {{#if contract_first_enabled}}
+          - Backend defines API contracts first
+          - Frontend/Mobile develop against contracts (mock implementations)
+          - Backend implements contracts, then integration testing
+          {{/if}}
+
+          **Story Assignment Strategy**: {{story_assignment}}
+          **Epic Mapping**: Stories mapped to repositories in Epic YAML files
+
+      - id: dependency-management
+        title: Cross-Repository Dependency Management
+        instruction: |
+          Define how cross-repo dependencies are tracked and managed.
+        elicit: true
+        template: |
+          ### Cross-Repository Dependency Management
+
+          **Dependency Tracking**: {{dependency_tracking}}
+          **Story Dependencies**: {{story_dependency_approach}}
+
+          **Breaking Change Process**:
+          1. {{breaking_change_step_1}}
+          2. {{breaking_change_step_2}}
+          3. {{breaking_change_step_3}}
+
+          **API Contract Updates**:
+          - {{api_contract_update_process}}
+
+  - id: appendix
+    title: Appendix
+    sections:
+      - id: changelog
+        title: Change Log
+        type: table
+        template: |
+          ## Change Log
+
+          | Date | Version | Description | Author |
+          |------|---------|-------------|--------|
+          {{#each changelog}}
+          | {{date}} | {{version}} | {{description}} | {{author}} |
+          {{/each}}
+
+      - id: glossary
+        title: Glossary
+        template: |
+          ## Glossary
+
+          | Term | Definition |
+          |------|------------|
+          | **System Architecture** | High-level coordination document for multi-repo projects |
+          | **Implementation Architecture** | Detailed technical architecture within a single repository |
+          | **API Contract** | Agreement between API provider and consumers |
+          | **Repository Topology** | Structure and relationships of all project repositories |
+          | **Cross-Cutting Concern** | Requirement that affects all repositories |
+
+      - id: references
+        title: References
+        template: |
+          ## References
+
+          **Product Documents**:
+          - [Product Requirements Document (PRD)](../prd.md)
+          - [Front-End Specification](../front-end-spec.md)
+
+          **Implementation Architecture Documents**:
+          {{#each repositories}}
+          - [{{name}} Architecture](../../{{name}}/docs/architecture.md)
+          {{/each}}
+
+          **API Documentation**:
+          - [API Contracts Specification](./api-contracts.md)

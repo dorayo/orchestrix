@@ -16,57 +16,77 @@ sections:
   - id: introduction
     title: Introduction
     instruction: |
-      IMPORTANT - SCOPE AND ASSESSMENT REQUIRED:
+      IMPORTANT - SCOPE AND PREREQUISITES:
 
       This architecture document is for SIGNIFICANT enhancements to existing projects that require comprehensive architectural planning. Before proceeding:
 
       1. **Verify Complexity**: Confirm this enhancement requires architectural planning. For simple additions, recommend: "For simpler changes that don't require architectural planning, consider using the brownfield-create-epic or brownfield-create-story task with the Product Owner instead."
 
-      2. **REQUIRED INPUTS**:
-         - Completed prd.md
-         - Existing project technical documentation (from docs folder or user-provided)
-         - Access to existing project structure (IDE or uploaded files)
+      2. **REQUIRED PREREQUISITES** (MUST have before starting):
+         - **REQUIRED**: docs/prd.md (created via @pm *create-doc brownfield-prd-tmpl.yaml)
+         - **REQUIRED**: docs/existing-system-analysis.md (created via @architect *document-project)
+         - **REQUIRED**: Access to existing project structure (IDE or uploaded files)
 
-      3. **DEEP ANALYSIS MANDATE**: You MUST conduct thorough analysis of the existing codebase, architecture patterns, and technical constraints before making ANY architectural recommendations. Every suggestion must be based on actual project analysis, not assumptions.
+      3. **Prerequisites Validation**:
+         - HALT if docs/prd.md is missing: "Please create brownfield PRD first using '@pm *create-doc brownfield-prd-tmpl.yaml'"
+         - HALT if docs/existing-system-analysis.md is missing: "Please analyze existing system first using '@architect *document-project'"
+         - Load and review both documents before proceeding
 
-      4. **CONTINUOUS VALIDATION**: Throughout this process, explicitly validate your understanding with the user. For every architectural decision, confirm: "Based on my analysis of your existing system, I recommend [decision] because [evidence from actual project]. Does this align with your system's reality?"
+      4. **DEEP ANALYSIS MANDATE**: You MUST base ALL architectural decisions on:
+         - Existing system constraints from docs/existing-system-analysis.md
+         - Enhancement requirements from docs/prd.md
+         - Real codebase patterns (if IDE access available)
+         Every suggestion must be grounded in actual analysis, not assumptions.
 
-      If any required inputs are missing, request them before proceeding.
+      5. **CONTINUOUS VALIDATION**: Throughout this process, explicitly reference your sources. For every architectural decision, state: "Based on [existing-system-analysis finding] and [PRD requirement], I recommend [decision] because [rationale]. This improves upon the current [existing practice] while maintaining [compatibility]. Does this align with your goals?"
+
+      If any required prerequisites are missing, HALT and request them before proceeding.
     elicit: true
     sections:
       - id: intro-content
         content: |
           This document outlines the architectural approach for enhancing {{project_name}} with {{enhancement_description}}. Its primary goal is to serve as the guiding architectural blueprint for AI-driven development of new features while ensuring seamless integration with the existing system.
 
-          **Relationship to Existing Architecture:**
-          This document supplements existing project architecture by defining how new components will integrate with current systems. Where conflicts arise between new and existing patterns, this document provides guidance on maintaining consistency while implementing enhancements.
+          **Key Improvement**: This architecture defines IMPROVED coding standards and patterns for the enhancement, learning from but not replicating the existing system's weaknesses documented in docs/existing-system-analysis.md.
+
+          **Relationship to Existing Documents:**
+          - **docs/existing-system-analysis.md**: Describes current system state (as-is, including technical debt)
+          - **docs/prd.md**: Defines what enhancements to build
+          - **docs/architecture.md** (THIS DOCUMENT): Defines HOW to build enhancements with improved standards
+
+          Where conflicts arise between new and existing patterns, this document provides guidance on maintaining compatibility while implementing better practices.
       - id: existing-project-analysis
         title: Existing Project Analysis
         instruction: |
-          Analyze the existing project structure and architecture:
+          Load and reference docs/existing-system-analysis.md as primary source:
 
-          1. Review existing documentation in docs folder
-          2. Examine current technology stack and versions
-          3. Identify existing architectural patterns and conventions
-          4. Note current deployment and infrastructure setup
-          5. Document any constraints or limitations
+          1. Review docs/existing-system-analysis.md thoroughly
+          2. Extract current tech stack and versions from "Tech Stack" section
+          3. Note architectural patterns from "High Level Architecture" section
+          4. Identify constraints from "Technical Debt and Known Issues" section
+          5. Review "Gaps and Recommendations" for improvement opportunities
+          6. If IDE access available, validate analysis against current codebase
 
-          CRITICAL: After your analysis, explicitly validate your findings: "Based on my analysis of your project, I've identified the following about your existing system: [key findings]. Please confirm these observations are accurate before I proceed with architectural recommendations."
+          CRITICAL: After reviewing existing-system-analysis.md, explicitly summarize: "Based on docs/existing-system-analysis.md, I understand your existing system has: [key constraints and patterns]. The enhancement will improve upon [identified weaknesses] while maintaining [compatibility requirements]. Please confirm this understanding before I proceed with architectural recommendations."
         elicit: true
         sections:
           - id: current-state
             title: Current Project State
+            instruction: Extract summary from docs/existing-system-analysis.md
             template: |
               - **Primary Purpose:** {{existing_project_purpose}}
               - **Current Tech Stack:** {{existing_tech_summary}}
               - **Architecture Style:** {{existing_architecture_style}}
               - **Deployment Method:** {{existing_deployment_approach}}
+              - **Reference**: See docs/existing-system-analysis.md for complete details
           - id: available-docs
             title: Available Documentation
+            instruction: Reference docs/existing-system-analysis.md
             type: bullet-list
             template: "- {{existing_docs_summary}}"
           - id: constraints
             title: Identified Constraints
+            instruction: Extract from "Technical Debt and Known Issues" section of existing-system-analysis.md
             type: bullet-list
             template: "- {{constraint}}"
       - id: changelog
@@ -344,26 +364,32 @@ sections:
   - id: coding-standards
     title: Coding Standards
     instruction: |
-      Ensure new code follows existing project conventions:
+      Define IMPROVED coding standards for the enhancement:
 
-      1. Document existing coding standards from project analysis
-      2. Identify any enhancement-specific requirements
-      3. Ensure consistency with existing codebase patterns
-      4. Define standards for new code organization
+      CRITICAL: This section defines standards for NEW code. You can and SHOULD improve upon existing practices documented in docs/existing-system-analysis.md.
+
+      1. Review existing coding standards from docs/existing-system-analysis.md "Coding Standards" section
+      2. Identify weaknesses or areas for improvement (check "Gaps and Recommendations" section)
+      3. Define IMPROVED standards for the enhancement (better than existing if current practices are poor)
+      4. Ensure compatibility where necessary, but prioritize code quality for new development
+      5. These standards will be used by Dev agents when implementing stories
+
+      Example: If existing code has poor test coverage, define higher coverage requirements for new code.
     elicit: true
     sections:
       - id: existing-standards
-        title: Existing Standards Compliance
+        title: Existing Standards (From Current System)
+        instruction: Extract from docs/existing-system-analysis.md "Coding Standards" section
         template: |
           **Code Style:** {{existing_code_style}}
           **Linting Rules:** {{existing_linting}}
           **Testing Patterns:** {{existing_test_patterns}}
           **Documentation Style:** {{existing_doc_style}}
       - id: enhancement-standards
-        title: Enhancement-Specific Standards
-        condition: New patterns needed for enhancement
+        title: Improved Standards for Enhancement
+        instruction: Define BETTER standards for new code (this is what Dev will follow)
         repeatable: true
-        template: "- **{{standard_name}}:** {{standard_description}}"
+        template: "- **{{standard_name}}:** {{standard_description}} (Improvement: {{why_better_than_existing}})"
       - id: integration-rules
         title: Critical Integration Rules
         template: |

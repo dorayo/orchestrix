@@ -118,6 +118,32 @@ sections:
       - id: testing-requirements
         title: Testing Requirements
         instruction: "CRITICAL DECISION - Document the testing requirements, unit only, integration, e2e, manual, need for manual testing convenience methods)."
+      - id: repository-details
+        title: Repository Details
+        condition: repository-structure is Polyrepo or Multi-repo
+        instruction: |
+          For multi-repository projects, define all target repositories.
+          This helps coordinate development across multiple teams and codebases.
+
+          **For Monolith Projects**: Skip this section or state "Single repository (monolith architecture)"
+
+          **For Multi-Repo Projects**: List all repositories with:
+          - Repository name (following naming convention: {project}-{type})
+          - Repository type (backend/frontend/ios/android/mobile/shared)
+          - Primary technology (high-level: Node.js, React, Swift, Kotlin, etc.)
+          - Team ownership (Backend Team, Frontend Team, Mobile Team, etc.)
+
+          This information will be used by:
+          - Architect to generate system-architecture.md
+          - PO to map stories to repositories during epic sharding
+          - SM to create stories in correct repositories
+        elicit: true
+        type: table
+        columns: [Repository Name, Type, Technology, Team]
+        examples:
+          - "| my-ecommerce-backend | backend | Node.js + Express | Backend Team |"
+          - "| my-ecommerce-web | frontend | React + Next.js | Frontend Team |"
+          - "| my-ecommerce-ios | ios | Swift + SwiftUI | Mobile Team |"
       - id: additional-assumptions
         title: Additional Technical Assumptions and Requests
         instruction: Throughout the entire process of drafting this document, if any other technical assumptions are raised or discovered appropriate for the architect, add them here as additional bulleted items
@@ -172,6 +198,103 @@ sections:
           I want {{action}},
           so that {{benefit}}.
         sections:
+          - id: target-platform
+            title: Target Platform
+            type: choice
+            choices: [backend, frontend, ios, android, mobile, fullstack, monolith]
+            default: fullstack
+            condition: project is multi-repo
+            instruction: |
+              **MULTI-REPO ONLY**: Specify which repository/platform this story targets.
+
+              Options:
+              - **backend**: Backend API implementation (database, business logic, API endpoints)
+              - **frontend**: Web frontend (React, Vue, Angular, etc.)
+              - **ios**: iOS mobile app (Swift/SwiftUI)
+              - **android**: Android mobile app (Kotlin/Jetpack Compose)
+              - **mobile**: Cross-platform mobile (Flutter/React Native)
+              - **fullstack**: Story spans multiple repositories (avoid if possible, prefer splitting)
+              - **monolith**: For monolith projects (single repository)
+
+              **Recommendation**: Prefer single-repo stories (backend, frontend, ios, android) over fullstack.
+              If a story needs both frontend and backend, consider splitting into two stories with dependencies.
+            elicit: true
+          - id: repository-name
+            title: Repository Name
+            type: string
+            condition: target-platform is not monolith
+            instruction: |
+              **MULTI-REPO ONLY**: Specify the repository name for this story.
+
+              Examples:
+              - `my-ecommerce-backend` (for backend stories)
+              - `my-ecommerce-web` (for frontend stories)
+              - `my-ecommerce-ios` (for iOS stories)
+
+              Leave empty for monolith projects.
+              For fullstack stories, specify the primary repository.
+
+              **Note**: This will be used by PO during epic sharding to generate Epic YAML files.
+            elicit: false
+          - id: provides-apis
+            title: APIs Provided
+            type: list
+            condition: target-platform is backend
+            instruction: |
+              **BACKEND STORIES ONLY**: List APIs this story will implement.
+
+              Format: "METHOD /path"
+
+              Examples:
+              - "POST /api/users"
+              - "GET /api/users/:id"
+              - "PUT /api/users/:id"
+              - "DELETE /api/users/:id"
+
+              **Purpose**: This information is used to:
+              - Generate API contract documents
+              - Track cross-repo dependencies (frontend/mobile stories that consume these APIs)
+              - Validate API completeness during QA review
+            elicit: true
+          - id: consumes-apis
+            title: APIs Consumed
+            type: list
+            condition: target-platform in [frontend, ios, android, mobile]
+            instruction: |
+              **FRONTEND/MOBILE STORIES ONLY**: List APIs this story will consume.
+
+              Format: "METHOD /path"
+
+              Examples:
+              - "POST /api/auth/login"
+              - "GET /api/products"
+              - "GET /api/products/:id"
+
+              **Purpose**: This information is used to:
+              - Validate that required backend APIs are implemented
+              - Track cross-repo dependencies (this story depends on backend stories)
+              - Generate API contract validation tests
+            elicit: true
+          - id: cross-repo-dependencies
+            title: Cross-Repository Dependencies
+            type: list
+            condition: project is multi-repo
+            instruction: |
+              **MULTI-REPO ONLY**: List other stories this depends on (may be in different repos).
+
+              Format: "Story ID - Brief Description"
+
+              Examples:
+              - "1.1 - Backend User API must be complete"
+              - "2.3 - Authentication service must be deployed"
+
+              **Purpose**: This information is used to:
+              - SM agent will check dependencies before allowing story creation
+              - PO will validate dependency graph during epic sharding
+              - QA will verify dependencies are satisfied
+
+              **Note**: Dependencies create blocking relationships. Story X cannot start until all its dependencies are Status = Done.
+            elicit: false
           - id: acceptance-criteria
             title: Acceptance Criteria
             type: numbered-list
@@ -179,7 +302,7 @@ sections:
             repeatable: true
             instruction: |
               Define clear, comprehensive, and testable acceptance criteria that:
-              
+
               - Precisely define what "done" means from a functional perspective
               - Are unambiguous and serve as basis for verification
               - Include any critical non-functional requirements from the PRD

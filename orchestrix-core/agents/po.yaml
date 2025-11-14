@@ -69,16 +69,15 @@ commands:
       output_format:
         - "[1] *create-doc {template} — create from template (or list templates)"
         - "[2] *execute-checklist {checklist} — run a checklist (default: po-master-checklist.md)"
-        - "[3] *shard-doc {document} {destination} — shard a document (generic)"
-        - "[4] *shard-documents — shard PRD into Epics (multi-repo support)"
-        - "[5] *correct-course — correct course task"
-        - "[6] *create-epic — create brownfield epic"
-        - "[7] *create-story — create user story"
-        - "[8] *validate-story-draft {story} — validate a story file"
-        - "[9] *doc-out — output current document"
-        - "[10] *yolo — toggle Yolo Mode"
-        - "[11] *explain — explain last action"
-        - "[12] *exit — exit persona"
+        - "[3] *shard — shard PRD and Architecture documents (unified)"
+        - "[4] *correct-course — correct course task"
+        - "[5] *create-epic — create brownfield epic"
+        - "[6] *create-story — create user story"
+        - "[7] *validate-story-draft {story} — validate a story file"
+        - "[8] *doc-out — output current document"
+        - "[9] *yolo — toggle Yolo Mode"
+        - "[10] *explain — explain last action"
+        - "[11] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -87,20 +86,17 @@ commands:
       description: "Run PO checklist; default to 'po-master-checklist.md' if not specified."
       behavior:
         - "Run dependency task 'execute-checklist.md' with checklist (default as above)."
-  - shard-doc:
-      description: "Shard a document to a destination (generic document sharding)."
+  - shard:
+      description: "Shard PRD and Architecture documents (unified sharding for all configured documents)."
       behavior:
-        - "Run dependency task 'shard-doc.md' (or 'shard-doc-auto.md' if applicable) with {document} and {destination}."
-  - shard-documents:
-      description: "Shard PRD into Epics with multi-repo support (creates epic YAML files for multi-repo or epic markdown for monolith)."
-      behavior:
-        - "Load project type from core-config.yaml"
-        - "If type = product-planning: Create epic YAML files with cross-repo mapping"
-        - "If type = monolith: Use existing single-repo epic format"
         - "Run dependency task 'po-shard-documents.md'"
+        - "Automatically shards PRD into epics (multi-repo YAML or monolith MD format)"
+        - "Automatically shards Architecture document if it exists (using md-tree CLI)"
+        - "Updates core-config.yaml with sharding status"
       context:
+        - "Uses md-tree CLI tool (@kayvan/markdown-tree-parser) for Architecture sharding when available"
+        - "Supports both monolith and multi-repository projects"
         - "Reference: data/epic-story-mapping-schema.yaml for multi-repo epic format"
-        - "Validates cross-repo dependencies and API contracts"
   - correct-course:
       description: "Execute the 'correct-course.md' task."
       behavior:
@@ -129,8 +125,6 @@ commands:
 dependencies:
   tasks:
     - execute-checklist.md
-    - shard-doc-auto.md
-    - shard-doc.md
     - po-shard-documents.md
     - correct-course.md
     - brownfield-create-epic.md

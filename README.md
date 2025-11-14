@@ -167,13 +167,29 @@ npx orchestrix list       # 列出所有可用代理
 
 ## 文档资源
 
+### 核心文档
+
 - 📚 **[用户指南](docs/01-用户指南.md)**: 快速上手和基础操作。
 - 🏗️ **[核心架构](docs/02-核心架构.md)**: 了解技术架构和系统设计。
-- 🔄 **[工作流程指南](docs/03-工作流程指南.md)**: 详细的10步工作流程。
-- 🔧 **[Brownfield开发](docs/04-Brownfield%20开发指南.md)**: 现有项目改进指南。
+- 🔄 **[工作流程指南](docs/03-工作流程指南.md)**: 详细的8步工作流程。
+- 🎯 **[设计哲学](docs/00-设计哲学.md)**: 理解核心设计理念与架构原则。
+
+### Brownfield 开发指南
+
+- ✨ **[Brownfield 项目增强指南](docs/BROWNFIELD_ENHANCEMENT_GUIDE.md)**: 为现有单体项目添加重大功能的完整流程（3步工作流）。
+- 🔧 **[Brownfield 开发指南](docs/04-Brownfield%20开发指南.md)**: 现有项目改进的通用指南。
+- 🌐 **[多仓库 Brownfield 指南](docs/MULTI_REPO_BROWNFIELD_GUIDE.md)**: 多仓库系统文档化和协调。
+
+### Greenfield 开发指南
+
+- 🌱 **[多仓库 Greenfield 指南](docs/MULTI_REPO_GREENFIELD_GUIDE.md)**: 从零开始的多仓库项目开发流程。
+
+### 高级主题
+
 - 🧩 **[扩展包系统](docs/06-扩展包系统.md)**: 探索模块化扩展机制。
 - 🚀 **[版本发布指南](docs/07-版本发布指南.md)**: 自动化版本管理与发布流程。
-- 🎯 **[设计哲学](docs/00-设计哲学.md)**: 理解核心设计理念与架构原则。
+- 📊 **[决策评估器指南](docs/decision-evaluator-guide.md)**: 智能决策系统使用指南。
+- 📖 **[Story 状态参考](docs/story-status-reference.md)**: Story 生命周期和状态管理。
 
 ---
 

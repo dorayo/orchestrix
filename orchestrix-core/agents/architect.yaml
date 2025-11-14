@@ -51,17 +51,112 @@ commands:
       description: Show numbered command list, wait for selection
       output_format:
         - '[1] *create-doc {template} — generate doc'
-        - '[2] *research {topic} — deep research'
-        - '[3] *review-story {story_id} — review story'
-        - '[4] *document-project — document architecture'
-        - '[5] *execute-checklist {checklist} — run checklist'
-        - '[6] *doc-out — output document'
-        - '[7] *yolo — toggle Yolo Mode'
-        - '[8] *explain — explain action'
-        - '[9] *exit — exit'
+        - '--- Greenfield (New Projects) ---'
+        - '[2] *create-system-architecture — generate system-level architecture (Product repo)'
+        - '[3] *create-backend-architecture — generate detailed backend architecture (Backend repo)'
+        - '[4] *create-frontend-architecture — generate detailed frontend architecture (Frontend/Web repo)'
+        - '[5] *create-mobile-architecture — generate detailed mobile architecture (iOS/Android/Flutter/RN repo)'
+        - '--- Brownfield (Existing Projects) ---'
+        - '[6] *aggregate-system-architecture — aggregate from existing repos (Product repo)'
+        - '[7] *extract-api-contracts — extract API docs from backend code (Backend repo)'
+        - '--- Other Commands ---'
+        - '[8] *research {topic} — deep research'
+        - '[9] *review-story {story_id} — review story'
+        - '[10] *document-project — document architecture'
+        - '[11] *execute-checklist {checklist} — run checklist'
+        - '[12] *doc-out — output document'
+        - '[13] *yolo — toggle Yolo Mode'
+        - '[14] *explain — explain action'
+        - '[15] *exit — exit'
   - create-doc:
       description: Generate architecture document from template
       task: create-doc.md
+  - create-system-architecture:
+      description: Generate system-level architecture for multi-repository projects
+      task: create-system-architecture.md
+      context: |
+        Use this command in Product repositories to generate system-architecture.md.
+        This document coordinates multiple implementation repositories by defining:
+        - Repository topology
+        - API contracts summary
+        - Integration strategy
+        - Deployment architecture
+        - Cross-cutting concerns
+  - create-backend-architecture:
+      description: Generate detailed backend architecture for implementation repository
+      task: create-backend-architecture.md
+      context: |
+        Use this command in Backend implementation repositories to generate detailed architecture.md.
+        This document provides implementation-level details:
+        - Service components (controllers, services, repositories)
+        - Database schema (tables, relationships, indexes)
+        - API implementation details (request/response schemas, validation)
+        - Backend-specific concerns (caching, jobs, logging, security)
+        Prerequisites: system-architecture.md must exist in Product repository
+  - create-frontend-architecture:
+      description: Generate detailed frontend architecture for implementation repository
+      task: create-frontend-architecture.md
+      context: |
+        Use this command in Frontend (Web) implementation repositories to generate detailed architecture.md.
+        This document provides implementation-level details:
+        - Component architecture (pages, shared components, layouts)
+        - State management (global state, server state, local state)
+        - Routing (routes, protected routes, navigation)
+        - API integration (API client, data fetching hooks/services)
+        - UI/UX implementation (design system, responsive patterns)
+        Prerequisites: system-architecture.md must exist in Product repository
+  - create-mobile-architecture:
+      description: Generate detailed mobile architecture for mobile implementation repository
+      task: create-mobile-architecture.md
+      context: >
+        Use this command in Mobile implementation repositories (iOS Native, Android Native, Flutter, React Native) to
+        generate detailed architecture.md.
+
+        This document provides implementation-level details:
+
+        - App architecture (MVVM, MVI, BLoC, etc.)
+
+        - Screen structure and navigation flow
+
+        - State management (global, screen, server state)
+
+        - API integration (API client, data fetching, error handling)
+
+        - Local data management (Keychain/KeyStore, Core Data/Room/SQLite, caching)
+
+        - Security (secure token storage, certificate pinning, biometric auth)
+
+        - Testing strategy (unit, UI, integration tests)
+
+        - Deployment (App Store/Google Play, CI/CD)
+
+        Prerequisites: system-architecture.md must exist in Product repository
+  - aggregate-system-architecture:
+      description: Aggregate system architecture from existing implementation repositories (Brownfield)
+      task: aggregate-system-architecture.md
+      context: |
+        Use this command in Product repository for BROWNFIELD projects (existing codebases).
+        This command performs BOTTOM-UP aggregation from implementation repositories:
+        - Scans implementation repos for architecture docs and code
+        - Extracts repository topology, tech stacks, deployment
+        - Identifies API contracts (backend provides, frontend consumes)
+        - Detects integration patterns (auth, data formats, error handling)
+        - Aggregates into system-architecture.md
+        - Documents gaps, inconsistencies, and recommendations
+        Opposite of create-system-architecture (which is top-down greenfield)
+  - extract-api-contracts:
+      description: Extract and document API contracts from backend code
+      task: extract-api-contracts.md
+      context: |
+        Use this command in Backend repository to extract API documentation from code.
+        This command analyzes backend code to:
+        - Scan route definitions (Express, NestJS, FastAPI, Django, Spring Boot, Rails)
+        - Extract endpoints: method, path, params, request/response schemas
+        - Document authentication requirements per endpoint
+        - Group endpoints by category
+        - Generate API contracts documentation (docs/api-contracts.md)
+        - Optionally generate OpenAPI 3.0 specification
+        - Optionally validate frontend API calls against backend
   - research:
       description: Conduct deep research for architectural decisions
       task: create-deep-research-prompt.md
@@ -87,6 +182,12 @@ dependencies:
   tasks:
     - create-doc-auto.md
     - create-doc.md
+    - create-system-architecture.md
+    - create-backend-architecture.md
+    - create-frontend-architecture.md
+    - create-mobile-architecture.md
+    - aggregate-system-architecture.md
+    - extract-api-contracts.md
     - create-deep-research-prompt.md
     - document-project.md
     - execute-checklist.md
@@ -96,8 +197,10 @@ dependencies:
   templates:
     - architecture-tmpl.yaml
     - front-end-architecture-tmpl.yaml
+    - mobile-architecture-tmpl.yaml
     - fullstack-architecture-tmpl.yaml
     - brownfield-architecture-tmpl.yaml
+    - system-architecture-tmpl.yaml
   checklists:
     - architect-checklist.md
     - assessment/architect-technical-review-checklist.md

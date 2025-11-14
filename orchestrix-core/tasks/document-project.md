@@ -98,11 +98,11 @@ CRITICAL: Before generating documentation, conduct extensive analysis of the exi
 
 **Document Structure**:
 
-# [Project Name] Brownfield Architecture Document
+# [Project Name] Existing System Analysis
 
 ## Introduction
 
-This document captures the CURRENT STATE of the [Project Name] codebase, including technical debt, workarounds, and real-world patterns. It serves as a reference for AI agents working on enhancements.
+This document captures the CURRENT STATE of the [Project Name] codebase, including technical debt, workarounds, and real-world patterns. It serves as an intermediate analysis document to inform brownfield PRD and architecture planning.
 
 ### Document Scope
 
@@ -134,7 +134,17 @@ This document captures the CURRENT STATE of the [Project Name] codebase, includi
 
 ### Technical Summary
 
-### Actual Tech Stack (from package.json/requirements.txt)
+[Overall architecture style, patterns, and key design decisions]
+
+### Repository Structure Reality Check
+
+- Type: [Monorepo/Polyrepo/Hybrid]
+- Package Manager: [npm/yarn/pnpm]
+- Notable: [Any unusual structure decisions]
+
+## Tech Stack
+
+Document the actual technology stack used in the project:
 
 | Category | Technology | Version | Notes |
 |----------|------------|---------|--------|
@@ -144,13 +154,7 @@ This document captures the CURRENT STATE of the [Project Name] codebase, includi
 
 etc...
 
-### Repository Structure Reality Check
-
-- Type: [Monorepo/Polyrepo/Hybrid]
-- Package Manager: [npm/yarn/pnpm]
-- Notable: [Any unusual structure decisions]
-
-## Source Tree and Module Organization
+## Source Tree
 
 ### Project Structure (Actual)
 
@@ -173,6 +177,53 @@ project-root/
 - **Authentication**: `src/middleware/auth.js` - JWT-based, custom implementation
 - **Payment Processing**: `src/legacy/payment.js` - CRITICAL: Do not refactor, tightly coupled
 - **[List other key modules with their actual files]**
+
+## Coding Standards
+
+Document the actual coding conventions, patterns, and standards used in this project:
+
+### Code Style and Conventions
+
+- **Language Style Guide**: [ESLint config, Prettier config, or other style guides]
+- **Naming Conventions**:
+  - Files: [kebab-case, camelCase, etc.]
+  - Variables: [camelCase, snake_case, etc.]
+  - Classes: [PascalCase, etc.]
+  - Constants: [UPPER_SNAKE_CASE, etc.]
+- **Code Organization**: [How code is structured within files]
+
+### Linting and Formatting
+
+- **Linter**: [ESLint, Pylint, etc.]
+- **Formatter**: [Prettier, Black, etc.]
+- **Configuration Files**: [.eslintrc.js, .prettierrc, etc.]
+- **Pre-commit Hooks**: [Husky, lint-staged, etc.]
+
+### Testing Conventions
+
+- **Test Framework**: [Jest, Mocha, PyTest, etc.]
+- **Test File Naming**: [*.test.js, *.spec.js, test_*.py, etc.]
+- **Test Organization**: [co-located with source, separate test directory]
+- **Coverage Requirements**: [Minimum coverage percentage]
+
+### Documentation Standards
+
+- **Code Comments**: [When and how to comment]
+- **API Documentation**: [JSDoc, Swagger, etc.]
+- **README Standards**: [What should be documented]
+
+### Common Patterns and Practices
+
+- **Error Handling**: [Try-catch patterns, error classes, etc.]
+- **Async Patterns**: [Promises, async/await, callbacks]
+- **Dependency Injection**: [How dependencies are managed]
+- **Configuration Management**: [Environment variables, config files]
+
+### Project-Specific Conventions
+
+- **[Any specific patterns unique to this project]**
+- **[Legacy patterns that must be maintained]**
+- **[New patterns introduced for enhancements]**
 
 ## Data Models and APIs
 
@@ -203,6 +254,51 @@ Instead of duplicating, reference actual model files:
 - **Environment Variables**: Must set `NODE_ENV=production` even for staging (historical reason)
 - **Database Connections**: Connection pool hardcoded to 10, changing breaks payment service
 - **[Other workarounds developers need to know]**
+
+## Gaps and Recommendations
+
+Document missing elements, improvement opportunities, and recommendations for future enhancements:
+
+### Missing Documentation
+
+- **API Documentation**: [What APIs lack documentation]
+- **Architecture Diagrams**: [Missing visual representations]
+- **Deployment Guides**: [Gaps in operational documentation]
+- **[Other documentation gaps]**
+
+### Code Quality Improvements
+
+- **Test Coverage**: [Areas needing better test coverage]
+- **Code Duplication**: [Repeated code that should be refactored]
+- **Complex Methods**: [Functions/methods that need simplification]
+- **[Other code quality issues]**
+
+### Architecture Improvements
+
+- **Separation of Concerns**: [Areas where responsibilities are mixed]
+- **Dependency Management**: [Tight coupling that should be loosened]
+- **Scalability Concerns**: [Bottlenecks or scaling limitations]
+- **[Other architectural improvements]**
+
+### Technology Updates
+
+- **Outdated Dependencies**: [Libraries needing updates]
+- **Framework Versions**: [Framework upgrades to consider]
+- **Security Vulnerabilities**: [Known security issues in dependencies]
+- **[Other technology recommendations]**
+
+### Process Improvements
+
+- **CI/CD Pipeline**: [Automation opportunities]
+- **Monitoring and Logging**: [Observability gaps]
+- **Error Handling**: [Areas needing better error management]
+- **[Other process improvements]**
+
+### Prioritized Recommendations
+
+1. **High Priority**: [Critical improvements needed before enhancement]
+2. **Medium Priority**: [Should address soon]
+3. **Low Priority**: [Nice to have, can defer]
 
 ## Integration Points and External Dependencies
 
@@ -294,13 +390,13 @@ npm run seed        # Seed test data
 
 1. **In Web UI (Gemini, ChatGPT, Claude)**:
    - Present the entire document in one response (or multiple if too long)
-   - Tell user to copy and save as `docs/brownfield-architecture.md` or `docs/project-architecture.md`
-   - Mention it can be sharded later in IDE if needed
+   - Tell user to copy and save as `docs/existing-system-analysis.md`
+   - This is an intermediate document for understanding the current system
 
 2. **In IDE Environment**:
-   - Create the document as `docs/brownfield-architecture.md`
-   - Inform user this single document contains all architectural information
-   - Can be sharded later using PO agent if desired
+   - Create the document as `docs/existing-system-analysis.md`
+   - Inform user this document captures the existing system's real state
+   - This document will be used as input for creating brownfield PRD and architecture documents
 
 The document should be comprehensive enough that future agents can understand:
 
@@ -324,18 +420,30 @@ Apply the advanced elicitation task after major sections to refine based on user
 
 ## Success Criteria
 
-- Single comprehensive brownfield architecture document created
+- Single comprehensive existing system analysis document created
 - Document reflects REALITY including technical debt and workarounds
+- Key sections capture actual current state:
+  - **Tech Stack**: Current technology choices and versions (as-is, not idealized)
+  - **Source Tree**: Actual project structure and organization
+  - **Coding Standards**: Real conventions and patterns used (including poor practices)
 - Key files and modules are referenced with actual paths
 - Models/APIs reference source files rather than duplicating content
 - If PRD provided: Clear impact analysis showing what needs to change
-- Document enables AI agents to navigate and understand the actual codebase
+- Document enables understanding of the actual codebase for planning enhancements
 - Technical constraints and "gotchas" are clearly documented
+- **Gaps and Recommendations** section identifies improvement opportunities
+- Document serves as input for brownfield PRD and architecture planning
 
 ## Notes
 
-- This task creates ONE document that captures the TRUE state of the system
+- This task creates an INTERMEDIATE analysis document, not the final architecture document
+- Output file: `docs/existing-system-analysis.md`
+- This document is NOT sharded (it's input for creating final architecture.md)
+- This document is NOT loaded by Dev agents (they load docs/architecture/ from final architecture.md)
 - References actual files rather than duplicating content when possible
 - Documents technical debt, workarounds, and constraints honestly
-- For brownfield projects with PRD: Provides clear enhancement impact analysis
-- The goal is PRACTICAL documentation for AI agents doing real work
+- The goal is to provide realistic context for enhancement planning
+- **Section Naming**: Sections match architecture template structure for easier reference when creating brownfield architecture
+- **Next Steps**: Use this document as input for:
+  1. `@pm *create-doc brownfield-prd-tmpl.yaml` (create enhancement PRD)
+  2. `@architect *create-doc brownfield-architecture-tmpl.yaml` (create enhancement architecture with improved standards)

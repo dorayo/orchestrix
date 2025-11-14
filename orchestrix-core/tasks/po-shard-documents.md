@@ -1,10 +1,12 @@
-# PO - Shard Documents into Epics (Multi-Repo Support)
+# PO - Shard Documents (Unified)
 
 ## Purpose
 
-Shard PRD into Epics with support for both monolith and multi-repository projects:
-- **Monolith Mode**: Create epic markdown files (existing behavior)
-- **Multi-Repo Mode**: Create epic YAML files with cross-repo story mapping
+Automatically shard all configured documents:
+1. **PRD → Epics**: Create epic YAML files (multi-repo) or epic MD files (monolith)
+2. **Architecture** (if exists): Shard into section files for better context management
+
+Uses `md-tree` CLI tool when available for fast, reliable sharding.
 
 ## Prerequisites
 
@@ -14,7 +16,24 @@ Shard PRD into Epics with support for both monolith and multi-repository project
 
 ## Task Instructions
 
-### 0. Load Configuration and Detect Project Type
+### 0. Check md-tree Availability
+
+**Detect `md-tree` command**:
+
+```bash
+if command -v md-tree &> /dev/null; then
+  USE_MD_TREE=true
+  echo "✅ md-tree available - using fast CLI tool for architecture sharding"
+else
+  USE_MD_TREE=false
+  echo "⚠️ md-tree not found. Architecture sharding will be skipped."
+  echo "📦 To enable: npm install -g @kayvan/markdown-tree-parser"
+fi
+```
+
+---
+
+### 1. Load Configuration and Detect Project Type
 
 **Read `{root}/core-config.yaml`**:
 
@@ -431,6 +450,93 @@ Navigate to: {product_repo_path}
 Run: *shard-documents
 
 HALT: Cannot proceed in implementation repository
+```
+
+---
+
+## Architecture Sharding (Automatic)
+
+**After completing PRD sharding**, automatically shard architecture document if it exists.
+
+### Check for Architecture Document
+
+```bash
+# Get architecture file path from config
+ARCH_FILE=$(grep "architectureFile:" {root}/core-config.yaml | awk '{print $2}')
+
+if [ -z "$ARCH_FILE" ]; then
+  echo "ℹ️ No architecture file configured, skipping architecture sharding"
+  exit 0
+fi
+
+if [ ! -f "$ARCH_FILE" ]; then
+  echo "ℹ️ Architecture file not found: $ARCH_FILE, skipping"
+  exit 0
+fi
+
+echo "📄 Architecture document found: $ARCH_FILE"
+```
+
+### Shard Architecture Document
+
+**If USE_MD_TREE=true** (md-tree is available):
+
+```bash
+# Get output directory (same as architecture file without extension)
+ARCH_DIR=$(dirname "$ARCH_FILE")/$(basename "$ARCH_FILE" .md)
+
+# Use md-tree for fast sharding
+md-tree explode "$ARCH_FILE" "$ARCH_DIR"
+
+if [ $? -eq 0 ]; then
+  echo "✅ Architecture sharded to: $ARCH_DIR"
+
+  # Update core-config.yaml
+  # Set architectureSharded: true
+  # Set architectureShardedLocation: $ARCH_DIR
+
+  echo ""
+  echo "📋 Architecture sections created:"
+  ls -1 "$ARCH_DIR"/*.md | xargs -n1 basename
+else
+  echo "❌ Architecture sharding failed"
+fi
+```
+
+**If USE_MD_TREE=false** (md-tree not available):
+
+```
+ℹ️ Skipping architecture sharding (md-tree not installed)
+
+To enable architecture sharding:
+npm install -g @kayvan/markdown-tree-parser
+
+Then run: @po *shard
+```
+
+### Final Report
+
+```
+✅ DOCUMENT SHARDING COMPLETE
+
+📋 PRD:
+  - Source: docs/prd.md
+  - Output: docs/epics/ ({N} epic YAML/MD files)
+  - Status: ✅ Complete
+
+🏗️ Architecture:
+  - Source: {ARCH_FILE}
+  - Output: {ARCH_DIR}/ ({M} section files)
+  - Status: ✅ Complete
+  - Tool: md-tree (fast)
+
+⚙️ Configuration updated:
+  - prdSharded: true
+  - architectureSharded: true
+
+🎯 NEXT STEPS:
+  - SM can now create stories: *create-next-story
+  - Dev will auto-load sections from devLoadAlwaysFiles
 ```
 
 ---

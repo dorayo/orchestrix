@@ -49,7 +49,84 @@ sections:
     elicit: true
     owner: scrum-master
     editors: [scrum-master, ux-expert]
-    
+
+  - id: multi-repo-context
+    title: Multi-Repository Context
+    condition: project.type != 'monolith'
+    type: template-text
+    template: |
+      **Repository**: {{repository_name}}
+      **Platform**: {{target_platform}}
+      **Epic**: Epic {{epic_id}} - {{epic_title}}
+
+      {{#if provides_apis}}
+      ### 🔌 APIs Provided by This Story
+
+      This story implements the following APIs that other repositories will consume:
+
+      {{#each provides_apis}}
+      - `{{this}}`
+      {{/each}}
+
+      **API Contract Reference**: See `{{api_contracts_path}}` for detailed specifications.
+
+      **⚠️ CRITICAL**: These APIs MUST match the contract exactly. Any changes require:
+      1. Update API contract document
+      2. Notify consuming teams (Frontend/Mobile)
+      3. Version API if breaking change
+      {{/if}}
+
+      {{#if consumes_apis}}
+      ### 📡 APIs Consumed by This Story
+
+      This story consumes the following APIs from other repositories:
+
+      {{#each consumes_apis}}
+      - `{{this}}`
+      {{/each}}
+
+      **API Contract Reference**: See `{{api_contracts_path}}` for detailed specifications.
+
+      **⚠️ DEPENDENCIES**: Verify these APIs are implemented and deployed before starting development.
+      Check Backend Story status to ensure APIs are Done.
+      {{/if}}
+
+      {{#if cross_repo_dependencies}}
+      ### 🔗 Cross-Repository Dependencies
+
+      This story depends on the following stories being completed:
+
+      {{#each cross_repo_dependencies}}
+      - **{{this}}** (Must be Status = Done)
+      {{/each}}
+
+      **⚠️ BLOCKING**: Do not start this story until all dependencies are Status = Done.
+      SM will verify dependencies before allowing story creation.
+      {{/if}}
+
+      {{#if repository_name}}
+      ### 📂 Repository Information
+
+      - **Repository Path**: `../{{repository_name}}/`
+      - **System Architecture**: `../{{product_repo_name}}/docs/architecture/system-architecture.md`
+      - **Detailed Architecture**: `docs/architecture.md`
+      - **API Contracts**: `../{{product_repo_name}}/docs/architecture/api-contracts.md`
+
+      **Note**: Always reference system-architecture.md for integration constraints and API contracts.
+      {{/if}}
+    instruction: |
+      Display multi-repository context information for this story.
+      This section is automatically populated from Epic YAML and PRD data.
+
+      Shows:
+      - Repository and platform assignments
+      - APIs provided (for backend stories)
+      - APIs consumed (for frontend/mobile stories)
+      - Cross-repository dependencies
+      - References to architecture documents
+    owner: scrum-master
+    editors: [scrum-master]
+
   - id: acceptance-criteria
     title: Acceptance Criteria
     type: numbered-list

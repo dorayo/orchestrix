@@ -20,9 +20,104 @@ sections:
       - id: intro-content
         content: |
           This document outlines the overall project architecture for {{project_name}}, including backend systems, shared services, and non-UI specific concerns. Its primary goal is to serve as the guiding architectural blueprint for AI-driven development, ensuring consistency and adherence to chosen patterns and technologies.
-          
+
           **Relationship to Frontend Architecture:**
           If the project includes a significant user interface, a separate Frontend Architecture Document will detail the frontend-specific design and MUST be used in conjunction with this document. Core technology stack choices documented herein (see "Tech Stack") are definitive for the entire project, including any frontend components.
+
+  - id: system-architecture-context
+    title: System Architecture Context (Implementation Repositories Only)
+    condition: project.type in [backend, frontend, ios, android, mobile]
+    instruction: |
+      **FOR IMPLEMENTATION REPOSITORIES ONLY** (backend, frontend, ios, android, mobile):
+
+      This detailed architecture document MUST align with the system-level architecture from the Product repository.
+
+      **Step 1: Check for System Architecture**
+
+      ```bash
+      PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+      SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
+
+      if [ -f "$SYSTEM_ARCH" ]; then
+        echo "✅ System architecture found at $SYSTEM_ARCH"
+      else
+        echo "⚠️ System architecture not found - proceeding without system-level constraints"
+        echo "Recommendation: Create system-architecture.md in Product repo first"
+      fi
+      ```
+
+      **Step 2: Load and Analyze System Architecture** (if it exists)
+
+      Read the system-architecture.md file and extract:
+
+      **For Backend Repositories**:
+      - Repository role and responsibilities
+      - API Contracts Summary - which APIs THIS backend must implement
+      - Authentication mechanism (JWT, session, OAuth)
+      - Data format standards (JSON structure, date format, pagination style)
+      - Error handling standard (error response format, HTTP status codes)
+      - Performance requirements (response SLAs, throughput targets)
+      - Security requirements (encryption, secrets management)
+      - Deployment architecture (platform, CI/CD)
+      - Cross-cutting concerns (logging, monitoring, observability)
+
+      **For Frontend Repositories**:
+      - Repository role and responsibilities
+      - API Contracts Summary - which APIs THIS frontend can consume
+      - Authentication mechanism (token storage, refresh strategy)
+      - Data format expectations (JSON structure, date parsing, pagination handling)
+      - Error handling expectations (how to display errors from backend)
+      - Performance requirements (page load time, TTI, Core Web Vitals)
+      - Security requirements (XSS protection, CSRF, secure token storage)
+      - Deployment architecture (platform, CI/CD)
+
+      **Step 3: Document System Architecture Alignment**
+
+      Present to user:
+      ```
+      📖 **System Architecture Context**
+
+      I've loaded the system-level architecture from Product repository.
+
+      **This Repository's Role** (from system-architecture.md):
+      - Repository Name: {{repo_name}}
+      - Type: {{repo_type}}
+      - Responsibility: {{repo_responsibility}}
+
+      **Key Constraints from System Architecture**:
+      - Authentication: {{auth_mechanism}}
+      - API Contracts: {{api_contracts_summary}}
+      - Data Format: {{data_format_standards}}
+      - Error Handling: {{error_standard}}
+      - Performance: {{performance_targets}}
+      - Deployment: {{deployment_platform}}
+
+      This detailed architecture will align with and expand upon these system-level decisions.
+      ```
+
+      **Step 4: Validation Requirements**
+
+      Throughout the architecture design, ensure:
+
+      **For Backend**:
+      - [ ] All APIs from system-architecture.md API Contracts Summary are implemented
+      - [ ] Authentication mechanism matches system-architecture.md exactly
+      - [ ] Data format (JSON structure, ISO 8601 dates, pagination) is consistent
+      - [ ] Error response format matches system-architecture.md standard
+      - [ ] Performance SLAs are documented and achievable
+
+      **For Frontend**:
+      - [ ] All API calls consume ONLY APIs defined in system-architecture.md
+      - [ ] Authentication mechanism (token storage, refresh) matches system-architecture.md
+      - [ ] Data format expectations match backend's format
+      - [ ] Error handling displays errors per system-architecture.md standard
+      - [ ] Performance targets (page load, TTI) are documented
+
+      **CRITICAL**: If this architecture needs APIs NOT in system-architecture.md:
+      1. STOP and flag this to the user
+      2. Either: Update system-architecture.md to include the new APIs, OR remove the need for those APIs
+      3. Resume architecture design once alignment is confirmed
+    elicit: true
       - id: starter-template
         title: Starter Template or Existing Project
         instruction: |
