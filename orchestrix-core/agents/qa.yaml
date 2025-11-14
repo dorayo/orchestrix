@@ -55,13 +55,17 @@ commands:
       description: Show numbered command list, wait for selection
       output_format:
         - '[1] *help — Show this list'
-        - '[2] *gate {story} — Write/update quality gate decision'
-        - '[3] *nfr-assess {story} — Validate NFRs'
-        - '[4] *review {story} — Adaptive, risk-aware comprehensive review'
-        - '[5] *risk-profile {story} — Generate risk assessment matrix'
-        - '[6] *test-design {story} — Create comprehensive test scenarios'
-        - '[7] *trace {story} — Map requirements to Given/When/Then tests'
-        - '[8] *exit — End persona'
+        - '[2] *finalize-commit {story} — Create git commit for completed story'
+        - '[3] *gate {story} — Write/update quality gate decision'
+        - '[4] *nfr-assess {story} — Validate NFRs'
+        - '[5] *review {story} — Adaptive, risk-aware comprehensive review'
+        - '[6] *risk-profile {story} — Generate risk assessment matrix'
+        - '[7] *test-design {story} — Create comprehensive test scenarios'
+        - '[8] *trace {story} — Map requirements to Given/When/Then tests'
+        - '[9] *exit — End persona'
+  - finalize-commit:
+      description: Create git commit for completed story
+      task: finalize-story-commit.md
   - gate:
       description: Write/update quality gate decision
       task: qa-gate.md
@@ -85,7 +89,10 @@ commands:
 dependencies:
   data:
     - technical-preferences.md
+  decisions:
+    - qa-post-review-workflow.yaml
   tasks:
+    - finalize-story-commit.md
     - qa-gate.md
     - nfr-assess.md
     - qa-review-story.md

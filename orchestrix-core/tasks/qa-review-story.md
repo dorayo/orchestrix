@@ -196,7 +196,28 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    - If validation fails: HALT
    - **MUST UPDATE Story Status field before proceeding**
 
-7. **Git Commit (ONLY if Gate = PASS and Status = Done)**:
+7. **AUTOMATIC GIT COMMIT** (Conditional - executes if Gate=PASS and Status=Done):
+
+   **7.1. Check Commit Conditions**:
+
+   Read the following from previous steps:
+   - `gate_result` from Step 4 (gate file)
+   - `story_status` from Step 6 (updated Status field)
+
+   **7.2. Execute Finalize Commit (ONLY IF gate_result=PASS AND story_status=Done)**:
+
+   If conditions are NOT met:
+   - Skip to Step 8 (OUTPUT HANDOFF MESSAGE)
+
+   If conditions ARE met:
+   - Execute the following git commit process (based on `finalize-story-commit.md`):
+
+   **A. Collect Commit Metadata**:
+   - From Story file: `story_id`, `story_title`, key ACs (up to 3), File List count
+   - From Gate file: `review_round`, `quality_score`
+   - From Dev Agent Record: tests added count (if available)
+
+   **B. Execute Git Commit**:
    ```bash
    # Stage all changes (story file + code changes)
    git add -A
@@ -208,7 +229,7 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    Story: {story_id} - {story_title}
 
    **Implemented**:
-   {list key ACs or features from story}
+   {list key ACs from story - use actual values}
 
    **Files Modified**: {count} files
    **Tests Added**: {count} tests
@@ -223,8 +244,23 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    )"
    ```
 
-   - Verify commit succeeded
-   - If commit fails, warn user but continue with handoff
+   **IMPORTANT**: Replace all `{placeholders}` with actual values from metadata. Do not leave any placeholders in the commit message.
+
+   **C. Verify Commit Succeeded**:
+   ```bash
+   # Get commit hash
+   git log -1 --oneline
+   ```
+
+   **D. Update Story Change Log**:
+   Add new table row:
+   ```markdown
+   | {current_date} | Git commit created: `{commit_hash}` - Story finalized and committed to repository | QA |
+   ```
+
+   **E. Store Commit Result**:
+   - If commit succeeded: Store commit_hash for handoff message
+   - If commit failed: Store error message for handoff warning
 
 8. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
 
@@ -243,15 +279,46 @@ Reason: {escalation_reason}
 ```
 
 #### Gate PASS (Story Complete):
+
+**If Step 7 executed git commit successfully**:
 ```
 ✅ STORY COMPLETE
 Story: {story_id} → Status: Done
 Gate: PASS | Round: {review_round} | Quality: {score}/100
 {result.reasoning}
 
-📦 Git commit created: {commit_hash}
+📦 Git Commit: {commit_hash}
+   Message: feat(story-{story_id}): {story_title}
+   Files: {files_count} modified, {tests_count} tests added
 
-🎉 STORY {story_id} DONE ✅
+🎉 STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
+```
+
+**If Step 7 skipped git commit (conditions not met - should not happen if Status=Done)**:
+```
+✅ QA REVIEW COMPLETE
+Story: {story_id} → Status: Done
+Gate: PASS | Round: {review_round} | Quality: {score}/100
+{result.reasoning}
+
+⚠️ Git commit was NOT created (unexpected state)
+
+🎯 MANUAL ACTION REQUIRED:
+Verify story status and run: *finalize-commit {story_id}
+```
+
+**If Step 7 git commit failed**:
+```
+✅ QA REVIEW COMPLETE - COMMIT FAILED
+Story: {story_id} → Status: Done
+Gate: PASS | Round: {review_round} | Quality: {score}/100
+
+⚠️ Git commit failed: {error_message}
+
+🎯 RETRY COMMIT:
+*finalize-commit {story_id}
+
+Or investigate git error and retry manually.
 ```
 
 #### Gate CONCERNS/FAIL (Need Dev Fix):
