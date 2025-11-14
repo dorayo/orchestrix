@@ -4,12 +4,12 @@ description: >
   workflows, and data for building and managing AI-driven development teams.
 markdownExploder: true
 project:
-  name: "My Project"
+  name: My Project
   type: monolith
   product_repo:
     enabled: false
-    path: ""
-  repository_id: ""
+    path: ''
+  repository_id: ''
   story_assignment:
     auto_filter: false
     assigned_stories: []
@@ -57,4 +57,4 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
-version: 6.1.2
+version: 7.0.0

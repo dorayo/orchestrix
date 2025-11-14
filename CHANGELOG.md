@@ -1,3 +1,19 @@
+# [7.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v6.1.2...v7.0.0) (2025-11-14)
+
+
+### Features
+
+* **multi-repo:** implement complete multi-repository architecture support ([33c5029](https://github.com/dorayo/ORCHESTRIX/commit/33c5029368a680ac7241d2f823c05742d6e1c6c5))
+
+
+### BREAKING CHANGES
+
+* **multi-repo:** none
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [6.1.2](https://github.com/dorayo/ORCHESTRIX/compare/v6.1.1...v6.1.2) (2025-11-14)
 
 
