@@ -81,3 +81,4 @@ dependencies:
   checklists:
     - completion/story-dod-checklist.md
     - validation/dev-implementation-gate.md
+    - validation/dev-completion-steps.md

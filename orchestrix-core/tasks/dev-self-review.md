@@ -202,10 +202,28 @@ Story: {story_id} ready for QA review
 Implementation Gate: {score}% | DoD: {score}% | Test Integrity: PASS
 Round: {N}
 
-Proceeding with status update to Review...
+⚠️⚠️⚠️ CRITICAL - READ THIS ⚠️⚠️⚠️
+
+Self-review validation PASSED, but task is NOT complete yet.
+
+YOU MUST NOW:
+1. Return to implement-story.md
+2. Execute GATE 2: Completion Steps Checklist
+3. Update Dev Agent Record (7 fields)
+4. Update Change Log
+5. Update Story Status to "Review"
+6. Output handoff message as FINAL action
+
+DO NOT:
+❌ Stop here and consider task done
+❌ Output handoff message now (too early)
+❌ Skip completion checklist
+❌ Forget to update story status
+
+NEXT STEP: Continue to implement-story.md GATE 2
 ```
 
-Return control to implement-story.md to complete Review transition.
+**Return control to implement-story.md** - Caller MUST execute completion checklist next.
 
 ### On FAIL
 

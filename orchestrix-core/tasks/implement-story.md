@@ -151,76 +151,97 @@ Use `make-decision.md`:
 
 ### 5. Complete
 
-**Execute these steps in order (ALL MANDATORY):**
+**⚠️ CRITICAL WORKFLOW CHANGE - READ CAREFULLY**:
 
-1. Add Dev Log Final Summary
+This completion phase has **TWO MANDATORY GATES** that must be executed in order:
 
-2. **MANDATORY SELF-REVIEW GATE**:
+---
 
-   **Execute**: `{root}/tasks/dev-self-review.md`
+#### GATE 1: SELF-REVIEW GATE (Quality) ✅
 
-   This executes:
-   - Implementation gate checklist (must pass ≥95%)
-   - Architecture compliance validation
-   - API contract validation (multi-repo)
-   - Test integrity validation
-   - DoD checklist (100% of critical items)
-   - Implementation rounds analysis
+**Execute**: `{root}/tasks/dev-self-review.md`
 
-   **On FAIL**:
-   - HALT immediately
-   - Status remains InProgress
-   - Output detailed failure report with action items
-   - DO NOT proceed to Review
-   - Fix issues and re-run *develop-story
+This validates implementation quality:
+- Implementation gate checklist (must pass ≥95%)
+- Architecture compliance validation
+- API contract validation (multi-repo)
+- Test integrity validation
+- DoD checklist (100% of critical items)
+- Implementation rounds analysis
 
-   **On PASS**:
-   - Self-review report generated
-   - Dev Agent Record updated with self-review results
-   - Proceed with status transition
+**Possible Outcomes**:
 
-   **On ESCALATE** (≥3 rounds with recurring issues):
-   - HALT
-   - Status = Escalated
-   - Output escalation report
-   - Handoff to Architect
-   - EXIT task
+**A) PASS**:
+```
+✅ SELF-REVIEW PASSED
+[Self-review report with scores]
 
-3. Update Dev Agent Record (if not done by self-review):
-   - model, summary, file_list, dev_log_reference
-   - open_issues, implementation_rounds
-   - self_review_result, self_review_date
+⚠️ IMPORTANT: Self-review PASSED
+→ You MUST now return to implement-story.md
+→ Execute GATE 2: Completion Steps Checklist
+→ DO NOT consider task complete until handoff message output
+```
 
-4. Add Change Log entry with transition details:
-   ```
-   | {date} {time} | Dev | InProgress → Review | Round {N}, Self-Review: PASS, Gate: {score}%, Tests: {count}, Files: {count} |
-   ```
+**Action**: Continue to GATE 2 below
 
-5. **VALIDATE STATUS TRANSITION**:
+**B) FAIL**:
+```
+❌ SELF-REVIEW FAILED
+[Detailed failure report]
+```
 
-   **Execute**: `{root}/tasks/utils/validate-agent-permission.md`
+**Action**: HALT, fix issues, re-run *develop-story, DO NOT proceed to GATE 2
 
-   **Input**:
-   ```yaml
-   agent_id: dev
-   story_path: {story_path}
-   action: mark_complete
-   target_status: Review
-   ```
+**C) ESCALATE**:
+```
+🚨 ESCALATED
+[Escalation report]
+```
 
-   **On FAIL**:
-   - Log validation error
-   - HALT with error details
-   - DO NOT update status
+**Action**: Status = Escalated, handoff to Architect, EXIT task immediately
 
-   **On PASS**:
-   - Proceed with status update
+---
 
-6. **UPDATE STORY STATUS FIELD** (REQUIRED):
-   - Set Story Status = `Review`
-   - Verify status update succeeded before proceeding
+#### GATE 2: COMPLETION STEPS CHECKLIST (Execution) ✅
 
-7. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
+**⚠️ CRITICAL**: Only execute this if GATE 1 = PASS
+
+**Execute**: `{root}/tasks/execute-checklist.md`
+
+**Checklist**: `{root}/checklists/validation/dev-completion-steps.md`
+
+**This checklist verifies you completed (100% required)**:
+1. ✅ Dev Log Final Summary written
+2. ✅ Self-review executed and passed
+3. ✅ Dev Agent Record updated (7 fields)
+4. ✅ Change Log entry added
+5. ✅ Status field updated to "Review"
+6. ✅ Handoff message prepared and ready
+
+**Execution Mode**: STRICT
+- Threshold: 100% (25/25 items)
+- On Fail: HALT immediately with missing items list
+- On Pass: Proceed to handoff output
+
+**The checklist will guide you through**:
+- What to update
+- How to format
+- What to verify
+- When to output handoff
+
+**⚠️ DO NOT SKIP THIS CHECKLIST**:
+- This prevents premature task termination
+- Ensures all administrative steps complete
+- Guarantees handoff message output
+- Required for audit compliance
+
+---
+
+#### FINAL OUTPUT: HANDOFF MESSAGE 🎯
+
+**After GATE 2 checklist shows 100% completion**:
+
+**You MUST output this EXACT message format**:
 
 ```
 ✅ IMPLEMENTATION COMPLETE
@@ -235,13 +256,70 @@ Self-Review Results:
 ✅ Test Integrity: PASS
 ✅ DoD Critical Items: 100%
 
-⚠️ Warnings: {list any: open_issues, dev_feedback, minor issues}
+⚠️ Warnings: {list any: open_issues, dev_feedback, minor issues OR "none"}
 
 🎯 HANDOFF TO QA:
 *review {story_id}
 ```
 
-**CRITICAL**: The handoff command `*review {story_id}` MUST be the last line of your output, clearly visible.
+**CRITICAL RULES FOR HANDOFF**:
+1. ✅ Handoff message is your FINAL output
+2. ✅ Command `*review {story_id}` is LAST LINE
+3. ✅ Nothing comes after handoff command
+4. ✅ Message must be clearly visible
+5. ❌ Do NOT add explanations after handoff
+6. ❌ Do NOT say "task complete" after handoff
+7. ❌ Do NOT continue to other topics
+
+---
+
+#### Common Mistake: Premature Termination ❌
+
+**WRONG** (Stopping after GATE 1):
+```
+✅ SELF-REVIEW PASSED
+Story ready for review.
+
+[Agent stops here - WRONG!]
+```
+
+**CORRECT** (Complete both gates):
+```
+✅ SELF-REVIEW PASSED
+→ Proceeding to GATE 2: Completion Steps
+
+[Execute completion checklist]
+[Update all fields]
+[Verify 25/25 items complete]
+
+✅ IMPLEMENTATION COMPLETE
+Story: 2.3 → Status: Review
+[Full handoff message]
+
+🎯 HANDOFF TO QA:
+*review 2.3
+```
+
+---
+
+#### Execution Checklist for You (LLM)
+
+Before ending this task, verify:
+
+- [ ] GATE 1 (Self-review) executed → Result: PASS
+- [ ] GATE 2 (Completion steps) executed → Result: 100%
+- [ ] Dev Log Final Summary written
+- [ ] Dev Agent Record updated with 7 fields
+- [ ] Change Log entry added to story
+- [ ] Story Status field = "Review" (actually changed)
+- [ ] Handoff message prepared
+- [ ] Handoff message output as FINAL action
+- [ ] Command `*review {story_id}` is last line
+- [ ] Task ended immediately after handoff
+
+**If ANY [ ] above**: You are NOT done. Complete missing items.
+
+**If ALL [x] above**: Output handoff message NOW and END.
 
 ## Refs
 - contract-driven-phases.md, coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md

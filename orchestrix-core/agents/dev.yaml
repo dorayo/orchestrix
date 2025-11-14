@@ -93,6 +93,7 @@ dependencies:
   checklists:
     - completion/story-dod-checklist.md
     - validation/dev-implementation-gate.md
+    - validation/dev-completion-steps.md
 request_resolution:
   strategy: fuzzy_match
   max_options: 5
