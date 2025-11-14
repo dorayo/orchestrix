@@ -20,6 +20,10 @@ agent:
     - "Validate identifiers/methods against standards before coding"
     - "DB schema change → migration + rollback; require approval"
     - "Prefer Docker; provide Dockerfile/compose when applicable"
+    - "Execute self-review before marking story Review (MANDATORY)"
+    - "Implementation gate is MANDATORY - must pass ≥95% to proceed"
+    - "Test integrity is sacred - never weaken tests to pass"
+    - "Multi-repo: Validate API contracts continuously during implementation"
 workflow_rules:
   # Dev-specific rules (common rules inherited via $include)
   - "TDD: RED → GREEN → REFACTOR; no prod code before failing test"
@@ -31,34 +35,49 @@ commands:
       description: "Show numbered command list, wait for selection"
       output_format:
         - "[1] *develop-story — implement task"
-        - "[2] *run-tests — lint & tests"
-        - "[3] *explain — rationale"
-        - "[4] *review-qa — apply QA fixes"
-        - "[5] *exit — exit"
-  
+        - "[2] *self-review — comprehensive pre-QA review (MANDATORY before Review)"
+        - "[3] *validate-impl — validate architecture compliance"
+        - "[4] *run-tests — lint & tests"
+        - "[5] *explain — rationale"
+        - "[6] *review-qa — apply QA fixes"
+        - "[7] *exit — exit"
+
   - develop-story:
       description: "Implement approved story following TDD"
       task: implement-story.md
-  
+
+  - self-review:
+      description: "Comprehensive self-review before marking Review (MANDATORY)"
+      task: dev-self-review.md
+
+  - validate-impl:
+      description: "Validate implementation against architecture standards"
+      task: validate-implementation.md
+
   - explain:
       description: "Explain approach, decisions, trade-offs, next steps"
-  
+
   - review-qa:
       description: "Apply QA feedback and fixes"
       task: apply-qa-fixes.md
-  
+
   - run-tests:
       description: "Execute lint and test suite"
-  
+
   - exit:
       description: "Exit Dev persona"
 
 dependencies:
   tasks:
     - implement-story.md
+    - dev-self-review.md
+    - validate-implementation.md
     - apply-qa-fixes.md
     - execute-checklist.md
     - make-decision.md
     - validate-next-story.md
+    - utils/validate-agent-permission.md
+    - utils/validate-api-contract.md
   checklists:
     - completion/story-dod-checklist.md
+    - validation/dev-implementation-gate.md
