@@ -351,25 +351,148 @@ If validation fails: Set Status = `Blocked`, document in Change Log, HALT
 
 ### 8. Execute Decisions
 
-Run via `{root}/tasks/make-decision.md`:
+**Decision Execution Strategy**: Use Decision Evaluator SubAgent with fallback to inline execution.
 
-**A. Architect Review:**
-- Type: `sm-architect-review-needed`
-- Context: `quality_score`, `complexity_indicators`
-- Store result as `architect_review_decision`
-- Extract: `architect_review_result` = `architect_review_decision.result`
+Reference: `{root}/tasks/utils/call-decision-evaluator.md` for invocation pattern.
 
-**B. Test Design Level:**
-- Type: `sm-test-design-level`
-- Context: `complexity_indicators`, `quality_score`, `security_sensitive`
-- Store result as `test_design_decision`
-- Extract: `test_design_level` = `test_design_decision.result`
+#### 8A. Determine Architect Review Requirement
 
-**C. Story Status:**
-- Type: `sm-story-status`
-- Context: `architect_review_result` (from 8A), `test_design_level` (from 8B)
-- Store result as `story_status_decision`
-- Apply: Set story status to `story_status_decision.next_status`
+**Primary: Call Decision Evaluator SubAgent**
+
+```
+@decision-evaluator Please execute decision evaluation:
+
+Decision Type: sm-architect-review-needed
+Context:
+  quality_score: {{quality_score from Step 7}}
+  complexity_indicators: {{complexity_indicators from Step 7}}
+
+Please return the structured result.
+```
+
+**Expected SubAgent Response:**
+```yaml
+status: success
+decision_type: sm-architect-review-needed
+result: [REQUIRED | NOT_REQUIRED | BLOCKED]
+reasoning: "{{explanation}}"
+next_action: "{{action}}"
+```
+
+**Extract Result:**
+- `architect_review_result` = SubAgent response `result` field
+- Store full response as `architect_review_decision`
+
+**Fallback (if SubAgent fails or timeout >30s):**
+```
+⚠️ SubAgent unavailable, using inline fallback
+
+Execute: {root}/tasks/make-decision.md
+Input:
+  decision_type: sm-architect-review-needed
+  context:
+    quality_score: {{quality_score}}
+    complexity_indicators: {{complexity_indicators}}
+
+Extract: architect_review_result = result
+```
+
+#### 8B. Determine Test Design Level
+
+**Primary: Call Decision Evaluator SubAgent**
+
+```
+@decision-evaluator Please execute decision evaluation:
+
+Decision Type: sm-test-design-level
+Context:
+  complexity_indicators: {{complexity_indicators from Step 7}}
+  quality_score: {{quality_score from Step 7}}
+  security_sensitive: {{security_sensitive from Step 7}}
+
+Please return the structured result.
+```
+
+**Expected SubAgent Response:**
+```yaml
+status: success
+decision_type: sm-test-design-level
+result: [Simple | Standard | Comprehensive]
+reasoning: "{{explanation}}"
+next_action: "{{action}}"
+```
+
+**Extract Result:**
+- `test_design_level` = SubAgent response `result` field
+- Store full response as `test_design_decision`
+
+**Fallback (if SubAgent fails or timeout >30s):**
+```
+⚠️ SubAgent unavailable, using inline fallback
+
+Execute: {root}/tasks/make-decision.md
+Input:
+  decision_type: sm-test-design-level
+  context:
+    complexity_indicators: {{complexity_indicators}}
+    quality_score: {{quality_score}}
+    security_sensitive: {{security_sensitive}}
+
+Extract: test_design_level = result
+```
+
+#### 8C. Determine Story Status
+
+**Primary: Call Decision Evaluator SubAgent**
+
+```
+@decision-evaluator Please execute decision evaluation:
+
+Decision Type: sm-story-status
+Context:
+  architect_review_result: {{architect_review_result from 8A}}
+  test_design_level: {{test_design_level from 8B}}
+
+Please return the structured result.
+```
+
+**Expected SubAgent Response:**
+```yaml
+status: success
+decision_type: sm-story-status
+result: [TestDesignComplete | AwaitingArchReview | RequiresRevision | Blocked | Escalated]
+reasoning: "{{explanation}}"
+next_action: [handoff_to_architect | handoff_to_dev | handoff_to_qa_test_design | ...]
+```
+
+**Extract Result:**
+- `final_status` = SubAgent response `result` field
+- `next_action` = SubAgent response `next_action` field
+- Store full response as `story_status_decision`
+- **Apply**: Set story status to `final_status`
+
+**Fallback (if SubAgent fails or timeout >30s):**
+```
+⚠️ SubAgent unavailable, using inline fallback
+
+Execute: {root}/tasks/make-decision.md
+Input:
+  decision_type: sm-story-status
+  context:
+    architect_review_result: {{architect_review_result}}
+    test_design_level: {{test_design_level}}
+
+Extract: final_status = result, next_action = next_action
+```
+
+**Decision Summary:**
+```
+Story Decision Results:
+- Architect Review: {{architect_review_result}}
+- Test Design Level: {{test_design_level}}
+- Story Status: {{final_status}}
+- Next Action: {{next_action}}
+```
 
 ### 9. Record Change Log
 

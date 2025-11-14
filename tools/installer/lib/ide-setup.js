@@ -2341,7 +2341,8 @@ ${cleanedYaml}
       'pm': 'sonnet',
       'dev': 'sonnet-4.5',
       'po': 'sonnet',
-      'ux-expert': 'sonnet'
+      'ux-expert': 'sonnet',
+      'decision-evaluator': 'sonnet'
     };
     return modelMap[agentId] || 'sonnet';
   }
@@ -2358,7 +2359,8 @@ ${cleanedYaml}
       'pm': 'green',
       'dev': 'teal',
       'po': 'yellow',
-      'ux-expert': 'magenta'
+      'ux-expert': 'magenta',
+      'decision-evaluator': 'indigo'
     };
     return colorMap[agentId] || 'blue';
   }
