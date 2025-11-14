@@ -1,3 +1,10 @@
+# [8.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.0.0...v8.1.0) (2025-11-14)
+
+
+### Features
+
+* **multi-repo:** add brownfield enhancement workflow support ([7f937d4](https://github.com/dorayo/ORCHESTRIX/commit/7f937d45c6102fc5b3f16c3e08d28d167e6ad69d))
+
 # [8.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v7.2.0...v8.0.0) (2025-11-14)
 
 
