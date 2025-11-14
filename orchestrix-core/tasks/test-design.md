@@ -144,16 +144,20 @@ Update `{devStoryLocation}/{epic}.{story}.*.md`:
 - Ready for Dev implementation
 ```
 
-### Output 4: Handoff Message
+### Output 4: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
 
 ```text
-✅ Test Design Complete: {epic}.{story}
+✅ TEST DESIGN COMPLETE
+Story: {epic}.{story} → Status: Approved
 
-📋 qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+📋 Test Design: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 📊 {total} scenarios ({unit}U, {int}I, {e2e}E) | P0:{p0} P1:{p1} P2:{p2}
 
-Next: Dev execute 'implement-story {epic}.{story}'
+🎯 HANDOFF TO DEV:
+*develop-story {epic}.{story}
 ```
+
+**CRITICAL**: The handoff command `*develop-story {story_id}` MUST be the last line of your output.
 
 ### Output 5: Trace References
 

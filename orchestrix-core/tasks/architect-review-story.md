@@ -296,12 +296,59 @@ Add entry:
 
 **Update Story**: `Status` field to {{next_status}}
 
-### Output 3: Handoff Message
+### Output 3: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
 
-Based on decision:
-- **Approved**: "Next: {{#if test_design_needed}}QA please execute command `test-design {story_id}`{{else}}Dev please execute command `implement-story {story_id}`{{/if}}"
-- **RequiresRevision**: "Next: SM please execute command `revise-story {story_id}` - {{critical_count}} critical, {{major_count}} major issues"
-- **Escalated**: "Story escalated - requires senior architect/human intervention"
+Based on decision, output the appropriate handoff using exact format:
+
+#### If Approved + Test Design Needed:
+```
+✅ ARCHITECT REVIEW COMPLETE
+Story: {story_id} → Status: AwaitingTestDesign
+Score: {score}/10 | Decision: Approved
+Test Design Level: {test_design_level}
+
+Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
+
+🎯 HANDOFF TO QA:
+*test-design {story_id}
+```
+
+#### If Approved + No Test Design (Simple):
+```
+✅ ARCHITECT REVIEW COMPLETE
+Story: {story_id} → Status: Approved
+Score: {score}/10 | Decision: Approved
+
+Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
+
+🎯 HANDOFF TO DEV:
+*develop-story {story_id}
+```
+
+#### If Requires Revision:
+```
+⚠️ ARCHITECT REVIEW COMPLETE - REVISION REQUIRED
+Story: {story_id} → Status: RequiresRevision
+Score: {score}/10 | Critical: {critical_count} | Major: {major_count}
+
+Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
+
+🎯 HANDOFF TO SM:
+*revise-story {story_id}
+```
+
+#### If Escalated:
+```
+🚨 ESCALATED TO SENIOR ARCHITECT
+Story: {story_id} → Status: Escalated
+Reason: {escalation_reason}
+
+Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
+
+⚠️ Requires human intervention
+```
+
+**CRITICAL**: The handoff command (e.g., `*test-design {story_id}`) MUST be clearly visible as the final line of your output.
 
 ---
 

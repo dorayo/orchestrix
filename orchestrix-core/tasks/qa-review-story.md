@@ -179,6 +179,8 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 ## Completion
 
+**Execute these steps in order (ALL MANDATORY):**
+
 1. Create detailed review report in `{qa.qaReviewsLocation}/{story_id}-qa-r{review_round}.md`
 2. Update Story: QA Review Metadata section
 3. Update Story: QA Review Summary section
@@ -187,38 +189,104 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    ```
    | {{date}} {{time}} | QA | Review → {{next_status}} | Round {{round}}, Gate: {{gate}}, {{issues_count}} issues [QA R{{round}}](docs/qa/reviews/{{story_id}}-qa-r{{round}}.md) |
    ```
-6. **Validate and Update Status:**
-   - If architecture escalation: Status = Escalated, skip gate decision, proceed to handoff
+6. **Validate and Update Status** (REQUIRED):
+   - If architecture escalation: Status = Escalated
    - Else: Use `result.next_status` from gate decision
    - Validate transition via `{root}/data/story-status-transitions.yaml`
    - If validation fails: HALT
-   - If succeeds: Update Status field
+   - **MUST UPDATE Story Status field before proceeding**
 
-### Handoff Message
+7. **Git Commit (ONLY if Gate = PASS and Status = Done)**:
+   ```bash
+   # Stage all changes (story file + code changes)
+   git add -A
 
-Based on the review outcome, output the appropriate handoff message:
+   # Create commit with conventional commit format
+   git commit -m "$(cat <<'EOF'
+   feat(story-{story_id}): complete story {story_title}
 
-- **Architecture Escalation:**
-  ```
-  Next: Architect please execute command `review-escalation {story_id}`
-  ```
+   Story: {story_id} - {story_title}
 
-- **Gate PASS (next_action = mark_story_complete):**
-  ```
-  Story completed! Gate: PASS. {result.reasoning}
-  ```
+   **Implemented**:
+   {list key ACs or features from story}
 
-- **Gate CONCERNS/FAIL (next_action = handoff_to_dev_fix):**
-  ```
-  Next: Dev please execute command `review-qa {story_id}`
-  ```
+   **Files Modified**: {count} files
+   **Tests Added**: {count} tests
+   **QA Gate**: PASS (Round {review_round})
 
-- **Gate FAIL with rework (next_action = handoff_to_dev_rework):**
-  ```
-  Next: Dev please execute command `review-qa {story_id}` - Major rework required
-  ```
+   Quality Score: {quality_score}/100
 
-- **Escalate to Architect (next_action = escalate_to_architect):**
-  ```
-  Next: Architect please execute command `review-escalation {story_id}` - No improvement after multiple reviews
-  ```
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+
+   - Verify commit succeeded
+   - If commit fails, warn user but continue with handoff
+
+8. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
+
+### Handoff Messages
+
+Based on the review outcome, output the appropriate handoff (use exact format):
+
+#### Architecture Escalation:
+```
+⚠️ ESCALATED TO ARCHITECT
+Story: {story_id} → Status: Escalated
+Reason: {escalation_reason}
+
+🎯 HANDOFF TO ARCHITECT:
+*review-escalation {story_id}
+```
+
+#### Gate PASS (Story Complete):
+```
+✅ STORY COMPLETE
+Story: {story_id} → Status: Done
+Gate: PASS | Round: {review_round} | Quality: {score}/100
+{result.reasoning}
+
+📦 Git commit created: {commit_hash}
+
+🎉 STORY {story_id} DONE ✅
+```
+
+#### Gate CONCERNS/FAIL (Need Dev Fix):
+```
+⚠️ QA REVIEW COMPLETE - ISSUES FOUND
+Story: {story_id} → Status: Review (Round {review_round})
+Gate: {CONCERNS|FAIL} | Issues: {issues_count} ({critical}C, {high}H, {medium}M)
+
+Review: docs/qa/reviews/{story_id}-qa-r{review_round}.md
+
+🎯 HANDOFF TO DEV:
+*review-qa {story_id}
+```
+
+#### Gate FAIL with Major Rework:
+```
+❌ QA REVIEW COMPLETE - MAJOR REWORK REQUIRED
+Story: {story_id} → Status: Review (Round {review_round})
+Gate: FAIL | Critical Issues: {critical_count}
+
+Review: docs/qa/reviews/{story_id}-qa-r{review_round}.md
+
+🎯 HANDOFF TO DEV:
+*review-qa {story_id}
+⚠️ Major rework required
+```
+
+#### Escalate to Architect (No Improvement):
+```
+🚨 ESCALATED - NO IMPROVEMENT
+Story: {story_id} → Status: Escalated
+Reason: No improvement after {review_round} rounds
+
+🎯 HANDOFF TO ARCHITECT:
+*review-escalation {story_id}
+```
+
+**CRITICAL**: The handoff command (e.g., `*review {story_id}`) MUST be clearly visible as the final line of your output.

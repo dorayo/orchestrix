@@ -93,23 +93,32 @@ Use `make-decision.md`:
 **Before HALT**: Update Resumption Guide (current_phase, current_subtask, next_steps, context)
 
 ### 5. Complete
-- Add Dev Log Final Summary
-- Execute: {root}/tasks/execute-checklist.md
-  - Checklist: {root}/checklists/completion/story-dod-checklist.md
-- Update Dev Agent Record: model, summary, file_list, dev_log_reference, open_issues, dod_result
-- Change Log: Add entry
-- Status → Ready for Review
 
-**Handoff**:
+**Execute these steps in order (ALL MANDATORY):**
+
+1. Add Dev Log Final Summary
+2. Execute DoD Checklist: `{root}/tasks/execute-checklist.md`
+   - Checklist: `{root}/checklists/completion/story-dod-checklist.md`
+3. Update Dev Agent Record: model, summary, file_list, dev_log_reference, open_issues, dod_result
+4. Add Change Log entry with transition details
+5. **UPDATE STORY STATUS FIELD** (REQUIRED):
+   - Set Story Status = `Review`
+   - Verify status update succeeded before proceeding
+6. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
+
 ```
 ✅ IMPLEMENTATION COMPLETE
-Story: {id} | Status: Ready for Review
+Story: {id} → Status: Review
 Tasks: {done}/{total} | Tests: {count} | Files: {count}
 Dev Log: {path} | DoD: {%}
-Next: QA 'review-story {id}'
+
+⚠️ Warnings: {list any: open_issues, dev_feedback, DoD<100%}
+
+🎯 HANDOFF TO QA:
+*review {story_id}
 ```
 
-Warn if: open_issues, dev_feedback, DoD < 100%
+**CRITICAL**: The handoff command `*review {story_id}` MUST be the last line of your output, clearly visible.
 
 ## Refs
 - contract-driven-phases.md, coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md

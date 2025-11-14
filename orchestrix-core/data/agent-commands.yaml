@@ -1,0 +1,226 @@
+# Agent Commands Reference
+# Single Source of Truth for all agent commands and handoff formats
+
+version: "1.0.0"
+last_updated: "2025-01-14"
+
+description: >
+  This file defines the canonical commands for each agent.
+  When outputting handoff messages, agents MUST reference this file
+  to ensure correct command format.
+
+agents:
+  sm:
+    id: scrum-master
+    agent_name: SM
+    commands:
+      - name: create-next-story
+        syntax: "*create-next-story"
+        description: "Create next story in sequence"
+        used_for: "Starting new story development"
+
+      - name: revise-story
+        syntax: "*revise-story {story_id}"
+        description: "Revise story based on feedback"
+        used_for: "Fixing story issues from Architect/QA"
+        example: "*revise-story 1.3"
+
+      - name: validate-story
+        syntax: "*validate-story {story_id}"
+        description: "Validate story structure and quality"
+        used_for: "Quality check before review"
+        example: "*validate-story 1.3"
+
+  architect:
+    id: architect
+    agent_name: Architect
+    commands:
+      - name: review-story
+        syntax: "*review-story {story_id}"
+        description: "Review story technical accuracy"
+        used_for: "Technical review of SM-created story"
+        example: "*review-story 1.3"
+        note: "Can also be called as *review {story_id}"
+
+      - name: review-escalation
+        syntax: "*review-escalation {story_id}"
+        description: "Review escalated story issues"
+        used_for: "Handling QA escalations"
+        example: "*review-escalation 1.3"
+
+  qa:
+    id: qa
+    agent_name: QA
+    commands:
+      - name: test-design
+        syntax: "*test-design {story_id}"
+        description: "Design test scenarios and strategy"
+        used_for: "Creating comprehensive test plan"
+        example: "*test-design 1.3"
+
+      - name: review
+        syntax: "*review {story_id}"
+        description: "Review completed implementation"
+        used_for: "QA review of Dev's work"
+        example: "*review 1.3"
+
+      - name: risk-profile
+        syntax: "*risk-profile {story_id}"
+        description: "Generate risk assessment matrix"
+        used_for: "Security and risk analysis"
+        example: "*risk-profile 1.3"
+
+  dev:
+    id: dev
+    agent_name: Dev
+    commands:
+      - name: develop-story
+        syntax: "*develop-story {story_id}"
+        description: "Implement approved story"
+        used_for: "Main development task"
+        example: "*develop-story 1.3"
+        aliases: ["*implement-story"]
+        note: "Primary command is *develop-story"
+
+      - name: review-qa
+        syntax: "*review-qa {story_id}"
+        description: "Apply QA feedback and fixes"
+        used_for: "Fixing issues found by QA"
+        example: "*review-qa 1.3"
+
+# Handoff Workflow Mapping
+# Use this section to determine correct handoff based on workflow state
+
+handoff_scenarios:
+  sm_to_architect:
+    condition: "Story created, Status = AwaitingArchReview"
+    command: "*review-story {story_id}"
+    target_agent: architect
+
+  sm_to_qa_test_design:
+    condition: "Story created, Status = AwaitingTestDesign"
+    command: "*test-design {story_id}"
+    target_agent: qa
+
+  sm_to_dev:
+    condition: "Story created, Status = Approved, test_design_level = Simple"
+    command: "*develop-story {story_id}"
+    target_agent: dev
+
+  architect_to_qa:
+    condition: "Architect approved, test_design_level = Standard/Comprehensive"
+    command: "*test-design {story_id}"
+    target_agent: qa
+
+  architect_to_dev:
+    condition: "Architect approved, test_design_level = Simple"
+    command: "*develop-story {story_id}"
+    target_agent: dev
+
+  architect_to_sm:
+    condition: "Architect found issues, Status = RequiresRevision"
+    command: "*revise-story {story_id}"
+    target_agent: sm
+
+  qa_test_design_to_dev:
+    condition: "QA test design complete, Status = Approved"
+    command: "*develop-story {story_id}"
+    target_agent: dev
+
+  dev_to_qa:
+    condition: "Dev implementation complete, Status = Review"
+    command: "*review {story_id}"
+    target_agent: qa
+
+  qa_to_dev:
+    condition: "QA found issues, Gate = FAIL/CONCERNS"
+    command: "*review-qa {story_id}"
+    target_agent: dev
+
+  qa_to_architect:
+    condition: "QA escalation, architecture concerns"
+    command: "*review-escalation {story_id}"
+    target_agent: architect
+
+  qa_completion:
+    condition: "QA passed, Gate = PASS, Status = Done"
+    command: null
+    target_agent: null
+    message: "Story {story_id} DONE ✅"
+    note: "Terminal state - no handoff needed"
+
+# Quick Reference: Most Common Handoffs
+
+common_handoffs:
+  - from: SM
+    to: Architect
+    command: "*review-story {story_id}"
+
+  - from: Architect
+    to: QA
+    command: "*test-design {story_id}"
+
+  - from: QA (test design)
+    to: Dev
+    command: "*develop-story {story_id}"
+
+  - from: Dev
+    to: QA
+    command: "*review {story_id}"
+
+  - from: QA (issues found)
+    to: Dev
+    command: "*review-qa {story_id}"
+
+  - from: Architect
+    to: SM
+    command: "*revise-story {story_id}"
+
+# Usage Instructions for Agents
+
+usage_instructions: >
+  When you need to output a handoff message:
+
+  1. Load this file: {root}/data/agent-commands.yaml
+  2. Identify your current state and the next agent
+  3. Look up the correct command in the handoff_scenarios section
+  4. Use the EXACT syntax specified (including asterisk and braces)
+  5. Replace {story_id} with the actual story ID (e.g., "1.3")
+  6. Output the handoff command as the FINAL line of your message
+
+  Example:
+  - Current state: Dev completed implementation
+  - Next agent: QA
+  - Look up: dev_to_qa scenario
+  - Command: "*review {story_id}"
+  - Output: "*review 1.3"
+
+validation_rules:
+  - "Command MUST start with asterisk (*)"
+  - "Command MUST match exactly one entry in this file"
+  - "Story ID format: {epic}.{story} (e.g., 1.3, 2.5)"
+  - "Handoff command MUST be the final line of output"
+  - "If unsure, consult this file before outputting handoff"
+
+# Error Prevention
+
+common_mistakes_to_avoid:
+  - mistake: "Using *implement-story instead of *develop-story"
+    correct: "*develop-story {story_id}"
+    note: "Dev's primary command is develop-story, not implement-story"
+
+  - mistake: "Using full sentence format: 'Next: QA please execute *review'"
+    correct: "🎯 HANDOFF TO QA:\n*review {story_id}"
+    note: "Use structured format with emoji prefix"
+
+  - mistake: "Forgetting the asterisk: 'review 1.3'"
+    correct: "*review 1.3"
+    note: "Commands always start with *"
+
+  - mistake: "Using wrong agent command: '*review-story' for QA"
+    correct: "*review {story_id}"
+    note: "QA uses *review, Architect uses *review-story"
+
+  - mistake: "Fabricating commands not in this file"
+    correct: "Consult this file for all valid commands"
+    note: "NEVER invent commands - always reference this file"
