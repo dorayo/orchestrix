@@ -15,8 +15,8 @@ Generate a **detailed mobile architecture document** for a mobile implementation
 
 **Required Documents**:
 - ✅ System Architecture exists at `../product-repo/docs/system-architecture.md`
-- ✅ Front-End Spec exists at `../product-repo/docs/front-end-spec.md` (recommended)
-- ✅ PRD exists at `../product-repo/docs/prd.md` (optional)
+- ✅ PRD exists at `../product-repo/docs/prd.md` (contains UI/UX Goals if front-end-spec is missing)
+- ⚪ Front-End Spec exists at `../product-repo/docs/front-end-spec.md` (optional - use if available, otherwise extract UI/UX from PRD)
 
 **Project Configuration**:
 - ✅ Project mode is `multi-repo` with role in `{ios, android, flutter, react-native}` in `core-config.yaml`
@@ -143,29 +143,45 @@ Does this match your understanding? Ready to proceed with detailed mobile archit
 
 ---
 
-### Step 2: Load Front-End Spec and PRD Context
+### Step 2: Load UI/UX Requirements and PRD Context
 
-Load the Front-End Spec to understand UI/UX requirements and PRD for functional requirements.
+Load UI/UX requirements from Front-End Spec (if available) or PRD's UI Goals section, and functional requirements from PRD.
 
-**Step 2.1: Load Front-End Spec**
+**Step 2.1: Attempt to Load Front-End Spec (Optional)**
 
 ```bash
-# Read Front-End Spec (if exists)
+# Try to read Front-End Spec (optional - gracefully handle if missing)
 FRONTEND_SPEC="$PRODUCT_REPO_PATH/docs/front-end-spec.md"
+
+if [ -f "$FRONTEND_SPEC" ]; then
+  echo "✅ Found Front-End Spec: docs/front-end-spec.md"
+else
+  echo "⚪ Front-End Spec not found (OK - will extract UI/UX from PRD)"
+fi
 ```
 
-**Analysis Focus**:
+**IF Front-End Spec exists**, analyze:
 - What are the core user flows for mobile? (Registration, Login, Product Browsing, Checkout, etc.)
 - What screens are needed?
 - What's the design system? (colors, typography, spacing, components)
 - What are mobile-specific interaction patterns? (swipe gestures, pull-to-refresh, bottom sheets)
 - Platform-specific guidelines? (iOS Human Interface Guidelines, Android Material Design)
 
-**Step 2.2: Load PRD Context**
+**IF Front-End Spec is missing**, note that UI/UX will be extracted from PRD in Step 2.2.
+
+**Step 2.2: Load PRD Context (Required)**
 
 ```bash
-# Read PRD
+# Read PRD (required)
 PRD_PATH="$PRODUCT_REPO_PATH/docs/prd.md"
+
+if [ ! -f "$PRD_PATH" ]; then
+  echo "❌ ERROR: PRD not found at $PRD_PATH"
+  echo "PRD is required for mobile architecture generation"
+  exit 1
+fi
+
+echo "✅ Found PRD: docs/prd.md"
 ```
 
 **Analysis Focus**:
@@ -173,9 +189,17 @@ PRD_PATH="$PRODUCT_REPO_PATH/docs/prd.md"
 - What are the user stories for this platform (target_platform = ios/android/mobile)?
 - What are the mobile-specific non-functional requirements? (offline support, push notifications, biometric auth)
 
+**IF Front-End Spec is missing**, also extract UI/UX from PRD's "User Interface Design Goals" section:
+- Overall UX Vision - What's the high-level UX approach?
+- Key Interaction Paradigms - How should users interact with the app?
+- Core Screens and Views - What are the critical screens?
+- Accessibility - What accessibility level? (None, WCAG AA, WCAG AAA)
+- Branding - Any branding requirements or style guidelines?
+- Target Platforms - Which platforms/devices? (iOS, Android, responsive web)
+
 **Step 2.3: Map User Flows to Screens and Components**
 
-Cross-reference Front-End Spec user flows with PRD stories:
+Cross-reference UI/UX requirements (from Front-End Spec OR PRD UI Goals) with PRD stories:
 - For each user flow, identify required screens
 - For each screen, identify required components (buttons, lists, forms, modals)
 - For each screen, identify state management needs
@@ -183,7 +207,9 @@ Cross-reference Front-End Spec user flows with PRD stories:
 
 **Elicit User Confirmation**:
 ```
-🎨 I've analyzed the Front-End Spec and PRD.
+🎨 I've analyzed the {{ui_source}} and PRD.
+
+{{ui_source}} = "Front-End Spec" if exists, else "PRD UI Goals section"
 
 **Core User Flows Identified**:
 1. {{flow_1}} → Screens: {{screens_1}}
@@ -195,8 +221,12 @@ Cross-reference Front-End Spec user flows with PRD stories:
 
 **Platform**: {{platform}} (iOS Native/Android Native/Flutter/React Native)
 **Design System**:
-- Primary Color: {{primary_color}}
+- Primary Color: {{primary_color}} (or TBD if not specified)
 - UI Style: {{ui_style}} (iOS HIG / Material Design / Custom)
+- Accessibility: {{accessibility_level}}
+
+**Note**: {{if_no_frontend_spec_note}}
+Example: "Front-End Spec not available - extracted UI/UX vision from PRD. Detailed design system will be refined during implementation."
 
 Does this match your vision? Ready to design app architecture?
 ```
@@ -546,11 +576,13 @@ All mobile development will reference this document to ensure consistency with s
 
 ## Notes for Agent Execution
 
-- **Context Management**: This task requires significant context (system-architecture.md + front-end-spec.md + PRD + user interactions). Recommend using **Web interface with large context window** (Gemini 1M+).
+- **Context Management**: This task requires significant context (system-architecture.md + PRD + optional front-end-spec.md + user interactions). Recommend using **Web interface with large context window** (Gemini 1M+).
 
 - **System Architecture is Constraint**: All API calls MUST be defined in system-architecture.md. If mobile app needs an API not in system-arch, either add it to system-arch or remove it from mobile app.
 
-- **Front-End Spec is Blueprint**: UI screens, design system, user flows MUST match front-end-spec.md (or adapt for mobile patterns).
+- **UI/UX Source Flexibility**:
+  - **IF Front-End Spec exists**: UI screens, design system, user flows MUST match front-end-spec.md (or adapt for mobile patterns)
+  - **IF Front-End Spec is missing**: Extract UI/UX requirements from PRD's "User Interface Design Goals" section. This is common for brownfield projects or mobile-only additions.
 
 - **Template Reference**: This task uses `mobile-architecture-tmpl.yaml` for output format. Do NOT duplicate template content in this task file.
 
@@ -562,7 +594,7 @@ All mobile development will reference this document to ensure consistency with s
 
 - ✅ Mobile architecture document exists at `docs/architecture.md`
 - ✅ All API calls reference APIs from system-architecture.md (Step 3 validation passed)
-- ✅ Screen structure covers all user flows from Front-End Spec/PRD
+- ✅ Screen structure covers all user flows from Front-End Spec (if available) or PRD UI Goals
 - ✅ Architecture pattern is clear and appropriate for chosen platform
 - ✅ State management strategy is well-defined
 - ✅ API integration pattern includes error handling and token refresh
@@ -619,7 +651,8 @@ All mobile API calls MUST be pre-approved in system-architecture.md to ensure mo
 
 ## Related Tasks
 
-- **Prerequisites**: `create-system-architecture.md` (Product repo), `ux-create-front-end-spec.md` (Product repo)
+- **Prerequisites**: `create-system-architecture.md` (Product repo)
+- **Optional Prerequisites**: `ux-create-front-end-spec.md` (Product repo - recommended but not required)
 - **Parallel**: `create-backend-architecture.md`, `create-frontend-architecture.md`
 - **Next Steps**: `sm-create-next-story.md` (Story creation for mobile)
 

@@ -15,8 +15,8 @@ Generate a **detailed frontend architecture document** for a frontend implementa
 
 **Required Documents**:
 - ✅ System Architecture exists at `../product-repo/docs/system-architecture.md`
-- ✅ Front-End Spec exists at `../product-repo/docs/front-end-spec.md` (recommended)
-- ✅ PRD exists at `../product-repo/docs/prd.md` (optional)
+- ✅ PRD exists at `../product-repo/docs/prd.md` (contains UI/UX Goals if front-end-spec is missing)
+- ⚪ Front-End Spec exists at `../product-repo/docs/front-end-spec.md` (optional - use if available, otherwise extract UI/UX from PRD)
 
 **Project Configuration**:
 - ✅ Project mode is `multi-repo` with role `frontend` in `core-config.yaml`
@@ -67,11 +67,12 @@ fi
 
 echo "✅ Found system architecture: docs/system-architecture.md"
 
-# Check if front-end spec exists
+# Check if front-end spec exists (optional)
 FRONTEND_SPEC="$PRODUCT_REPO_PATH/docs/front-end-spec.md"
-if [ ! -f "$FRONTEND_SPEC" ]; then
-  echo "⚠️ WARNING: Front-End Spec not found at $FRONTEND_SPEC"
-  echo "This is recommended but not required. Proceeding without UI/UX specifications."
+if [ -f "$FRONTEND_SPEC" ]; then
+  echo "✅ Found Front-End Spec: docs/front-end-spec.md"
+else
+  echo "⚪ Front-End Spec not found (OK - will extract UI/UX from PRD)"
 fi
 
 echo "✅ Prerequisites validated. Proceeding with frontend architecture generation..."
@@ -145,28 +146,44 @@ Does this match your understanding? Ready to proceed with detailed frontend arch
 
 ---
 
-### Step 2: Load Front-End Spec and PRD Context
+### Step 2: Load UI/UX Requirements and PRD Context
 
-Load the Front-End Spec to understand UI/UX requirements and PRD for functional requirements.
+Load UI/UX requirements from Front-End Spec (if available) or PRD's UI Goals section, and functional requirements from PRD.
 
-**Step 2.1: Load Front-End Spec**
+**Step 2.1: Attempt to Load Front-End Spec (Optional)**
 
 ```bash
-# Read Front-End Spec
+# Try to read Front-End Spec (optional - gracefully handle if missing)
 FRONTEND_SPEC="$PRODUCT_REPO_PATH/docs/front-end-spec.md"
+
+if [ -f "$FRONTEND_SPEC" ]; then
+  echo "✅ Found Front-End Spec: docs/front-end-spec.md"
+else
+  echo "⚪ Front-End Spec not found (OK - will extract UI/UX from PRD)"
+fi
 ```
 
-**Analysis Focus**:
+**IF Front-End Spec exists**, analyze:
 - What are the core user flows? (Registration, Login, Product Browsing, Checkout, etc.)
 - What screens/pages are needed?
 - What's the design system? (colors, typography, spacing, components)
 - What are the interaction patterns? (modals, drawers, tabs, infinite scroll)
 
-**Step 2.2: Load PRD Context**
+**IF Front-End Spec is missing**, note that UI/UX will be extracted from PRD in Step 2.2.
+
+**Step 2.2: Load PRD Context (Required)**
 
 ```bash
-# Read PRD
+# Read PRD (required)
 PRD_PATH="$PRODUCT_REPO_PATH/docs/prd.md"
+
+if [ ! -f "$PRD_PATH" ]; then
+  echo "❌ ERROR: PRD not found at $PRD_PATH"
+  echo "PRD is required for frontend architecture generation"
+  exit 1
+fi
+
+echo "✅ Found PRD: docs/prd.md"
 ```
 
 **Analysis Focus**:
@@ -174,9 +191,17 @@ PRD_PATH="$PRODUCT_REPO_PATH/docs/prd.md"
 - What are the user stories for this platform (target_platform = frontend)?
 - What are the UI-specific non-functional requirements? (accessibility, responsiveness, performance)
 
+**IF Front-End Spec is missing**, also extract UI/UX from PRD's "User Interface Design Goals" section:
+- Overall UX Vision - What's the high-level UX approach?
+- Key Interaction Paradigms - How should users interact with the application?
+- Core Screens and Views - What are the critical screens/pages?
+- Accessibility - What accessibility level? (None, WCAG AA, WCAG AAA)
+- Branding - Any branding requirements or style guidelines?
+- Target Platforms - Which platforms/devices? (Web Responsive, Desktop Only, Mobile Only)
+
 **Step 2.3: Map User Flows to Pages and Components**
 
-Cross-reference Front-End Spec user flows with PRD stories:
+Cross-reference UI/UX requirements (from Front-End Spec OR PRD UI Goals) with PRD stories:
 - For each user flow, identify required pages/screens
 - For each page, identify required components (pages, layouts, shared, feature components)
 - For each component, identify state management needs
@@ -184,7 +209,9 @@ Cross-reference Front-End Spec user flows with PRD stories:
 
 **Elicit User Confirmation**:
 ```
-🎨 I've analyzed the Front-End Spec and PRD.
+🎨 I've analyzed the {{ui_source}} and PRD.
+
+{{ui_source}} = "Front-End Spec" if exists, else "PRD UI Goals section"
 
 **Core User Flows Identified**:
 1. {{flow_1}} → Pages: {{pages_1}}
@@ -195,8 +222,12 @@ Cross-reference Front-End Spec user flows with PRD stories:
 **Estimated Components**: {{component_estimate}}
 
 **Design System**:
-- Primary Color: {{primary_color}}
+- Primary Color: {{primary_color}} (or TBD if not specified)
 - UI Framework: {{ui_framework}} (Material-UI, Ant Design, Chakra UI, etc.)
+- Accessibility: {{accessibility_level}}
+
+**Note**: {{if_no_frontend_spec_note}}
+Example: "Front-End Spec not available - extracted UI/UX vision from PRD. Detailed design system will be refined during implementation."
 - Responsive Breakpoints: {{breakpoints}}
 
 Does this match your vision? Ready to design component architecture?
@@ -509,11 +540,13 @@ All frontend development will reference this document to ensure consistency with
 
 ## Notes for Agent Execution
 
-- **Context Management**: This task requires significant context (system-architecture.md + front-end-spec.md + PRD + user interactions). Recommend using **Web interface with large context window** (Gemini 1M+).
+- **Context Management**: This task requires significant context (system-architecture.md + PRD + optional front-end-spec.md + user interactions). Recommend using **Web interface with large context window** (Gemini 1M+).
 
 - **System Architecture is Constraint**: All API calls MUST be defined in system-architecture.md. If frontend needs an API not in system-arch, either add it to system-arch or remove it from frontend-arch.
 
-- **Front-End Spec is Blueprint**: UI components, design system, user flows MUST match front-end-spec.md.
+- **UI/UX Source Flexibility**:
+  - **IF Front-End Spec exists**: UI components, design system, user flows MUST match front-end-spec.md
+  - **IF Front-End Spec is missing**: Extract UI/UX requirements from PRD's "User Interface Design Goals" section. This is common for brownfield projects or backend-first development.
 
 - **Template Reference**: This task uses `front-end-architecture-tmpl.yaml` for output format. Do NOT duplicate template content in this task file.
 
@@ -528,7 +561,7 @@ All frontend development will reference this document to ensure consistency with
 
 - ✅ Frontend architecture document exists at `docs/ui-architecture.md` or `docs/architecture.md`
 - ✅ All API calls reference APIs from system-architecture.md (Step 3 validation passed)
-- ✅ Component architecture covers all pages from Front-End Spec
+- ✅ Component architecture covers all pages from Front-End Spec (if available) or PRD UI Goals
 - ✅ State management strategy is clear and appropriate for chosen framework
 - ✅ Routing structure covers all user flows
 - ✅ API integration pattern is defined with error handling and token refresh
@@ -585,7 +618,8 @@ All frontend API calls MUST be pre-approved in system-architecture.md to ensure 
 
 ## Related Tasks
 
-- **Prerequisites**: `create-system-architecture.md` (Product repo), `ux-create-front-end-spec.md` (Product repo)
+- **Prerequisites**: `create-system-architecture.md` (Product repo)
+- **Optional Prerequisites**: `ux-create-front-end-spec.md` (Product repo - recommended but not required)
 - **Parallel**: `create-backend-architecture.md`, `create-mobile-architecture.md`
 - **Next Steps**: `sm-create-next-story.md` (Story creation for frontend)
 

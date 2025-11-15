@@ -21,8 +21,8 @@ Generate a **system-level architecture document** for multi-repository projects.
 ## Prerequisites
 
 **Required Documents**:
-- ✅ PRD exists at `docs/prd.md`
-- ✅ Front-End Spec exists at `docs/front-end-spec.md` (if UI components are involved)
+- ✅ PRD exists at `docs/prd.md` (contains UI/UX Goals if front-end-spec is missing)
+- ⚪ Front-End Spec exists at `docs/front-end-spec.md` (optional - use if available, otherwise extract UI/UX from PRD)
 - ⚠️ **Brownfield Mode** (if applicable): `docs/existing-system-integration.md` (multi-repo) or `docs/existing-system-analysis.md` (single-repo)
 
 **Project Configuration**:
@@ -91,14 +91,16 @@ Check which analysis document exists to determine mode:
 **Step 1.2: Load Documents**
 
 **All Modes**:
-1. **PRD** (`docs/prd.md`)
+1. **PRD** (`docs/prd.md`) - REQUIRED
    - Functional requirements
-   - Technical assumptions
+   - Technical assumptions (including Repository Structure)
    - Epic and Story list
-2. **Front-End Spec** (`docs/front-end-spec.md`) (if exists)
+   - **IF no Front-End Spec**: Also contains UI/UX Design Goals section
+2. **Front-End Spec** (`docs/front-end-spec.md`) - OPTIONAL
    - UI/UX requirements
    - Platform scope
    - Design system
+   - **NOTE**: If this file doesn't exist, extract UI/UX from PRD's "User Interface Design Goals" section
 
 **Brownfield Multi-Repo Mode (Additional)**:
 3. **Existing System Integration Analysis** (`docs/existing-system-integration.md`)
@@ -167,7 +169,9 @@ Check that current repository role is 'product':
 
 **Greenfield**:
 ```
-📖 I've loaded the PRD and Front-End Spec. Based on my analysis:
+📖 I've loaded the PRD {{and_frontend_spec}}. Based on my analysis:
+
+{{and_frontend_spec}} = "and Front-End Spec" if exists, else "(Front-End Spec not found - extracted UI/UX from PRD)"
 
 **Mode**: Greenfield (New Project)
 
@@ -185,7 +189,9 @@ Does this match your understanding?
 
 **Brownfield Multi-Repo**:
 ```
-📖 I've loaded the PRD, Front-End Spec, and Existing System Integration Analysis.
+📖 I've loaded the PRD{{, Front-End Spec if available,}} and Existing System Integration Analysis.
+
+{{Note if Front-End Spec missing}}: "Front-End Spec not found - extracted UI/UX requirements from PRD's UI Goals section"
 
 **Mode**: Brownfield Multi-Repository Enhancement
 
