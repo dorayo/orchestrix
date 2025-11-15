@@ -36,7 +36,6 @@ prd:
   prdFile: docs/prd.md
   prdSharded: true
   prdShardedLocation: docs/prd
-  epicsLocation: docs/epics          # Location of epic YAML files (multi-repo mode)
   epicFilePattern: epic-{n}*.md
 architecture:
   architectureFile: docs/architecture.md

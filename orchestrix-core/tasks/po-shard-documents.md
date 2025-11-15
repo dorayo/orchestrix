@@ -67,16 +67,13 @@ HALT: Cannot proceed in implementation repository
 
 ## MONOLITH MODE (Existing Behavior)
 
-Use existing process - create epic markdown files in configured epics location:
-
-**Epics Location**:
-- Read from `config.prd.epicsLocation` (defaults to `docs/epics` if not set)
+Use existing process - create epic markdown files in `docs/epics/`:
 
 1. Read PRD
 2. Identify major features/epics
 3. Create epic markdown files (e.g., `epic-1-user-auth.md`)
 4. Each epic contains stories in markdown format
-5. Output: `{config.prd.epicsLocation}/epic-{N}-{slug}.md`
+5. Output: `docs/epics/epic-{N}-{slug}.md`
 
 **HANDOFF**:
 ```
@@ -216,14 +213,14 @@ For each story, define specific, measurable deliverables:
 ### 6. Create Epic YAML Files
 
 **Step 6.1: Create Epic Directory**
-- Path: `{config.prd.epicsLocation}/` (from core-config.yaml, defaults to `docs/epics/`)
+- Path: `docs/epics/`
 - Create if doesn't exist
 
 **Step 6.2: For Each Epic, Create YAML File**
 
-Filename: `{config.prd.epicsLocation}/epic-{N}-{slug}.yaml`
+Filename: `docs/epics/epic-{N}-{slug}.yaml`
 
-Example: `{config.prd.epicsLocation}/epic-1-user-auth.yaml` (typically `docs/epics/epic-1-user-auth.yaml`)
+Example: `docs/epics/epic-1-user-auth.yaml`
 
 **File Structure** (follow `{root}/data/epic-story-mapping-schema.yaml`):
 
