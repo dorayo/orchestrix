@@ -310,6 +310,126 @@ sections:
               - Specify UI/UX requirements and framework adherence where applicable
               - Avoid cross-cutting concerns that should be in other stories or PRD sections
 
+  - id: epic-planning
+    title: Epic Planning
+    instruction: |
+      ⚠️  CRITICAL SECTION - This section will be used for story creation across all repositories.
+
+      This section consolidates all epic and story definitions into structured YAML format.
+      During PO *shard, this PRD will be split into docs/prd/*.md using md-tree,
+      and the YAML blocks below will be preserved in the sharded files for SM agents to read.
+
+      For EACH epic defined in the "Epic Details" section above, create a corresponding
+      YAML block below using this exact format:
+
+      ## Epic {{N}}: {{Epic Title from Epic Details}}
+
+      **Epic Summary:** {{2-3 sentence summary from epic details}}
+
+      **Target Repositories:** {{List applicable repository types: backend, frontend, ios, android, mobile}}
+
+      ```yaml
+      epic_id: {{N}}
+      title: "{{Epic Title}}"
+      description: |
+        {{Epic goal and description from epic details section}}
+
+      stories:
+        - id: "{{N}}.1"
+          title: "{{Story title from Epic Details}}"
+          repository_type: {{backend|frontend|ios|android|flutter|react-native|monolith}}
+          acceptance_criteria_summary: |
+            {{Consolidate all ACs from Epic Details into paragraph form}}
+          estimated_complexity: {{low|medium|high}}
+          priority: {{P0|P1|P2}}
+          provides_apis: []  # For backend stories: list of "METHOD /path"
+          consumes_apis: []  # For frontend/mobile stories: list of "METHOD /path"
+          cross_repo_dependencies: []  # List of "Story ID - Description" if any
+
+        - id: "{{N}}.2"
+          title: "{{Next story title}}"
+          repository_type: {{backend|frontend|ios|android|flutter|react-native|monolith}}
+          acceptance_criteria_summary: |
+            {{Consolidate ACs}}
+          estimated_complexity: {{low|medium|high}}
+          priority: {{P0|P1|P2}}
+          provides_apis: []
+          consumes_apis: []
+          cross_repo_dependencies: []
+      ```
+
+      IMPORTANT INSTRUCTIONS:
+
+      1. **One YAML block per epic** - Do not combine multiple epics in one YAML block
+      2. **repository_type is MANDATORY** - This field determines which implementation repo gets each story
+      3. **Maintain epic/story IDs** - Must match the IDs from Epic Details section (Epic 1 → epic_id: 1, Story 1.3 → id: "1.3")
+      4. **APIs tracking**:
+         - Backend stories MUST list APIs they provide in provides_apis
+         - Frontend/mobile stories MUST list APIs they consume in consumes_apis
+         - Use format: "METHOD /path" (e.g., "POST /api/users", "GET /api/users/:id")
+      5. **Cross-repo dependencies**:
+         - If a story depends on another story (possibly in different repo), list in cross_repo_dependencies
+         - Format: "Story ID - Brief description" (e.g., "1.2 - Backend auth API must be complete")
+      6. **Acceptance criteria consolidation**:
+         - Convert numbered AC list from Epic Details into flowing paragraph form
+         - Keep all critical acceptance points but make it readable as a summary
+      7. **For monolith projects**: Use repository_type: monolith for all stories
+
+      EXAMPLE (Multi-repo project):
+
+      ## Epic 1: User Authentication System
+
+      **Epic Summary:** Implement complete user authentication across backend API and frontend UI, including registration, login, and session management.
+
+      **Target Repositories:** backend, frontend
+
+      ```yaml
+      epic_id: 1
+      title: "User Authentication System"
+      description: |
+        Establish foundation and core infrastructure for user authentication.
+        Backend will provide secure API endpoints for user registration and login.
+        Frontend will provide intuitive UI for authentication flows.
+
+      stories:
+        - id: "1.1"
+          title: "Backend - User Registration and Login API"
+          repository_type: backend
+          acceptance_criteria_summary: |
+            User can register with email and password. Password must be hashed using bcrypt.
+            User can login with correct credentials and receive JWT token. Invalid credentials
+            return appropriate error. All endpoints return proper HTTP status codes and error messages.
+          estimated_complexity: medium
+          priority: P0
+          provides_apis:
+            - "POST /api/users"
+            - "POST /api/auth/login"
+            - "POST /api/auth/logout"
+            - "GET /api/auth/me"
+          consumes_apis: []
+          cross_repo_dependencies: []
+
+        - id: "1.2"
+          title: "Frontend - User Registration and Login UI"
+          repository_type: frontend
+          acceptance_criteria_summary: |
+            Registration form with email and password fields, with client-side validation.
+            Login form with email and password fields. Form submission calls backend API.
+            Successful login stores token and redirects to dashboard. Errors are displayed
+            clearly to the user. Forms are responsive and accessible (WCAG AA).
+          estimated_complexity: medium
+          priority: P0
+          provides_apis: []
+          consumes_apis:
+            - "POST /api/users"
+            - "POST /api/auth/login"
+            - "GET /api/auth/me"
+          cross_repo_dependencies:
+            - "1.1 - Backend auth API must be complete"
+      ```
+
+      Now create YAML blocks for ALL epics defined in your Epic Details section above.
+
   - id: checklist-results
     title: Checklist Results Report
     instruction: Before running the checklist and drafting the prompts, offer to output the full updated PRD. If outputting it, confirm with the user that you will be proceeding to run the checklist and produce the report. Once the user confirms, execute the pm-checklist and populate the results in this section.

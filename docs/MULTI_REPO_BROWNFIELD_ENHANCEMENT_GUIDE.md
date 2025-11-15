@@ -580,24 +580,27 @@ Once you have the enhanced system architecture, proceed with standard Orchestrix
 
 **What This Does**:
 
-- ✅ Shards `docs/prd.md` → `docs/prd/epic-*.yaml` (multi-repo format)
-- ✅ Shards `docs/architecture/system-architecture.md` → Multiple system-level architecture files
+- ✅ Shards `docs/prd.md` → `docs/prd/*.md` (preserves epic YAML blocks embedded in PRD)
+- ✅ Shards `docs/system-architecture.md` → `docs/system-architecture/*.md` (multiple system-level architecture files)
 - ⚠️ **Does NOT** shard implementation repository architectures (those are sharded separately in each repo)
 
 **Important Clarifications**:
 
-1. **What gets sharded here**: Only **system-level** documents in Product repo
-2. **What does NOT get sharded**: Implementation repository architectures (backend/frontend/mobile)
-3. **Why separate**: System architecture coordinates all repos; implementation architectures detail execution
-4. **Timing**: Run this **after** creating system-architecture.md, **before** creating implementation architectures
+1. **What gets sharded here**: Only **system-level** documents in Product repo (PRD and system architecture)
+2. **Epic storage**: Epics are embedded as YAML code blocks in PRD's "Epic Planning" section, preserved after sharding
+3. **What does NOT get sharded**: Implementation repository architectures (backend/frontend/mobile)
+4. **Why separate**: System architecture coordinates all repos; implementation architectures detail execution
+5. **Timing**: Run this **after** creating system-architecture.md, **before** creating implementation architectures
 
 **Output** (in Product repo):
 
 ```
 docs/
-├── epics/
-│   ├── epic-1-*.yaml         # ⭐ Multi-repo epic format (cross-repo dependencies)
-│   └── epic-2-*.yaml
+├── prd/                       # ⭐ Sharded from prd.md (contains epic YAML blocks)
+│   ├── 01-overview.md
+│   ├── 02-requirements.md
+│   ├── 03-epic-planning.md    # Contains epic YAML blocks with cross-repo story mapping
+│   └── 04-appendix.md
 └── system-architecture/       # ⭐ Sharded from system-architecture.md
     ├── 00-system-overview.md      # System-level coordination docs
     ├── 01-repository-topology.md  # Which repos exist, how they relate
@@ -605,6 +608,34 @@ docs/
     ├── 03-integration-strategy.md # Auth, data formats, error handling
     ├── 04-deployment.md           # Deployment coordination
     └── 05-cross-cutting-concerns.md # Security, performance, observability
+```
+
+**Epic Format** (embedded in prd.md, preserved in prd/03-epic-planning.md):
+
+```yaml
+epic_id: 1
+title: "User Authentication"
+description: |
+  Implement complete authentication system across all platforms
+
+stories:
+  - id: "1.1"
+    title: "Backend - Auth API"
+    repository_type: backend  # ⭐ Used for story filtering by SM
+    acceptance_criteria_summary: |
+      User can register and login...
+    provides_apis:
+      - "POST /api/auth/login"
+    ...
+
+  - id: "1.2"
+    title: "Frontend - Login UI"
+    repository_type: frontend  # ⭐ Filtered to frontend repo
+    consumes_apis:
+      - "POST /api/auth/login"
+    cross_repo_dependencies:
+      - "1.1 - Backend auth API must be complete"
+    ...
 ```
 
 **Next**: Create detailed implementation architectures for each repository (Step 5)
@@ -779,7 +810,12 @@ cd my-app-web
 @sm *create-next-story
 ```
 
-SM will create stories based on epics, respecting repository boundaries.
+**How SM finds epics**:
+
+- SM reads epic YAML blocks from Product Repo's `docs/prd/*.md` files (sharded PRD)
+- Filters stories by `repository_type` matching current repo's role (backend/frontend/ios/android)
+- Creates only the stories assigned to this repository
+- Respects cross-repository dependencies
 
 ### Step 7: Implement and Review
 
@@ -838,10 +874,10 @@ SM will create stories based on epics, respecting repository boundaries.
 
 ### 📄 `prd.md` (Product Repo)
 
-**Role**: Requirements document
+**Role**: Requirements document with embedded epic definitions
 **Path**: Product repo `docs/prd.md`
-**Content**: What to build (multi-repository enhancement plan)
-**Sharded?**: ✅ Yes → `docs/prd/epic-*.yaml`
+**Content**: What to build (multi-repository enhancement plan) + epic YAML blocks
+**Sharded?**: ✅ Yes → `docs/prd/*.md` (epic YAML blocks preserved in sharded files)
 **Dev Loads?**: ❌ No (PO and SM use it)
 **Used By**: Architect (Step 3), PO (sharding), SM (story creation)
 **Scope**: System-wide
@@ -851,7 +887,10 @@ SM will create stories based on epics, respecting repository boundaries.
 - Enhancement goals (AI recommendations)
 - Functional requirements (FR1, FR2, ...)
 - Repository impact assessment (backend + web + ios)
-- Epics and stories (cross-repository coordination)
+- **Epic Planning section** with YAML code blocks:
+  - Epic definitions with cross-repository story mapping
+  - Stories with `repository_type` field for filtering
+  - Cross-repo dependencies and API contracts
 
 ### 📄 `architecture/system-architecture.md` (Product Repo)
 

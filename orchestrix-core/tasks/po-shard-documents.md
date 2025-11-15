@@ -1,18 +1,21 @@
-# PO - Shard Documents (Unified)
+# PO - Shard Documents
 
 ## Purpose
 
-Automatically shard all configured documents:
-1. **PRD → Epics**: Create epic YAML files (multi-repo) or epic MD files (monolith)
+Automatically shard all configured documents using `md-tree` CLI tool:
+
+1. **PRD → Sharded PRD**: Split prd.md into docs/prd/*.md (preserves epic YAML blocks)
 2. **Architecture** (if exists): Shard into section files for better context management
 
-Uses `md-tree` CLI tool when available for fast, reliable sharding.
+Epic definitions are embedded as YAML code blocks in prd.md (created by PM in "Epic Planning" section).
+After sharding, these YAML blocks remain in the sharded prd files for SM agents to read and filter by repository_type.
 
 ## Prerequisites
 
-1. PRD document exists and is complete
-2. Architecture documents exist (especially for multi-repo projects)
+1. PRD document exists at `docs/prd.md` with "Epic Planning" section containing YAML blocks
+2. Architecture documents exist (for multi-repo: `docs/system-architecture.md`, for monolith: `docs/architecture.md`)
 3. Core config file exists at `{root}/core-config.yaml`
+4. `md-tree` CLI tool is installed: `npm install -g @kayvan/markdown-tree-parser`
 
 ## Task Instructions
 
@@ -23,11 +26,13 @@ Uses `md-tree` CLI tool when available for fast, reliable sharding.
 ```bash
 if command -v md-tree &> /dev/null; then
   USE_MD_TREE=true
-  echo "✅ md-tree available - using fast CLI tool for architecture sharding"
+  echo "✅ md-tree available - using fast CLI tool for sharding"
 else
   USE_MD_TREE=false
-  echo "⚠️ md-tree not found. Architecture sharding will be skipped."
-  echo "📦 To enable: npm install -g @kayvan/markdown-tree-parser"
+  echo "❌ ERROR: md-tree not found"
+  echo "📦 Required: npm install -g @kayvan/markdown-tree-parser"
+  echo "HALT: Cannot proceed without md-tree"
+  exit 1
 fi
 ```
 
@@ -39,14 +44,14 @@ fi
 
 ```yaml
 project:
-  mode: single-repo | multi-repo
+  mode: monolith | multi-repo
   multi_repo:
     role: product | backend | frontend | ios | android
 ```
 
 **Determine mode**:
-- If `mode = single-repo` OR `mode` not set: **MONOLITH MODE** → Use existing single-repo epic format
-- If `mode = multi-repo` AND `role = product`: **MULTI-REPO MODE** → Create epic YAML files with cross-repo mapping
+- If `mode = monolith` OR `mode` not set: **MONOLITH MODE**
+- If `mode = multi-repo` AND `role = product`: **MULTI-REPO PRODUCT MODE**
 - If `mode = multi-repo` AND `role ∈ {backend, frontend, ios, android, mobile, shared, admin}`: **ERROR** → HALT with message below
 
 **ERROR Message for Implementation Repositories**:
@@ -59,7 +64,7 @@ Repository: {repository_id}
 
 REASON: Document sharding must be performed in either:
 - Product repository (mode: multi-repo, role: product) for multi-repo projects
-- Monolith repository (mode: single-repo) for single-repo projects
+- Monolith repository (mode: monolith) for single-repo projects
 
 ACTION: Navigate to the Product repository and run *shard there.
 
@@ -68,501 +73,243 @@ HALT: Cannot proceed in implementation repository
 
 ---
 
-## MONOLITH MODE (Existing Behavior)
+### 2. Shard PRD Document
 
-Use existing process - create epic markdown files in `docs/epics/`:
+**Purpose**: Split prd.md into multiple section files. Epic YAML blocks in the "Epic Planning" section will be preserved in the sharded files.
 
-1. Read PRD
-2. Identify major features/epics
-3. Create epic markdown files (e.g., `epic-1-user-auth.md`)
-4. Each epic contains stories in markdown format
-5. Output: `docs/epics/epic-{N}-{slug}.md`
+**Step 2.1: Check if PRD exists**
 
-**HANDOFF**:
-```
-✅ EPIC SHARDING COMPLETE
-Created {N} epics
+```bash
+PRD_FILE="docs/prd.md"
 
-🎯 HANDOFF TO SM:
-*create-next-story
-```
+if [ ! -f "$PRD_FILE" ]; then
+  echo "❌ ERROR: PRD not found at $PRD_FILE"
+  echo "ACTION: Create PRD first using PM agent"
+  echo "HALT: Cannot proceed without PRD"
+  exit 1
+fi
 
----
-
-## MULTI-REPO MODE (New Behavior)
-
-### 1. Load Required Documents
-
-**Step 1.1: Read PRD**
-- Path: `docs/prd.md` (or from config)
-- Extract all features and requirements
-
-**Step 1.2: Read Architecture Documents**
-- Path: `docs/architecture/` (or from config)
-- Key files:
-  - `system-architecture.md` - Extract repository list
-  - `api-contracts.md` - Extract API endpoints (if exists)
-
-**Step 1.3: Identify Target Repositories**
-
-From system architecture document, identify:
-- Backend repository name (e.g., `my-product-backend`)
-- Frontend repository name (e.g., `my-product-web`)
-- Mobile repositories (e.g., `my-product-ios`, `my-product-android`)
-
-Example extraction:
-```
-Found repositories:
-- my-product-backend (type: backend)
-- my-product-web (type: frontend)
-- my-product-ios (type: ios)
+echo "📄 PRD document found: $PRD_FILE"
 ```
 
-### 2. Identify Epics and Stories
+**Step 2.2: Check if PRD already sharded**
 
-**Progress Feedback**:
-```
-🔍 STEP 2: Analyzing PRD for Epics and Stories...
-📄 Reading: docs/prd.md
-```
+```bash
+PRD_SHARDED=$(grep "prdSharded:" core-config.yaml | awk '{print $2}')
 
-**Step 2.1: Identify Epics from PRD**
+if [ "$PRD_SHARDED" = "true" ]; then
+  echo "⚠️ WARNING: PRD already sharded (prdSharded: true in core-config.yaml)"
+  echo "📁 Existing shards location: docs/prd/"
+  echo ""
+  echo "❓ Do you want to re-shard? This will:"
+  echo "   - Delete existing docs/prd/ directory"
+  echo "   - Re-create prd shards from docs/prd.md"
+  echo ""
+  read -p "Re-shard PRD? [y/N]: " RESHARD
 
-Parse PRD to identify major features that will become epics:
-- User Authentication
-- Product Management
-- Shopping Cart
-- Payment Processing
-- etc.
-
-Assign epic IDs sequentially (1, 2, 3...)
-
-**Announce**:
-```
-✅ Found {N} epics in PRD:
-  - Epic 1: {title}
-  - Epic 2: {title}
-  ...
-```
-
-**Step 2.2: For Each Epic, Break Down into Repository-Specific Stories**
-
-For each epic, identify stories for each repository:
-
-Example for "User Authentication" epic:
-- **Backend story**: User Registration and Login API
-- **Frontend story**: Login and Registration UI
-- **iOS story**: Login Screen
-- **Android story**: Login Screen
-
-**Story ID format**: `{epic}.{story}` (e.g., `1.1`, `1.2`, `1.3`)
-
-### 3. Define Cross-Repo Dependencies
-
-**Step 3.1: Identify API Provider Stories (Backend)**
-
-Backend stories typically have NO dependencies on other repos.
-
-Mark these stories with:
-- `dependencies: []`
-- `provides_apis: ["POST /api/users", "POST /api/auth/login"]`
-
-**Step 3.2: Identify API Consumer Stories (Frontend/Mobile)**
-
-Frontend/mobile stories depend on backend stories providing the APIs.
-
-Mark these stories with:
-- `dependencies: ["1.1"]` (the backend story ID)
-- `consumes_apis: ["POST /api/auth/login"]`
-
-**Dependency Rules**:
-- Frontend/mobile stories MUST depend on backend stories that provide the APIs they consume
-- Backend stories should NOT depend on frontend/mobile stories
-- Stories within the same epic can have dependencies
-
-### 4. Map API Contracts (if api-contracts.md exists)
-
-**Step 4.1: Load `docs/architecture/api-contracts.md`** (if exists)
-
-**Step 4.2: For Backend Stories (API Providers)**:
-- Extract API endpoints from api-contracts.md
-- Add to story's `provides_apis` list
-- Example: `["POST /api/users", "POST /api/auth/login"]`
-
-**Step 4.3: For Frontend/Mobile Stories (API Consumers)**:
-- Identify which APIs from api-contracts.md this story uses
-- Add to story's `consumes_apis` list
-- Add backend story providing that API to `dependencies`
-
-**If api-contracts.md does NOT exist**:
-- Infer APIs from PRD requirements
-- Document inferred APIs in `provides_apis` and `consumes_apis`
-- **RECOMMEND**: Suggest Architect create api-contracts.md before implementation
-
-### 5. Define Deliverables for Each Story
-
-For each story, define specific, measurable deliverables:
-
-**Backend Story Deliverables**:
-- Database models and migrations
-- API endpoints implementation
-- Business logic services
-- Unit tests (>80% coverage)
-- Integration tests
-- API documentation
-
-**Frontend Story Deliverables**:
-- UI components
-- State management (Redux/Context)
-- API integration
-- Form validation
-- Unit tests
-- E2E tests
-
-**Mobile Story Deliverables**:
-- ViewControllers/Activities/Screens
-- API service layer
-- Local storage (Keychain/SharedPreferences)
-- ViewModel/Presenter
-- Unit tests
-- UI tests
-
-### 6. Create Epic YAML Files
-
-**Progress Feedback**:
-```
-🔍 STEP 6: Creating Epic YAML Files...
-📁 Target directory: docs/epics/
+  if [ "$RESHARD" != "y" ] && [ "$RESHARD" != "Y" ]; then
+    echo "ℹ️ Skipping PRD sharding (already complete)"
+    echo "Proceeding to architecture sharding..."
+  else
+    echo "🗑️ Removing existing prd shards..."
+    rm -rf docs/prd
+    # Update config to mark as not sharded
+    sed -i.bak 's|prdSharded:.*|prdSharded: false|' core-config.yaml
+  fi
+fi
 ```
 
-**Step 6.1: Create Epic Directory**
-- Path: `docs/epics/`
-- Create if doesn't exist
-- **Announce**: `✅ Epic directory ready: docs/epics/`
+**Step 2.3: Shard PRD using md-tree**
 
-**Step 6.2: For Each Epic, Create YAML File**
+```bash
+echo ""
+echo "🔍 STEP 2: Sharding PRD Document..."
+echo "📄 Source: $PRD_FILE"
+echo "📁 Target: docs/prd/"
+echo ""
 
-**Progress Feedback** (for each epic):
-```
-📝 Creating Epic {N}/{total}: {epic_title}
-   - Stories: {story_count}
-   - Repositories: {repo_count}
-   - Output: docs/epics/epic-{N}-{slug}.yaml
-```
+# Use md-tree to shard PRD
+md-tree --input "$PRD_FILE" --output docs/prd
 
-Filename: `docs/epics/epic-{N}-{slug}.yaml`
+if [ $? -ne 0 ]; then
+  echo "❌ ERROR: PRD sharding failed"
+  echo "HALT: Cannot proceed"
+  exit 1
+fi
 
-Example: `docs/epics/epic-1-user-auth.yaml`
-
-**File Structure** (follow `{root}/data/epic-story-mapping-schema.yaml`):
-
-```yaml
-epic_id: 1
-title: "User Authentication"
-description: |
-  Implement complete user authentication system across all platforms.
-  Users can register with email/password, login to receive JWT token,
-  and logout to invalidate session.
-
-target_repositories: [my-product-backend, my-product-web, my-product-ios, my-product-android]
-
-stories:
-  - id: "1.1"
-    title: "Backend - User Registration and Login API"
-    repository: "my-product-backend"
-    repository_type: backend
-    dependencies: []
-    provides_apis:
-      - "POST /api/users"
-      - "POST /api/auth/login"
-      - "POST /api/auth/logout"
-    consumes_apis: []
-    deliverables:
-      - "User model and database migration"
-      - "Registration endpoint with email validation"
-      - "Login endpoint with JWT generation"
-      - "Logout endpoint with token invalidation"
-      - "Unit tests (>80% coverage)"
-      - "Integration tests for auth flow"
-    acceptance_criteria_summary: |
-      User can register with email/password, login to get JWT token,
-      and logout to invalidate token. All endpoints follow api-contracts.md.
-    estimated_complexity: medium
-    priority: P0
-
-  - id: "1.2"
-    title: "Frontend - Login and Registration UI"
-    repository: "my-product-web"
-    repository_type: frontend
-    dependencies: ["1.1"]  # Must wait for backend API
-    provides_apis: []
-    consumes_apis:
-      - "POST /api/users"
-      - "POST /api/auth/login"
-    deliverables:
-      - "Login page component with form validation"
-      - "Registration page component"
-      - "JWT token storage in localStorage"
-      - "Auth context provider for React"
-      - "Unit tests for components"
-      - "E2E tests for login/registration flow"
-    acceptance_criteria_summary: |
-      User can access login page, enter credentials, and be redirected
-      to dashboard on success. Registration form validates inputs.
-    estimated_complexity: medium
-    priority: P0
-
-  - id: "1.3"
-    title: "iOS - Login Screen"
-    repository: "my-product-ios"
-    repository_type: ios
-    dependencies: ["1.1"]
-    provides_apis: []
-    consumes_apis:
-      - "POST /api/auth/login"
-    deliverables:
-      - "LoginViewController with form validation"
-      - "Keychain JWT storage"
-      - "AuthService for API calls"
-      - "UI tests for login flow"
-    acceptance_criteria_summary: |
-      iOS user can login using native UI. Token stored securely.
-    estimated_complexity: medium
-    priority: P1
-
-  - id: "1.4"
-    title: "Android - Login Screen"
-    repository: "my-product-android"
-    repository_type: android
-    dependencies: ["1.1"]
-    provides_apis: []
-    consumes_apis:
-      - "POST /api/auth/login"
-    deliverables:
-      - "LoginActivity with form validation"
-      - "SharedPreferences JWT storage"
-      - "AuthRepository for API calls"
-      - "Instrumented tests for login flow"
-    acceptance_criteria_summary: |
-      Android user can login using Material Design UI.
-    estimated_complexity: medium
-    priority: P1
+echo "✅ PRD sharded successfully to: docs/prd/"
+echo ""
+echo "📋 PRD sections created:"
+ls -1 docs/prd/*.md | xargs -n1 basename
+echo ""
 ```
 
-### 7. Validate Epic YAML Files
+**Step 2.4: Validate Epic YAML blocks exist**
 
-**Step 7.1: Cross-Repo Dependency Validation**
-- ✅ All `dependencies` must reference valid story IDs in the same epic
-- ✅ No circular dependencies (1.2 → 1.1 → 1.2)
-- ✅ Backend stories (API providers) should have no dependencies on frontend stories
-- ✅ All `consumes_apis` must match `provides_apis` from dependency stories
+```bash
+echo "🔍 Validating epic YAML blocks in sharded PRD..."
 
-**Step 7.2: API Contract Validation** (if api-contracts.md exists)
-- ✅ All APIs in `provides_apis` must exist in api-contracts.md
-- ✅ All APIs in `consumes_apis` must exist in api-contracts.md
+# Search for YAML blocks containing epic_id
+EPIC_COUNT=$(grep -r '```yaml' docs/prd/*.md | grep -A 5 'epic_id:' | grep -c 'epic_id:')
 
-**Step 7.3: Repository Validation**
-- ✅ All `repository` values must match actual repository names from architecture
-- ✅ `repository_type` must match repository's actual type
+if [ "$EPIC_COUNT" -eq 0 ]; then
+  echo "⚠️ WARNING: No epic YAML blocks found in sharded PRD"
+  echo ""
+  echo "Expected format in Epic Planning section of prd.md:"
+  echo '```yaml'
+  echo 'epic_id: 1'
+  echo 'title: "Epic Title"'
+  echo 'stories:'
+  echo '  - id: "1.1"'
+  echo '    repository_type: backend'
+  echo '    ...'
+  echo '```'
+  echo ""
+  echo "⚠️ WARNING: SM agents will not be able to create stories without epic definitions"
+  echo ""
+  read -p "Continue anyway? [y/N]: " CONTINUE
 
-**If validation fails**:
-- List all validation errors
-- Ask user to fix or proceed with warnings
-
-### 8. Output Summary
-
-**Count Stories per Repository**:
-
-Example:
-```
-Epic 1 - User Authentication:
-- my-product-backend: 1 story (1.1)
-- my-product-web: 1 story (1.2)
-- my-product-ios: 1 story (1.3)
-- my-product-android: 1 story (1.4)
-
-Epic 2 - Product Management:
-- my-product-backend: 2 stories (2.1, 2.2)
-- my-product-web: 2 stories (2.3, 2.4)
-...
+  if [ "$CONTINUE" != "y" ] && [ "$CONTINUE" != "Y" ]; then
+    echo "HALT: Fix PRD Epic Planning section and re-run *shard"
+    exit 1
+  fi
+else
+  echo "✅ Found $EPIC_COUNT epic definitions in sharded PRD"
+fi
 ```
 
-### 9. Handoff Output
+**Step 2.5: Update core-config.yaml**
 
-**Multi-Repo Mode**:
-```
-✅ EPIC SHARDING COMPLETE (Multi-Repo)
-Created {N} epics with cross-repo story mapping
+```bash
+# Update prd configuration in core-config.yaml
+sed -i.bak 's|prdSharded:.*|prdSharded: true|' core-config.yaml
+sed -i.bak 's|prdShardedLocation:.*|prdShardedLocation: docs/prd|' core-config.yaml
 
-Epic files: docs/epics/epic-*.yaml
-Total stories: {count}
-Repositories involved: {repo_list}
-
-📋 Story Distribution:
-- {backend-repo}: Stories {list}
-- {frontend-repo}: Stories {list}
-- {ios-repo}: Stories {list}
-- {android-repo}: Stories {list}
-
-⚠️ IMPORTANT: Frontend/mobile stories depend on backend stories.
-Ensure backend stories complete first!
-
-📝 Next Steps:
-1. Each repository team should use SM to create their assigned stories
-2. Backend team starts first (no dependencies)
-3. Frontend/mobile teams wait for backend stories marked "Done"
-
-🎯 HANDOFF TO SM (per repository):
-Each repository SM should run: *create-next-story
-SM will automatically filter stories for that repository.
-```
-
-**Monolith Mode**:
-```
-✅ EPIC SHARDING COMPLETE
-Created {N} epics
-
-🎯 HANDOFF TO SM:
-*create-next-story
+echo "✅ Updated core-config.yaml:"
+echo "   - prdSharded: true"
+echo "   - prdShardedLocation: docs/prd"
+echo ""
 ```
 
 ---
 
-## Important Notes
-
-### Multi-Repo Best Practices
-
-1. **Epic Scope**: Keep epics focused (3-7 stories per epic)
-2. **Backend First**: Backend stories should have no dependencies
-3. **Clear Naming**: Story titles should include repository context (e.g., "Backend - ", "Frontend - ")
-4. **API Contracts**: Define all APIs in api-contracts.md before sharding
-5. **Priority**: Use P0 for critical path, P1 for important, P2-P3 for nice-to-have
-6. **Complexity**: Be realistic about complexity estimates
-
-### Dependency Guidelines
-
-- **Backend → Frontend/Mobile**: Valid (frontend depends on backend)
-- **Frontend/Mobile → Backend**: Invalid (backend should not depend on frontend)
-- **Frontend ↔ Frontend**: Valid (if needed)
-- **Circular**: Invalid (detect and break cycles)
-
-### Validation Checklist
-
-Before completing:
-- [ ] All epics have unique IDs (1, 2, 3...)
-- [ ] All stories have unique IDs (1.1, 1.2, 2.1...)
-- [ ] All dependencies reference valid story IDs
-- [ ] No circular dependencies
-- [ ] Backend stories provide APIs that frontend/mobile consume
-- [ ] All API references match api-contracts.md (if exists)
-- [ ] All repository names match architecture document
-- [ ] All stories have clear deliverables
-- [ ] Priority set for all stories (P0-P3)
-
----
-
-## Error Handling
-
-### If PRD Not Found
-```
-❌ ERROR: PRD not found at expected location
-Expected: {prd_path}
-
-ACTION: Create PRD first using PM agent
-HALT: Cannot proceed without PRD
-```
-
-### If Architecture Not Found (Multi-Repo)
-```
-⚠️ WARNING: Architecture documents not found
-Expected: docs/architecture/
-
-RECOMMENDATION: Create architecture documents first using Architect agent
-This includes:
-- system-architecture.md (repository definitions)
-- api-contracts.md (API endpoint definitions)
-
-QUESTION: Proceed with basic epic sharding (using inferred repositories)?
-[Y/N]
-```
-
-### If Implementation Repo Detected
-```
-❌ ERROR: Cannot shard documents in implementation repository
-
-Current project type: {backend|frontend|ios|android}
-Repository ID: {repository_id}
-
-ACTION: Epic sharding must be done in the product-planning repository.
-Navigate to: {product_repo_path}
-Run: *shard-documents
-
-HALT: Cannot proceed in implementation repository
-```
-
----
-
-## Architecture Sharding (Automatic)
+### 3. Shard Architecture Document (if exists)
 
 **After completing PRD sharding**, automatically shard architecture document if it exists.
 
-### Check for Architecture Document
+**Step 3.1: Check for Architecture Document**
 
 ```bash
 # Get architecture file path from config
-ARCH_FILE=$(grep "architectureFile:" {root}/core-config.yaml | awk '{print $2}')
+ARCH_FILE=$(grep "architectureFile:" core-config.yaml | awk '{print $2}')
 
 if [ -z "$ARCH_FILE" ]; then
   echo "ℹ️ No architecture file configured, skipping architecture sharding"
-  exit 0
+else
+  if [ ! -f "$ARCH_FILE" ]; then
+    echo "⚠️ WARNING: Architecture file configured but not found: $ARCH_FILE"
+    echo "   Expected paths:"
+    echo "   - Multi-repo Product: docs/system-architecture.md"
+    echo "   - Monolith: docs/architecture.md"
+    echo ""
+    echo "   Recommendation: Run @architect *create-system-architecture or *document-project first"
+    echo ""
+    echo "ℹ️ Skipping architecture sharding"
+  else
+    echo "📄 Architecture document found: $ARCH_FILE"
+  fi
 fi
-
-if [ ! -f "$ARCH_FILE" ]; then
-  echo "ℹ️ Architecture file not found: $ARCH_FILE, skipping"
-  exit 0
-fi
-
-echo "📄 Architecture document found: $ARCH_FILE"
 ```
 
-### Shard Architecture Document
-
-**If USE_MD_TREE=true** (md-tree is available):
+**Step 3.2: Check if Architecture already sharded**
 
 ```bash
-# Get output directory (same as architecture file without extension)
-ARCH_DIR=$(dirname "$ARCH_FILE")/$(basename "$ARCH_FILE" .md)
+if [ -f "$ARCH_FILE" ]; then
+  ARCH_SHARDED=$(grep "architectureSharded:" core-config.yaml | awk '{print $2}')
 
-# Use md-tree for fast sharding
-md-tree explode "$ARCH_FILE" "$ARCH_DIR"
+  if [ "$ARCH_SHARDED" = "true" ]; then
+    ARCH_DIR=$(grep "architectureShardedLocation:" core-config.yaml | awk '{print $2}')
+    echo "⚠️ WARNING: Architecture already sharded (architectureSharded: true)"
+    echo "📁 Existing shards location: $ARCH_DIR"
+    echo ""
+    read -p "Re-shard architecture? [y/N]: " RESHARD_ARCH
 
-if [ $? -eq 0 ]; then
-  echo "✅ Architecture sharded to: $ARCH_DIR"
-
-  # Update core-config.yaml
-  # Set architectureSharded: true
-  # Set architectureShardedLocation: $ARCH_DIR
-
-  echo ""
-  echo "📋 Architecture sections created:"
-  ls -1 "$ARCH_DIR"/*.md | xargs -n1 basename
-else
-  echo "❌ Architecture sharding failed"
+    if [ "$RESHARD_ARCH" != "y" ] && [ "$RESHARD_ARCH" != "Y" ]; then
+      echo "ℹ️ Skipping architecture re-sharding"
+      ARCH_FILE=""  # Clear to skip sharding
+    else
+      echo "🗑️ Removing existing architecture shards..."
+      rm -rf "$ARCH_DIR"
+      sed -i.bak 's|architectureSharded:.*|architectureSharded: false|' core-config.yaml
+    fi
+  fi
 fi
 ```
 
-**If USE_MD_TREE=false** (md-tree not available):
+**Step 3.3: Shard Architecture using md-tree**
 
+```bash
+if [ -n "$ARCH_FILE" ] && [ -f "$ARCH_FILE" ]; then
+  echo ""
+  echo "🔍 STEP 3: Sharding Architecture Document..."
+  echo "📄 Source: $ARCH_FILE"
+
+  # Determine output directory based on architecture file name
+  # docs/system-architecture.md → docs/system-architecture/
+  # docs/architecture.md → docs/architecture/
+  ARCH_BASE=$(basename "$ARCH_FILE" .md)
+  ARCH_DIR="docs/$ARCH_BASE"
+
+  echo "📁 Target: $ARCH_DIR/"
+  echo ""
+
+  # Use md-tree for sharding
+  md-tree --input "$ARCH_FILE" --output "$ARCH_DIR"
+
+  if [ $? -eq 0 ]; then
+    echo "✅ Architecture sharded to: $ARCH_DIR/"
+    echo ""
+    echo "📋 Architecture sections created:"
+    ls -1 "$ARCH_DIR"/*.md | xargs -n1 basename
+    echo ""
+
+    # Update core-config.yaml
+    sed -i.bak "s|architectureSharded:.*|architectureSharded: true|" core-config.yaml
+    sed -i.bak "s|architectureShardedLocation:.*|architectureShardedLocation: $ARCH_DIR|" core-config.yaml
+
+    echo "✅ Updated core-config.yaml:"
+    echo "   - architectureSharded: true"
+    echo "   - architectureShardedLocation: $ARCH_DIR"
+    echo ""
+  else
+    echo "❌ Architecture sharding failed"
+    echo "⚠️ Continuing without architecture shards"
+  fi
+fi
 ```
-ℹ️ Skipping architecture sharding (md-tree not installed)
 
-To enable architecture sharding:
-npm install -g @kayvan/markdown-tree-parser
+---
 
-Then run: @po *shard
+### 4. Final Report
+
+**Step 4.1: Count epics and stories**
+
+```bash
+# Count epics by counting epic_id occurrences in prd/ files
+TOTAL_EPICS=$(grep -r 'epic_id:' docs/prd/*.md 2>/dev/null | grep -c 'epic_id:')
+
+# Count total stories by counting id fields under stories: sections
+TOTAL_STORIES=$(grep -r -A 1000 'stories:' docs/prd/*.md 2>/dev/null | grep '  - id:' | wc -l | tr -d ' ')
+
+# Detect repository types mentioned in epic YAML blocks
+if [ "$TOTAL_STORIES" -gt 0 ]; then
+  REPO_TYPES=$(grep -r 'repository_type:' docs/prd/*.md 2>/dev/null | awk '{print $NF}' | sort -u | tr '\n' ', ' | sed 's/,$//')
+else
+  REPO_TYPES="none"
+fi
 ```
 
-### Final Report
+**Step 4.2: Display comprehensive summary**
 
 ```
 ═══════════════════════════════════════════════════════
@@ -571,48 +318,188 @@ Then run: @po *shard
 
 📋 PRD SHARDING:
   - Source: docs/prd.md
-  - Output: docs/epics/
-  - Epic YAML files: {N} created
-  - Total stories: {total_stories} across {total_repos} repositories
+  - Output: docs/prd/
+  - Epic definitions: {TOTAL_EPICS} epics found
+  - Total stories: {TOTAL_STORIES} stories across all repos
+  - Repository types: {REPO_TYPES}
   - Status: ✅ Complete
 
 🏗️ ARCHITECTURE SHARDING:
+  {if ARCH_FILE sharded}
   - Source: {ARCH_FILE}
   - Output: {ARCH_DIR}/
-  - Section files: {M} created
-  - Tool: md-tree (fast)
+  - Section files: {count} created
+  - Tool: md-tree
   - Status: ✅ Complete
+  {else}
+  - Status: ⏭️ Skipped (not configured or already sharded)
+  {endif}
 
-⚙️ CONFIGURATION UPDATED:
+⚙️ CONFIGURATION UPDATED (core-config.yaml):
   - prdSharded: true
+  - prdShardedLocation: docs/prd
+  {if ARCH sharded}
   - architectureSharded: true
+  - architectureShardedLocation: {ARCH_DIR}
+  {endif}
 
 📊 EPIC SUMMARY:
-{for each epic}
-  Epic {N}: {title}
-    - Stories: {count}
-    - Repositories: {list}
-{end for}
+  Epic YAML blocks are embedded in docs/prd/*.md files.
+  SM agents will read these files, extract YAML blocks, and filter
+  stories by repository_type matching their repository role.
+
+  Example epic file location: docs/prd/XX-epic-planning.md
 
 🎯 NEXT STEPS:
-  1. SM can create stories: *create-next-story
-  2. Dev will auto-load: devLoadAlwaysFiles sections
-  3. Validate config: node tools/utils/validate-multi-repo-config.js .
 
-📚 REFERENCE:
-  - Epic files: docs/epics/epic-*.yaml
-  - Story schema: orchestrix-core/data/epic-story-mapping-schema.yaml
-  - Enhancement guide: docs/MULTI_REPO_BROWNFIELD_ENHANCEMENT_GUIDE.md
+  **For Monolith Projects:**
+    SM can create stories: @sm *create-next-story
+    SM will read epics from docs/prd/ and create all stories locally.
+
+  **For Multi-Repo Projects:**
+    1. Each implementation repository SM runs: @sm *create-next-story
+    2. SM automatically reads epics from: {PRODUCT_REPO_PATH}/docs/prd/
+    3. SM filters stories by repository_type matching current repo role
+    4. SM creates only the stories assigned to this repository
+
+  **Story Creation Logic:**
+    - Backend repo (role: backend) → gets stories with repository_type: backend
+    - Frontend repo (role: frontend) → gets stories with repository_type: frontend
+    - iOS repo (role: ios) → gets stories with repository_type: ios
+    - Android repo (role: android) → gets stories with repository_type: android
+
+═══════════════════════════════════════════════════════
 ```
 
 ---
 
-## References
+## Important Notes
 
-- **Schema**: `{root}/data/epic-story-mapping-schema.yaml`
-- **API Contracts Template**: `{root}/templates/api-contracts-tmpl.yaml`
-- **Config**: `{root}/core-config.yaml`
+### Epic Format in PRD
+
+Epics are defined in the "Epic Planning" section of prd.md using YAML code blocks:
+
+```markdown
+## Epic Planning
+
+### Epic 1: User Authentication
+
+**Epic Summary:** Complete user authentication system
+
+**Target Repositories:** backend, frontend
+
+```yaml
+epic_id: 1
+title: "User Authentication"
+description: |
+  Implement user authentication across all platforms
+
+stories:
+  - id: "1.1"
+    title: "Backend Auth API"
+    repository_type: backend
+    acceptance_criteria_summary: |
+      User can register and login...
+    estimated_complexity: medium
+    priority: P0
+    provides_apis:
+      - "POST /api/auth/login"
+    consumes_apis: []
+    cross_repo_dependencies: []
+```
+```
+
+After sharding, this YAML block will be preserved in one of the prd/*.md files.
+
+### Multi-Repo Best Practices
+
+1. **Epic definitions in Product Repo**: All epics defined in Product repo's prd.md
+2. **Story filtering**: Each implementation repo's SM filters by repository_type
+3. **repository_type is mandatory**: Every story must have repository_type field
+4. **Cross-repo dependencies**: Use cross_repo_dependencies field to track dependencies
+5. **API tracking**: Backend stories list provides_apis, frontend/mobile list consumes_apis
+
+### Sharding Benefits
+
+1. **Consistency**: Both PRD and architecture use md-tree for sharding
+2. **Maintainability**: Single source of truth (prd.md), shards auto-generated
+3. **Clarity**: Epic data lives where it belongs (in PRD)
+4. **Simplicity**: No separate docs/epics/ directory needed
 
 ---
 
-**END OF TASK**
+## Error Handling
+
+### If PRD Not Found
+
+```
+❌ ERROR: PRD not found at expected location
+Expected: docs/prd.md
+
+ACTION: Create PRD first using PM agent
+HALT: Cannot proceed without PRD
+```
+
+### If md-tree Not Installed
+
+```
+❌ ERROR: md-tree not found
+
+The md-tree CLI tool is required for document sharding.
+
+INSTALLATION:
+npm install -g @kayvan/markdown-tree-parser
+
+After installation, run: @po *shard
+
+HALT: Cannot proceed without md-tree
+```
+
+### If No Epic YAML Blocks Found
+
+```
+⚠️ WARNING: No epic YAML blocks found in sharded PRD
+
+Expected format in Epic Planning section of prd.md:
+```yaml
+epic_id: 1
+title: "Epic Title"
+stories:
+  - id: "1.1"
+    repository_type: backend
+    ...
+```
+
+SM agents will not be able to create stories without epic definitions.
+
+ACTION: Add Epic Planning section to prd.md following template format.
+Then re-run: @po *shard
+```
+
+### If Implementation Repo Detected
+
+```
+❌ ERROR: Cannot shard documents in implementation repository
+
+Current project type: {backend|frontend|ios|android}
+Repository ID: {repository_id}
+
+ACTION: Document sharding must be done in the product repository.
+Navigate to: {product_repo_path}
+Run: @po *shard
+
+HALT: Cannot proceed in implementation repository
+```
+
+---
+
+## Migration from Old Format
+
+If you have an existing project with docs/epics/*.yaml files:
+
+1. **Migrate epic data to prd.md**: Add "Epic Planning" section to prd.md with YAML blocks
+2. **Delete old epics directory**: `rm -rf docs/epics/`
+3. **Update core-config.yaml**: Set `prdSharded: false`
+4. **Run sharding**: `@po *shard`
+
+The new format embeds epic data in PRD where it conceptually belongs, then shards naturally with the rest of the PRD content.

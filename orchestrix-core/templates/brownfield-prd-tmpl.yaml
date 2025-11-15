@@ -308,3 +308,132 @@ sections:
               - template: "IV1: {{existing_functionality_verification}}"
               - template: "IV2: {{integration_point_verification}}"
               - template: "IV3: {{performance_impact_verification}}"
+
+  - id: epic-planning
+    title: Epic Planning
+    instruction: |
+      ⚠️  CRITICAL SECTION - This section will be used for story creation across all repositories.
+
+      This section consolidates all epic and story definitions into structured YAML format.
+      During PO *shard, this PRD will be split into docs/prd/*.md using md-tree,
+      and the YAML blocks below will be preserved in the sharded files for SM agents to read.
+
+      For EACH epic defined in the "Epic Details" section above, create a corresponding
+      YAML block below using this exact format:
+
+      ## Epic {{N}}: {{Epic Title from Epic Details}}
+
+      **Epic Summary:** {{2-3 sentence summary from epic details}}
+
+      **Target Repositories:** {{List applicable repository types: backend, frontend, ios, android, mobile}}
+
+      **Integration Notes:** {{Brief note on how this epic integrates with existing system}}
+
+      ```yaml
+      epic_id: {{N}}
+      title: "{{Epic Title}}"
+      description: |
+        {{Epic goal and integration requirements from epic details section}}
+
+      stories:
+        - id: "{{N}}.1"
+          title: "{{Story title from Epic Details}}"
+          repository_type: {{backend|frontend|ios|android|flutter|react-native|monolith}}
+          acceptance_criteria_summary: |
+            {{Consolidate all ACs from Epic Details into paragraph form, including integration verification}}
+          estimated_complexity: {{low|medium|high}}
+          priority: {{P0|P1|P2}}
+          provides_apis: []  # For backend stories: list of "METHOD /path"
+          consumes_apis: []  # For frontend/mobile stories: list of "METHOD /path"
+          cross_repo_dependencies: []  # List of "Story ID - Description" if any
+
+        - id: "{{N}}.2"
+          title: "{{Next story title}}"
+          repository_type: {{backend|frontend|ios|android|flutter|react-native|monolith}}
+          acceptance_criteria_summary: |
+            {{Consolidate ACs including integration verification}}
+          estimated_complexity: {{low|medium|high}}
+          priority: {{P0|P1|P2}}
+          provides_apis: []
+          consumes_apis: []
+          cross_repo_dependencies: []
+      ```
+
+      IMPORTANT INSTRUCTIONS FOR BROWNFIELD:
+
+      1. **One YAML block per epic** - Do not combine multiple epics in one YAML block
+      2. **repository_type is MANDATORY** - This field determines which implementation repo gets each story
+      3. **Maintain epic/story IDs** - Must match the IDs from Epic Details section
+      4. **Include Integration Verification** - Brownfield stories must verify existing functionality remains intact
+      5. **APIs tracking**:
+         - Backend stories MUST list APIs they provide in provides_apis
+         - Frontend/mobile stories MUST list APIs they consume in consumes_apis
+         - Include both new APIs and modified existing APIs
+         - Use format: "METHOD /path" (e.g., "POST /api/users", "GET /api/users/:id")
+      6. **Cross-repo dependencies**:
+         - If a story depends on another story (possibly in different repo), list in cross_repo_dependencies
+         - Format: "Story ID - Brief description" (e.g., "1.2 - Backend enhancement must be deployed")
+      7. **Acceptance criteria consolidation**:
+         - Convert numbered AC list AND Integration Verification points into flowing paragraph form
+         - Ensure both new functionality and existing system integrity are captured
+      8. **For monolith projects**: Use repository_type: monolith for all stories
+
+      EXAMPLE (Brownfield multi-repo enhancement):
+
+      ## Epic 1: AI-Powered Search Enhancement
+
+      **Epic Summary:** Add AI-powered semantic search to existing search functionality while maintaining backward compatibility with current keyword-based search.
+
+      **Target Repositories:** backend, frontend
+
+      **Integration Notes:** Enhances existing search service without breaking current search API contracts. Frontend will gracefully upgrade to AI search while keeping fallback to keyword search.
+
+      ```yaml
+      epic_id: 1
+      title: "AI-Powered Search Enhancement"
+      description: |
+        Enhance existing search functionality with AI-powered semantic search capabilities.
+        Backend will add new AI search endpoints while maintaining existing search API.
+        Frontend will integrate AI search UI while preserving current search experience.
+
+      stories:
+        - id: "1.1"
+          title: "Backend - AI Search Service Integration"
+          repository_type: backend
+          acceptance_criteria_summary: |
+            New AI search endpoint returns semantically relevant results using vector embeddings.
+            Existing keyword search endpoint continues to work unchanged. New endpoint follows
+            existing API conventions (pagination, filtering, sorting). Performance metrics show
+            AI search responds within 500ms for typical queries. Existing search tests still pass.
+            New integration tests cover AI search functionality.
+          estimated_complexity: high
+          priority: P0
+          provides_apis:
+            - "POST /api/search/ai"
+            - "GET /api/search/ai/suggestions"
+          consumes_apis:
+            - "POST /external/openai/embeddings"
+          cross_repo_dependencies: []
+
+        - id: "1.2"
+          title: "Frontend - AI Search UI Component"
+          repository_type: frontend
+          acceptance_criteria_summary: |
+            Search bar shows "AI Search" toggle option. When enabled, uses AI search endpoint.
+            When disabled, uses existing keyword search (backward compatible). Search results
+            display is enhanced to show relevance scores. Existing search functionality remains
+            unchanged when AI toggle is off. UI components follow existing design system.
+            Accessibility standards (WCAG AA) maintained. Loading states and error handling
+            match existing patterns.
+          estimated_complexity: medium
+          priority: P0
+          provides_apis: []
+          consumes_apis:
+            - "POST /api/search/ai"
+            - "GET /api/search/ai/suggestions"
+            - "GET /api/search"
+          cross_repo_dependencies:
+            - "1.1 - Backend AI search API must be complete and deployed"
+      ```
+
+      Now create YAML blocks for ALL epics defined in your Epic Details section above.

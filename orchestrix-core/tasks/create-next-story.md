@@ -96,94 +96,187 @@ Load `{root}/core-config.yaml`. If missing: HALT with "core-config.yaml not foun
 
 Extract: `devStoryLocation`, `prd.*`, `architecture.*`, `workflow.*`
 
+**Determine PRD shards location**:
+- If `prdSharded` = true: Use `prdShardedLocation` (e.g., `docs/prd`)
+- If `prdSharded` = false: HALT with "PRD not sharded. Run @po *shard first"
+
 **If Multi-Repo Mode**: Override document paths to product repo:
-- `prd_location` = `{product_repo_path}/docs/prd.md`
+- `prd_sharded_location` = `{product_repo_path}/{prdShardedLocation}` (e.g., `../product-repo/docs/prd`)
 - `architecture_location` = `{product_repo_path}/docs/architecture`
-- `epics_location` = `{product_repo_path}/docs/epics`
 - `devStoryLocation` remains in current repo (local stories)
+
+**If Monolith Mode**:
+- `prd_sharded_location` = `{prdShardedLocation}` (e.g., `docs/prd`)
+- `devStoryLocation` = local `devStoryLocation`
 
 ### 2. Identify Next Story
 
-**If MONOLITH MODE** (existing behavior):
-1. Locate epic files via `prdSharded` config
-2. Load highest `{epicNum}.{storyNum}.story.md` from `devStoryLocation`
-3. If story exists:
-   - Verify status is 'Done', else alert incomplete story
-   - Select next sequential story in current epic
-   - If epic complete, prompt: "Epic {epicNum} Complete. Options: 1) Begin Epic {epicNum+1} 2) Select specific story 3) Cancel"
-   - NEVER auto-skip epics
-4. If no stories: next is 1.1
-5. Announce: "Identified next story: {epicNum}.{storyNum} - {Title}"
+#### 2.1 Load Epic Definitions from Sharded PRD
 
-**If MULTI-REPO MODE** (new behavior):
+**Purpose**: Read epic YAML blocks embedded in sharded PRD files.
 
-#### 2.1 Load Epic YAML Files
+**Path**: `{prd_sharded_location}` (from Step 1)
+- Monolith: `docs/prd/`
+- Multi-repo: `{product_repo_path}/docs/prd/`
 
-**Path**: `{epics_location}` (from Step 1, points to product repo)
+**Step 2.1.1: Verify PRD shards exist**
 
-**Find all epic files**: `{epics_location}/epic-*.yaml`
+```bash
+if [ ! -d "$prd_sharded_location" ]; then
+  echo "❌ ERROR: PRD shards directory not found"
+  echo "📍 Expected location: $prd_sharded_location"
+  echo ""
+  echo "🔍 Possible causes:"
+  echo "  1. PO *shard not run yet"
+  echo "  2. prdSharded flag not set in core-config.yaml"
+  echo ""
+  echo "✅ Fix:"
+  if [ "$PROJECT_MODE" = "multi-repo" ] && [ "$PROJECT_ROLE" != "product" ]; then
+    echo "  1. Navigate to Product repo: cd $product_repo_path"
+    echo "  2. Run PO shard: @po *shard"
+    echo "  3. Verify prd shards created: ls -la $product_repo_path/docs/prd/"
+  else
+    echo "  1. Run PO shard: @po *shard"
+    echo "  2. Verify prd shards created: ls -la docs/prd/"
+  fi
+  exit 1
+fi
 
-If no epic files found: HALT with:
-```
-❌ NO EPIC YAML FILES FOUND
-
-📍 Searched location: {epics_location}
-📍 Pattern: epic-*.yaml
-
-🔍 Possible causes:
-  1. PO shard not run yet in Product repo
-  2. Wrong epics directory
-  3. Epic files not created
-
-✅ Fix:
-  1. Navigate to Product repo: cd {product_repo_path}
-  2. Run PO shard: @po *shard
-  3. Verify epics created: ls -la docs/epics/
-  4. Should see files like: epic-1-*.yaml, epic-2-*.yaml
-
-📚 Reference: Multi-Repo Enhancement Guide - Step 4
+echo "✅ PRD shards found: $prd_sharded_location"
 ```
 
-**Load all epic YAML files** (use `{root}/data/epic-story-mapping-schema.yaml` as reference for structure)
+**Step 2.1.2: Extract Epic YAML blocks from markdown files**
 
-Example epic YAML structure:
-```yaml
-epic_id: 1
-title: "User Authentication"
-target_repositories: [my-product-backend, my-product-web]
-stories:
-  - id: "1.1"
-    title: "Backend - User API"
-    repository: "my-product-backend"
-    repository_type: backend
-    dependencies: []
-    provides_apis: [...]
-    ...
-  - id: "1.2"
-    title: "Frontend - Login UI"
-    repository: "my-product-web"
-    repository_type: frontend
-    dependencies: ["1.1"]
-    ...
+```bash
+echo "📖 Reading epic definitions from PRD shards..."
+
+# Find all markdown files in prd shards directory
+PRD_FILES=$(ls -1 "$prd_sharded_location"/*.md 2>/dev/null)
+
+if [ -z "$PRD_FILES" ]; then
+  echo "❌ ERROR: No markdown files found in $prd_sharded_location"
+  exit 1
+fi
+
+# Extract YAML blocks containing epic definitions
+# Look for ```yaml ... ``` blocks that contain epic_id field
+TEMP_EPICS_FILE="/tmp/orchestrix-epics-$$.yaml"
+> "$TEMP_EPICS_FILE"
+
+for prd_file in $PRD_FILES; do
+  # Extract YAML code blocks (between ```yaml and ```)
+  awk '/```yaml/,/```/ {if (!/```/) print}' "$prd_file" >> "$TEMP_EPICS_FILE"
+  echo "" >> "$TEMP_EPICS_FILE"  # Add separator
+done
+
+# Validate epic YAML blocks found
+EPIC_COUNT=$(grep -c 'epic_id:' "$TEMP_EPICS_FILE" 2>/dev/null || echo "0")
+
+if [ "$EPIC_COUNT" -eq 0 ]; then
+  echo "❌ ERROR: No epic YAML blocks found in PRD shards"
+  echo ""
+  echo "Expected format in prd.md (Epic Planning section):"
+  echo '```yaml'
+  echo 'epic_id: 1'
+  echo 'title: "Epic Title"'
+  echo 'stories:'
+  echo '  - id: "1.1"'
+  echo '    repository_type: backend'
+  echo '    ...'
+  echo '```'
+  echo ""
+  echo "✅ Fix:"
+  echo "  1. Add Epic Planning section to docs/prd.md with YAML blocks"
+  echo "  2. Run PO shard: @po *shard"
+  echo "  3. Re-run story creation: @sm *create-next-story"
+  exit 1
+fi
+
+echo "✅ Found $EPIC_COUNT epic definitions in PRD shards"
 ```
 
-#### 2.2 Filter Stories for Current Repository
+**Step 2.1.3: Parse YAML and extract all stories**
 
-**Current repo ID**: `{current_repo_id}` (from Step 0)
+Parse the extracted YAML blocks to create a list of all stories across all epics.
 
-**Filter all stories**:
-```
+```python
+# Pseudo-code (implement using Python, yq, or similar YAML parser)
+
+all_epics = []
 all_stories = []
-for each epic in loaded epics:
-  for each story in epic.stories:
-    all_stories.append(story)
 
-my_stories = filter(all_stories, story.repository == current_repo_id)
+# Parse YAML blocks from TEMP_EPICS_FILE
+for yaml_block in parse_yaml_blocks(TEMP_EPICS_FILE):
+    if 'epic_id' in yaml_block and 'stories' in yaml_block:
+        epic = yaml_block
+        all_epics.append(epic)
+
+        for story in epic['stories']:
+            # Add epic context to each story
+            story['epic_id'] = epic['epic_id']
+            story['epic_title'] = epic['title']
+            all_stories.append(story)
+
+announce(f"Loaded {len(all_epics)} epics with {len(all_stories)} total stories")
 ```
 
-Announce: `Found {len(my_stories)} stories assigned to {current_repo_id} (Total: {len(all_stories)} across all repos)`
+#### 2.2 Filter Stories by Repository Type
 
-If `len(my_stories) == 0`: HALT with "No stories assigned to this repository ({current_repo_id}) in epics"
+**Determine current repository type**:
+
+```bash
+if [ "$PROJECT_MODE" = "multi-repo" ]; then
+  # Multi-repo: Use repository role (backend, frontend, ios, android, etc.)
+  CURRENT_REPO_TYPE="$PROJECT_ROLE"
+  echo "🔍 Filtering stories for repository_type: $CURRENT_REPO_TYPE"
+elif [ "$PROJECT_MODE" = "monolith" ]; then
+  # Monolith: Accept all repository_type values (or specifically 'monolith')
+  CURRENT_REPO_TYPE="monolith"
+  echo "🔍 Monolith mode: Including all stories"
+else
+  # Default to monolith if mode not set
+  CURRENT_REPO_TYPE="monolith"
+  echo "🔍 Default mode: Including all stories"
+fi
+```
+
+**Filter stories by repository_type**:
+
+```python
+# Pseudo-code
+
+if CURRENT_REPO_TYPE == "monolith":
+    # Monolith mode: Include all stories or filter by repository_type: monolith
+    my_stories = [s for s in all_stories if s.get('repository_type') == 'monolith' or len(all_stories) > 0]
+else:
+    # Multi-repo mode: Filter by matching repository_type
+    my_stories = [s for s in all_stories if s.get('repository_type') == CURRENT_REPO_TYPE]
+
+announce(f"Found {len(my_stories)} stories for repository_type={CURRENT_REPO_TYPE} (Total: {len(all_stories)} across all repos)")
+```
+
+**Validation**:
+
+```bash
+if [ ${#my_stories[@]} -eq 0 ]; then
+  echo "❌ ERROR: No stories assigned to repository_type: $CURRENT_REPO_TYPE"
+  echo ""
+  echo "📊 Available repository types in epics:"
+  # List all unique repository_type values found
+  grep -r 'repository_type:' "$prd_sharded_location"/*.md 2>/dev/null | \
+    awk '{print $NF}' | sort -u
+  echo ""
+  echo "🔍 Current repository configuration:"
+  echo "   - Mode: $PROJECT_MODE"
+  echo "   - Role: $PROJECT_ROLE"
+  echo "   - Repository ID: $CURRENT_REPO_ID"
+  echo ""
+  echo "✅ Fix:"
+  echo "  1. Verify PRD Epic Planning section has stories with repository_type: $CURRENT_REPO_TYPE"
+  echo "  2. Or check core-config.yaml multi_repo.role matches story assignments"
+  exit 1
+fi
+```
 
 #### 2.3 Identify Next Story to Create
 
@@ -192,25 +285,33 @@ If `len(my_stories) == 0`: HALT with "No stories assigned to this repository ({c
 - Example: `1.1-backend-user-api/` → story ID = "1.1"
 
 **Find next story**:
-```
-existing_ids = [list of story IDs already created in devStoryLocation]
+```python
+# Pseudo-code
 
-uncreated_stories = filter(my_stories, story.id NOT IN existing_ids)
+# Get existing story IDs from filesystem
+existing_story_dirs = list_directories(devStoryLocation)
+existing_ids = [extract_story_id(dirname) for dirname in existing_story_dirs]
+# Example: ["1.1", "1.2", "2.1"]
+
+# Filter to uncreated stories
+uncreated_stories = [s for s in my_stories if s['id'] not in existing_ids]
 
 if len(uncreated_stories) == 0:
-  ✅ All stories for this repository have been created!
-  HALT with success message
+    announce("✅ All stories for this repository have been created!")
+    announce(f"Total stories created: {len(existing_ids)}")
+    exit(0)
 
 # Sort by story ID (1.1 < 1.2 < 2.1)
-next_story = sort(uncreated_stories)[0]
+next_story = sort_stories_by_id(uncreated_stories)[0]
 ```
 
-Announce: `Identified next story: {next_story.id} - {next_story.title}`
+Announce: `📌 Identified next story: {next_story.id} - {next_story.title}`
 
 **Store for later steps**:
-- `next_story_id` = next_story.id
+- `next_story_id` = next_story['id']
 - `next_story_definition` = next_story (entire story object from epic YAML)
-- `next_story_epic` = parent epic object
+- `next_story_epic_id` = next_story['epic_id']
+- `next_story_epic_title` = next_story['epic_title']
 
 #### 2.4 Check Cross-Repo Dependencies (Stage 2: Automated)
 

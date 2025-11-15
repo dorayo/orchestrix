@@ -49,7 +49,7 @@ epic:
       minItems: 1
       items:
         type: object
-        required: [id, title, repository, repository_type]
+        required: [id, title, repository_type]
         properties:
           id:
             type: string
@@ -66,13 +66,19 @@ epic:
 
           repository:
             type: string
-            description: Repository name where this story will be implemented
+            description: |
+              Repository name where this story will be implemented.
+              NOTE: This field is optional and primarily used for documentation.
+              Story filtering in SM *create-next-story uses repository_type field instead.
             example: "my-product-backend"
 
           repository_type:
             type: string
             enum: [backend, frontend, ios, android, flutter, react-native, monolith]
-            description: Type of repository
+            description: |
+              Type of repository (REQUIRED for story filtering).
+              This field is used by SM *create-next-story to filter stories for current repository.
+              Must match the repository role in core-config.yaml (project.multi_repo.role).
 
           dependencies:
             type: array

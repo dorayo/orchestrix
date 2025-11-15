@@ -14,12 +14,11 @@ project:
     assigned_stories: []
 prd:
   prdFile: docs/prd.md
-  prdSharded: true
+  prdSharded: false  # Set to true automatically after PO *shard
   prdShardedLocation: docs/prd
-  epicFilePattern: epic-{n}*.md
 architecture:
   architectureFile: docs/architecture.md
-  architectureSharded: true
+  architectureSharded: false  # Set to true automatically after PO *shard
   architectureShardedLocation: docs/architecture
   storyReviewsLocation: docs/architecture/story-reviews
 customTechnicalDocuments: null
