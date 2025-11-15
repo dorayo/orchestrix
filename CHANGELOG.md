@@ -1,3 +1,10 @@
+# [10.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.1.0...v10.2.0) (2025-11-15)
+
+
+### Features
+
+* **architecture:** make front-end-spec optional for all architecture tasks ([4722631](https://github.com/dorayo/ORCHESTRIX/commit/472263102583dd559f6989caaed35a061cc2ef07))
+
 # [10.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.0.0...v10.1.0) (2025-11-15)
 
 
