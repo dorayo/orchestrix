@@ -81,6 +81,7 @@ class ValidationResult {
       this.warnings.forEach(w => {
         console.log(`  ⚠  [${w.category}] ${w.message}`);
         if (w.suggestion) console.log(`     Suggestion: ${w.suggestion}`);
+        if (w.autofix) console.log(`     🔧 Auto-fix: ${w.autofix}`);
       });
       console.log('');
     }
@@ -92,6 +93,7 @@ class ValidationResult {
         if (e.expected) console.log(`     Expected: ${e.expected}`);
         if (e.actual) console.log(`     Actual: ${e.actual}`);
         if (e.fix) console.log(`     Fix: ${e.fix}`);
+        if (e.autofix) console.log(`     🔧 Auto-fix: ${e.autofix}`);
       });
       console.log('');
     }
@@ -101,6 +103,21 @@ class ValidationResult {
     console.log(`Warnings: ${this.warnings.length}`);
     console.log(`Errors: ${this.errors.length}`);
     console.log('');
+
+    // Print helpful commands if there are issues
+    if (this.hasErrors() || this.warnings.length > 0) {
+      console.log('🛠️  HELPFUL COMMANDS:');
+      console.log('');
+      console.log('  Validate Epic YAMLs:');
+      console.log('    node tools/utils/validate-epic-yaml.js docs/epics/');
+      console.log('');
+      console.log('  Check Story Sync:');
+      console.log('    node tools/utils/check-story-sync.js .');
+      console.log('');
+      console.log('  View Migration Guide:');
+      console.log('    cat docs/PHASE_1_MIGRATION_GUIDE.md');
+      console.log('');
+    }
 
     return !this.hasErrors();
   }
