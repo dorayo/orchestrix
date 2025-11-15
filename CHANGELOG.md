@@ -1,3 +1,10 @@
+# [10.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.2.0...v10.3.0) (2025-11-15)
+
+
+### Features
+
+* **po-checklist:** add architecture template compliance validation ([cb9ded6](https://github.com/dorayo/ORCHESTRIX/commit/cb9ded65e92e1b71d520890ffebed158ddb51668))
+
 # [10.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.1.0...v10.2.0) (2025-11-15)
 
 
