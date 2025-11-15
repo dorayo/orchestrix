@@ -1,8 +1,21 @@
-# Aggregate System Architecture (Brownfield)
+# Aggregate System Architecture (Brownfield - LEGACY)
+
+> ⚠️ **DEPRECATED - For Documentation-Only Purposes**
+>
+> **For Enhancement Projects (Adding Features to Existing Systems)**: Use the 3-step Brownfield Enhancement workflow instead:
+> 1. **Step 1**: `*aggregate-system-analysis` - Aggregate existing system analysis
+> 2. **Step 2**: `*create-doc brownfield-prd` - Create enhancement PRD
+> 3. **Step 3**: `*create-system-architecture` - Design enhanced system architecture
+>
+> **This task** (`*aggregate-system-architecture`) is only for pure documentation projects where you need to generate architecture docs from existing code **without planning enhancements**.
+>
+> See: [Multi-Repository Brownfield Enhancement Guide](../../docs/MULTI_REPO_BROWNFIELD_ENHANCEMENT_GUIDE.md)
+
+---
 
 ## Purpose
 
-Generate a **system-level architecture document** for existing (brownfield) multi-repository projects by aggregating information from implementation repositories. This is the **bottom-up** approach, opposite of the greenfield workflow.
+Generate a **system-level architecture document** for existing (brownfield) multi-repository projects by aggregating information from implementation repositories. This is the **bottom-up** approach for documentation-only purposes (legacy workflow).
 
 **Use Case**: You have existing backend, frontend, and/or mobile repositories with code and possibly architecture documents, and you want to create a system-level coordination document that reflects the current state.
 

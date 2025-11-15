@@ -1,8 +1,20 @@
 # Multi-Repository Brownfield Development Guide
 
+> ⚠️ **DEPRECATED - This guide is for documentation-only purposes**
+>
+> **For Enhancement Projects (Adding Features)**: Use the [Multi-Repository Brownfield Enhancement Guide](./MULTI_REPO_BROWNFIELD_ENHANCEMENT_GUIDE.md) instead, which follows the proper 3-step workflow:
+>
+> 1. Aggregate System Analysis (`*aggregate-system-analysis`)
+> 2. Create Brownfield PRD
+> 3. Design Enhanced Architecture
+>
+> **This guide** is only for pure documentation projects where you need to generate architecture docs from existing code without planning enhancements.
+
+---
+
 > **Brownfield**: Working with existing codebases across multiple repositories that need architecture documentation.
 
-This guide walks you through the Orchestrix workflow for documenting and coordinating existing multi-repository projects using **bottom-up aggregation**.
+This guide walks you through the Orchestrix workflow for documenting and coordinating existing multi-repository projects using **bottom-up aggregation** (legacy approach).
 
 ---
 

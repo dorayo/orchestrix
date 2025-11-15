@@ -280,10 +280,18 @@ If result.status = "satisfied" or "no_dependencies":
 
 ## Implementation
 
-This utility should be implemented as a JavaScript module:
-- Path: `{root}/utils/dependency-checker.js`
+This utility is implemented as a JavaScript module:
+- Path: `{root}/../../tools/utils/dependency-checker.js` (relative to orchestrix-core)
+- Absolute path: `<project-root>/tools/utils/dependency-checker.js`
 - Export: `async function checkCrossRepoDependencies(params)`
 - Can be called directly by agents via Node.js execution
+
+**Repository Path Resolution**:
+The implementation supports two modes for resolving repository IDs to file paths:
+1. **Future Mode** (recommended): Use `repository_id` field in `implementation_repos`
+2. **Fallback Mode**: Read `repository_id` from each repo's `core-config.yaml`
+
+This ensures compatibility during the transition to the new schema.
 
 ## Error Handling
 

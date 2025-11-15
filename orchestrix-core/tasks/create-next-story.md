@@ -63,10 +63,13 @@ Load `{root}/core-config.yaml`. If missing: HALT with "core-config.yaml not foun
 
 Extract: `devStoryLocation`, `prd.*`, `architecture.*`, `workflow.*`
 
+**Epics Location**:
+- Extract `epics_location` from `config.prd.epicsLocation` (defaults to `docs/epics` if not set)
+
 **If Multi-Repo Mode**: Override document paths to product repo:
 - `prd_location` = `{product_repo_path}/docs/prd.md`
 - `architecture_location` = `{product_repo_path}/docs/architecture`
-- `epics_location` = `{product_repo_path}/docs/epics`
+- `epics_location` = `{product_repo_path}/{config.prd.epicsLocation}`
 - `devStoryLocation` remains in current repo (local stories)
 
 ### 2. Identify Next Story

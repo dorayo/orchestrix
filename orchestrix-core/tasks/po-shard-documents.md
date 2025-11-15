@@ -45,19 +45,38 @@ project:
 **Determine mode**:
 - If `type = monolith` OR `type` not set: **MONOLITH MODE** → Use existing single-repo epic format
 - If `type = product-planning`: **MULTI-REPO MODE** → Create epic YAML files with cross-repo mapping
-- If `type ∈ {backend, frontend, ios, android}`: **ERROR** → Cannot shard in implementation repo (must be done in product repo)
+- If `type ∈ {backend, frontend, ios, android, mobile, shared, admin}`: **ERROR** → HALT with message below
+
+**ERROR Message for Implementation Repositories**:
+```
+❌ CANNOT SHARD DOCUMENTS IN IMPLEMENTATION REPOSITORY
+
+Current project type: {type}
+Repository: {repository_id}
+
+REASON: Document sharding must be performed in either:
+- Product repository (type: product-planning) for multi-repo projects
+- Monolith repository (type: monolith) for single-repo projects
+
+ACTION: Navigate to the Product repository and run *shard there.
+
+HALT: Cannot proceed in implementation repository
+```
 
 ---
 
 ## MONOLITH MODE (Existing Behavior)
 
-Use existing process - create epic markdown files in `docs/epics/`:
+Use existing process - create epic markdown files in configured epics location:
+
+**Epics Location**:
+- Read from `config.prd.epicsLocation` (defaults to `docs/epics` if not set)
 
 1. Read PRD
 2. Identify major features/epics
 3. Create epic markdown files (e.g., `epic-1-user-auth.md`)
 4. Each epic contains stories in markdown format
-5. Output: `docs/epics/epic-{N}-{slug}.md`
+5. Output: `{config.prd.epicsLocation}/epic-{N}-{slug}.md`
 
 **HANDOFF**:
 ```
@@ -197,14 +216,14 @@ For each story, define specific, measurable deliverables:
 ### 6. Create Epic YAML Files
 
 **Step 6.1: Create Epic Directory**
-- Path: `docs/epics/`
+- Path: `{config.prd.epicsLocation}/` (from core-config.yaml, defaults to `docs/epics/`)
 - Create if doesn't exist
 
 **Step 6.2: For Each Epic, Create YAML File**
 
-Filename: `docs/epics/epic-{N}-{slug}.yaml`
+Filename: `{config.prd.epicsLocation}/epic-{N}-{slug}.yaml`
 
-Example: `docs/epics/epic-1-user-auth.yaml`
+Example: `{config.prd.epicsLocation}/epic-1-user-auth.yaml` (typically `docs/epics/epic-1-user-auth.yaml`)
 
 **File Structure** (follow `{root}/data/epic-story-mapping-schema.yaml`):
 

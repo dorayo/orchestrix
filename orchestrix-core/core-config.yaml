@@ -17,20 +17,26 @@ project:
 # Multi-Repository Configuration (for Product repositories only)
 # Uncomment and configure when project.type is 'product-planning'
 # implementation_repos:
-#   - path: ../my-project-backend
-#     type: backend
-#   - path: ../my-project-web
+#   - repository_id: my-project-backend  # Unique repository identifier (must match Epic YAML)
+#     path: ../my-project-backend        # Relative or absolute path to repository
+#     type: backend                      # Repository type
+#   - repository_id: my-project-web
+#     path: ../my-project-web
 #     type: frontend
-#   - path: ../my-project-ios
+#   - repository_id: my-project-ios
+#     path: ../my-project-ios
 #     type: ios              # Native iOS (Swift/SwiftUI)
-#   - path: ../my-project-android
+#   - repository_id: my-project-android
+#     path: ../my-project-android
 #     type: android          # Native Android (Kotlin/Java)
-#   - path: ../my-project-mobile
+#   - repository_id: my-project-mobile
+#     path: ../my-project-mobile
 #     type: mobile           # Cross-platform (Flutter/React Native)
 prd:
   prdFile: docs/prd.md
   prdSharded: true
   prdShardedLocation: docs/prd
+  epicsLocation: docs/epics          # Location of epic YAML files (multi-repo mode)
   epicFilePattern: epic-{n}*.md
 architecture:
   architectureFile: docs/architecture.md

@@ -13,6 +13,82 @@
 const fs = require('fs');
 const path = require('path');
 const { glob } = require('glob');
+const yaml = require('js-yaml');
+
+/**
+ * Load Product repository configuration
+ *
+ * @param {string} product_repo_path - Absolute path to product repository
+ * @returns {Object|null} Product repo config or null if not found
+ */
+function loadProductRepoConfig(product_repo_path) {
+  const config_path = path.join(product_repo_path, 'core-config.yaml');
+
+  if (!fs.existsSync(config_path)) {
+    return null;
+  }
+
+  try {
+    const config_content = fs.readFileSync(config_path, 'utf8');
+    return yaml.load(config_content);
+  } catch (error) {
+    console.error(`Error loading product repo config: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Build repository ID to path mapping
+ *
+ * Supports two modes:
+ * 1. Future: implementation_repos with repository_id field
+ * 2. Fallback: Read repository_id from each repo's core-config.yaml
+ *
+ * @param {string} product_repo_path - Absolute path to product repository
+ * @param {Object} product_config - Product repo configuration
+ * @returns {Promise<Map<string, string>>} Map of repository_id → absolute_path
+ */
+async function buildRepositoryMapping(product_repo_path, product_config) {
+  const mapping = new Map();
+
+  if (!product_config.implementation_repos || product_config.implementation_repos.length === 0) {
+    return mapping;
+  }
+
+  for (const repo of product_config.implementation_repos) {
+    const repo_path = path.isAbsolute(repo.path)
+      ? repo.path
+      : path.resolve(product_repo_path, repo.path);
+
+    // Mode 1: Use repository_id from implementation_repos (if available)
+    if (repo.repository_id) {
+      mapping.set(repo.repository_id, repo_path);
+      continue;
+    }
+
+    // Mode 2: Fallback - Read repository_id from repo's core-config.yaml
+    try {
+      const repo_config_path = path.join(repo_path, 'core-config.yaml');
+
+      if (!fs.existsSync(repo_config_path)) {
+        console.warn(`Warning: Config not found for repo at ${repo_path}`);
+        continue;
+      }
+
+      const repo_config = yaml.load(fs.readFileSync(repo_config_path, 'utf8'));
+
+      if (repo_config.project && repo_config.project.repository_id) {
+        mapping.set(repo_config.project.repository_id, repo_path);
+      } else {
+        console.warn(`Warning: repository_id not found in ${repo_config_path}`);
+      }
+    } catch (error) {
+      console.error(`Error reading config for ${repo_path}: ${error.message}`);
+    }
+  }
+
+  return mapping;
+}
 
 /**
  * Check if cross-repository dependencies for a story are satisfied
@@ -88,16 +164,36 @@ async function checkCrossRepoDependencies(params) {
     };
   }
 
-  // Step 3: Check each cross-repo dependency status
+  // Step 3: Load Product repo config and build repository mapping
+  const product_config = loadProductRepoConfig(product_repo_path);
+
+  if (!product_config) {
+    return {
+      status: 'error',
+      message: `Cannot load product repository config at ${product_repo_path}/core-config.yaml`,
+      blocking_dependencies: []
+    };
+  }
+
+  const repo_mapping = await buildRepositoryMapping(product_repo_path, product_config);
+
+  // Step 4: Check each cross-repo dependency status
   const blocking_deps = [];
   const satisfied_deps = [];
 
   for (const dep of cross_repo_deps) {
     try {
-      // Step 3.1: Resolve dependency repository path
-      const dep_repo_name = dep.repository;
-      const dep_repo_type = extractLastSegment(dep_repo_name);
-      const dep_repo_path = path.resolve(product_repo_path, '..', dep_repo_type);
+      // Step 4.1: Resolve dependency repository path using mapping
+      const dep_repo_id = dep.repository;
+      const dep_repo_path = repo_mapping.get(dep_repo_id);
+
+      if (!dep_repo_path) {
+        return {
+          status: 'error',
+          message: `Cannot resolve path for repository: ${dep_repo_id}. Check implementation_repos in product repo config.`,
+          blocking_dependencies: [dep.story_id]
+        };
+      }
 
       if (!fs.existsSync(dep_repo_path)) {
         return {
@@ -107,7 +203,7 @@ async function checkCrossRepoDependencies(params) {
         };
       }
 
-      // Step 3.2: Load dependency story file
+      // Step 4.2: Load dependency story file
       const story_pattern = path.join(dep_repo_path, `docs/stories/${dep.story_id}-*`, 'story.md');
       const story_files = await glob(story_pattern, { windowsPathsNoEscape: true });
 
@@ -127,7 +223,7 @@ async function checkCrossRepoDependencies(params) {
 
       const story_file_path = story_files[0];
 
-      // Step 3.3: Extract status from story file
+      // Step 4.3: Extract status from story file
       const story_content = fs.readFileSync(story_file_path, 'utf8');
       const status_match = story_content.match(/\*\*Status\*\*:\s*(\w+)/);
 
@@ -141,7 +237,7 @@ async function checkCrossRepoDependencies(params) {
 
       const dep_status = status_match[1];
 
-      // Step 3.4: Check if status is "Done"
+      // Step 4.4: Check if status is "Done"
       if (dep_status !== 'Done') {
         blocking_deps.push({
           story_id: dep.story_id,
@@ -169,7 +265,7 @@ async function checkCrossRepoDependencies(params) {
     }
   }
 
-  // Step 4: Return final result
+  // Step 5: Return final result
   if (blocking_deps.length > 0) {
     return {
       status: 'blocked',
@@ -183,18 +279,6 @@ async function checkCrossRepoDependencies(params) {
     message: `All ${cross_repo_deps.length} cross-repo dependencies are satisfied (Status: Done)`,
     satisfied_dependencies: satisfied_deps
   };
-}
-
-/**
- * Extract last segment from repository name
- * Example: "my-ecommerce-backend" -> "backend"
- *
- * @param {string} repoName - Repository name
- * @returns {string} Last segment
- */
-function extractLastSegment(repoName) {
-  const parts = repoName.split('-');
-  return parts[parts.length - 1];
 }
 
 /**
@@ -213,7 +297,6 @@ async function main() {
     const [story_id, current_repo_id, product_repo_path, epic_yaml_path] = args;
 
     // Load epic YAML
-    const yaml = require('js-yaml');
     const epic_content = fs.readFileSync(epic_yaml_path, 'utf8');
     const epic = yaml.load(epic_content);
 
@@ -252,7 +335,8 @@ async function main() {
 // Export for use as module
 module.exports = {
   checkCrossRepoDependencies,
-  extractLastSegment
+  buildRepositoryMapping,
+  loadProductRepoConfig
 };
 
 // Run CLI if executed directly
