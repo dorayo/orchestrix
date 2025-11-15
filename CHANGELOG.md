@@ -1,3 +1,10 @@
+## [8.3.1](https://github.com/dorayo/ORCHESTRIX/compare/v8.3.0...v8.3.1) (2025-11-15)
+
+
+### Bug Fixes
+
+* add missing comments and implementation_repos example to core-config.yaml ([a447288](https://github.com/dorayo/ORCHESTRIX/commit/a4472883172fb603b172918e5eb16e006f5acda1))
+
 # [8.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.2.0...v8.3.0) (2025-11-15)
 
 

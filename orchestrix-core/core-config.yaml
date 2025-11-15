@@ -3,46 +3,15 @@ description: >
   The core agent framework for Orchestrix, providing the essential agents,
   workflows, and data for building and managing AI-driven development teams.
 markdownExploder: true
-
-# ============================================================================
-# PROJECT CONFIGURATION
-# ============================================================================
-# Two modes:
-#   - monolith: Single repo (planning + implementation together)
-#   - multi-repo: Multiple repos (product repo + implementation repos)
-#
-# Quick Start: https://github.com/dorayo/ORCHESTRIX/blob/main/docs/QUICK_START_MULTI_REPO.md
-# ============================================================================
-
 project:
   name: My Project
-  mode: monolith  # monolith | multi-repo
-
-  # ========== Multi-Repo Configuration (ignore if mode=monolith) ==========
+  mode: monolith
   multi_repo:
-    # This repo's role: 'product' (planning) OR 'implementation' (development)
-    # For implementation repos, specify type: backend/frontend/ios/android/mobile
-    role: implementation  # product | implementation | backend | frontend | ios | android | mobile
-
-    # Repository ID - must match Epic YAML 'repository' field
-    repository_id: ''  # e.g., 'my-app-backend', 'my-app-web'
-
-    # For implementation repos: path to product repo
-    product_repo_path: ''  # e.g., '../my-app-product'
-
-    # For product repos: list of implementation repositories
-    # Uncomment and configure when role=product:
-    # implementation_repos:
-    #   - repository_id: my-app-backend
-    #     path: ../my-app-backend
-    #     type: backend
-    #   - repository_id: my-app-web
-    #     path: ../my-app-web
-    #     type: frontend
-
-    # Story filtering (optional)
-    auto_filter_stories: false  # Auto-filter by repository_id
-    assigned_stories: []        # Manual list: ['1.1', '1.3']
+    role: implementation
+    repository_id: ''
+    product_repo_path: ''
+    auto_filter_stories: false
+    assigned_stories: []
 prd:
   prdFile: docs/prd.md
   prdSharded: true
@@ -87,4 +56,4 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
-version: 8.3.0
+version: 8.3.1
