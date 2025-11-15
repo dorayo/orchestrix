@@ -1,3 +1,10 @@
+# [8.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.3.1...v8.4.0) (2025-11-15)
+
+
+### Features
+
+* add comprehensive core-config template with detailed documentation ([034e04b](https://github.com/dorayo/ORCHESTRIX/commit/034e04bfe31c35fead55a16d23a1f5fa739f3fc3))
+
 ## [8.3.1](https://github.com/dorayo/ORCHESTRIX/compare/v8.3.0...v8.3.1) (2025-11-15)
 
 
