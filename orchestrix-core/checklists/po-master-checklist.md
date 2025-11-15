@@ -57,6 +57,84 @@ Ask the user if they want to work through the checklist:
 - Section by section (interactive mode) - Review each section, get confirmation before proceeding
 - All at once (comprehensive mode) - Complete full analysis and present report at end]]
 
+## 0. PRD DOCUMENT FORMAT & STRUCTURE VALIDATION
+
+[[LLM: Before validating content, ensure the PRD document structure matches the template. This prevents downstream issues during epic sharding and story creation. Pay special attention to multi-repo configurations and API contract completeness.]]
+
+### 0.1 Core Document Structure
+
+- [ ] PRD contains all required template sections: Goals and Background Context, Requirements, Technical Assumptions, Epic List, Epic Details, Epic Planning
+- [ ] Each section follows the template structure (subsections, format types)
+- [ ] Goals and Background Context includes Change Log table
+- [ ] Requirements section has both Functional (FR prefix) and Non-Functional (NFR prefix) subsections
+- [ ] Next Steps section includes UX Expert Prompt and Architect Prompt
+
+### 0.2 Epic Planning YAML Format [[CRITICAL]]
+
+[[LLM: Epic Planning section contains structured YAML that will be parsed by SM agents. Invalid or incomplete YAML will block story creation.]]
+
+- [ ] Epic Planning section exists and contains YAML blocks
+- [ ] One YAML block per epic (matching Epic Details section)
+- [ ] Each YAML block is properly formatted and parseable
+- [ ] Epic IDs in YAML match Epic IDs in Epic Details section (Epic 1 → epic_id: 1)
+- [ ] Story IDs in YAML match Story IDs in Epic Details section (Story 1.3 → id: "1.3")
+- [ ] All YAML blocks include required fields: `epic_id`, `title`, `description`, `stories`
+- [ ] Each story includes required fields: `id`, `title`, `repository_type`, `acceptance_criteria_summary`, `estimated_complexity`, `priority`, `provides_apis`, `consumes_apis`, `cross_repo_dependencies`
+
+### 0.3 Multi-Repo Configuration Completeness
+
+[[LLM: Multi-repo projects require additional configuration. Missing these will cause epic sharding and story creation failures.]]
+
+- [ ] Technical Assumptions section specifies Repository Structure (Monorepo/Polyrepo/Multi-repo)
+- [ ] If Multi-repo: Repository Details table exists with columns [Repository Name, Type, Technology, Team]
+- [ ] If Multi-repo: All repositories listed with correct naming convention ({project}-{type})
+- [ ] If Multi-repo: Repository types match available options (backend, frontend, ios, android, mobile, shared)
+- [ ] If Monolith: Repository Details section skipped or states "Single repository (monolith architecture)"
+
+### 0.4 Story Repository Assignment [[MULTI-REPO ONLY]]
+
+[[LLM: Each story must be assigned to a specific repository. Skip this subsection for monolith projects.]]
+
+- [ ] All stories have `repository_type` field populated
+- [ ] Repository types match template options: backend, frontend, ios, android, flutter, react-native, monolith
+- [ ] Story repository types align with Repository Details table entries
+- [ ] For multi-repo: No stories use `repository_type: monolith`
+- [ ] For monolith: All stories use `repository_type: monolith`
+- [ ] Stories with `repository_type != monolith` have `repository-name` field populated
+- [ ] Repository names in stories match Repository Details table
+
+### 0.5 API Contract Completeness [[MULTI-REPO ONLY]]
+
+[[LLM: API contracts enable cross-repo dependency tracking and validation. This is CRITICAL for multi-repo projects to prevent integration failures.]]
+
+- [ ] All backend stories include `provides_apis` list (even if empty)
+- [ ] Backend `provides_apis` entries use correct format: "METHOD /path" (e.g., "POST /api/users")
+- [ ] All frontend/mobile stories include `consumes_apis` list (even if empty)
+- [ ] Frontend/mobile `consumes_apis` entries use correct format: "METHOD /path"
+- [ ] API consumption forms closed loop: APIs in `consumes_apis` exist in some story's `provides_apis`
+- [ ] API provisioning is sequenced before consumption (backend story comes before frontend story)
+
+### 0.6 Cross-Repo Dependencies [[MULTI-REPO ONLY]]
+
+[[LLM: Cross-repo dependencies create blocking relationships. These must be explicitly tracked to prevent integration issues.]]
+
+- [ ] All stories include `cross_repo_dependencies` field (even if empty array)
+- [ ] Dependencies use correct format: "Story ID - Brief Description" (e.g., "1.2 - Backend auth API must be complete")
+- [ ] Dependency Story IDs reference valid stories from Epic Planning
+- [ ] Dependencies are properly sequenced (dependent story comes after prerequisite story)
+- [ ] Frontend/mobile stories depending on backend APIs have explicit dependencies listed
+- [ ] No circular dependencies exist
+
+### 0.7 Epic and Story Metadata
+
+[[LLM: Complete metadata enables quality assessment and prioritization during story creation.]]
+
+- [ ] All stories have `estimated_complexity` field with valid values: low, medium, high
+- [ ] All stories have `priority` field with valid values: P0, P1, P2
+- [ ] `acceptance_criteria_summary` consolidates all ACs from Epic Details in paragraph form (not numbered list)
+- [ ] Story titles in Epic Planning match Epic Details section
+- [ ] Epic descriptions in Epic Planning match Epic Details section
+
 ## 1. PROJECT SETUP & INITIALIZATION
 
 [[LLM: Project setup is the foundation. For greenfield, ensure clean start. For brownfield, ensure safe integration with existing system. Verify setup matches project type.]]
@@ -406,6 +484,7 @@ After presenting the report, ask if the user wants:
 
 | Category                                | Status | Critical Issues |
 | --------------------------------------- | ------ | --------------- |
+| 0. PRD Document Format & Structure      | _TBD_  |                 |
 | 1. Project Setup & Initialization       | _TBD_  |                 |
 | 2. Infrastructure & Deployment          | _TBD_  |                 |
 | 3. External Dependencies & Integrations | _TBD_  |                 |
