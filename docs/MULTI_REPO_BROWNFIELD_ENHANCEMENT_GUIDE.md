@@ -483,7 +483,7 @@ This requires changes in all 3 repositories. Shall I proceed?
 
 **Agent**: `@architect`
 **Command**: `*create-system-architecture`
-**Output**: `docs/architecture/system-architecture.md`
+**Output**: `docs/system-architecture.md` (multi-repo Product repo mode)
 
 **Prerequisites**:
 
@@ -595,11 +595,11 @@ Once you have the enhanced system architecture, proceed with standard Orchestrix
 
 ```
 docs/
-├── prd/
-│   ├── epic-1.yaml           # ⭐ Multi-repo epic format (cross-repo dependencies)
-│   └── epic-2.yaml
-└── architecture/
-    ├── 00-system-overview.md      # ⭐ System-level coordination docs
+├── epics/
+│   ├── epic-1-*.yaml         # ⭐ Multi-repo epic format (cross-repo dependencies)
+│   └── epic-2-*.yaml
+└── system-architecture/       # ⭐ Sharded from system-architecture.md
+    ├── 00-system-overview.md      # System-level coordination docs
     ├── 01-repository-topology.md  # Which repos exist, how they relate
     ├── 02-api-contracts.md        # Cross-repo API contracts
     ├── 03-integration-strategy.md # Auth, data formats, error handling

@@ -14,9 +14,9 @@ Generate a **detailed mobile architecture document** for a mobile implementation
 ## Prerequisites
 
 **Required Documents**:
-- ✅ System Architecture exists at `../product-repo/docs/architecture/system-architecture.md` (or configured path)
-- ✅ Front-End Spec exists at `../product-repo/docs/front-end-spec.md` (or configured path) - recommended
-- ✅ PRD exists at `../product-repo/docs/prd.md` (or configured path)
+- ✅ System Architecture exists at `../product-repo/docs/system-architecture.md`
+- ✅ Front-End Spec exists at `../product-repo/docs/front-end-spec.md` (recommended)
+- ✅ PRD exists at `../product-repo/docs/prd.md` (optional)
 
 **Project Configuration**:
 - ✅ Project mode is `multi-repo` with role in `{ios, android, flutter, react-native}` in `core-config.yaml`
@@ -55,13 +55,17 @@ if [ -z "$PRODUCT_REPO_PATH" ]; then
 fi
 
 # Check if system architecture exists
-SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
+SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/system-architecture.md"
 if [ ! -f "$SYSTEM_ARCH" ]; then
   echo "❌ ERROR: System architecture not found at $SYSTEM_ARCH"
+  echo ""
   echo "👉 Action: Create system architecture first in Product repository"
-  echo "@architect *create-system-architecture"
+  echo "   cd $PRODUCT_REPO_PATH"
+  echo "   @architect *create-system-architecture"
   exit 1
 fi
+
+echo "✅ Found system architecture: docs/system-architecture.md"
 
 echo "✅ Prerequisites validated. Proceeding with mobile architecture generation..."
 ```
@@ -79,10 +83,17 @@ Load the system-level architecture as a CONSTRAINT for this detailed architectur
 ```bash
 # Read system architecture
 PRODUCT_REPO_PATH=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
-SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
+SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/system-architecture.md"
+
+echo "📄 Reading system architecture from: $SYSTEM_ARCH"
 ```
 
-Read and analyze the system architecture document.
+Read and analyze the **complete** system architecture document (not the sharded files).
+
+**Why read the complete file?**
+- Even if Product repo has sharded the architecture, the complete `system-architecture.md` file still exists
+- Reading the complete file ensures we get the full context in one pass
+- Sharded files are for PO/SM story creation, not for implementation architecture generation
 
 **Focus Areas**:
 1. **Repository Topology**: Understand this mobile app's role in the overall system

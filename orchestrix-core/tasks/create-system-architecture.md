@@ -672,8 +672,19 @@ Now that all information is collected, generate the complete document using the 
 # Ensure architecture directory exists
 mkdir -p docs/architecture
 
-# Set output path
-OUTPUT_PATH="docs/architecture/system-architecture.md"
+# Set output path based on project mode
+# For multi-repo Product repositories, use system-architecture.md in docs/ root
+# For single-repo, use architecture.md in docs/ root
+PROJECT_MODE=$(grep "mode:" core-config.yaml | awk '{print $2}')
+PROJECT_ROLE=$(grep -A 2 "multi_repo:" core-config.yaml | grep "role:" | awk '{print $2}')
+
+if [ "$PROJECT_MODE" = "multi-repo" ] && [ "$PROJECT_ROLE" = "product" ]; then
+  OUTPUT_PATH="docs/system-architecture.md"  # Multi-repo Product repo
+  echo "📍 Output path: docs/system-architecture.md (multi-repo product mode)"
+else
+  OUTPUT_PATH="docs/architecture.md"  # Single-repo or implementation repo
+  echo "📍 Output path: docs/architecture.md (single-repo mode)"
+fi
 ```
 
 **Step 7.2: Render Template**
@@ -699,6 +710,37 @@ project_name: {{project_name}}
 repositories: {{repository_count}}
 ---
 ```
+
+**Step 7.4: Update core-config.yaml**
+
+After creating the architecture document, automatically update `core-config.yaml` to reflect the correct path:
+
+```bash
+# Update architecture configuration in core-config.yaml
+# This ensures PO *shard can find the file correctly
+
+if [ "$PROJECT_MODE" = "multi-repo" ] && [ "$PROJECT_ROLE" = "product" ]; then
+  # Multi-repo Product repo
+  sed -i.bak 's|architectureFile:.*|architectureFile: docs/system-architecture.md|' core-config.yaml
+  sed -i.bak 's|architectureSharded:.*|architectureSharded: false|' core-config.yaml
+  sed -i.bak 's|architectureShardedLocation:.*|architectureShardedLocation: docs/system-architecture|' core-config.yaml
+  echo "✅ Updated core-config.yaml: architectureFile → docs/system-architecture.md"
+else
+  # Single-repo
+  sed -i.bak 's|architectureFile:.*|architectureFile: docs/architecture.md|' core-config.yaml
+  sed -i.bak 's|architectureSharded:.*|architectureSharded: false|' core-config.yaml
+  sed -i.bak 's|architectureShardedLocation:.*|architectureShardedLocation: docs/architecture|' core-config.yaml
+  echo "✅ Updated core-config.yaml: architectureFile → docs/architecture.md"
+fi
+
+# Remove backup file
+rm -f core-config.yaml.bak
+```
+
+**Why This Step is Important**:
+- Ensures `@po *shard` can find the architecture file
+- Prevents "architecture.md not found - already sharded" errors
+- Maintains consistency between file location and configuration
 
 ---
 
@@ -791,7 +833,7 @@ Present the completed system architecture document and provide next steps.
 ```
 ✅ SYSTEM ARCHITECTURE COMPLETE
 
-📄 Generated Document: docs/architecture/system-architecture.md
+📄 Generated Document: {{OUTPUT_PATH}} (docs/system-architecture.md for multi-repo, docs/architecture.md for single-repo)
 
 📦 Repository Topology ([N] repositories):
   - [backend] {{project}}-backend ({{tech_stack}})
