@@ -35,19 +35,18 @@ commands:
       description: "Show numbered command list, wait for selection"
       output_format:
         - "[1] *create-doc {template} — generate doc"
-        - "--- Greenfield (New Projects) ---"
-        - "[2] *create-system-architecture — generate system-level architecture (Product repo)"
+        - "--- System Architecture (Greenfield & Brownfield) ---"
+        - "[2] *create-system-architecture — generate system-level architecture (Product repo, supports both modes)"
         - "[3] *create-backend-architecture — generate detailed backend architecture (Backend repo)"
         - "[4] *create-frontend-architecture — generate detailed frontend architecture (Frontend/Web repo)"
         - "[5] *create-mobile-architecture — generate detailed mobile architecture (iOS/Android/Flutter/RN repo)"
-        - "--- Brownfield (Existing Projects) ---"
-        - "[6] *aggregate-system-analysis — aggregate analysis from repos (Product repo, Enhancement Step 1)"
-        - "[7] *aggregate-system-architecture — aggregate architecture from repos (Product repo, DEPRECATED - docs only)"
-        - "[8] *extract-api-contracts — extract API docs from backend code (Backend repo)"
+        - "--- Brownfield Enhancement Workflow ---"
+        - "[6] *aggregate-system-analysis — Step 1: aggregate analysis from repos (Product repo)"
+        - "[7] *document-project — document existing codebase (Implementation repos)"
         - "--- Other Commands ---"
-        - "[9] *research {topic} — deep research"
-        - "[10] *review-story {story_id} — review story"
-        - "[11] *document-project — document architecture"
+        - "[9] *extract-api-contracts — extract API docs from backend code (Backend repo)"
+        - "[10] *research {topic} — deep research"
+        - "[11] *review-story {story_id} — review story"
         - "[12] *execute-checklist {checklist} — run checklist"
         - "[13] *doc-out — output document"
         - "[14] *yolo — toggle Yolo Mode"
@@ -128,22 +127,6 @@ commands:
         - Detects integration gaps and inconsistencies
         - Aggregates into existing-system-integration.md
         - Provides foundation for creating Brownfield PRD
-
-  - aggregate-system-architecture:
-      description: "Aggregate system architecture from existing implementation repositories (Brownfield - Legacy)"
-      task: aggregate-system-architecture.md
-      context: |
-        Use this command in Product repository for BROWNFIELD projects (existing codebases).
-        This command performs BOTTOM-UP aggregation from implementation repositories:
-        - Scans implementation repos for architecture docs and code
-        - Extracts repository topology, tech stacks, deployment
-        - Identifies API contracts (backend provides, frontend consumes)
-        - Detects integration patterns (auth, data formats, error handling)
-        - Aggregates into system-architecture.md
-        - Documents gaps, inconsistencies, and recommendations
-
-        NOTE: For Brownfield Enhancement, use *aggregate-system-analysis instead (3-step workflow).
-        This task is for documentation-only purposes (not enhancement planning).
 
   - extract-api-contracts:
       description: "Extract and document API contracts from backend code"

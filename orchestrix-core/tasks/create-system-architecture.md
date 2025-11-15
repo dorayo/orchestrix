@@ -113,6 +113,43 @@ Check which analysis document exists to determine mode:
    - Technical Debt (known issues)
    - Coding Standards (current practices)
 
+**⚠️ CRITICAL - Document Scope Restriction (Brownfield Multi-Repo Mode ONLY)**:
+
+When in **Brownfield Multi-Repo Mode**, you MUST strictly adhere to the following restrictions:
+
+**✅ ALLOWED - Read ONLY from Product Repository (current directory)**:
+- `docs/prd.md` ✅
+- `docs/front-end-spec.md` ✅
+- `docs/existing-system-integration.md` ✅ (this already contains ALL aggregated info)
+
+**❌ FORBIDDEN - DO NOT read from Implementation Repositories**:
+- ❌ DO NOT read `../my-app-backend/docs/existing-system-analysis.md`
+- ❌ DO NOT read `../my-app-web/docs/existing-system-analysis.md`
+- ❌ DO NOT read `../my-app-ios/docs/existing-system-analysis.md`
+- ❌ DO NOT read any files from `../` paths to implementation repos
+- ❌ DO NOT scan implementation repository source code
+- ❌ DO NOT use Bash to navigate to implementation repository directories
+
+**Why This Restriction Exists**:
+1. **Aggregation Already Done**: Step 1 (`*aggregate-system-analysis`) has already aggregated all implementation repository information into `existing-system-integration.md`
+2. **Single Source of Truth**: `docs/existing-system-integration.md` IS the authoritative, complete source for all cross-repo integration information
+3. **Efficiency**: Reading implementation repos again would be redundant, wasteful, and violate task boundaries
+4. **Separation of Concerns**: This task creates system-level coordination; implementation repo details were handled in Step 1
+
+**If `existing-system-integration.md` is missing or incomplete**:
+- ❌ DO NOT work around by reading implementation repos directly
+- ✅ HALT execution immediately
+- ✅ Instruct user: "Run `@architect *aggregate-system-analysis` first to create `existing-system-integration.md`"
+- ✅ Wait for aggregation to complete, then retry this task
+
+**Validation Check** (perform before loading documents):
+```
+Check that current repository role is 'product':
+- Read core-config.yaml
+- Extract project.multi_repo.role
+- If role != 'product': HALT with error "This task must run in Product repository"
+```
+
 **Step 1.3: Analysis Focus**
 
 **Greenfield Mode**:
