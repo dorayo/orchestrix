@@ -1,7 +1,7 @@
 template:
   id: frontend-architecture-template-v2
   name: Frontend Architecture Document
-  version: 2.0
+  version: 2.1
   output:
     format: markdown
     filename: docs/ui-architecture.md
@@ -155,7 +155,7 @@ sections:
         columns: [Date, Version, Description, Author]
         instruction: Track document versions and changes
 
-  - id: frontend-tech-stack
+  - id: tech-stack
     title: Frontend Tech Stack
     instruction: Extract from main architecture's Technology Stack Table. This section MUST remain synchronized with the main architecture document.
     elicit: true
@@ -178,7 +178,7 @@ sections:
           - ["Animation", "{{animation_lib}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
           - ["Dev Tools", "{{dev_tools}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
 
-  - id: project-structure
+  - id: source-tree
     title: Project Structure
     instruction: Define exact directory structure for AI tools based on the chosen framework. Be specific about where each type of file goes. Generate a structure that follows the framework's best practices and conventions.
     elicit: true
@@ -256,8 +256,8 @@ sections:
         type: code
         language: css
 
-  - id: testing-requirements
-    title: Testing Requirements
+  - id: testing-strategy
+    title: Testing Strategy
     instruction: Define minimal testing requirements based on the chosen framework.
     elicit: true
     sections:
@@ -282,8 +282,8 @@ sections:
     instruction: List required environment variables based on the chosen framework. Show the appropriate format and naming conventions for the framework.
     elicit: true
 
-  - id: frontend-developer-standards
-    title: Frontend Developer Standards
+  - id: coding-standards
+    title: Coding Standards
     sections:
       - id: critical-coding-rules
         title: Critical Coding Rules

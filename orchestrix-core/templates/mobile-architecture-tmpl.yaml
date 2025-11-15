@@ -1,7 +1,7 @@
 template:
   id: mobile-architecture-template-v1
   name: Mobile Architecture Document
-  version: 1.0
+  version: 1.1
   output:
     format: markdown
     filename: docs/architecture.md
@@ -112,7 +112,7 @@ sections:
         columns: [Date, Version, Description, Author]
         instruction: Track document versions and changes
 
-  - id: mobile-tech-stack
+  - id: tech-stack
     title: Mobile Tech Stack
     instruction: Define the mobile technology stack based on platform choice (iOS Native, Android Native, Flutter, React Native).
     elicit: true
@@ -142,6 +142,30 @@ sections:
           - ["Testing", "{{test_framework}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
           - ["Analytics", "{{analytics}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
           - ["Crash Reporting", "{{crash_reporting}}", "{{version}}", "{{purpose}}", "{{why_chosen}}"]
+
+  - id: source-tree
+    title: Project Structure
+    instruction: |
+      Define the mobile app directory structure based on the chosen platform and architecture pattern.
+
+      **iOS Native (Swift)**:
+      - Follow MVC/MVVM/Clean Architecture folder structure
+      - Organize by feature or layer
+
+      **Android Native (Kotlin)**:
+      - Follow package-by-feature or package-by-layer structure
+      - Use standard Android project structure
+
+      **Flutter (Dart)**:
+      - Follow lib/ folder structure with features/screens/widgets
+      - Separate data, domain, and presentation layers
+
+      **React Native (TypeScript)**:
+      - Follow src/ folder structure
+      - Organize by feature or screens
+    elicit: true
+    type: code
+    language: plaintext
 
   - id: app-architecture
     title: App Architecture
@@ -407,8 +431,8 @@ sections:
         title: Performance Monitoring
         instruction: Document performance monitoring (app startup time, screen rendering, network requests).
 
-  - id: mobile-developer-standards
-    title: Mobile Developer Standards
+  - id: coding-standards
+    title: Coding Standards
     sections:
       - id: critical-coding-rules
         title: Critical Coding Rules

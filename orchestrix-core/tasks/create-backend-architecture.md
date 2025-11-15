@@ -466,60 +466,29 @@ Does this API implementation detail level match your expectations?
 
 ---
 
-### Step 7: Generate Backend Architecture Document Using Template
+### Step 7: Generate Backend Architecture Document
 
-Now generate the complete document using the `architecture-tmpl.yaml` template.
+**Output Document**:
+Use template: `orchestrix-core/templates/architecture-tmpl.yaml`
 
-**Step 7.1: Prepare Output Directory**
-
+**Prepare Output**:
 ```bash
 # Ensure docs directory exists
 mkdir -p docs
-
-# Set output path
 OUTPUT_PATH="docs/architecture.md"
 ```
 
-**Step 7.2: Load Template and Fill Sections**
-
-Use the `architecture-tmpl.yaml` template to generate the document. The template defines the output format for:
-
-1. **System Architecture Context** - Present loaded constraints from Step 1
-2. **High Level Architecture** - Technical summary, overview, project diagram, architectural patterns
-3. **Tech Stack** - Cloud infrastructure, technology stack table with versions
-4. **Data Models** - Core business entities with attributes and relationships
-5. **Components** - Service components with responsibilities, interfaces, dependencies
-6. **External APIs** - Third-party integrations (if any)
-7. **Core Workflows** - Sequence diagrams for key workflows
-8. **REST API Spec** - OpenAPI 3.0 specification
-9. **Database Schema** - Complete schema with tables, relationships, indexes
-10. **Authentication & Authorization** - Auth implementation details
-11. **Testing Strategy** - Unit, integration, E2E test approach
-12. **Deployment** - Deployment architecture and CI/CD pipeline
-13. **Monitoring & Logging** - Observability strategy
-
-**Fill each template section** with information collected in Steps 1-6:
-- Use actual tech stack from system-architecture.md
-- Use actual API endpoints from system-architecture.md
-- Use actual auth mechanism from system-architecture.md
-- Include all validated API implementations from Step 3
-- Include complete database schema from Step 5
-
-**Template Reference Pattern**:
-```markdown
-## Output Document Structure
-
-This task generates a backend architecture document following the structure defined in:
-`orchestrix-core/templates/architecture-tmpl.yaml`
-
-The template sections will be filled with:
-- System constraints from system-architecture.md (Step 1)
-- PRD requirements (Step 2)
-- Validated API implementations (Step 3)
-- Component architecture decisions (Step 4)
-- Database schema design (Step 5)
-- API implementation details (Step 6)
-```
+**Fill Template Sections** with information collected in Steps 1-6:
+- System Architecture Context: Constraints from system-architecture.md (Step 1)
+- Tech Stack: Technology selections from system-architecture.md
+- Data Models & Database Schema: Entities and schema from Step 5
+- Components: Service architecture from Step 4
+- REST API Spec: All validated API implementations from Step 3
+- Core Workflows: Key backend workflows with sequence diagrams
+- Testing Strategy: Unit, integration, E2E test approach
+- Deployment: Deployment architecture and CI/CD pipeline
+- Security: Authentication, authorization, secrets management
+- Monitoring & Logging: Observability strategy
 
 ---
 
@@ -748,5 +717,6 @@ All backend API implementations MUST be pre-defined in system-architecture.md to
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
+| 2.1.0 | 2025-01-15 | REFACTOR: Simplified Step 7 template section description, reduced by 30 lines | Orchestrix Team |
 | 2.0.0 | 2025-01-14 | REFACTOR: Reduced from 1047 to 300 lines, removed template duplication, focused on procedures only | Orchestrix Team |
 | 1.0.0 | 2025-01-14 | Initial creation for Phase 2 | Orchestrix Team |

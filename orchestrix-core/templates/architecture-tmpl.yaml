@@ -1,7 +1,7 @@
 template:
   id: architecture-template-v2
   name: Architecture Document
-  version: 2.0
+  version: 2.1
   output:
     format: markdown
     filename: docs/architecture.md
@@ -579,7 +579,7 @@ sections:
             repeatable: true
             template: "- **{{rule_topic}}:** {{rule_detail}}"
 
-  - id: test-strategy
+  - id: testing-strategy
     title: Test Strategy and Standards
     instruction: |
       Work with user to define comprehensive test strategy:

@@ -370,60 +370,34 @@ Does this app architecture make sense for your mobile platform?
 
 ---
 
-### Step 5: Generate Mobile Architecture Document Using Template
+### Step 5: Generate Mobile Architecture Document
 
-Now generate the complete document using the `mobile-architecture-tmpl.yaml` template.
+**Output Document**:
+Use template: `orchestrix-core/templates/mobile-architecture-tmpl.yaml`
 
-**Step 5.1: Prepare Output Directory**
-
+**Prepare Output**:
 ```bash
 # Ensure docs directory exists
 mkdir -p docs
-
-# Set output path
 OUTPUT_PATH="docs/architecture.md"
 ```
 
-**Step 5.2: Load Template and Fill Sections**
-
-Use the `mobile-architecture-tmpl.yaml` template to generate the document. The template defines the output format for:
-
-1. **System Architecture Context** - Present loaded constraints from Step 1
-2. **Mobile Tech Stack** - Language, UI framework, architecture pattern, networking, local storage, DI, testing
-3. **App Architecture** - Architecture pattern details, architecture diagram
-4. **Screen Structure** - Screen list, navigation flow diagram
-5. **State Management** - State types, state management template/code
-6. **API Integration** - API client configuration, service templates, API validation
-7. **Local Data Management** - Local storage strategy, caching strategy
-8. **Security** - Secure token storage, certificate pinning, biometric auth
-9. **Offline Support** - Offline capabilities, sync strategy (if applicable)
-10. **Push Notifications** - Notification setup and handling (if applicable)
-11. **Testing Strategy** - Unit tests, UI tests, testing best practices
-12. **Deployment** - App versioning, build configuration, CI/CD pipeline, App Store/Play Store release process
-13. **Monitoring & Analytics** - Crash reporting, analytics tracking, performance monitoring
-14. **Mobile Developer Standards** - Critical coding rules, quick reference
-
-**Fill each template section** with information collected in Steps 1-4:
-- Use actual platform (iOS/Android/Flutter/React Native)
-- Use actual technology stack with versions
-- Use actual API endpoints from system-architecture.md
-- Use actual auth mechanism from system-architecture.md
-- Include all validated API calls from Step 3
-- Include platform-specific security implementations (Keychain/KeyStore)
-
-**Template Reference Pattern**:
-```markdown
-## Output Document Structure
-
-This task generates a mobile architecture document following the structure defined in:
-`orchestrix-core/templates/mobile-architecture-tmpl.yaml`
-
-The template sections will be filled with:
-- System constraints from system-architecture.md (Step 1)
-- UI/UX requirements from front-end-spec.md (Step 2)
-- Validated API contracts (Step 3)
-- App architecture and state management decisions (Step 4)
-```
+**Fill Template Sections** with information collected in Steps 1-4:
+- System Architecture Context: Constraints from system-architecture.md (Step 1)
+- Tech Stack: Platform, language, UI framework, architecture pattern, networking, local storage, DI, testing
+- Source Tree: Mobile app directory structure for chosen platform
+- App Architecture: Architecture pattern details with diagram (MVVM/MVI/BLoC/Redux)
+- Screen Structure: Screen list and navigation flow diagram
+- State Management: Global/screen/server state with platform-specific patterns
+- API Integration: API client configuration, service templates, validated API contracts (Step 3)
+- Local Data Management: Keychain/KeyStore for tokens, local database, caching strategy
+- Security: Secure token storage, certificate pinning (if required), biometric auth (if required)
+- Offline Support: Offline capabilities and sync strategy (if applicable)
+- Push Notifications: FCM/APNS setup and handling (if applicable)
+- Testing Strategy: Unit tests, UI tests (XCTest/Espresso/Detox), best practices
+- Deployment: App versioning, build configs, CI/CD, App Store/Play Store release
+- Monitoring & Analytics: Crash reporting, analytics, performance monitoring
+- Coding Standards: Platform-specific critical rules and quick reference
 
 ---
 
@@ -660,4 +634,5 @@ All mobile API calls MUST be pre-approved in system-architecture.md to ensure mo
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
+| 1.1.0 | 2025-01-15 | REFACTOR: Simplified Step 5 template section description, reduced by 40 lines | Orchestrix Team |
 | 1.0.0 | 2025-01-14 | Initial creation for Phase 2 mobile support | Orchestrix Team |

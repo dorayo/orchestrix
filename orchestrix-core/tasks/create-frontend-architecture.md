@@ -339,56 +339,30 @@ Does this architecture structure make sense for your frontend?
 
 ---
 
-### Step 5: Generate Frontend Architecture Document Using Template
+### Step 5: Generate Frontend Architecture Document
 
-Now generate the complete document using the `front-end-architecture-tmpl.yaml` template.
+**Output Document**:
+Use template: `orchestrix-core/templates/front-end-architecture-tmpl.yaml`
 
-**Step 5.1: Prepare Output Directory**
-
+**Prepare Output**:
 ```bash
 # Ensure docs directory exists
 mkdir -p docs
-
-# Set output path
 OUTPUT_PATH="docs/ui-architecture.md"  # or docs/architecture.md
 ```
 
-**Step 5.2: Load Template and Fill Sections**
-
-Use the `front-end-architecture-tmpl.yaml` template to generate the document. The template defines the output format for:
-
-1. **System Architecture Context** - Present loaded constraints from Step 1
-2. **Frontend Tech Stack** - Framework, UI library, state management, routing, build tool, styling, testing
-3. **Project Structure** - Directory structure following framework conventions
-4. **Component Standards** - Component template and naming conventions
-5. **State Management** - Store structure and state management template
-6. **API Integration** - Service template and API client configuration (with auth interceptors)
-7. **Routing** - Route configuration with protected routes
-8. **Styling Guidelines** - Styling approach and global theme variables
-9. **Testing Requirements** - Component test template and best practices
-10. **Environment Configuration** - Required environment variables
-11. **Developer Standards** - Critical coding rules and quick reference
-
-**Fill each template section** with information collected in Steps 1-4:
-- Use actual framework names (React, Vue, Angular, etc.)
-- Use actual library names with versions (React Router v6, Zustand 4.x, etc.)
-- Use actual API endpoints from system-architecture.md
-- Use actual auth mechanism from system-architecture.md
-- Include all validated API calls from Step 3
-
-**Template Reference Pattern**:
-```markdown
-## Output Document Structure
-
-This task generates a frontend architecture document following the structure defined in:
-`orchestrix-core/templates/front-end-architecture-tmpl.yaml`
-
-The template sections will be filled with:
-- System constraints from system-architecture.md (Step 1)
-- UI/UX requirements from front-end-spec.md (Step 2)
-- Validated API contracts (Step 3)
-- Component architecture and state management decisions (Step 4)
-```
+**Fill Template Sections** with information collected in Steps 1-4:
+- System Architecture Context: Constraints from system-architecture.md (Step 1)
+- Tech Stack: Framework, UI library, state management, routing, styling, testing tools
+- Source Tree: Project directory structure following framework conventions
+- Component Standards: Component template and naming conventions
+- State Management: Store structure and state management patterns
+- API Integration: Service templates and API client configuration (with auth interceptors)
+- Routing: Route configuration with protected routes
+- Styling Guidelines: Styling approach and global theme variables
+- Testing Strategy: Component test templates and best practices
+- Environment Configuration: Required environment variables
+- Coding Standards: Critical coding rules and quick reference
 
 ---
 
@@ -627,5 +601,6 @@ All frontend API calls MUST be pre-approved in system-architecture.md to ensure 
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
+| 2.1.0 | 2025-01-15 | REFACTOR: Simplified Step 5 template section description, reduced by 35 lines | Orchestrix Team |
 | 2.0.0 | 2025-01-14 | REFACTOR: Reduced from 902 to 250 lines, removed template duplication, focused on procedures only | Orchestrix Team |
 | 1.0.0 | 2025-01-14 | Initial creation for Phase 2 | Orchestrix Team |
