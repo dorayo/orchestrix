@@ -1,3 +1,20 @@
+# [9.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.4.0...v9.0.0) (2025-11-15)
+
+
+### Code Refactoring
+
+* **architect:** remove deprecated aggregate-system-architecture command ([1b59a41](https://github.com/dorayo/ORCHESTRIX/commit/1b59a410a11fb8efedf08f67497a0ba64aa5f37f))
+
+
+### BREAKING CHANGES
+
+* **architect:** aggregate-system-architecture command removed.
+Use aggregate-system-analysis + create-system-architecture workflow instead.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 # [8.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.3.1...v8.4.0) (2025-11-15)
 
 
