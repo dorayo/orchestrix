@@ -50,25 +50,24 @@ project:
 ```
 
 **Determine mode**:
-- If `mode = monolith` OR `mode` not set: **MONOLITH MODE**
-- If `mode = multi-repo` AND `role = product`: **MULTI-REPO PRODUCT MODE**
-- If `mode = multi-repo` AND `role ∈ {backend, frontend, ios, android, mobile, shared, admin}`: **ERROR** → HALT with message below
+- If `mode = monolith` OR `mode` not set: **MONOLITH MODE** → Shard both PRD and Architecture
+- If `mode = multi-repo` AND `role = product`: **MULTI-REPO PRODUCT MODE** → Shard both PRD and System Architecture
+- If `mode = multi-repo` AND `role ∈ {backend, frontend, ios, android, mobile, shared, admin}`: **MULTI-REPO IMPLEMENTATION MODE** → Shard Architecture ONLY (skip PRD)
 
-**ERROR Message for Implementation Repositories**:
+**Info Message for Implementation Repositories**:
 ```
-❌ CANNOT SHARD DOCUMENTS IN IMPLEMENTATION REPOSITORY
+ℹ️ IMPLEMENTATION REPOSITORY DETECTED
 
 Current project mode: multi-repo
 Repository role: {role}
 Repository: {repository_id}
 
-REASON: Document sharding must be performed in either:
-- Product repository (mode: multi-repo, role: product) for multi-repo projects
-- Monolith repository (mode: monolith) for single-repo projects
+SHARDING BEHAVIOR:
+✅ Architecture: Will be sharded (docs/architecture.md → docs/architecture/*.md)
+⏭️ PRD: Will be skipped (PRD is sharded in Product repository)
 
-ACTION: Navigate to the Product repository and run *shard there.
-
-HALT: Cannot proceed in implementation repository
+Implementation repositories shard their own architecture documents,
+but read PRD and epics from the Product repository.
 ```
 
 ---
@@ -77,7 +76,18 @@ HALT: Cannot proceed in implementation repository
 
 **Purpose**: Split prd.md into multiple section files. Epic YAML blocks in the "Epic Planning" section will be preserved in the sharded files.
 
-**Step 2.1: Check if PRD exists**
+**⚠️ SKIP THIS STEP if in MULTI-REPO IMPLEMENTATION MODE**
+
+If current repository role ∈ {backend, frontend, ios, android, mobile, shared, admin}:
+- Skip all PRD sharding steps (2.1 - 2.5)
+- Display info message:
+  ```
+  ℹ️ Skipping PRD sharding (implementation repository)
+  PRD is managed in Product repository at: {product_repo_path}
+  ```
+- Proceed directly to Step 3 (Architecture sharding)
+
+**Step 2.1: Check if PRD exists** (MONOLITH or PRODUCT mode only)
 
 ```bash
 PRD_FILE="docs/prd.md"
@@ -195,7 +205,12 @@ echo ""
 
 ### 3. Shard Architecture Document (if exists)
 
-**After completing PRD sharding**, automatically shard architecture document if it exists.
+**After completing PRD sharding** (or skipping it in implementation repos), automatically shard architecture document if it exists.
+
+**Architecture File Paths by Repository Type**:
+- **Product Repo** (role: product): `docs/system-architecture.md` (system-level architecture)
+- **Implementation Repos** (role: backend/frontend/ios/android): `docs/architecture.md` (implementation-level architecture)
+- **Monolith Repo**: `docs/architecture.md`
 
 **Step 3.1: Check for Architecture Document**
 
@@ -208,11 +223,15 @@ if [ -z "$ARCH_FILE" ]; then
 else
   if [ ! -f "$ARCH_FILE" ]; then
     echo "⚠️ WARNING: Architecture file configured but not found: $ARCH_FILE"
-    echo "   Expected paths:"
-    echo "   - Multi-repo Product: docs/system-architecture.md"
-    echo "   - Monolith: docs/architecture.md"
+    echo "   Expected paths by repository type:"
+    echo "   - Product repo (role: product): docs/system-architecture.md"
+    echo "   - Implementation repos (role: backend/frontend/ios/android): docs/architecture.md"
+    echo "   - Monolith repo: docs/architecture.md"
     echo ""
-    echo "   Recommendation: Run @architect *create-system-architecture or *document-project first"
+    echo "   Recommendations:"
+    echo "   - Product repo: Run @architect *create-system-architecture"
+    echo "   - Implementation repos: Run @architect *create-{backend|mobile|frontend}-architecture"
+    echo "   - Monolith repo: Run @architect *document-project"
     echo ""
     echo "ℹ️ Skipping architecture sharding"
   else
@@ -292,20 +311,27 @@ fi
 
 ### 4. Final Report
 
-**Step 4.1: Count epics and stories**
+**Step 4.1: Count epics and stories** (only for MONOLITH or PRODUCT mode)
 
 ```bash
-# Count epics by counting epic_id occurrences in prd/ files
-TOTAL_EPICS=$(grep -r 'epic_id:' docs/prd/*.md 2>/dev/null | grep -c 'epic_id:')
-
-# Count total stories by counting id fields under stories: sections
-TOTAL_STORIES=$(grep -r -A 1000 'stories:' docs/prd/*.md 2>/dev/null | grep '  - id:' | wc -l | tr -d ' ')
-
-# Detect repository types mentioned in epic YAML blocks
-if [ "$TOTAL_STORIES" -gt 0 ]; then
-  REPO_TYPES=$(grep -r 'repository_type:' docs/prd/*.md 2>/dev/null | awk '{print $NF}' | sort -u | tr '\n' ', ' | sed 's/,$//')
+# Skip epic/story counting for implementation repositories
+if [ "$REPO_MODE" = "IMPLEMENTATION" ]; then
+  TOTAL_EPICS=0
+  TOTAL_STORIES=0
+  REPO_TYPES="N/A (read from product repo)"
 else
-  REPO_TYPES="none"
+  # Count epics by counting epic_id occurrences in prd/ files
+  TOTAL_EPICS=$(grep -r 'epic_id:' docs/prd/*.md 2>/dev/null | grep -c 'epic_id:')
+
+  # Count total stories by counting id fields under stories: sections
+  TOTAL_STORIES=$(grep -r -A 1000 'stories:' docs/prd/*.md 2>/dev/null | grep '  - id:' | wc -l | tr -d ' ')
+
+  # Detect repository types mentioned in epic YAML blocks
+  if [ "$TOTAL_STORIES" -gt 0 ]; then
+    REPO_TYPES=$(grep -r 'repository_type:' docs/prd/*.md 2>/dev/null | awk '{print $NF}' | sort -u | tr '\n' ', ' | sed 's/,$//')
+  else
+    REPO_TYPES="none"
+  fi
 fi
 ```
 
@@ -316,6 +342,7 @@ fi
 ✅ DOCUMENT SHARDING COMPLETE
 ═══════════════════════════════════════════════════════
 
+{if REPO_MODE = MONOLITH or PRODUCT}
 📋 PRD SHARDING:
   - Source: docs/prd.md
   - Output: docs/prd/
@@ -323,6 +350,12 @@ fi
   - Total stories: {TOTAL_STORIES} stories across all repos
   - Repository types: {REPO_TYPES}
   - Status: ✅ Complete
+{else if REPO_MODE = IMPLEMENTATION}
+📋 PRD SHARDING:
+  - Status: ⏭️ Skipped (implementation repository)
+  - PRD location: {PRODUCT_REPO_PATH}/docs/prd/
+  - Note: SM will read epics from product repository
+{endif}
 
 🏗️ ARCHITECTURE SHARDING:
   {if ARCH_FILE sharded}
@@ -331,36 +364,57 @@ fi
   - Section files: {count} created
   - Tool: md-tree
   - Status: ✅ Complete
+  - Dev auto-load files: coding-standards.md, tech-stack.md, source-tree.md
   {else}
   - Status: ⏭️ Skipped (not configured or already sharded)
   {endif}
 
 ⚙️ CONFIGURATION UPDATED (core-config.yaml):
+  {if REPO_MODE != IMPLEMENTATION}
   - prdSharded: true
   - prdShardedLocation: docs/prd
+  {endif}
   {if ARCH sharded}
   - architectureSharded: true
   - architectureShardedLocation: {ARCH_DIR}
   {endif}
 
+{if REPO_MODE = MONOLITH or PRODUCT}
 📊 EPIC SUMMARY:
   Epic YAML blocks are embedded in docs/prd/*.md files.
   SM agents will read these files, extract YAML blocks, and filter
   stories by repository_type matching their repository role.
 
   Example epic file location: docs/prd/XX-epic-planning.md
+{endif}
 
 🎯 NEXT STEPS:
 
+  {if REPO_MODE = MONOLITH}
   **For Monolith Projects:**
     SM can create stories: @sm *create-next-story
     SM will read epics from docs/prd/ and create all stories locally.
+  {endif}
 
-  **For Multi-Repo Projects:**
-    1. Each implementation repository SM runs: @sm *create-next-story
-    2. SM automatically reads epics from: {PRODUCT_REPO_PATH}/docs/prd/
-    3. SM filters stories by repository_type matching current repo role
-    4. SM creates only the stories assigned to this repository
+  {if REPO_MODE = PRODUCT}
+  **For Product Repository:**
+    1. PRD and System Architecture are now sharded
+    2. Navigate to implementation repositories (backend, frontend, ios, android)
+    3. In each implementation repo:
+       - Run: @architect *create-{backend|mobile|frontend}-architecture
+       - Run: @po *shard (to shard implementation architecture)
+       - Run: @sm *create-next-story (to create stories filtered by repo type)
+  {endif}
+
+  {if REPO_MODE = IMPLEMENTATION}
+  **For Implementation Repository:**
+    1. Architecture is now sharded into {ARCH_DIR}/
+    2. Dev agents will auto-load: coding-standards.md, tech-stack.md, source-tree.md
+    3. Create stories: @sm *create-next-story
+       - SM will read epics from: {PRODUCT_REPO_PATH}/docs/prd/
+       - SM will filter by: repository_type = {CURRENT_ROLE}
+       - SM will create only stories assigned to this repository
+  {endif}
 
   **Story Creation Logic:**
     - Backend repo (role: backend) → gets stories with repository_type: backend

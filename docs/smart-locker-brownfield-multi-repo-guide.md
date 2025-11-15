@@ -1022,6 +1022,8 @@ return response.data;
 
 **⚠️ IMPORTANT**: 在各实现仓库分别执行！
 
+**说明**: 在实现仓库中运行 `@po *shard` 只会分片 Architecture 文档，不会分片 PRD（PRD 已在 Product Repo 分片）。
+
 #### Backend 分片
 
 ```bash
@@ -1029,6 +1031,29 @@ cd /Users/dorayo/Codes/smart-locker/java-server
 
 # 分片 Backend architecture
 @po *shard
+```
+
+**PO 输出**:
+
+```
+ℹ️ IMPLEMENTATION REPOSITORY DETECTED
+
+Current project mode: multi-repo
+Repository role: backend
+Repository: smart-locker-backend
+
+SHARDING BEHAVIOR:
+✅ Architecture: Will be sharded (docs/architecture.md → docs/architecture/*.md)
+⏭️ PRD: Will be skipped (PRD is sharded in Product repository)
+
+ℹ️ Skipping PRD sharding (implementation repository)
+PRD is managed in Product repository at: ../smart-locker-product
+
+🔍 STEP 3: Sharding Architecture Document...
+📄 Source: docs/architecture.md
+📁 Target: docs/architecture/
+
+✅ Architecture sharded to: docs/architecture/
 ```
 
 **输出**:
@@ -1056,7 +1081,9 @@ cd /Users/dorayo/Codes/smart-locker/locker_app
 @po *shard
 ```
 
-**输出**:
+**说明**: 同 Backend，只分片 Architecture，跳过 PRD。
+
+**目录结构输出**:
 
 ```
 locker_app/
@@ -1081,7 +1108,9 @@ cd /Users/dorayo/Codes/smart-locker/web-admin
 @po *shard
 ```
 
-**输出**:
+**说明**: 同 Backend，只分片 Architecture，跳过 PRD。
+
+**目录结构输出**:
 
 ```
 web-admin/

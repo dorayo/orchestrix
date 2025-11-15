@@ -728,7 +728,9 @@ cd my-app-ios
 
 #### Step 5.3: Shard Implementation Architectures (Each Repo)
 
-**After creating implementation architectures**, shard them in each repository:
+**After creating implementation architectures**, shard them in each repository.
+
+**Important**: In implementation repositories, `@po *shard` only shards the Architecture document (`docs/architecture.md`). PRD sharding is skipped because PRD is managed in the Product repository.
 
 #### In Backend Repository:
 
@@ -737,7 +739,9 @@ cd my-app-backend
 
 # Shard backend architecture
 @po *shard
-# Output: docs/architecture/*.md (backend-specific sections)
+# Expected output:
+# - ℹ️ Skipping PRD sharding (implementation repository)
+# - ✅ Architecture sharded: docs/architecture.md → docs/architecture/*.md
 ```
 
 #### In Frontend Repository:
@@ -747,7 +751,9 @@ cd my-app-web
 
 # Shard frontend architecture
 @po *shard
-# Output: docs/architecture/*.md (frontend-specific sections)
+# Expected output:
+# - ℹ️ Skipping PRD sharding (implementation repository)
+# - ✅ Architecture sharded: docs/architecture.md → docs/architecture/*.md
 ```
 
 #### In Mobile Repository:
@@ -757,7 +763,9 @@ cd my-app-ios
 
 # Shard mobile architecture
 @po *shard
-# Output: docs/architecture/*.md (ios-specific sections)
+# Expected output:
+# - ℹ️ Skipping PRD sharding (implementation repository)
+# - ✅ Architecture sharded: docs/architecture.md → docs/architecture/*.md
 ```
 
 **What Gets Sharded**:
