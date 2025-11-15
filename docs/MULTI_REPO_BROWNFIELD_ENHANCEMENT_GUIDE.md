@@ -6,6 +6,22 @@ This guide walks you through the Orchestrix workflow for planning and implementi
 
 ---
 
+## 🎉 What's New in Phase 1 (v8.1.1+)
+
+**Critical Fixes & Improvements**:
+
+1. ✅ **`repository_id` Field Required** - Now required in `implementation_repos[]` for proper Epic-to-Repository mapping
+2. ✅ **Multi-Repo Config Validator** - New tool: `node tools/utils/validate-multi-repo-config.js <product-repo-path>`
+3. ✅ **Smart Dependency Checker** - Fixed path resolution bugs, supports complex repository names
+4. ✅ **Repository Type Checks** - PO shard now blocks execution in wrong repository types
+5. ✅ **Clearer Documentation** - Deprecated legacy workflows, improved guidance
+
+**Breaking Changes**: None (backward compatible via fallback mode)
+
+**Migration**: If you have existing `implementation_repos` configured, add `repository_id` field to each entry (see Step 2 configuration example below).
+
+---
+
 ## 📋 Table of Contents
 
 - [When to Use This Guide](#when-to-use-this-guide)
@@ -248,18 +264,25 @@ In the same `core-config.yaml`, uncomment and configure the `implementation_repo
 # Multi-Repository Configuration (for Product repositories only)
 # Uncomment and configure when project.type is 'product-planning'
 implementation_repos:
-  - path: ../my-app-backend
-    type: backend
-  - path: ../my-app-web
+  - repository_id: my-app-backend # ⚠️ REQUIRED: Unique ID (must match Epic YAML)
+    path: ../my-app-backend # Relative or absolute path
+    type: backend # Repository type
+  - repository_id: my-app-web
+    path: ../my-app-web
     type: frontend
-  - path: ../my-app-ios
-    type: ios # Native iOS
-  - path: ../my-app-android
-    type: android # Native Android
+  - repository_id: my-app-ios
+    path: ../my-app-ios
+    type: ios # Native iOS (Swift/SwiftUI)
+  - repository_id: my-app-android
+    path: ../my-app-android
+    type: android # Native Android (Kotlin/Java)
   # OR for cross-platform mobile:
-  # - path: ../my-app-mobile
+  # - repository_id: my-app-mobile
+  #   path: ../my-app-mobile
   #   type: mobile # Flutter/React Native
 ```
+
+**⚠️ NEW in Phase 1**: The `repository_id` field is now **required** for proper Epic-to-Repository mapping. This must match the `repository` field in Epic YAML files.
 
 **Repository Types**:
 
