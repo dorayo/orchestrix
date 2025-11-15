@@ -14,11 +14,11 @@ project:
     assigned_stories: []
 prd:
   prdFile: docs/prd.md
-  prdSharded: false  # Set to true automatically after PO *shard
+  prdSharded: false
   prdShardedLocation: docs/prd
 architecture:
   architectureFile: docs/architecture.md
-  architectureSharded: false  # Set to true automatically after PO *shard
+  architectureSharded: false
   architectureShardedLocation: docs/architecture
   storyReviewsLocation: docs/architecture/story-reviews
 customTechnicalDocuments: null
@@ -55,4 +55,4 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
-version: 9.0.0
+version: 10.0.0

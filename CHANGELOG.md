@@ -1,3 +1,89 @@
+# [10.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v9.0.0...v10.0.0) (2025-11-15)
+
+
+### Bug Fixes
+
+* **architecture:** standardize system-architecture.md path across all tasks ([bcd575d](https://github.com/dorayo/ORCHESTRIX/commit/bcd575da20d4a6eae529e7b4f93c052de12f1e6d))
+
+
+* feat!: integrate epic definitions into PRD sharding workflow ([90cc93e](https://github.com/dorayo/ORCHESTRIX/commit/90cc93e3446c5b42b5235d07f16df17d7f77c119))
+
+
+### BREAKING CHANGES
+
+* Epic storage architecture has been fundamentally redesigned
+
+## What Changed
+
+### Epic Storage Architecture
+- **OLD**: Separate epic YAML files in `docs/epics/epic-*.yaml`
+- **NEW**: Epic YAML blocks embedded in PRD's "Epic Planning" section
+- After PO *shard: YAML blocks preserved in `docs/prd/*.md` files
+
+### PRD Sharding
+- PRD now sharded using md-tree: `prd.md` → `prd/*.md`
+- Epic YAML blocks remain intact in sharded files
+- Eliminates redundant `docs/epics/` directory
+
+### Story Filtering
+- Stories now filtered by `repository_type` field (backend/frontend/ios/android)
+- Matches `project.multi_repo.role` in core-config.yaml
+- `repository` field is now optional (used for documentation only)
+
+## Files Modified
+
+### Templates
+- prd-tmpl.yaml: Added "Epic Planning" section with YAML block examples
+- brownfield-prd-tmpl.yaml: Added brownfield-specific epic planning section
+
+### Tasks
+- po-shard-documents.md: Complete rewrite - PRD sharding with md-tree
+- create-next-story.md: Reads epics from prd/*.md, filters by repository_type
+
+### Configuration
+- core-config.yaml: Added prdSharded/prdShardedLocation config
+- epic-story-mapping-schema.yaml: Clarified repository_type is primary filter field
+
+### Documentation
+- MULTI_REPO_BROWNFIELD_ENHANCEMENT_GUIDE.md: Updated for new epic format
+
+## Migration Required
+
+Existing projects must:
+1. Add "Epic Planning" section to prd.md with YAML blocks
+2. Delete old `docs/epics/` directory
+3. Run `@po *shard` to create new prd shards
+
+## Benefits
+
+✅ Conceptual clarity: Epics belong in PRD
+✅ Consistency: Both PRD and architecture use md-tree sharding
+✅ Simplicity: One less directory to manage
+✅ Maintainability: Single source of truth (prd.md)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+* **architecture:** System architecture path changed from docs/architecture/system-architecture.md to docs/system-architecture.md for multi-repo Product repositories.
+
+Changes:
+- Update create-system-architecture.md to output to docs/system-architecture.md (multi-repo) or docs/architecture.md (single-repo)
+- Add automatic core-config.yaml update after architecture creation
+- Update all implementation repo tasks (backend, frontend, mobile) to read from correct path
+- Remove legacy path compatibility to avoid ambiguity
+- Add document scope restrictions to prevent reading from implementation repos
+- Update MULTI_REPO_BROWNFIELD_ENHANCEMENT_GUIDE.md with correct paths
+- Add CORE_CONFIG_ARCHITECTURE_PATHS.md configuration guide
+
+Migration for existing projects:
+1. Move docs/architecture/system-architecture.md to docs/system-architecture.md
+2. Update core-config.yaml: architectureFile to docs/system-architecture.md
+3. Re-run @po *shard to regenerate sharded files
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 # [9.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.4.0...v9.0.0) (2025-11-15)
 
 
