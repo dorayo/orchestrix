@@ -1,3 +1,17 @@
+# [8.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.1.1...v8.2.0) (2025-11-15)
+
+
+### Bug Fixes
+
+* **config:** revert epicsLocation - use hardcoded docs/epics for simplicity ([7b897c5](https://github.com/dorayo/ORCHESTRIX/commit/7b897c55b037f94575a82b55d297895f1296b104))
+* **multi-repo:** critical path fixes for multi-repository workflow ([74bdef1](https://github.com/dorayo/ORCHESTRIX/commit/74bdef1f46e10b2e56f23dbd0bd9e95a63596066)), closes [#4](https://github.com/dorayo/ORCHESTRIX/issues/4) [#5](https://github.com/dorayo/ORCHESTRIX/issues/5) [#22](https://github.com/dorayo/ORCHESTRIX/issues/22) [#26](https://github.com/dorayo/ORCHESTRIX/issues/26) [#9](https://github.com/dorayo/ORCHESTRIX/issues/9) [#18](https://github.com/dorayo/ORCHESTRIX/issues/18) [#21](https://github.com/dorayo/ORCHESTRIX/issues/21) [#3](https://github.com/dorayo/ORCHESTRIX/issues/3) [#8](https://github.com/dorayo/ORCHESTRIX/issues/8) [#1](https://github.com/dorayo/ORCHESTRIX/issues/1) [#2](https://github.com/dorayo/ORCHESTRIX/issues/2) [#7](https://github.com/dorayo/ORCHESTRIX/issues/7) [#2](https://github.com/dorayo/ORCHESTRIX/issues/2)
+
+
+### Features
+
+* **ux:** improve error messages and execution feedback (Phase 2 [#11](https://github.com/dorayo/ORCHESTRIX/issues/11)-[#13](https://github.com/dorayo/ORCHESTRIX/issues/13)) ([94aec28](https://github.com/dorayo/ORCHESTRIX/commit/94aec28e649574fc7fc34ef163f007477caef200)), closes [#12](https://github.com/dorayo/ORCHESTRIX/issues/12)
+* **validation:** add Epic YAML, Story sync, and enhanced validation tools (Phase 2 [#16](https://github.com/dorayo/ORCHESTRIX/issues/16), [#10](https://github.com/dorayo/ORCHESTRIX/issues/10), [#14](https://github.com/dorayo/ORCHESTRIX/issues/14)) ([6f02df1](https://github.com/dorayo/ORCHESTRIX/commit/6f02df12dba783a7802f016c7e3492661eb44dcd))
+
 ## [8.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v8.1.0...v8.1.1) (2025-11-14)
 
 

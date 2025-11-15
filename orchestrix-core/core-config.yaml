@@ -13,25 +13,6 @@ project:
   story_assignment:
     auto_filter: false
     assigned_stories: []
-
-# Multi-Repository Configuration (for Product repositories only)
-# Uncomment and configure when project.type is 'product-planning'
-# implementation_repos:
-#   - repository_id: my-project-backend  # Unique repository identifier (must match Epic YAML)
-#     path: ../my-project-backend        # Relative or absolute path to repository
-#     type: backend                      # Repository type
-#   - repository_id: my-project-web
-#     path: ../my-project-web
-#     type: frontend
-#   - repository_id: my-project-ios
-#     path: ../my-project-ios
-#     type: ios              # Native iOS (Swift/SwiftUI)
-#   - repository_id: my-project-android
-#     path: ../my-project-android
-#     type: android          # Native Android (Kotlin/Java)
-#   - repository_id: my-project-mobile
-#     path: ../my-project-mobile
-#     type: mobile           # Cross-platform (Flutter/React Native)
 prd:
   prdFile: docs/prd.md
   prdSharded: true
@@ -76,4 +57,4 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
-version: 8.1.1
+version: 8.2.0
