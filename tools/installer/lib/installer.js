@@ -273,7 +273,15 @@ class Installer {
       const sourceDir = configLoader.getOrchestrixCorePath();
       const orchestrixCoreDestDir = path.join(installDir, ".orchestrix-core");
       await fileManager.copyDirectoryWithRootReplacement(sourceDir, orchestrixCoreDestDir, ".orchestrix-core");
-      
+
+      // Copy core-config from template to preserve comments
+      spinner.text = "正在配置 core-config.yaml...";
+      const templatePath = path.join(sourceDir, "core-config.template.yaml");
+      const configDestPath = path.join(orchestrixCoreDestDir, "core-config.yaml");
+      if (await require("fs-extra").pathExists(templatePath)) {
+        await fileManager.copyFileWithRootReplacement(templatePath, configDestPath, ".orchestrix-core");
+      }
+
       // Copy common/ items to .orchestrix-core
       spinner.text = "正在复制通用工具...";
       await this.copyCommonItems(installDir, ".orchestrix-core", spinner);
@@ -350,6 +358,18 @@ class Installer {
       spinner.text = "Copying common utilities...";
       const commonFiles = await this.copyCommonItems(installDir, ".orchestrix-core", spinner);
       files.push(...commonFiles);
+
+      // Copy core-config from template to preserve comments (single-agent mode)
+      spinner.text = "正在配置 core-config.yaml...";
+      const sourceDir = configLoader.getOrchestrixCorePath();
+      const templatePath = path.join(sourceDir, "core-config.template.yaml");
+      const configDestPath = path.join(installDir, ".orchestrix-core", "core-config.yaml");
+      if (await require("fs-extra").pathExists(templatePath)) {
+        await fileManager.copyFileWithRootReplacement(templatePath, configDestPath, ".orchestrix-core");
+        if (!files.includes(".orchestrix-core/core-config.yaml")) {
+          files.push(".orchestrix-core/core-config.yaml");
+        }
+      }
     } else if (config.installType === "team") {
       // Team installation
       spinner.text = `正在安装 ${config.team} 团队...`;
@@ -395,6 +415,17 @@ class Installer {
       spinner.text = "Copying common utilities...";
       const commonFiles = await this.copyCommonItems(installDir, ".orchestrix-core", spinner);
       files.push(...commonFiles);
+
+      // Copy core-config from template to preserve comments (team mode)
+      spinner.text = "正在配置 core-config.yaml...";
+      const templatePath = path.join(sourceBase, "core-config.template.yaml");
+      const configDestPath = path.join(installDir, ".orchestrix-core", "core-config.yaml");
+      if (await require("fs-extra").pathExists(templatePath)) {
+        await fileManager.copyFileWithRootReplacement(templatePath, configDestPath, ".orchestrix-core");
+        if (!files.includes(".orchestrix-core/core-config.yaml")) {
+          files.push(".orchestrix-core/core-config.yaml");
+        }
+      }
     } else if (config.installType === "expansion-only") {
       // Expansion-only installation - DO NOT create .orchestrix-core
       // Only install expansion packs

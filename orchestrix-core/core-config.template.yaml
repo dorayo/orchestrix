@@ -1,0 +1,263 @@
+title: Orchestrix Core System
+description: >
+  The core agent framework for Orchestrix, providing the essential agents,
+  workflows, and data for building and managing AI-driven development teams.
+markdownExploder: true
+
+# ============================================================================
+# PROJECT CONFIGURATION
+# ============================================================================
+# Orchestrix supports two modes:
+#
+#   1. MONOLITH MODE (default)
+#      - Single repository contains everything
+#      - Planning documents (PRD, Architecture, Epics) in docs/
+#      - Implementation code in src/
+#      - Stories in docs/stories/
+#      - Suitable for: Small to medium projects, solo developers, simple apps
+#
+#   2. MULTI-REPO MODE
+#      - Separate repositories for planning and implementation
+#      - Product repo: PRD, Architecture, Epics (planning team)
+#      - Implementation repos: Backend, Frontend, iOS, Android (dev teams)
+#      - Centralized coordination with distributed execution
+#      - Suitable for: Large projects, multiple teams, microservices
+#
+# Quick Start Guide:
+#   - Monolith: Leave mode as 'monolith', ignore multi_repo section
+#   - Multi-Repo: See https://github.com/dorayo/ORCHESTRIX/blob/main/docs/QUICK_START_MULTI_REPO.md
+# ============================================================================
+
+project:
+  name: My Project
+
+  # ========== MODE SELECTION ==========
+  # Choose: monolith | multi-repo
+  mode: monolith
+
+  # ========== MULTI-REPO CONFIGURATION ==========
+  # Only relevant when mode = multi-repo
+  # Ignore this entire section if using monolith mode
+  multi_repo:
+
+    # --- Repository Role ---
+    # Defines this repository's purpose in the multi-repo setup
+    #
+    # Options:
+    #   - product: Planning/coordination repository
+    #     Contains: PRD, Epics, System Architecture, API contracts
+    #     Used by: PM, Analyst, UX-Expert, Architect, PO
+    #
+    #   - implementation: Generic implementation repository
+    #     Use when repository type doesn't fit standard categories
+    #
+    #   - backend: Backend/API implementation repository
+    #     Contains: Server code, API implementations, database schemas
+    #     Used by: Dev, QA, Architect (for detailed architecture)
+    #
+    #   - frontend: Web frontend implementation repository
+    #     Contains: Web UI code, components, client-side logic
+    #     Used by: Dev, QA, Architect (for detailed architecture)
+    #
+    #   - ios: iOS mobile implementation repository
+    #     Contains: iOS app code, Swift/SwiftUI implementations
+    #     Used by: Dev, QA, Architect (for detailed architecture)
+    #
+    #   - android: Android mobile implementation repository
+    #     Contains: Android app code, Kotlin/Java implementations
+    #     Used by: Dev, QA, Architect (for detailed architecture)
+    #
+    #   - mobile: Cross-platform mobile implementation repository
+    #     Contains: React Native, Flutter, or other cross-platform code
+    #     Used by: Dev, QA, Architect (for detailed architecture)
+    role: implementation
+
+    # --- Repository ID ---
+    # Unique identifier for this repository
+    # MUST match the 'repository' field in Epic YAML files for story routing
+    #
+    # Examples:
+    #   - my-ecommerce-backend
+    #   - my-ecommerce-web
+    #   - my-ecommerce-ios
+    #   - company-project-api
+    #
+    # Leave empty ('') for monolith mode or product repos without stories
+    repository_id: ''
+
+    # --- Product Repository Path (Implementation Repos Only) ---
+    # Relative or absolute path to the product repository
+    # Used to locate PRD, Epics, and System Architecture documents
+    #
+    # Examples:
+    #   - '../my-ecommerce-product'     (sibling directory)
+    #   - '../../product-repos/my-app'  (nested structure)
+    #   - '/absolute/path/to/product'   (absolute path)
+    #
+    # Leave empty ('') for product repos or monolith mode
+    product_repo_path: ''
+
+    # --- Implementation Repositories (Product Repos Only) ---
+    # List of all implementation repositories coordinated by this product repo
+    # Each entry must have: repository_id, path, and type
+    #
+    # Uncomment and configure when role = product:
+    #
+    # implementation_repos:
+    #   # Backend Repository
+    #   - repository_id: my-app-backend    # Must match impl repo's repository_id
+    #     path: ../my-app-backend          # Relative path to backend repo
+    #     type: backend                    # Repository type
+    #
+    #   # Web Frontend Repository
+    #   - repository_id: my-app-web
+    #     path: ../my-app-web
+    #     type: frontend
+    #
+    #   # iOS Mobile Repository
+    #   - repository_id: my-app-ios
+    #     path: ../my-app-ios
+    #     type: ios
+    #
+    #   # Android Mobile Repository
+    #   - repository_id: my-app-android
+    #     path: ../my-app-android
+    #     type: android
+    #
+    #   # Cross-platform Mobile Repository
+    #   - repository_id: my-app-mobile
+    #     path: ../my-app-mobile
+    #     type: mobile
+    #
+    # Validation: Run `npm run validate:multi-repo .` to check configuration
+
+    # --- Story Filtering (Optional) ---
+    # Control which stories are visible in this repository
+    #
+    # auto_filter_stories: Automatically filter stories by repository_id
+    #   - true: Only show stories where Epic YAML repository = this repository_id
+    #   - false: Show all stories (default)
+    #
+    # assigned_stories: Manual list of story IDs to show
+    #   - Overrides auto_filter when specified
+    #   - Useful for temporary assignments or testing
+    #
+    # Examples:
+    #   auto_filter_stories: true
+    #   assigned_stories: []                    # Auto-filter all
+    #
+    #   auto_filter_stories: false
+    #   assigned_stories: ['1.1', '1.3', '2.5'] # Manual selection
+    auto_filter_stories: false
+    assigned_stories: []
+
+# ============================================================================
+# DOCUMENT LOCATIONS
+# ============================================================================
+# Paths to core planning and architecture documents
+# These paths are relative to the project root
+
+# --- Product Requirements Document (PRD) ---
+prd:
+  prdFile: docs/prd.md              # Main PRD file
+  prdSharded: true                  # Whether PRD is split into multiple files
+  prdShardedLocation: docs/prd      # Directory for sharded PRD sections
+  epicFilePattern: epic-{n}*.md     # Pattern for Epic files (deprecated, use YAML)
+
+# --- Architecture Documents ---
+architecture:
+  architectureFile: docs/architecture.md              # Main architecture file
+  architectureSharded: true                           # Whether architecture is split
+  architectureShardedLocation: docs/architecture      # Directory for architecture sections
+  storyReviewsLocation: docs/architecture/story-reviews  # Architect's story review outputs
+
+# --- Custom Technical Documents ---
+# Additional technical documents to load during development
+# Leave as null if not using custom docs
+customTechnicalDocuments: null
+
+# ============================================================================
+# DEVELOPMENT CONFIGURATION
+# ============================================================================
+
+# --- Always-Load Architecture Files ---
+# Files that Dev agent should always load on startup
+# Ensures developers have context about standards and project structure
+devLoadAlwaysFiles:
+  - docs/architecture/coding-standards.md
+  - docs/architecture/tech-stack.md
+  - docs/architecture/source-tree.md
+
+# --- Debug Log Location ---
+# Where Dev agent writes debug information during development
+devDebugLog: .ai/debug-log.md
+
+# --- Story Location ---
+# Root directory for all story files
+# Each story is in its own subdirectory: {devStoryLocation}/{story-id}/
+devStoryLocation: docs/stories
+
+# --- Vertical Slice Strategy ---
+# When true, each story implements a complete vertical slice:
+#   - Backend API + Database
+#   - Frontend UI + State Management
+#   - Integration + End-to-End Testing
+# When false, stories can be horizontal (e.g., "just the API layer")
+verticalSliceStrategy: true
+
+# --- Dev Agent Settings ---
+dev:
+  devLogLocation: docs/dev/logs   # Where Dev writes implementation logs
+  devLogEnabled: true             # Whether to enable detailed logging
+
+# ============================================================================
+# QUALITY ASSURANCE CONFIGURATION
+# ============================================================================
+
+# --- Architect Review Settings ---
+architect:
+  storyReviewsLocation: docs/architecture/story-reviews  # Architect review outputs
+
+# --- QA Settings ---
+qa:
+  qaLocation: docs/qa                    # Root QA directory
+  qaReviewsLocation: docs/qa/reviews     # QA review outputs
+
+  # Test Design Thresholds
+  # Determines when comprehensive test design is required based on story complexity
+  testDesignThresholds:
+
+    # Simple Stories (Low Risk)
+    simple:
+      maxComplexity: 0              # Max complexity indicators (0 = none)
+      minQualityScore: 8.5          # Minimum quality score required
+      securitySensitive: false      # No security implications
+      tasks: []                     # No additional tasks required
+
+    # Standard Stories (Medium Risk)
+    standard:
+      maxComplexity: 2              # Up to 2 complexity indicators
+      minQualityScore: 7            # Minimum quality score required
+      tasks:
+        - test-design               # Requires test design document
+
+    # Comprehensive Stories (High Risk)
+    comprehensive:
+      minComplexity: 3              # 3+ complexity indicators
+      securitySensitive: true       # OR has security implications
+      tasks:
+        - test-design               # Requires test design document
+        - risk-profile              # Requires risk analysis
+
+# ============================================================================
+# SYSTEM SETTINGS
+# ============================================================================
+
+# --- Slash Command Prefix ---
+# Prefix for all Orchestrix slash commands
+# Default: "Orchestrix" results in /Orchestrix-create-story, etc.
+slashPrefix: Orchestrix
+
+# --- Version ---
+# Orchestrix core version (auto-updated by semantic-release)
+version: 8.3.0
