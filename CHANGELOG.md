@@ -1,3 +1,10 @@
+# [10.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.0.0...v10.1.0) (2025-11-15)
+
+
+### Features
+
+* **po-checklist:** add PRD format validation section for multi-repo support ([128d3e5](https://github.com/dorayo/ORCHESTRIX/commit/128d3e542cf5342b8b92be6d8ec67a2782c6d22a))
+
 # [10.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v9.0.0...v10.0.0) (2025-11-15)
 
 
