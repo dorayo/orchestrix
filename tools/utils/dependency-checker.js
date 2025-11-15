@@ -112,9 +112,18 @@ async function checkCrossRepoDependencies(params) {
 
   // Validate inputs
   if (!story_id || !story_definition || !current_repo_id || !product_repo_path || !all_stories) {
+    const missing = [];
+    if (!story_id) missing.push('story_id');
+    if (!story_definition) missing.push('story_definition');
+    if (!current_repo_id) missing.push('current_repo_id');
+    if (!product_repo_path) missing.push('product_repo_path');
+    if (!all_stories) missing.push('all_stories');
+
     return {
       status: 'error',
-      message: 'Missing required parameters',
+      message: `❌ DEPENDENCY CHECK FAILED - Missing required parameters: ${missing.join(', ')}\n\n` +
+               `🔍 This is likely a bug in the calling task.\n` +
+               `✅ Fix: Report this issue with the command you ran.`,
       blocking_dependencies: []
     };
   }
@@ -140,7 +149,15 @@ async function checkCrossRepoDependencies(params) {
     if (!dep_story) {
       return {
         status: 'error',
-        message: `Dependency story not found: ${dep_id}`,
+        message: `❌ DEPENDENCY STORY NOT FOUND: ${dep_id}\n\n` +
+                 `🔍 Possible causes:\n` +
+                 `  1. Story ${dep_id} not defined in any Epic YAML\n` +
+                 `  2. Typo in dependencies list\n` +
+                 `  3. Story was deleted from Epic\n\n` +
+                 `✅ Fix:\n` +
+                 `  1. Check Epic YAML files in Product repo: docs/epics/epic-*.yaml\n` +
+                 `  2. Verify story ${dep_id} exists in the stories[] array\n` +
+                 `  3. If story was removed, update dependencies in current story`,
         blocking_dependencies: [dep_id]
       };
     }
@@ -170,7 +187,17 @@ async function checkCrossRepoDependencies(params) {
   if (!product_config) {
     return {
       status: 'error',
-      message: `Cannot load product repository config at ${product_repo_path}/core-config.yaml`,
+      message: `❌ CANNOT LOAD PRODUCT REPOSITORY CONFIG\n\n` +
+               `📍 Expected location: ${product_repo_path}/core-config.yaml\n\n` +
+               `🔍 Possible causes:\n` +
+               `  1. File does not exist\n` +
+               `  2. Invalid YAML syntax\n` +
+               `  3. Incorrect product_repo_path in current repo config\n\n` +
+               `✅ Fix:\n` +
+               `  1. Verify Product repo path: ${product_repo_path}\n` +
+               `  2. Check current repo's core-config.yaml:\n` +
+               `     project.product_repo.path should point to Product repo\n` +
+               `  3. Run: cd ${product_repo_path} && cat core-config.yaml`,
       blocking_dependencies: []
     };
   }
@@ -190,7 +217,19 @@ async function checkCrossRepoDependencies(params) {
       if (!dep_repo_path) {
         return {
           status: 'error',
-          message: `Cannot resolve path for repository: ${dep_repo_id}. Check implementation_repos in product repo config.`,
+          message: `❌ CANNOT RESOLVE PATH FOR REPOSITORY: ${dep_repo_id}\n\n` +
+                   `📍 Story ${dep.story_id} depends on a story in repository "${dep_repo_id}"\n\n` +
+                   `🔍 Possible causes:\n` +
+                   `  1. Repository "${dep_repo_id}" not in Product repo's implementation_repos[]\n` +
+                   `  2. Missing repository_id field in implementation_repos\n` +
+                   `  3. Typo: Epic YAML uses "${dep_repo_id}" but config uses different name\n\n` +
+                   `✅ Fix:\n` +
+                   `  1. Open Product repo: ${product_repo_path}/core-config.yaml\n` +
+                   `  2. Add to implementation_repos:\n` +
+                   `     - repository_id: ${dep_repo_id}\n` +
+                   `       path: ../path-to-repo\n` +
+                   `       type: backend|frontend|ios|android|mobile\n` +
+                   `  3. Or fix typo in Epic YAML: docs/epics/epic-*.yaml`,
           blocking_dependencies: [dep.story_id]
         };
       }
@@ -198,7 +237,20 @@ async function checkCrossRepoDependencies(params) {
       if (!fs.existsSync(dep_repo_path)) {
         return {
           status: 'error',
-          message: `Dependency repository not found: ${dep_repo_path}`,
+          message: `❌ DEPENDENCY REPOSITORY NOT FOUND\n\n` +
+                   `📍 Repository: ${dep_repo_id}\n` +
+                   `📍 Expected path: ${dep_repo_path}\n` +
+                   `📍 Story ${dep.story_id} depends on this repository\n\n` +
+                   `🔍 Possible causes:\n` +
+                   `  1. Repository not cloned yet\n` +
+                   `  2. Wrong path in Product repo's implementation_repos[]\n` +
+                   `  3. Repository moved to different location\n\n` +
+                   `✅ Fix:\n` +
+                   `  1. Clone repository: git clone <url> ${dep_repo_path}\n` +
+                   `  2. Or update path in ${product_repo_path}/core-config.yaml:\n` +
+                   `     Find entry with repository_id: ${dep_repo_id}\n` +
+                   `     Update path: to correct location\n` +
+                   `  3. Verify with: ls -la ${path.dirname(dep_repo_path)}`,
           blocking_dependencies: [dep.story_id]
         };
       }
@@ -230,7 +282,18 @@ async function checkCrossRepoDependencies(params) {
       if (!status_match) {
         return {
           status: 'error',
-          message: `Cannot extract status from ${story_file_path}`,
+          message: `❌ CANNOT EXTRACT STATUS FROM STORY FILE\n\n` +
+                   `📍 Story: ${dep.story_id}\n` +
+                   `📍 File: ${story_file_path}\n\n` +
+                   `🔍 Possible causes:\n` +
+                   `  1. Story file missing "**Status**: <status>" field\n` +
+                   `  2. Incorrect format (should be markdown bold: **Status**:)\n` +
+                   `  3. Story file corrupted or incomplete\n\n` +
+                   `✅ Fix:\n` +
+                   `  1. Open file: ${story_file_path}\n` +
+                   `  2. Check for line matching: **Status**: Blocked|AwaitingArchReview|...\n` +
+                   `  3. If missing, add it to the story metadata section\n` +
+                   `  4. Ensure format: **Status**: <StatusValue> (markdown bold)`,
           blocking_dependencies: [dep.story_id]
         };
       }

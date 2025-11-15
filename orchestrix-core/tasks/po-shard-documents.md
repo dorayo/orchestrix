@@ -117,6 +117,12 @@ Found repositories:
 
 ### 2. Identify Epics and Stories
 
+**Progress Feedback**:
+```
+🔍 STEP 2: Analyzing PRD for Epics and Stories...
+📄 Reading: docs/prd.md
+```
+
 **Step 2.1: Identify Epics from PRD**
 
 Parse PRD to identify major features that will become epics:
@@ -127,6 +133,14 @@ Parse PRD to identify major features that will become epics:
 - etc.
 
 Assign epic IDs sequentially (1, 2, 3...)
+
+**Announce**:
+```
+✅ Found {N} epics in PRD:
+  - Epic 1: {title}
+  - Epic 2: {title}
+  ...
+```
 
 **Step 2.2: For Each Epic, Break Down into Repository-Specific Stories**
 
@@ -212,11 +226,26 @@ For each story, define specific, measurable deliverables:
 
 ### 6. Create Epic YAML Files
 
+**Progress Feedback**:
+```
+🔍 STEP 6: Creating Epic YAML Files...
+📁 Target directory: docs/epics/
+```
+
 **Step 6.1: Create Epic Directory**
 - Path: `docs/epics/`
 - Create if doesn't exist
+- **Announce**: `✅ Epic directory ready: docs/epics/`
 
 **Step 6.2: For Each Epic, Create YAML File**
+
+**Progress Feedback** (for each epic):
+```
+📝 Creating Epic {N}/{total}: {epic_title}
+   - Stories: {story_count}
+   - Repositories: {repo_count}
+   - Output: docs/epics/epic-{N}-{slug}.yaml
+```
 
 Filename: `docs/epics/epic-{N}-{slug}.yaml`
 
@@ -533,26 +562,44 @@ Then run: @po *shard
 ### Final Report
 
 ```
+═══════════════════════════════════════════════════════
 ✅ DOCUMENT SHARDING COMPLETE
+═══════════════════════════════════════════════════════
 
-📋 PRD:
+📋 PRD SHARDING:
   - Source: docs/prd.md
-  - Output: docs/epics/ ({N} epic YAML/MD files)
+  - Output: docs/epics/
+  - Epic YAML files: {N} created
+  - Total stories: {total_stories} across {total_repos} repositories
   - Status: ✅ Complete
 
-🏗️ Architecture:
+🏗️ ARCHITECTURE SHARDING:
   - Source: {ARCH_FILE}
-  - Output: {ARCH_DIR}/ ({M} section files)
-  - Status: ✅ Complete
+  - Output: {ARCH_DIR}/
+  - Section files: {M} created
   - Tool: md-tree (fast)
+  - Status: ✅ Complete
 
-⚙️ Configuration updated:
+⚙️ CONFIGURATION UPDATED:
   - prdSharded: true
   - architectureSharded: true
 
+📊 EPIC SUMMARY:
+{for each epic}
+  Epic {N}: {title}
+    - Stories: {count}
+    - Repositories: {list}
+{end for}
+
 🎯 NEXT STEPS:
-  - SM can now create stories: *create-next-story
-  - Dev will auto-load sections from devLoadAlwaysFiles
+  1. SM can create stories: *create-next-story
+  2. Dev will auto-load: devLoadAlwaysFiles sections
+  3. Validate config: node tools/utils/validate-multi-repo-config.js .
+
+📚 REFERENCE:
+  - Epic files: docs/epics/epic-*.yaml
+  - Story schema: orchestrix-core/data/epic-story-mapping-schema.yaml
+  - Enhancement guide: docs/MULTI_REPO_BROWNFIELD_ENHANCEMENT_GUIDE.md
 ```
 
 ---

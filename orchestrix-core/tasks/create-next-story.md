@@ -45,9 +45,55 @@ HALT: Cannot proceed in product-planning repository
 - `product_repo_enabled` = `project.product_repo.enabled`
 
 **Validate**:
-- If `product_repo_enabled = false`: HALT with "Multi-repo mode requires product_repo.enabled = true"
-- If `product_repo_path` is empty: HALT with "Multi-repo mode requires product_repo.path to be set"
-- If product repo directory doesn't exist: HALT with "Product repo not found at: {product_repo_path}"
+- If `product_repo_enabled = false`: HALT with:
+  ```
+  ❌ MULTI-REPO MODE NOT ENABLED
+
+  Current repository: {current_repo_id}
+  Type: {type}
+
+  🔍 This repository is configured as "{type}" but product_repo is disabled.
+
+  ✅ Fix: Edit core-config.yaml in this repository:
+     project:
+       product_repo:
+         enabled: true  # ⚠️ CHANGE THIS
+         path: ../path-to-product-repo
+  ```
+
+- If `product_repo_path` is empty: HALT with:
+  ```
+  ❌ PRODUCT REPO PATH NOT SET
+
+  ✅ Fix: Edit core-config.yaml in this repository:
+     project:
+       product_repo:
+         enabled: true
+         path: ../my-product  # ⚠️ SET THIS (relative or absolute)
+
+  📍 Example: If Product repo is ../my-app-product:
+     path: ../my-app-product
+  ```
+
+- If product repo directory doesn't exist: HALT with:
+  ```
+  ❌ PRODUCT REPOSITORY NOT FOUND
+
+  📍 Expected path: {product_repo_path}
+  📍 Resolved from: project.product_repo.path in core-config.yaml
+
+  🔍 Possible causes:
+    1. Product repo not cloned yet
+    2. Wrong path in config (relative path from current repo)
+    3. Path typo
+
+  ✅ Fix:
+    1. Verify current location: pwd
+    2. Check Product repo exists: ls -la {product_repo_path}
+    3. If not exists: Clone Product repo or fix path in core-config.yaml
+    4. Update config if needed:
+       project.product_repo.path: ../correct-path-to-product-repo
+  ```
 
 **Resolve product repo path**:
 ```
@@ -90,7 +136,26 @@ Extract: `devStoryLocation`, `prd.*`, `architecture.*`, `workflow.*`
 
 **Find all epic files**: `{epics_location}/epic-*.yaml`
 
-If no epic files found: HALT with "No epic files found in {epics_location}. Run PO *shard-documents first."
+If no epic files found: HALT with:
+```
+❌ NO EPIC YAML FILES FOUND
+
+📍 Searched location: {epics_location}
+📍 Pattern: epic-*.yaml
+
+🔍 Possible causes:
+  1. PO shard not run yet in Product repo
+  2. Wrong epics directory
+  3. Epic files not created
+
+✅ Fix:
+  1. Navigate to Product repo: cd {product_repo_path}
+  2. Run PO shard: @po *shard
+  3. Verify epics created: ls -la docs/epics/
+  4. Should see files like: epic-1-*.yaml, epic-2-*.yaml
+
+📚 Reference: Multi-Repo Enhancement Guide - Step 4
+```
 
 **Load all epic YAML files** (use `{root}/data/epic-story-mapping-schema.yaml` as reference for structure)
 
