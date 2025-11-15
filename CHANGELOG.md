@@ -1,3 +1,10 @@
+## [10.3.1](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.0...v10.3.1) (2025-11-15)
+
+
+### Bug Fixes
+
+* **po-shard:** allow architecture sharding in implementation repos ([250adbf](https://github.com/dorayo/ORCHESTRIX/commit/250adbfc2d37d437384afc69ca85a63bbe8084f5))
+
 # [10.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.2.0...v10.3.0) (2025-11-15)
 
 
