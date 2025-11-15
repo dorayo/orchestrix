@@ -26,7 +26,7 @@ Generate a **system-level architecture document** for multi-repository projects.
 - ⚠️ **Brownfield Mode** (if applicable): `docs/existing-system-integration.md` (multi-repo) or `docs/existing-system-analysis.md` (single-repo)
 
 **Project Configuration**:
-- ✅ Project type is `product-planning` in `core-config.yaml`
+- ✅ Project mode is `multi-repo` with role `product` in `core-config.yaml`
 - ✅ Running in Product repository (not implementation repo)
 
 **Recommended Environment**:
@@ -59,10 +59,11 @@ else
   echo "🔍 MODE DETECTED: Greenfield (New Project)"
 fi
 
-# Check project type
-PROJECT_TYPE=$(grep "type:" core-config.yaml | awk '{print $2}')
-if [ "$PROJECT_TYPE" != "product-planning" ]; then
-  echo "⚠️ WARNING: Project type is '$PROJECT_TYPE', expected 'product-planning'"
+# Check project mode and role
+PROJECT_MODE=$(grep "mode:" core-config.yaml | awk '{print $2}')
+PROJECT_ROLE=$(grep -A 1 "multi_repo:" core-config.yaml | grep "role:" | awk '{print $2}')
+if [ "$PROJECT_MODE" != "multi-repo" ] || [ "$PROJECT_ROLE" != "product" ]; then
+  echo "⚠️ WARNING: Project mode is '$PROJECT_MODE' with role '$PROJECT_ROLE', expected mode='multi-repo' role='product'"
   echo "This task should run in Product repository, not implementation repo"
   echo "Continue? (y/n)"
   read -r response
@@ -800,8 +801,9 @@ Present the completed system architecture document and provide next steps.
    **In Backend Repository**:
    ```bash
    cd {{project}}-backend
-   # Configure: project.type = backend
-   #            product_repo.path = ../{{project}}-product
+   # Configure: project.mode = multi-repo
+   #            project.multi_repo.role = backend
+   #            project.multi_repo.product_repo_path = ../{{project}}-product
    @architect *create-backend-architecture
    # Output: docs/architecture.md (detailed backend architecture)
    ```
@@ -809,8 +811,9 @@ Present the completed system architecture document and provide next steps.
    **In Frontend Repository**:
    ```bash
    cd {{project}}-web
-   # Configure: project.type = frontend
-   #            product_repo.path = ../{{project}}-product
+   # Configure: project.mode = multi-repo
+   #            project.multi_repo.role = frontend
+   #            project.multi_repo.product_repo_path = ../{{project}}-product
    @architect *create-frontend-architecture
    # Output: docs/architecture.md (detailed frontend architecture)
    ```

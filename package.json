@@ -16,6 +16,8 @@
     "validate:epics": "node tools/utils/validate-epic-yaml.js",
     "validate:story-sync": "node tools/utils/check-story-sync.js",
     "validate:all": "npm run validate:multi-repo . && npm run validate:epics docs/epics && npm run validate:story-sync .",
+    "migrate:config": "node tools/migrate-config-structure.js",
+    "migrate:config:all": "node tools/migrate-config-structure.js --all",
     "install:orchestrix": "node tools/installer/bin/orchestrix.js install",
     "format": "prettier --write \"**/*.md\"",
     "expansion:bump": "node tools/bump-expansion-version.js",

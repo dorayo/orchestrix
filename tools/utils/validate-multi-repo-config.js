@@ -135,28 +135,45 @@ function validateProductRepo(product_repo_path, result) {
     return null;
   }
 
-  // Check project.type
-  if (config.project?.type !== 'product-planning') {
+  // Check project.mode
+  if (config.project?.mode !== 'multi-repo') {
     result.addError(
-      'Product Type',
-      'Product repository must have project.type = "product-planning"',
+      'Product Mode',
+      'Product repository must have project.mode = "multi-repo"',
       {
-        actual: config.project?.type || 'undefined',
-        expected: 'product-planning',
-        fix: 'Set project.type to "product-planning" in core-config.yaml'
+        actual: config.project?.mode || 'undefined',
+        expected: 'multi-repo',
+        fix: 'Set project.mode to "multi-repo" in core-config.yaml'
       }
     );
   } else {
-    result.addPassed('Product Type', 'Project type is "product-planning"');
+    result.addPassed('Product Mode', 'Project mode is "multi-repo"');
   }
 
-  // Check implementation_repos
-  if (!config.implementation_repos || config.implementation_repos.length === 0) {
+  // Check project.multi_repo.role
+  if (config.project?.multi_repo?.role !== 'product') {
+    result.addError(
+      'Product Role',
+      'Product repository must have project.multi_repo.role = "product"',
+      {
+        actual: config.project?.multi_repo?.role || 'undefined',
+        expected: 'product',
+        fix: 'Set project.multi_repo.role to "product" in core-config.yaml'
+      }
+    );
+  } else {
+    result.addPassed('Product Role', 'Repository role is "product"');
+  }
+
+  // Check implementation_repos (now under multi_repo)
+  const impl_repos = config.project?.multi_repo?.implementation_repos || config.implementation_repos;
+
+  if (!impl_repos || impl_repos.length === 0) {
     result.addError(
       'Implementation Repos',
-      'Product repo must have implementation_repos[] configured',
+      'Product repo must have project.multi_repo.implementation_repos[] configured',
       {
-        fix: 'Add implementation_repos[] to core-config.yaml with at least one repository'
+        fix: 'Add implementation_repos[] to project.multi_repo in core-config.yaml'
       }
     );
     return null;
@@ -164,10 +181,14 @@ function validateProductRepo(product_repo_path, result) {
 
   result.addPassed(
     'Implementation Repos',
-    `Found ${config.implementation_repos.length} implementation repositories`
+    `Found ${impl_repos.length} implementation repositories`
   );
 
-  return config;
+  // Create a normalized config for backward compatibility
+  return {
+    ...config,
+    implementation_repos: impl_repos
+  };
 }
 
 /**
@@ -232,16 +253,17 @@ function validateImplementationRepos(product_repo_path, product_config, result) 
       continue;
     }
 
-    // Validate repository_id exists
-    const repository_id = impl_config.project?.repository_id;
+    // Validate repository_id exists (check both new and old location)
+    const repository_id = impl_config.project?.multi_repo?.repository_id ||
+                         impl_config.project?.repository_id;
 
     if (!repository_id) {
       result.addError(
         'Repository ID',
-        `implementation_repos[${repo_num}] missing project.repository_id in config`,
+        `implementation_repos[${repo_num}] missing project.multi_repo.repository_id in config`,
         {
           actual: repo_path,
-          fix: 'Set project.repository_id in core-config.yaml'
+          fix: 'Set project.multi_repo.repository_id in core-config.yaml'
         }
       );
       continue;
@@ -260,41 +282,46 @@ function validateImplementationRepos(product_repo_path, product_config, result) 
       repo_ids_seen.add(repository_id);
     }
 
-    // Validate bidirectional link: product_repo.path
-    const product_repo_link = impl_config.project?.product_repo;
-
-    if (!product_repo_link?.enabled) {
+    // Validate mode is multi-repo
+    if (impl_config.project?.mode !== 'multi-repo') {
       result.addWarning(
-        'Bidirectional Link',
-        `implementation_repos[${repo_num}] (${repository_id}) has product_repo.enabled = false`,
+        'Impl Mode',
+        `implementation_repos[${repo_num}] (${repository_id}) should have mode = "multi-repo"`,
         {
-          suggestion: 'Set product_repo.enabled = true for multi-repo mode'
+          suggestion: 'Set project.mode to "multi-repo" for proper multi-repo operation'
         }
       );
-    } else if (!product_repo_link?.path) {
+    }
+
+    // Validate bidirectional link: product_repo_path
+    const product_repo_path_link = impl_config.project?.multi_repo?.product_repo_path ||
+                                  (impl_config.project?.product_repo?.enabled ?
+                                   impl_config.project.product_repo.path : null);
+
+    if (!product_repo_path_link) {
       result.addError(
         'Bidirectional Link',
-        `implementation_repos[${repo_num}] (${repository_id}) missing product_repo.path`,
+        `implementation_repos[${repo_num}] (${repository_id}) missing project.multi_repo.product_repo_path`,
         {
-          fix: 'Set product_repo.path to point back to Product repository'
+          fix: 'Set product_repo_path to point back to Product repository'
         }
       );
     } else {
-      // Resolve and validate product_repo.path
-      const linked_product_path = path.isAbsolute(product_repo_link.path)
-        ? product_repo_link.path
-        : path.resolve(repo_path, product_repo_link.path);
+      // Resolve and validate product_repo_path
+      const linked_product_path = path.isAbsolute(product_repo_path_link)
+        ? product_repo_path_link
+        : path.resolve(repo_path, product_repo_path_link);
 
       const actual_product_path = path.resolve(product_repo_path);
 
       if (linked_product_path !== actual_product_path) {
         result.addError(
           'Bidirectional Link',
-          `implementation_repos[${repo_num}] (${repository_id}) product_repo.path points to wrong location`,
+          `implementation_repos[${repo_num}] (${repository_id}) product_repo_path points to wrong location`,
           {
             expected: actual_product_path,
             actual: linked_product_path,
-            fix: `Update product_repo.path in ${impl_config_path}`
+            fix: `Update product_repo_path in ${impl_config_path}`
           }
         );
       } else {
@@ -305,31 +332,32 @@ function validateImplementationRepos(product_repo_path, product_config, result) 
       }
     }
 
-    // Validate project.type matches
-    const impl_type = impl_config.project?.type;
+    // Validate project.multi_repo.role matches
+    const impl_role = impl_config.project?.multi_repo?.role ||
+                     impl_config.project?.type;
 
-    if (impl_type === 'monolith') {
+    if (impl_role === 'monolith') {
       result.addError(
-        'Impl Type',
-        `implementation_repos[${repo_num}] (${repository_id}) has type "monolith"`,
+        'Impl Role',
+        `implementation_repos[${repo_num}] (${repository_id}) has role "monolith"`,
         {
           expected: impl_repo.type,
           actual: 'monolith',
-          fix: `Change project.type to "${impl_repo.type}" in ${impl_config_path}`
+          fix: `Change project.multi_repo.role to "${impl_repo.type}" in ${impl_config_path}`
         }
       );
-    } else if (impl_type !== impl_repo.type) {
+    } else if (impl_role !== impl_repo.type) {
       result.addWarning(
-        'Type Mismatch',
-        `implementation_repos[${repo_num}] type mismatch: Product config says "${impl_repo.type}", Impl config says "${impl_type}"`,
+        'Role Mismatch',
+        `implementation_repos[${repo_num}] role mismatch: Product config says "${impl_repo.type}", Impl config says "${impl_role}"`,
         {
-          suggestion: 'Ensure both configs use the same type'
+          suggestion: 'Ensure both configs use the same role/type'
         }
       );
     } else {
       result.addPassed(
-        'Impl Type',
-        `${repository_id} type matches: "${impl_type}"`
+        'Impl Role',
+        `${repository_id} role matches: "${impl_role}"`
       );
     }
 

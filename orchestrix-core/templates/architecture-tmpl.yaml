@@ -26,7 +26,7 @@ sections:
 
   - id: system-architecture-context
     title: System Architecture Context (Implementation Repositories Only)
-    condition: project.type in [backend, frontend, ios, android, mobile]
+    condition: project.mode == 'multi-repo' and multi_repo.role in [backend, frontend, ios, android, mobile]
     instruction: |
       **FOR IMPLEMENTATION REPOSITORIES ONLY** (backend, frontend, ios, android, mobile):
 
@@ -35,7 +35,7 @@ sections:
       **Step 1: Check for System Architecture**
 
       ```bash
-      PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+      PRODUCT_REPO_PATH=$(yq eval '.multi_repo.product_repo_path' core-config.yaml)
       SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
 
       if [ -f "$SYSTEM_ARCH" ]; then

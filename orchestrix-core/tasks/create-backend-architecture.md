@@ -18,8 +18,8 @@ Generate a **detailed backend architecture document** for a backend implementati
 - ✅ PRD exists at `../product-repo/docs/prd.md` (or configured path)
 
 **Project Configuration**:
-- ✅ Project type is `backend` in `core-config.yaml`
-- ✅ `product_repo.path` is configured in `core-config.yaml` pointing to Product repository
+- ✅ Project mode is `multi-repo` with role `backend` in `core-config.yaml`
+- ✅ `multi_repo.product_repo_path` is configured in `core-config.yaml` pointing to Product repository
 - ✅ Running in Backend implementation repository (not Product repo)
 
 **Recommended Environment**:
@@ -31,21 +31,25 @@ Generate a **detailed backend architecture document** for a backend implementati
 Before starting, validate prerequisites:
 
 ```bash
-# Check project type
-PROJECT_TYPE=$(grep "type:" core-config.yaml | awk '{print $2}')
-if [ "$PROJECT_TYPE" != "backend" ]; then
-  echo "❌ ERROR: Project type is '$PROJECT_TYPE', expected 'backend'"
+# Check project mode and role
+PROJECT_MODE=$(grep "mode:" core-config.yaml | awk '{print $2}')
+PROJECT_ROLE=$(grep -A 1 "multi_repo:" core-config.yaml | grep "role:" | awk '{print $2}')
+if [ "$PROJECT_MODE" != "multi-repo" ] || [ "$PROJECT_ROLE" != "backend" ]; then
+  echo "❌ ERROR: Project mode is '$PROJECT_MODE' with role '$PROJECT_ROLE', expected mode='multi-repo' role='backend'"
   echo "This task should run in Backend implementation repository"
   exit 1
 fi
 
 # Check if product repo path is configured
-PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+PRODUCT_REPO_PATH=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
 if [ -z "$PRODUCT_REPO_PATH" ]; then
-  echo "❌ ERROR: product_repo.path not configured in core-config.yaml"
+  echo "❌ ERROR: multi_repo.product_repo_path not configured in core-config.yaml"
   echo "Add this to core-config.yaml:"
-  echo "product_repo:"
-  echo "  path: ../my-project-product  # Adjust path to your Product repo"
+  echo "project:"
+  echo "  mode: multi-repo"
+  echo "  multi_repo:"
+  echo "    role: backend"
+  echo "    product_repo_path: ../my-project-product  # Adjust path to your Product repo"
   exit 1
 fi
 
@@ -73,7 +77,7 @@ Load the system-level architecture as a CONSTRAINT for this detailed architectur
 
 ```bash
 # Read system architecture
-PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+PRODUCT_REPO_PATH=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
 SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
 ```
 

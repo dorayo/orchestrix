@@ -52,7 +52,7 @@ sections:
 
   - id: multi-repo-context
     title: Multi-Repository Context
-    condition: project.type != 'monolith'
+    condition: project.mode == 'multi-repo'
     type: template-text
     template: |
       **Repository**: {{repository_name}}

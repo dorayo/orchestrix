@@ -8,12 +8,12 @@ Validate implementation compliance with API contracts in multi-repository projec
 
 **Only execute if**:
 ```yaml
-project.type ∈ {backend, frontend, ios, android}
+project.mode = 'multi-repo' AND project.multi_repo.role ∈ {backend, frontend, ios, android}
 ```
 
 **Skip if**:
 ```yaml
-project.type ∈ {monolith, product-planning}
+project.mode = 'single-repo' OR project.multi_repo.role = 'product'
 ```
 
 ## Inputs
@@ -37,14 +37,20 @@ optional:
 
 ```yaml
 project:
-  type: {monolith|product-planning|backend|frontend|ios|android}
+  mode: {single-repo|multi-repo}
+  multi_repo:
+    role: {product|backend|frontend|ios|android}
 ```
 
-**If** `project.type` **∈** `{monolith, product-planning}`:
+**If** `project.mode = 'single-repo'`:
 - Skip validation
 - Return: `{result: SKIPPED, reason: "Not a multi-repo project"}`
 
-**If** `project.type` **∈** `{backend, frontend, ios, android}`:
+**If** `project.multi_repo.role = 'product'`:
+- Skip validation
+- Return: `{result: SKIPPED, reason: "Product repo does not implement APIs"}`
+
+**If** `project.mode = 'multi-repo'` **AND** `project.multi_repo.role ∈ {backend, frontend, ios, android}`:
 - Proceed with validation
 
 ### 2. Load Epic and Story Metadata
@@ -420,7 +426,7 @@ blocking_dependencies:
 
 ```yaml
 result: SKIPPED
-reason: "Project type is monolith - API contract validation not applicable"
+reason: "Project mode is single-repo - API contract validation not applicable"
 ```
 
 ## Usage Context
@@ -437,7 +443,7 @@ reason: "Project type is monolith - API contract validation not applicable"
 error: PRODUCT_REPO_NOT_FOUND
 message: "Cannot locate product repository"
 path_checked: {product_repo_path}
-config: "Check core-config.yaml project.productRepoPath"
+config: "Check core-config.yaml project.multi_repo.product_repo_path"
 result: ERROR
 ```
 

@@ -13,26 +13,27 @@ Verify SM agent permissions via `{root}/data/story-status-transitions.yaml`:
 
 **Read `{root}/core-config.yaml`**:
 
-Extract `project.type`, `project.repository_id`, `project.product_repo.*`
+Extract `project.mode`, `project.multi_repo.role`, `project.multi_repo.repository_id`, `project.multi_repo.product_repo_path`
 
 **Determine mode**:
-- If `project.type = monolith` OR `project.type` not set: **MONOLITH MODE** ✅ → Use existing single-repo logic (skip to Step 1)
-- If `project.type = product-planning`: **ERROR** → Cannot create stories in product-planning repo (HALT with message)
-- If `project.type ∈ {backend, frontend, ios, android, flutter, react-native}`: **MULTI-REPO MODE** ✅ → Continue with multi-repo logic below
+- If `project.mode = single-repo` OR `project.mode` not set: **MONOLITH MODE** ✅ → Use existing single-repo logic (skip to Step 1)
+- If `project.mode = multi-repo` AND `project.multi_repo.role = product`: **ERROR** → Cannot create stories in product-planning repo (HALT with message)
+- If `project.mode = multi-repo` AND `project.multi_repo.role ∈ {backend, frontend, ios, android, flutter, react-native}`: **MULTI-REPO MODE** ✅ → Continue with multi-repo logic below
 
 **If MONOLITH MODE**: Skip to Step 1 (existing behavior)
 
-**If ERROR (product-planning repo)**:
+**If ERROR (product repo)**:
 ```
-❌ ERROR: Cannot create stories in product-planning repository
+❌ ERROR: Cannot create stories in product repository
 
-Current project type: product-planning
+Current project mode: multi-repo
+Repository role: product
 Repository ID: {repository_id}
 
 ACTION: Stories must be created in implementation repositories (backend, frontend, ios, android).
 Navigate to the appropriate implementation repository and run *draft there.
 
-HALT: Cannot proceed in product-planning repository
+HALT: Cannot proceed in product repository
 ```
 
 **If MULTI-REPO MODE**: Continue below
@@ -40,39 +41,25 @@ HALT: Cannot proceed in product-planning repository
 #### Multi-Repo Configuration
 
 **Extract from core-config.yaml**:
-- `current_repo_id` = `project.repository_id` (e.g., "my-product-backend")
-- `product_repo_path` = `project.product_repo.path` (e.g., "../my-product")
-- `product_repo_enabled` = `project.product_repo.enabled`
+- `current_repo_id` = `project.multi_repo.repository_id` (e.g., "my-product-backend")
+- `product_repo_path` = `project.multi_repo.product_repo_path` (e.g., "../my-product")
+- `repo_role` = `project.multi_repo.role` (e.g., "backend")
 
 **Validate**:
-- If `product_repo_enabled = false`: HALT with:
-  ```
-  ❌ MULTI-REPO MODE NOT ENABLED
-
-  Current repository: {current_repo_id}
-  Type: {type}
-
-  🔍 This repository is configured as "{type}" but product_repo is disabled.
-
-  ✅ Fix: Edit core-config.yaml in this repository:
-     project:
-       product_repo:
-         enabled: true  # ⚠️ CHANGE THIS
-         path: ../path-to-product-repo
-  ```
-
 - If `product_repo_path` is empty: HALT with:
   ```
   ❌ PRODUCT REPO PATH NOT SET
 
   ✅ Fix: Edit core-config.yaml in this repository:
      project:
-       product_repo:
-         enabled: true
-         path: ../my-product  # ⚠️ SET THIS (relative or absolute)
+       mode: multi-repo
+       multi_repo:
+         role: backend  # or frontend, ios, android
+         repository_id: my-product-backend
+         product_repo_path: ../my-product  # ⚠️ SET THIS (relative or absolute)
 
   📍 Example: If Product repo is ../my-app-product:
-     path: ../my-app-product
+     product_repo_path: ../my-app-product
   ```
 
 - If product repo directory doesn't exist: HALT with:
@@ -80,7 +67,7 @@ HALT: Cannot proceed in product-planning repository
   ❌ PRODUCT REPOSITORY NOT FOUND
 
   📍 Expected path: {product_repo_path}
-  📍 Resolved from: project.product_repo.path in core-config.yaml
+  📍 Resolved from: project.multi_repo.product_repo_path in core-config.yaml
 
   🔍 Possible causes:
     1. Product repo not cloned yet
@@ -92,7 +79,7 @@ HALT: Cannot proceed in product-planning repository
     2. Check Product repo exists: ls -la {product_repo_path}
     3. If not exists: Clone Product repo or fix path in core-config.yaml
     4. Update config if needed:
-       project.product_repo.path: ../correct-path-to-product-repo
+       project.multi_repo.product_repo_path: ../correct-path-to-product-repo
   ```
 
 **Resolve product repo path**:
@@ -234,7 +221,7 @@ Announce: `Identified next story: {next_story.id} - {next_story.title}`
 **Input Parameters**:
 - `story_id`: `next_story.id`
 - `story_definition`: `next_story_definition`
-- `current_repo_id`: `config.project.repository_id`
+- `current_repo_id`: `config.project.multi_repo.repository_id`
 - `product_repo_path`: `product_repo_path` (from Step 0)
 - `all_stories`: `all_stories` (from Step 2.1)
 

@@ -120,15 +120,18 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: Existing App - Backend
-  type: backend
+  mode: multi-repo
   version: 1.0.0
+
+  multi_repo:
+    role: backend
 
 document_locations:
   architecture: docs/brownfield-architecture.md
 EOF
 ```
 
-**Note**: Do NOT set `product_repo.path` yet (Product repo doesn't exist).
+**Note**: Do NOT set `product_repo_path` yet (Product repo doesn't exist).
 
 ---
 
@@ -321,8 +324,11 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: Existing App - Web
-  type: frontend
+  mode: multi-repo
   version: 1.0.0
+
+  multi_repo:
+    role: frontend
 
 document_locations:
   architecture: docs/brownfield-architecture.md
@@ -495,8 +501,11 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: Existing App - iOS
-  type: ios
+  mode: multi-repo
   version: 1.0.0
+
+  multi_repo:
+    role: ios
 
 document_locations:
   architecture: docs/brownfield-architecture.md
@@ -535,17 +544,23 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: Existing App
-  type: product-planning
+  mode: multi-repo
   version: 1.0.0
 
-# List implementation repositories
-implementation_repos:
-  - path: ../existing-app-backend
-    type: backend
-  - path: ../existing-app-web
-    type: frontend
-  - path: ../existing-app-ios
-    type: ios
+  multi_repo:
+    role: product
+
+    # List implementation repositories
+    implementation_repos:
+      - repository_id: existing-app-backend
+        path: ../existing-app-backend
+        type: backend
+      - repository_id: existing-app-web
+        path: ../existing-app-web
+        type: frontend
+      - repository_id: existing-app-ios
+        path: ../existing-app-ios
+        type: ios
 
 document_locations:
   architecture: docs/architecture/system-architecture.md
@@ -1044,13 +1059,20 @@ This PRD documents the existing E-Commerce App as of 2025-01-14, based on revers
 
 ```yaml
 # In existing-app-product/core-config.yaml
-implementation_repos:
-  - path: ../existing-app-backend
-    type: backend
-  - path: ../existing-app-web
-    type: frontend
-  - path: ../existing-app-ios
-    type: ios
+project:
+  mode: multi-repo
+  multi_repo:
+    role: product
+    implementation_repos:
+      - repository_id: existing-app-backend
+        path: ../existing-app-backend
+        type: backend
+      - repository_id: existing-app-web
+        path: ../existing-app-web
+        type: frontend
+      - repository_id: existing-app-ios
+        path: ../existing-app-ios
+        type: ios
 ```
 
 **Why**: Architect agent needs to know which repos to scan for aggregation.
@@ -1080,8 +1102,8 @@ cd existing-app-backend
 # Edit core-config.yaml
 cat >> core-config.yaml << EOF
 
-product_repo:
-  path: ../existing-app-product
+  multi_repo:
+    product_repo_path: ../existing-app-product
 EOF
 ```
 

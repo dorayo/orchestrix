@@ -19,8 +19,8 @@ agent:
     - "All tech details MUST reference architecture docs with [Source: ...] format"
     - "Story preparation only - never implement code"
     - "Precision over speed - quality stories reduce downstream rework"
-    - "REPOSITORY AWARENESS: Check project.type from core-config.yaml at task start"
-    - "Multi-Repo Mode (backend/frontend/ios/android): Only create stories for THIS repository, load epics from product repo"
+    - "REPOSITORY AWARENESS: Check project.mode and project.multi_repo.role from core-config.yaml at task start"
+    - "Multi-Repo Mode (role: backend/frontend/ios/android/mobile/implementation): Only create stories for THIS repository, load epics from product repo"
     - "Monolith Mode: Create all stories (existing behavior)"
     - "Check cross-repo dependencies before creating stories (Stage 1: Manual warning)"
 

@@ -39,24 +39,27 @@ fi
 
 ```yaml
 project:
-  type: monolith | product-planning | backend | frontend | ios | android
+  mode: single-repo | multi-repo
+  multi_repo:
+    role: product | backend | frontend | ios | android
 ```
 
 **Determine mode**:
-- If `type = monolith` OR `type` not set: **MONOLITH MODE** → Use existing single-repo epic format
-- If `type = product-planning`: **MULTI-REPO MODE** → Create epic YAML files with cross-repo mapping
-- If `type ∈ {backend, frontend, ios, android, mobile, shared, admin}`: **ERROR** → HALT with message below
+- If `mode = single-repo` OR `mode` not set: **MONOLITH MODE** → Use existing single-repo epic format
+- If `mode = multi-repo` AND `role = product`: **MULTI-REPO MODE** → Create epic YAML files with cross-repo mapping
+- If `mode = multi-repo` AND `role ∈ {backend, frontend, ios, android, mobile, shared, admin}`: **ERROR** → HALT with message below
 
 **ERROR Message for Implementation Repositories**:
 ```
 ❌ CANNOT SHARD DOCUMENTS IN IMPLEMENTATION REPOSITORY
 
-Current project type: {type}
+Current project mode: multi-repo
+Repository role: {role}
 Repository: {repository_id}
 
 REASON: Document sharding must be performed in either:
-- Product repository (type: product-planning) for multi-repo projects
-- Monolith repository (type: monolith) for single-repo projects
+- Product repository (mode: multi-repo, role: product) for multi-repo projects
+- Monolith repository (mode: single-repo) for single-repo projects
 
 ACTION: Navigate to the Product repository and run *shard there.
 

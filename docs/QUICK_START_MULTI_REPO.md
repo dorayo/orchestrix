@@ -2,6 +2,22 @@
 
 > **5-minute setup** for multi-repository projects with Orchestrix
 
+## 🆕 New Configuration Structure (v8.2+)
+
+**Simpler, clearer multi-repo configuration:**
+
+- **Before**: Multiple project types (`product-planning`, `backend`, `frontend`, etc.)
+- **Now**: Just two modes - `monolith` or `multi-repo`, with specific `role` within multi-repo mode
+
+**Key Changes**:
+
+1. `project.type` → `project.mode` (monolith vs multi-repo)
+2. Repository role specified in `multi_repo.role` (product, backend, frontend, etc.)
+3. `product_repo.path` → `multi_repo.product_repo_path`
+4. `implementation_repos` moved under `multi_repo.implementation_repos`
+
+This makes the configuration structure clearer and more intuitive!
+
 ## 🎯 What You'll Get
 
 ✅ Coordinate development across multiple repos (Backend, Frontend, Mobile)
@@ -35,16 +51,20 @@ npx orchestrix install
 ```yaml
 project:
   name: My App
-  type: product-planning # ⚠️ REQUIRED for multi-repo
+  mode: multi-repo # ⚠️ REQUIRED: Use 'multi-repo' instead of 'product-planning'
 
-implementation_repos:
-  - repository_id: my-app-backend # ⚠️ Must match Epic YAML
-    path: ../my-app-backend
-    type: backend
-  - repository_id: my-app-web
-    path: ../my-app-web
-    type: frontend
-  # Add more repos as needed (ios, android, mobile, etc.)
+  multi_repo:
+    role: product # ⚠️ REQUIRED: This is the product repository
+
+    # Define implementation repositories
+    implementation_repos:
+      - repository_id: my-app-backend # ⚠️ Must match Epic YAML
+        path: ../my-app-backend
+        type: backend
+      - repository_id: my-app-web
+        path: ../my-app-web
+        type: frontend
+      # Add more repos as needed (ios, android, mobile, etc.)
 ```
 
 ### Step 2: Setup Implementation Repositories
@@ -62,11 +82,12 @@ vi core-config.yaml
 
 ```yaml
 project:
-  type: backend # ⚠️ Change from 'monolith'
-  repository_id: my-app-backend # ⚠️ Must match Product config
-  product_repo:
-    enabled: false # Enable after Product repo setup
-    path: ""
+  mode: multi-repo # ⚠️ Change from 'monolith'
+
+  multi_repo:
+    role: backend # ⚠️ Change to match repo type (backend/frontend/ios/android/mobile)
+    repository_id: my-app-backend # ⚠️ Must match Product config
+    product_repo_path: "" # Will configure after Product repo setup
 ```
 
 ### Step 3: Validate Configuration
@@ -79,7 +100,7 @@ npm run validate:multi-repo .
 
 # Expected output:
 # ✅ PASSED CHECKS:
-#   ✓ [Product Type] Project type is "product-planning"
+#   ✓ [Multi-Repo Mode] Project mode is "multi-repo" with role "product"
 #   ✓ [Implementation Repos] Found 2 implementation repositories
 #   ...
 ```
@@ -222,16 +243,18 @@ my-app-web/             # Implementation Repository
 
 ## ⚠️ Common Pitfalls
 
-### 1. Forgot to change `project.type`
+### 1. Forgot to change `project.mode` and `multi_repo.role`
 
-**Error**: "Cannot create stories in product-planning repository"
+**Error**: "Cannot create stories in product repository"
 
 **Fix**: In implementation repos, change:
 
 ```yaml
 project:
-  type: monolith  # ❌ Wrong
-  type: backend   # ✅ Correct
+  mode: monolith # ❌ Wrong
+
+  multi_repo:
+    role: backend # ✅ Correct - set appropriate role
 ```
 
 ### 2. Missing `repository_id`
@@ -241,10 +264,14 @@ project:
 **Fix**: Add `repository_id` to Product repo config:
 
 ```yaml
-implementation_repos:
-  - repository_id: my-app-backend # ⚠️ Required
-    path: ../my-app-backend
-    type: backend
+project:
+  mode: multi-repo
+  multi_repo:
+    role: product
+    implementation_repos:
+      - repository_id: my-app-backend # ⚠️ Required
+        path: ../my-app-backend
+        type: backend
 ```
 
 ### 3. Epic YAML repository mismatch

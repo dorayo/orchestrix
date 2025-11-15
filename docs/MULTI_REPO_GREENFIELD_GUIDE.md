@@ -41,7 +41,7 @@ This guide walks you through the complete Orchestrix workflow for building a new
 
 ```
 my-ecommerce-product/           # Product Repository (Planning Team)
-├── core-config.yaml            # type: product-planning
+├── core-config.yaml            # mode: multi-repo, role: product
 ├── docs/
 │   ├── project-brief.md        # Analyst output
 │   ├── prd.md                  # PM output
@@ -53,19 +53,19 @@ my-ecommerce-product/           # Product Repository (Planning Team)
 │       └── epic-2-product-catalog.yaml
 
 my-ecommerce-backend/           # Backend Repository (Dev Team)
-├── core-config.yaml            # type: backend, product_repo.path: ../my-ecommerce-product
+├── core-config.yaml            # mode: multi-repo, role: backend, product_repo_path: ../my-ecommerce-product
 ├── docs/
 │   └── architecture.md         # Detailed backend architecture
 └── src/                        # Implementation code
 
 my-ecommerce-web/               # Frontend Repository (Dev Team)
-├── core-config.yaml            # type: frontend, product_repo.path: ../my-ecommerce-product
+├── core-config.yaml            # mode: multi-repo, role: frontend, product_repo_path: ../my-ecommerce-product
 ├── docs/
 │   └── ui-architecture.md      # Detailed frontend architecture
 └── src/                        # Implementation code
 
 my-ecommerce-ios/               # iOS Repository (Dev Team)
-├── core-config.yaml            # type: ios, product_repo.path: ../my-ecommerce-product
+├── core-config.yaml            # mode: multi-repo, role: ios, product_repo_path: ../my-ecommerce-product
 ├── docs/
 │   └── architecture.md         # Detailed iOS architecture
 └── MyApp/                      # Implementation code
@@ -96,14 +96,17 @@ Verify `core-config.yaml`:
 ```yaml
 project:
   name: My E-Commerce App
-  type: product-planning
+  mode: multi-repo # Using multi-repo mode
   version: 1.0.0
+
+  multi_repo:
+    role: product # This is the product repository
 
 document_locations:
   prd: docs/prd.md
   front_end_spec: docs/front-end-spec.md
   architecture: docs/architecture/system-architecture.md
-# No product_repo.path here (this IS the product repo)
+# No product_repo_path here (this IS the product repo)
 ```
 
 ---
@@ -355,11 +358,12 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: My E-Commerce App - Backend
-  type: backend
+  mode: multi-repo
   version: 1.0.0
 
-product_repo:
-  path: ../my-ecommerce-product   # ← CRITICAL: Points to Product repo
+  multi_repo:
+    role: backend # ← CRITICAL: Set role to backend
+    product_repo_path: ../my-ecommerce-product   # ← CRITICAL: Points to Product repo
 
 document_locations:
   architecture: docs/architecture.md
@@ -542,11 +546,12 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: My E-Commerce App - Web
-  type: frontend
+  mode: multi-repo
   version: 1.0.0
 
-product_repo:
-  path: ../my-ecommerce-product   # ← CRITICAL: Points to Product repo
+  multi_repo:
+    role: frontend # ← CRITICAL: Set role to frontend
+    product_repo_path: ../my-ecommerce-product   # ← CRITICAL: Points to Product repo
 
 document_locations:
   architecture: docs/ui-architecture.md
@@ -732,11 +737,12 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: My E-Commerce App - iOS
-  type: ios
+  mode: multi-repo
   version: 1.0.0
 
-product_repo:
-  path: ../my-ecommerce-product   # ← CRITICAL: Points to Product repo
+  multi_repo:
+    role: ios # ← CRITICAL: Set role to ios
+    product_repo_path: ../my-ecommerce-product   # ← CRITICAL: Points to Product repo
 
 document_locations:
   architecture: docs/architecture.md

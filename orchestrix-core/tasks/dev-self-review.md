@@ -71,7 +71,7 @@ Execute: `{root}/tasks/validate-implementation.md`
 
 ### 4. Validate API Contracts (Multi-Repo Only)
 
-**Only if** `project.type ∈ {backend, frontend, ios, android}`:
+**Only if** `project.mode = 'multi-repo'` AND `project.multi_repo.role ∈ {backend, frontend, ios, android}`:
 
 Execute: `{root}/tasks/utils/validate-api-contract.md`
 

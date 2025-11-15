@@ -164,17 +164,18 @@ npx orchestrix install
 
 After installation, edit each repository's `core-config.yaml`:
 
-**⚠️ CRITICAL**: You **MUST** change `project.type` in each implementation repository!
+**⚠️ CRITICAL**: You **MUST** change `project.mode` to `multi-repo` and set `multi_repo.role` in each implementation repository!
 
 **Backend** (`my-app-backend/core-config.yaml`):
 
 ```yaml
 project:
   name: My App Backend # Include repo type for clarity
-  type: backend # ⚠️ MUST CHANGE from default 'monolith'
-  product_repo:
-    enabled: false # Will enable in Step 5
-    path: ""
+  mode: multi-repo # ⚠️ MUST CHANGE from default 'monolith'
+
+  multi_repo:
+    role: backend # ⚠️ Set role to backend
+    product_repo_path: "" # Will configure in Step 5
 ```
 
 **Frontend** (`my-app-web/core-config.yaml`):
@@ -182,10 +183,11 @@ project:
 ```yaml
 project:
   name: My App Web
-  type: frontend # ⚠️ MUST CHANGE from default 'monolith'
-  product_repo:
-    enabled: false
-    path: ""
+  mode: multi-repo # ⚠️ MUST CHANGE from default 'monolith'
+
+  multi_repo:
+    role: frontend # ⚠️ Set role to frontend
+    product_repo_path: "" # Will configure in Step 5
 ```
 
 **Native Mobile** (`my-app-ios/core-config.yaml`):
@@ -193,10 +195,11 @@ project:
 ```yaml
 project:
   name: My App iOS
-  type: ios # ⚠️ MUST CHANGE (use 'ios' for native iOS, 'android' for native Android)
-  product_repo:
-    enabled: false
-    path: ""
+  mode: multi-repo # ⚠️ MUST CHANGE from default 'monolith'
+
+  multi_repo:
+    role: ios # ⚠️ Set role (use 'ios' for native iOS, 'android' for native Android)
+    product_repo_path: "" # Will configure in Step 5
 ```
 
 **Cross-Platform Mobile** (if using Flutter/React Native):
@@ -204,38 +207,39 @@ project:
 ```yaml
 project:
   name: My App Mobile
-  type: mobile # ⚠️ Use 'mobile' for Flutter/React Native
-  product_repo:
-    enabled: false
-    path: ""
+  mode: multi-repo # ⚠️ MUST CHANGE from default 'monolith'
+
+  multi_repo:
+    role: mobile # ⚠️ Use 'mobile' for Flutter/React Native
+    product_repo_path: "" # Will configure in Step 5
 ```
 
 **💡 Configuration Tips**:
 
 - `project.name`: Descriptive name (used in docs, not for logic)
-- `project.type`: **REQUIRED** - See table below for complete list
-- `product_repo.path`: Leave empty for now, configure later (Step 5)
+- `project.mode`: **REQUIRED** - Use `multi-repo` for multi-repository projects
+- `multi_repo.role`: **REQUIRED** - See table below for complete list
+- `product_repo_path`: Leave empty for now, configure later (Step 5)
 
-**Complete Type Reference**:
+**Complete Role Reference**:
 
-| Type               | Use Case                          | Example                         |
-| ------------------ | --------------------------------- | ------------------------------- |
-| `backend`          | Backend/API implementation        | Node.js, Java, Python API       |
-| `frontend`         | Web frontend implementation       | React, Vue, Angular             |
-| `ios`              | iOS native implementation         | Swift/SwiftUI                   |
-| `android`          | Android native implementation     | Kotlin/Java                     |
-| `mobile` ⭐        | **Cross-platform mobile**         | **Flutter/React Native**        |
-| `shared`           | Shared library (optional)         | Common utilities across repos   |
-| `admin`            | Admin dashboard (optional)        | Separate admin UI from main web |
-| `product-planning` | Product repo (DO NOT use in impl) | Multi-repo coordinator          |
-| `monolith`         | Single-repo project (DO NOT use)  | Non multi-repo projects         |
+| Role        | Use Case                                | Example                         |
+| ----------- | --------------------------------------- | ------------------------------- |
+| `backend`   | Backend/API implementation              | Node.js, Java, Python API       |
+| `frontend`  | Web frontend implementation             | React, Vue, Angular             |
+| `ios`       | iOS native implementation               | Swift/SwiftUI                   |
+| `android`   | Android native implementation           | Kotlin/Java                     |
+| `mobile` ⭐ | **Cross-platform mobile**               | **Flutter/React Native**        |
+| `shared`    | Shared library (optional)               | Common utilities across repos   |
+| `admin`     | Admin dashboard (optional)              | Separate admin UI from main web |
+| `product`   | Product repo (use in Product repo only) | Multi-repo coordinator          |
 
 **Important Notes**:
 
-- For **Flutter or React Native**, use `type: mobile` (not `ios` or `android`)
-- For **native iOS**, use `type: ios`
-- For **native Android**, use `type: android`
-- `product-planning` and `monolith` are for Product/single repos, not implementation repos
+- For **Flutter or React Native**, use `role: mobile` (not `ios` or `android`)
+- For **native iOS**, use `role: ios`
+- For **native Android**, use `role: android`
+- The `product` role is only for Product repos, not implementation repos
 
 #### 1.1: Analyze Each Implementation Repository
 
@@ -287,33 +291,40 @@ Edit `core-config.yaml` in Product repository:
 ```yaml
 project:
   name: My App
-  type: product-planning # ⚠️ MUST be 'product-planning' for multi-repo
+  mode: multi-repo # ⚠️ MUST be 'multi-repo'
+
+  multi_repo:
+    role: product # ⚠️ MUST be 'product' for Product repository
 ```
 
 **Step 2: Configure Implementation Repositories**
 
-In the same `core-config.yaml`, uncomment and configure the `implementation_repos` section:
+In the same `core-config.yaml`, configure the `implementation_repos` section under `multi_repo`:
 
 ```yaml
-# Multi-Repository Configuration (for Product repositories only)
-# Uncomment and configure when project.type is 'product-planning'
-implementation_repos:
-  - repository_id: my-app-backend # ⚠️ REQUIRED: Unique ID (must match Epic YAML)
-    path: ../my-app-backend # Relative or absolute path
-    type: backend # Repository type
-  - repository_id: my-app-web
-    path: ../my-app-web
-    type: frontend
-  - repository_id: my-app-ios
-    path: ../my-app-ios
-    type: ios # Native iOS (Swift/SwiftUI)
-  - repository_id: my-app-android
-    path: ../my-app-android
-    type: android # Native Android (Kotlin/Java)
-  # OR for cross-platform mobile:
-  # - repository_id: my-app-mobile
-  #   path: ../my-app-mobile
-  #   type: mobile # Flutter/React Native
+project:
+  mode: multi-repo
+  multi_repo:
+    role: product
+
+    # Define implementation repositories
+    implementation_repos:
+      - repository_id: my-app-backend # ⚠️ REQUIRED: Unique ID (must match Epic YAML)
+        path: ../my-app-backend # Relative or absolute path
+        type: backend # Repository type
+      - repository_id: my-app-web
+        path: ../my-app-web
+        type: frontend
+      - repository_id: my-app-ios
+        path: ../my-app-ios
+        type: ios # Native iOS (Swift/SwiftUI)
+      - repository_id: my-app-android
+        path: ../my-app-android
+        type: android # Native Android (Kotlin/Java)
+      # OR for cross-platform mobile:
+      # - repository_id: my-app-mobile
+      #   path: ../my-app-mobile
+      #   type: mobile # Flutter/React Native
 ```
 
 **⚠️ NEW in Phase 1**: The `repository_id` field is now **required** for proper Epic-to-Repository mapping. This must match the `repository` field in Epic YAML files.
@@ -328,12 +339,12 @@ implementation_repos:
 - `shared`: Shared library (optional)
 - `admin`: Admin dashboard (optional, if separate from main web)
 
-**💡 Type Selection Guide**:
+**💡 Role Selection Guide**:
 
-- **Native iOS app**: Use `type: ios`
-- **Native Android app**: Use `type: android`
-- **Flutter app**: Use `type: mobile` (single repo for both platforms)
-- **React Native app**: Use `type: mobile` (single repo for both platforms)
+- **Native iOS app**: Use `role: ios`
+- **Native Android app**: Use `role: android`
+- **Flutter app**: Use `role: mobile` (single repo for both platforms)
+- **React Native app**: Use `role: mobile` (single repo for both platforms)
 
 **💡 Path Tips**:
 
@@ -611,10 +622,11 @@ docs/
 ```yaml
 project:
   name: My App Backend
-  type: backend
-  product_repo:
-    enabled: true # ⚠️ Enable the link
-    path: ../my-app-product # ⚠️ Relative path to Product repo
+  mode: multi-repo
+
+  multi_repo:
+    role: backend
+    product_repo_path: ../my-app-product # ⚠️ Relative path to Product repo
 ```
 
 **Frontend Repository** (`my-app-web/core-config.yaml`):
@@ -622,10 +634,11 @@ project:
 ```yaml
 project:
   name: My App Web
-  type: frontend
-  product_repo:
-    enabled: true
-    path: ../my-app-product
+  mode: multi-repo
+
+  multi_repo:
+    role: frontend
+    product_repo_path: ../my-app-product
 ```
 
 **Mobile Repository** (`my-app-ios/core-config.yaml`):
@@ -633,10 +646,11 @@ project:
 ```yaml
 project:
   name: My App iOS
-  type: ios
-  product_repo:
-    enabled: true
-    path: ../my-app-product
+  mode: multi-repo
+
+  multi_repo:
+    role: ios
+    product_repo_path: ../my-app-product
 ```
 
 **💡 Path Configuration**:
@@ -961,17 +975,17 @@ Define API versioning strategy:
 # Install Orchestrix in each repo
 cd ecommerce-backend
 npx orchestrix install
-# Edit core-config.yaml: type: backend, product_repo.enabled: false
+# Edit core-config.yaml: mode: multi-repo, role: backend, product_repo_path: ""
 @architect *document-project
 
 cd ../ecommerce-web
 npx orchestrix install
-# Edit core-config.yaml: type: frontend, product_repo.enabled: false
+# Edit core-config.yaml: mode: multi-repo, role: frontend, product_repo_path: ""
 @architect *document-project
 
 cd ../ecommerce-ios
 npx orchestrix install
-# Edit core-config.yaml: type: ios, product_repo.enabled: false
+# Edit core-config.yaml: mode: multi-repo, role: ios, product_repo_path: ""
 @architect *document-project
 
 # Create Product repo
@@ -984,15 +998,19 @@ npx orchestrix install
 cat > core-config.yaml << EOF
 project:
   name: E-Commerce Platform
-  type: product-planning
-
-implementation_repos:
-  - path: ../ecommerce-backend
-    type: backend
-  - path: ../ecommerce-web
-    type: frontend
-  - path: ../ecommerce-ios
-    type: ios
+  mode: multi-repo
+  multi_repo:
+    role: product
+    implementation_repos:
+      - repository_id: ecommerce-backend
+        path: ../ecommerce-backend
+        type: backend
+      - repository_id: ecommerce-web
+        path: ../ecommerce-web
+        type: frontend
+      - repository_id: ecommerce-ios
+        path: ../ecommerce-ios
+        type: ios
 EOF
 
 # Aggregate
@@ -1092,22 +1110,28 @@ EOF
 # Configure product_repo.path in each implementation repo
 cd ../ecommerce-backend
 # Edit core-config.yaml:
-#   product_repo.enabled: true
-#   product_repo.path: ../ecommerce-product
+#   mode: multi-repo
+#   multi_repo:
+#     role: backend
+#     product_repo_path: ../ecommerce-product
 @architect *create-backend-architecture
 @po *shard  # Shard backend architecture
 
 cd ../ecommerce-web
 # Edit core-config.yaml:
-#   product_repo.enabled: true
-#   product_repo.path: ../ecommerce-product
+#   mode: multi-repo
+#   multi_repo:
+#     role: frontend
+#     product_repo_path: ../ecommerce-product
 @architect *create-frontend-architecture
 @po *shard  # Shard frontend architecture
 
 cd ../ecommerce-ios
 # Edit core-config.yaml:
-#   product_repo.enabled: true
-#   product_repo.path: ../ecommerce-product
+#   mode: multi-repo
+#   multi_repo:
+#     role: ios
+#     product_repo_path: ../ecommerce-product
 @architect *create-mobile-architecture
 @po *shard  # Shard mobile architecture
 

@@ -224,7 +224,7 @@ Execute: `{root}/tasks/utils/check-cross-repo-dependencies.md`
 Input:
 - story_id: next_story.id
 - story_definition: next_story_definition
-- current_repo_id: config.project.repository_id
+- current_repo_id: config.project.multi_repo.repository_id
 - product_repo_path: resolved_product_repo_path
 - all_stories: all_stories (from Step 2.1)
 
@@ -267,7 +267,7 @@ Add dependency check before implementation:
 ```markdown
 ### Step 0.5: Check Cross-Repo Dependencies (Stage 2)
 
-**If project.type IN [backend, frontend, ios, android]**:
+**If project.mode = 'multi-repo' AND project.multi_repo.role IN [backend, frontend, ios, android]**:
 
 Execute: `{root}/tasks/utils/check-cross-repo-dependencies.md`
 

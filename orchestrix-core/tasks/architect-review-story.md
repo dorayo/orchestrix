@@ -152,15 +152,16 @@ compliance_checking:
 
 ```yaml
 # Multi-repository API contract compliance checking
-# Only execute if project.type ∈ {backend, frontend, ios, android}
+# Only execute if project.mode = multi-repo AND role ∈ {backend, frontend, ios, android}
 
 api_contract_validation:
-  enabled_when: project.type IN [backend, frontend, ios, android]
+  enabled_when: project.mode = 'multi-repo' AND project.multi_repo.role IN ['backend', 'frontend', 'ios', 'android']
 
   initialization:
-    - Load core-config.yaml and check project.type
-    - If monolith or product-planning: SKIP this validation
-    - If multi-repo: Load story's epic YAML to get provides_apis/consumes_apis
+    - Load core-config.yaml and check project.mode and project.multi_repo.role
+    - If project.mode = 'single-repo': SKIP this validation
+    - If project.multi_repo.role = 'product': SKIP this validation
+    - If multi-repo implementation: Load story's epic YAML to get provides_apis/consumes_apis
     - Load api-contracts.md from product repo (if exists)
 
   for_backend_stories:

@@ -22,7 +22,7 @@ sections:
       1. **Assess Enhancement Complexity**: If this is a simple feature addition or bug fix that could be completed in 1-2 focused development sessions, STOP and recommend: "For simpler changes, consider using the brownfield-create-epic or brownfield-create-story task with the Product Owner instead. This full PRD process is designed for substantial enhancements that require architectural planning and multiple coordinated stories."
 
       2. **REQUIRED PREREQUISITE - Existing System Analysis**:
-         - **Multi-Repo Detection**: Check if core-config.yaml contains `implementation_repos:` key
+         - **Multi-Repo Detection**: Check if core-config.yaml contains `multi_repo:` key with `mode: multi-repo`
            * If YES: Multi-repository mode → **MUST have**: docs/existing-system-integration.md (created via @architect *aggregate-system-analysis)
            * If NO: Single-repository mode → **MUST have**: docs/existing-system-analysis.md (created via @architect *document-project)
          - **Why required**: This PRD defines ENHANCEMENTS to the existing system. You need to understand the current state first.
@@ -31,7 +31,7 @@ sections:
            * Single-repo: HALT and instruct: "Please run '@architect *document-project' first to create docs/existing-system-analysis.md. This provides the necessary context about the existing system before defining enhancements."
 
       3. **Project Context Validation**:
-         - **Auto-detect mode**: Check core-config.yaml for implementation_repos
+         - **Auto-detect mode**: Check core-config.yaml for `project.mode` and `multi_repo` configuration
          - **Load and review**:
            * Multi-repo mode: docs/existing-system-integration.md (aggregated analysis)
            * Single-repo mode: docs/existing-system-analysis.md (repository analysis)
@@ -60,7 +60,7 @@ sections:
               - Supplementary: IDE-based validation (if available)
               - Additional context: User-provided information
 
-              Auto-detect by checking core-config.yaml for `implementation_repos:` key.
+              Auto-detect by checking core-config.yaml for `project.mode` value.
           - id: current-state
             title: Current Project State
             instruction: |

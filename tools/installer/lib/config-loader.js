@@ -232,19 +232,22 @@ class ConfigLoader {
 
   /**
    * Resolve document paths for multi-repo configurations
-   * If product_repo is enabled, override document locations to point to product repo
+   * If mode is multi-repo and role is implementation, override document locations to point to product repo
    * @param {Object} config - The core config object
    * @returns {Object} - Config with resolved document paths
    */
   resolveDocumentPaths(config) {
     if (!config) return config;
 
-    // Check if product repo is enabled
-    if (config.project?.product_repo?.enabled) {
-      const productPath = config.project.product_repo.path;
+    // Check if this is multi-repo mode with implementation role
+    const isMultiRepo = config.project?.mode === 'multi-repo';
+    const isImplementation = config.project?.multi_repo?.role &&
+                             config.project.multi_repo.role !== 'product';
+    const productPath = config.project?.multi_repo?.product_repo_path;
 
+    if (isMultiRepo && isImplementation) {
       if (!productPath) {
-        console.warn('Warning: product_repo.enabled is true but path is not specified');
+        console.warn('Warning: multi-repo mode enabled but product_repo_path is not specified');
         return config;
       }
 
@@ -290,33 +293,64 @@ class ConfigLoader {
       const configContent = await fs.readFile(configPath, 'utf8');
       const config = yaml.load(configContent);
 
-      // Apply defaults for backward compatibility
+      // Apply defaults for new structure
       if (!config.project) {
         config.project = {};
       }
 
-      // Default project type to monolith
-      if (!config.project.type) {
-        config.project.type = 'monolith';
+      // Default mode to monolith
+      if (!config.project.mode) {
+        config.project.mode = 'monolith';
       }
 
-      // Default product_repo to disabled
-      if (!config.project.product_repo) {
-        config.project.product_repo = {
-          enabled: false,
-          path: ''
-        };
-      }
-
-      // Default story_assignment
-      if (!config.project.story_assignment) {
-        config.project.story_assignment = {
-          auto_filter: false,
+      // Default multi_repo configuration
+      if (!config.project.multi_repo) {
+        config.project.multi_repo = {
+          role: 'implementation',
+          repository_id: '',
+          product_repo_path: '',
+          auto_filter_stories: false,
           assigned_stories: []
         };
       }
 
-      // Resolve document paths if product repo is enabled
+      // Migrate old configuration to new structure (backward compatibility)
+      if (config.project.type) {
+        console.warn('Warning: project.type is deprecated. Use project.mode instead.');
+
+        // Map old type to new mode
+        if (config.project.type === 'product-planning') {
+          config.project.mode = 'multi-repo';
+          config.project.multi_repo.role = 'product';
+        } else if (config.project.type !== 'monolith') {
+          config.project.mode = 'multi-repo';
+          config.project.multi_repo.role = config.project.type; // backend/frontend/ios/etc
+        }
+      }
+
+      // Migrate old product_repo.enabled to new structure
+      if (config.project.product_repo?.enabled) {
+        console.warn('Warning: project.product_repo.enabled is deprecated. Use project.mode = "multi-repo"');
+        config.project.mode = 'multi-repo';
+
+        if (config.project.product_repo.path) {
+          config.project.multi_repo.product_repo_path = config.project.product_repo.path;
+        }
+      }
+
+      // Migrate old story_assignment to new structure
+      if (config.project.story_assignment) {
+        console.warn('Warning: project.story_assignment is deprecated. Use project.multi_repo.auto_filter_stories');
+        config.project.multi_repo.auto_filter_stories = config.project.story_assignment.auto_filter || false;
+        config.project.multi_repo.assigned_stories = config.project.story_assignment.assigned_stories || [];
+      }
+
+      // Migrate old repository_id
+      if (config.project.repository_id && !config.project.multi_repo.repository_id) {
+        config.project.multi_repo.repository_id = config.project.repository_id;
+      }
+
+      // Resolve document paths if in multi-repo implementation mode
       return this.resolveDocumentPaths(config);
     } catch (error) {
       throw new Error(`Failed to load core config: ${error.message}`);

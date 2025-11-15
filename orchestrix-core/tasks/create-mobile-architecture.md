@@ -19,8 +19,8 @@ Generate a **detailed mobile architecture document** for a mobile implementation
 - ✅ PRD exists at `../product-repo/docs/prd.md` (or configured path)
 
 **Project Configuration**:
-- ✅ Project type is `ios`, `android`, `flutter`, or `react-native` in `core-config.yaml`
-- ✅ `product_repo.path` is configured in `core-config.yaml` pointing to Product repository
+- ✅ Project mode is `multi-repo` with role in `{ios, android, flutter, react-native}` in `core-config.yaml`
+- ✅ `multi_repo.product_repo_path` is configured in `core-config.yaml` pointing to Product repository
 - ✅ Running in Mobile implementation repository (not Product repo)
 
 **Recommended Environment**:
@@ -32,21 +32,25 @@ Generate a **detailed mobile architecture document** for a mobile implementation
 Before starting, validate prerequisites:
 
 ```bash
-# Check project type
-PROJECT_TYPE=$(grep "type:" core-config.yaml | awk '{print $2}')
-if [[ "$PROJECT_TYPE" != "ios" && "$PROJECT_TYPE" != "android" && "$PROJECT_TYPE" != "flutter" && "$PROJECT_TYPE" != "react-native" ]]; then
-  echo "❌ ERROR: Project type is '$PROJECT_TYPE', expected 'ios', 'android', 'flutter', or 'react-native'"
+# Check project mode and role
+PROJECT_MODE=$(grep "mode:" core-config.yaml | awk '{print $2}')
+PROJECT_ROLE=$(grep -A 1 "multi_repo:" core-config.yaml | grep "role:" | awk '{print $2}')
+if [ "$PROJECT_MODE" != "multi-repo" ] || [[ "$PROJECT_ROLE" != "ios" && "$PROJECT_ROLE" != "android" && "$PROJECT_ROLE" != "flutter" && "$PROJECT_ROLE" != "react-native" ]]; then
+  echo "❌ ERROR: Project mode is '$PROJECT_MODE' with role '$PROJECT_ROLE', expected mode='multi-repo' role in {ios, android, flutter, react-native}"
   echo "This task should run in Mobile implementation repository"
   exit 1
 fi
 
 # Check if product repo path is configured
-PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+PRODUCT_REPO_PATH=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
 if [ -z "$PRODUCT_REPO_PATH" ]; then
-  echo "❌ ERROR: product_repo.path not configured in core-config.yaml"
+  echo "❌ ERROR: multi_repo.product_repo_path not configured in core-config.yaml"
   echo "Add this to core-config.yaml:"
-  echo "product_repo:"
-  echo "  path: ../my-project-product  # Adjust path to your Product repo"
+  echo "project:"
+  echo "  mode: multi-repo"
+  echo "  multi_repo:"
+  echo "    role: ios  # or android, flutter, react-native"
+  echo "    product_repo_path: ../my-project-product  # Adjust path to your Product repo"
   exit 1
 fi
 
@@ -74,7 +78,7 @@ Load the system-level architecture as a CONSTRAINT for this detailed architectur
 
 ```bash
 # Read system architecture
-PRODUCT_REPO_PATH=$(grep -A 1 "product_repo:" core-config.yaml | grep "path:" | awk '{print $2}')
+PRODUCT_REPO_PATH=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
 SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/architecture/system-architecture.md"
 ```
 
