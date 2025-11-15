@@ -1,3 +1,10 @@
+# [8.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.2.0...v8.3.0) (2025-11-15)
+
+
+### Features
+
+* simplify multi-repo configuration structure ([5bd9868](https://github.com/dorayo/ORCHESTRIX/commit/5bd986830f3a602fba49a84a9b9bee8e6a17973f))
+
 # [8.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v8.1.1...v8.2.0) (2025-11-15)
 
 
