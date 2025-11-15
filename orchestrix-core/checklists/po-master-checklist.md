@@ -135,6 +135,97 @@ Ask the user if they want to work through the checklist:
 - [ ] Story titles in Epic Planning match Epic Details section
 - [ ] Epic descriptions in Epic Planning match Epic Details section
 
+### 0.8 Architecture Document Template Compliance [[MULTI-REPO ONLY]]
+
+[[LLM: For multi-repo projects, each repository must have an architecture document that follows the standardized template for its type. This ensures Dev agents can correctly load architecture context during story implementation. Skip this subsection for monolith projects.]]
+
+**Purpose**: Validate that architecture documents use standardized Section IDs, enabling the Dev agent's `load-architecture-context.md` utility to correctly extract implementation guidance.
+
+**Critical**: Dev agents expect specific section names (`tech-stack`, `source-tree`, `coding-standards`, `testing-strategy`). Mismatched section names will cause context loading failures.
+
+#### 0.8.1 Architecture Document Existence
+
+- [ ] Product repo has `docs/architecture/system-architecture.md` (if system architecture exists)
+- [ ] Backend repo(s) have `docs/architecture.md`
+- [ ] Frontend/Web repo(s) have `docs/ui-architecture.md` or `docs/architecture.md`
+- [ ] Mobile repo(s) have `docs/architecture.md`
+
+#### 0.8.2 Backend Architecture Template Compliance
+
+[[LLM: Backend repos must follow `architecture-tmpl.yaml` structure. Read the architecture.md file and verify section headings.]]
+
+For each Backend repository's `docs/architecture.md`, verify it contains these **exact section headings**:
+
+- [ ] Section exists: `## Tech Stack` (or `## Technology Stack`)
+- [ ] Section exists: `## Source Tree` (or `## Project Structure`)
+- [ ] Section exists: `## Coding Standards`
+- [ ] Section exists: `## Testing Strategy`
+- [ ] Section exists: `## Data Models`
+- [ ] Section exists: `## Database Schema`
+- [ ] Section exists: `## REST API Spec` or `## API Specification`
+- [ ] Section exists: `## Components`
+- [ ] Section exists: `## External APIs` (if external integrations exist)
+
+**Common Errors to Flag**:
+- ❌ `Backend Tech Stack` → Should be `Tech Stack`
+- ❌ `Test Strategy` → Should be `Testing Strategy`
+- ❌ `Backend Developer Standards` → Should be `Coding Standards`
+
+#### 0.8.3 Frontend Architecture Template Compliance
+
+[[LLM: Frontend repos must follow `front-end-architecture-tmpl.yaml` structure. Read the architecture file and verify section headings.]]
+
+For each Frontend repository's `docs/ui-architecture.md` (or `docs/architecture.md`), verify it contains these **exact section headings**:
+
+- [ ] Section exists: `## Tech Stack` (or `## Frontend Tech Stack` - both acceptable)
+- [ ] Section exists: `## Source Tree` or `## Project Structure`
+- [ ] Section exists: `## Coding Standards`
+- [ ] Section exists: `## Testing Strategy`
+- [ ] Section exists: `## Component Standards`
+- [ ] Section exists: `## State Management`
+- [ ] Section exists: `## API Integration`
+- [ ] Section exists: `## Routing`
+- [ ] Section exists: `## Styling Guidelines`
+
+**Common Errors to Flag**:
+- ❌ `Frontend Developer Standards` → Should be `Coding Standards`
+- ❌ `Testing Requirements` → Should be `Testing Strategy`
+
+#### 0.8.4 Mobile Architecture Template Compliance
+
+[[LLM: Mobile repos must follow `mobile-architecture-tmpl.yaml` structure. Read the architecture.md file and verify section headings.]]
+
+For each Mobile repository's `docs/architecture.md`, verify it contains these **exact section headings**:
+
+- [ ] Section exists: `## Tech Stack` (or `## Mobile Tech Stack` - both acceptable)
+- [ ] Section exists: `## Source Tree` or `## Project Structure` (CRITICAL - must exist)
+- [ ] Section exists: `## Coding Standards`
+- [ ] Section exists: `## Testing Strategy`
+- [ ] Section exists: `## App Architecture`
+- [ ] Section exists: `## Screen Structure`
+- [ ] Section exists: `## State Management`
+- [ ] Section exists: `## API Integration`
+- [ ] Section exists: `## Security`
+
+**Common Errors to Flag**:
+- ❌ `Mobile Developer Standards` → Should be `Coding Standards`
+- ❌ Missing `Source Tree` section → CRITICAL, must add
+
+#### 0.8.5 Section ID Consistency Across Repos
+
+[[LLM: Verify that core sections use consistent naming across ALL repos for Dev agent compatibility.]]
+
+- [ ] All architecture documents use `Coding Standards` (not `*-Developer Standards`)
+- [ ] All architecture documents use `Testing Strategy` (not `Test Strategy` or `Testing Requirements`)
+- [ ] All architecture documents have `Source Tree` or `Project Structure` section
+- [ ] All architecture documents have `Tech Stack` section (prefix like "Frontend/Mobile/Backend" is acceptable)
+
+**If Validation Fails**:
+1. HALT epic sharding process
+2. Report specific section naming issues to user
+3. Recommend running architecture regeneration with correct templates
+4. Wait for user to fix before proceeding
+
 ## 1. PROJECT SETUP & INITIALIZATION
 
 [[LLM: Project setup is the foundation. For greenfield, ensure clean start. For brownfield, ensure safe integration with existing system. Verify setup matches project type.]]
