@@ -78,6 +78,40 @@ Use this guide when you want to add **significant features** or make **substanti
 
 **Critical Insight**: Multi-repository projects require understanding the **integration** between repositories, not just individual repository analysis.
 
+### Workflow Diagram
+
+```mermaid
+graph TD
+    A[Existing Multi-Repo System] --> B[Step 1: Aggregate Analysis]
+    B --> C[existing-system-integration.md]
+    C --> D[Step 2: Create Brownfield PRD]
+    D --> E[prd.md with Enhancements]
+    E --> F[Step 3: Design Architecture]
+    F --> G[system-architecture.md]
+    G --> H[Step 4: PO Shard Documents]
+    H --> I[Epic YAML Files]
+    I --> J[Step 5: Create Repo Architectures]
+    J --> K1[Backend architecture.md]
+    J --> K2[Frontend architecture.md]
+    J --> K3[Mobile architecture.md]
+    K1 --> L[Development Phase]
+    K2 --> L
+    K3 --> L
+    L --> M[SM creates stories]
+    M --> N[Dev implements]
+    N --> O[QA reviews]
+    O --> P[Deploy enhancements]
+
+    style B fill:#e1f5ff
+    style D fill:#e1f5ff
+    style F fill:#e1f5ff
+    style H fill:#ffe1f5
+    style J fill:#ffe1f5
+    style L fill:#e1ffe1
+```
+
+**Legend**: 🔵 Planning | 🔴 Sharding | 🟢 Development
+
 ---
 
 ## Prerequisites
