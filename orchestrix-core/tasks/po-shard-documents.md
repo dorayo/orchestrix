@@ -24,7 +24,7 @@ After sharding, these YAML blocks remain in the sharded prd files for SM agents 
 **Detect `md-tree` command**:
 
 ```bash
-if command -v md-tree &> /dev/null; then
+if command -v md-tree > /dev/null 2>&1; then
   USE_MD_TREE=true
   echo "✅ md-tree available - using fast CLI tool for sharding"
 else
