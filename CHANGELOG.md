@@ -1,3 +1,10 @@
+# [10.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.4...v10.4.0) (2025-11-16)
+
+
+### Features
+
+* **workflow:** allow parallel story creation and auto-preserve user config ([27bda38](https://github.com/dorayo/ORCHESTRIX/commit/27bda38c45d7a32889fa44c1f03f0b5593a631a1))
+
 ## [10.3.4](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.3...v10.3.4) (2025-11-16)
 
 
