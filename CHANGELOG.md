@@ -1,3 +1,10 @@
+## [10.4.1](https://github.com/dorayo/ORCHESTRIX/compare/v10.4.0...v10.4.1) (2025-11-16)
+
+
+### Bug Fixes
+
+* **tasks:** improve shell compatibility in po-shard-documents task ([525ccf6](https://github.com/dorayo/ORCHESTRIX/commit/525ccf6269ec5af5274646fbf6245d3addf5c14a))
+
 # [10.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.4...v10.4.0) (2025-11-16)
 
 
