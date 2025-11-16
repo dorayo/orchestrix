@@ -1,1210 +1,939 @@
-# Multi-Repository Brownfield Development Guide
+# Multi-Repository Brownfield Guide
 
-> ⚠️ **DEPRECATED - This guide is for documentation-only purposes**
->
-> **For Enhancement Projects (Adding Features)**: Use the [Multi-Repository Brownfield Enhancement Guide](./MULTI_REPO_BROWNFIELD_ENHANCEMENT_GUIDE.md) instead, which follows the proper 3-step workflow:
->
-> 1. Aggregate System Analysis (`*aggregate-system-analysis`)
-> 2. Create Brownfield PRD
-> 3. Design Enhanced Architecture
->
-> **This guide** is only for pure documentation projects where you need to generate architecture docs from existing code without planning enhancements.
-
----
-
-> **Brownfield**: Working with existing codebases across multiple repositories that need architecture documentation.
-
-This guide walks you through the Orchestrix workflow for documenting and coordinating existing multi-repository projects using **bottom-up aggregation** (legacy approach).
-
----
-
-**📖 Looking for something else?**
-
-If you want to **add significant features to a single existing project**, see the [Brownfield Enhancement Guide](./BROWNFIELD_ENHANCEMENT_GUIDE.md) instead.
-
-This guide is specifically for **documenting and coordinating multiple existing repositories**.
+This guide walks you through the Orchestrix workflow for planning and implementing substantial enhancements to existing multi-repository projects.
 
 ---
 
 ## 📋 Table of Contents
 
+- [When to Use This Guide](#when-to-use-this-guide)
 - [Overview](#overview)
-- [Brownfield vs Greenfield](#brownfield-vs-greenfield)
 - [Prerequisites](#prerequisites)
-- [Phase 1: Document Implementation Repositories](#phase-1-document-implementation-repositories)
-- [Phase 2: Aggregate System Architecture](#phase-2-aggregate-system-architecture)
-- [Phase 3: Extract and Validate API Contracts](#phase-3-extract-and-validate-api-contracts)
-- [Phase 4: Create PRD from Architecture](#phase-4-create-prd-from-architecture)
+- [The 3-Step Multi-Repo Enhancement Workflow](#the-3-step-multi-repo-enhancement-workflow)
+  - [Step 1: Aggregate System Analysis](#step-1-aggregate-system-analysis)
+  - [Step 2: Define Enhancement Requirements](#step-2-define-enhancement-requirements)
+  - [Step 3: Design Enhanced System Architecture](#step-3-design-enhanced-system-architecture)
+- [After Architecture: Development Phase](#after-architecture-development-phase)
+- [Document Roles Explained](#document-roles-explained)
 - [Best Practices](#best-practices)
-- [Common Issues](#common-issues)
+- [Example Scenario](#example-scenario)
+
+---
+
+## When to Use This Guide
+
+Use this guide when you want to add **significant features** or make **substantial improvements** to an existing **multi-repository system**:
+
+✅ **Use this workflow when**:
+
+- You have multiple existing repositories (backend, frontend, mobile, etc.)
+- Enhancement requires coordination across repositories
+- Architectural planning across multiple repos is needed
+- You need to understand cross-repository integration before making changes
+- Changes affect API contracts between repositories
+
+❌ **Use other workflows when**:
+
+- Single repository project → Use [BROWNFIELD_ENHANCEMENT_GUIDE.md](./BROWNFIELD_ENHANCEMENT_GUIDE.md)
+- New multi-repo project → Use [MULTI_REPO_GREENFIELD_GUIDE.md](./MULTI_REPO_GREENFIELD_GUIDE.md)
+- Simple changes (1-2 stories) → Use `@po *create-epic` directly
 
 ---
 
 ## Overview
 
-**Brownfield Workflow** follows a **bottom-up approach**:
+### Key Philosophy
 
-1. **Implementation Repos**: Document existing architecture from code
-2. **Product Repo**: Aggregate system-level architecture from implementation repos
-3. **Product Repo**: Extract API contracts and validate alignment
-4. **Product Repo**: Create PRD from documented architecture (optional)
+**Multi-Repository Brownfield Enhancement follows a principled 3-step approach**:
 
-**Key Benefits**:
+1. **Understand Reality**: Aggregate analysis from all repositories to understand the current integrated system
+2. **Define Goals**: Specify what enhancements to build based on cross-repository understanding
+3. **Design Future**: Create improved system architecture that coordinates all repositories
 
-- ✅ Document existing systems quickly
-- ✅ Identify architectural gaps and inconsistencies
-- ✅ Validate API alignment across repos
-- ✅ Create foundation for future feature development
+### Why 3 Documents?
 
----
+Multi-repository projects require understanding the **integration** between repositories, not just individual repository analysis. This workflow uses three core documents: `existing-system-integration.md` (understand current state), `prd.md` (define what to build), and `system-architecture.md` (guide implementation). See [Document Roles Explained](#document-roles-explained) for details.
 
-## Brownfield vs Greenfield
+### Workflow Diagram
 
-| Aspect                  | Greenfield                         | Brownfield                                |
-| ----------------------- | ---------------------------------- | ----------------------------------------- |
-| **Direction**           | Top-Down                           | Bottom-Up                                 |
-| **Starting Point**      | Requirements → Architecture → Code | Code → Architecture → Documentation       |
-| **System Architecture** | Created first in Product repo      | Aggregated last from Implementation repos |
-| **API Contracts**       | Defined before implementation      | Extracted from existing code              |
-| **Use Case**            | New projects                       | Existing projects                         |
-| **Goal**                | Guide implementation               | Document existing system                  |
+```mermaid
+graph TD
+    A[Existing Multi-Repo System] --> B[Step 1: Aggregate Analysis]
+    B --> C[existing-system-integration.md]
+    C --> D[Step 2: Create Brownfield PRD]
+    D --> E[prd.md with Enhancements]
+    E --> F[Step 3: Design Architecture]
+    F --> G[system-architecture.md]
+    G --> H[Step 4: PO Shard Documents]
+    H --> I[Epic YAML Files]
+    I --> J[Step 5: Create Repo Architectures]
+    J --> K1[Backend architecture.md]
+    J --> K2[Frontend architecture.md]
+    J --> K3[Mobile architecture.md]
+    K1 --> L[Development Phase]
+    K2 --> L
+    K3 --> L
+    L --> M[SM creates stories]
+    M --> N[Dev implements]
+    N --> O[QA reviews]
+    O --> P[Deploy enhancements]
+
+    style B fill:#e1f5ff
+    style D fill:#e1f5ff
+    style F fill:#e1f5ff
+    style H fill:#ffe1f5
+    style J fill:#ffe1f5
+    style L fill:#e1ffe1
+```
+
+**Legend**: 🔵 Planning | 🔴 Sharding | 🟢 Development
 
 ---
 
 ## Prerequisites
 
-You have existing repositories with code but missing architecture documentation:
+**Existing System**:
 
-```
-existing-app-backend/          # Backend code exists
-├── src/
-│   ├── controllers/
-│   ├── services/
-│   └── repositories/
-├── package.json
-└── README.md                  # Minimal docs
+- ✅ Multiple existing repositories (at least 2: e.g., backend + frontend)
+- ✅ Each repository has working code
+- ✅ Repositories integrate with each other (via APIs, shared data, etc.)
 
-existing-app-web/              # Frontend code exists
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-├── package.json
-└── README.md
+**Project Setup**:
 
-existing-app-ios/              # iOS code exists
-├── MyApp/
-│   ├── Views/
-│   ├── ViewModels/
-│   └── Services/
-└── MyApp.xcodeproj
+- ✅ Product repository exists or will be created
+- ✅ Understanding of what enhancement you want to build
 
-# No Product repo yet!
-```
+**Tools**:
+
+- 🌐 Web interface (Gemini 1M+ context) - **Highly Recommended** for analyzing multiple repos
+- 💻 IDE (Claude Code, Cursor, etc.) - Acceptable but challenging with large context
 
 ---
 
-## Phase 1: Document Implementation Repositories
+## The 3-Step Multi-Repo Enhancement Workflow
 
-First, generate architecture documentation for each implementation repository.
+### Step 1: Aggregate System Analysis
 
-### Step 1: Setup Backend Repo
+**Goal**: Create a unified understanding of the current multi-repository system integration.
+
+#### 1.0: Install Orchestrix in Each Implementation Repository
+
+**⚠️ IMPORTANT**: Each implementation repository needs Orchestrix installed before analysis.
+
+**In each implementation repository**:
 
 ```bash
-cd existing-app-backend
-
-# Install Orchestrix (installs all agents)
+# Backend repo
+cd my-app-backend
 npx orchestrix install
 
-# Create core-config.yaml
-cat > core-config.yaml << EOF
-project:
-  name: Existing App - Backend
-  mode: multi-repo
-  version: 1.0.0
-
-  multi_repo:
-    role: backend
-
-document_locations:
-  architecture: docs/brownfield-architecture.md
-EOF
-```
-
-**Note**: Do NOT set `product_repo_path` yet (Product repo doesn't exist).
-
----
-
-### Step 2: Document Backend Architecture (Architect)
-
-```bash
-cd existing-app-backend
-
-# Activate Architect agent
-@architect
-
-# Select command
-*document-project
-```
-
-**Architect will**:
-
-1. Analyze existing codebase:
-   - Detect tech stack (Node.js + NestJS + PostgreSQL)
-   - Identify architecture pattern (MVC, Clean Architecture, etc.)
-   - Scan route files for API endpoints
-   - Analyze database schema (migrations, models)
-2. Interview user about:
-   - Authentication mechanism
-   - Data format conventions
-   - Deployment platform
-3. Generate `docs/brownfield-architecture.md`
-
-**Example Brownfield Backend Architecture**:
-
-````markdown
-# Backend Architecture (Brownfield)
-
-> **Status**: Reverse-engineered from existing codebase on 2025-01-14
-
-## Tech Stack (Detected)
-
-| Category  | Technology | Version |
-| --------- | ---------- | ------- |
-| Language  | TypeScript | 5.3.3   |
-| Runtime   | Node.js    | 20.11.0 |
-| Framework | NestJS     | 10.3.2  |
-| Database  | PostgreSQL | 15.5    |
-| ORM       | TypeORM    | 0.3.20  |
-
-## Architecture Pattern (Detected)
-
-**Three-Layer Architecture (MVC)**:
-
-- Controllers: `src/*/\*.controller.ts` (14 controllers)
-- Services: `src/*/\*.service.ts` (18 services)
-- Repositories: TypeORM entities (10 entities)
-
-## API Endpoints (Detected from Routes)
-
-**Authentication & User APIs**:
-
-- POST /api/auth/login (`AuthController.login()`)
-- POST /api/auth/register (`AuthController.register()`)
-- POST /api/auth/refresh (`AuthController.refresh()`)
-- GET /api/users/:id (`UserController.getUser()`)
-- PUT /api/users/:id (`UserController.updateUser()`)
-
-**Product APIs**:
-
-- GET /api/products (`ProductController.getProducts()`)
-  - Query params: ?page=1&limit=20 (offset pagination)
-- GET /api/products/:id (`ProductController.getProduct()`)
-- POST /api/products (`ProductController.createProduct()`, Admin only)
-- PUT /api/products/:id (`ProductController.updateProduct()`, Admin only)
-- DELETE /api/products/:id (`ProductController.deleteProduct()`, Admin only)
-
-**Order APIs**:
-
-- POST /api/orders (`OrderController.createOrder()`)
-- GET /api/orders (`OrderController.getOrders()`)
-  - Query params: ?userId=xxx
-- GET /api/orders/:id (`OrderController.getOrder()`)
-- PUT /api/orders/:id/status (`OrderController.updateStatus()`, Admin only)
-
-**Total**: 13 endpoints
-
-## Authentication (Detected)
-
-**Mechanism**: JWT (JSON Web Tokens)
-
-- Access Token Lifetime: 15 minutes (from code)
-- Refresh Token Lifetime: 7 days (from code)
-- Token Storage: Not specified (client responsibility)
-- Authorization: Bearer token in `Authorization` header
-
-## Data Format (Detected)
-
-**Content-Type**: application/json
-**Date Format**: ISO 8601 (detected in TypeORM entities)
-**Pagination**: Offset-based (`page`, `limit`)
-
-**Example Response**:
-
-```json
-{
-  "data": [...],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 150
-  }
-}
-```
-````
-
-## Database Schema (Detected)
-
-**Tables** (from TypeORM migrations):
-
-**users**:
-
-- id: UUID (PK)
-- email: VARCHAR(255) UNIQUE NOT NULL
-- password_hash: VARCHAR(255) NOT NULL
-- role: ENUM('user', 'admin')
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-
-**products**:
-
-- id: UUID (PK)
-- name: VARCHAR(255) NOT NULL
-- description: TEXT
-- price: DECIMAL(10,2) NOT NULL
-- stock_quantity: INT NOT NULL
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-
-**orders**:
-
-- id: UUID (PK)
-- user_id: UUID (FK → users.id)
-- status: ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled')
-- total_amount: DECIMAL(10,2) NOT NULL
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-
-**order_items**:
-
-- id: UUID (PK)
-- order_id: UUID (FK → orders.id)
-- product_id: UUID (FK → products.id)
-- quantity: INT NOT NULL
-- unit_price: DECIMAL(10,2) NOT NULL
-
-## Deployment (User Provided)
-
-- Platform: AWS ECS (Docker containers)
-- Database: AWS RDS PostgreSQL
-- Load Balancer: AWS ALB
-- CI/CD: GitHub Actions
-
-## Gaps and Recommendations
-
-**Gaps Identified**:
-
-1. ⚠️ No API documentation (OpenAPI/Swagger)
-2. ⚠️ Inconsistent error response format (some endpoints return different structures)
-3. ⚠️ No rate limiting
-4. ⚠️ No API versioning strategy
-
-**Recommendations**:
-
-1. Generate OpenAPI specification from routes
-2. Standardize error response format
-3. Add rate limiting middleware
-4. Implement API versioning (e.g., /api/v1/)
-
-````
-
-**Output**: `existing-app-backend/docs/brownfield-architecture.md` (30-50 pages)
-
----
-
-### Step 3: Document Frontend Architecture (Architect)
-
-```bash
-cd existing-app-web
-
-# Install Orchestrix (installs all agents)
+# Frontend repo
+cd ../my-app-web
 npx orchestrix install
 
-# Create core-config.yaml
-cat > core-config.yaml << EOF
-project:
-  name: Existing App - Web
-  mode: multi-repo
-  version: 1.0.0
-
-  multi_repo:
-    role: frontend
-
-document_locations:
-  architecture: docs/brownfield-architecture.md
-EOF
-
-# Document architecture
-@architect
-*document-project
-````
-
-**Architect will**:
-
-1. Analyze existing codebase:
-   - Detect tech stack (React + TypeScript + Vite)
-   - Identify architecture pattern (Component-based, hooks)
-   - Scan components for API calls
-   - Identify state management (Zustand, Redux, Context API)
-2. Interview user about:
-   - Authentication strategy
-   - API base URL
-   - Deployment platform
-3. Generate `docs/brownfield-architecture.md`
-
-**Example Brownfield Frontend Architecture**:
-
-```markdown
-# Frontend Architecture (Brownfield)
-
-> **Status**: Reverse-engineered from existing codebase on 2025-01-14
-
-## Tech Stack (Detected)
-
-| Category         | Technology   | Version |
-| ---------------- | ------------ | ------- |
-| Framework        | React        | 18.2.0  |
-| Language         | TypeScript   | 5.3.3   |
-| Build Tool       | Vite         | 5.0.10  |
-| State Management | Zustand      | 4.5.0   |
-| Routing          | React Router | 6.21.1  |
-| HTTP Client      | Axios        | 1.6.5   |
-| UI Library       | Material-UI  | 5.15.3  |
-
-## Component Architecture (Detected)
-
-**Pages** (8 detected in `src/pages/`):
-
-- HomePage, LoginPage, RegisterPage
-- ProductListPage, ProductDetailPage
-- CartPage, CheckoutPage
-- OrderHistoryPage
-
-**Shared Components** (25 detected in `src/components/`):
-
-- Button, Input, Modal, Card, Spinner, Toast
-- Navbar, Footer, SearchBar, Pagination
-- ProductCard, CartItem, OrderSummary, etc.
-
-## State Management (Detected)
-
-**Solution**: Zustand (detected in `src/stores/`)
-
-**Stores** (3 detected):
-
-- `auth.store.ts`: user, isAuthenticated, login(), logout()
-- `cart.store.ts`: items, total, addItem(), removeItem(), clearCart()
-- `ui.store.ts`: theme, language, showToast()
-
-## Routing (Detected)
-
-**React Router v6** (from `src/App.tsx`):
-
-| Path          | Component         | Protected |
-| ------------- | ----------------- | --------- |
-| /             | HomePage          | No        |
-| /login        | LoginPage         | No        |
-| /register     | RegisterPage      | No        |
-| /products     | ProductListPage   | No        |
-| /products/:id | ProductDetailPage | No        |
-| /cart         | CartPage          | No        |
-| /checkout     | CheckoutPage      | Yes       |
-| /orders       | OrderHistoryPage  | Yes       |
-
-**Protected Routes**: Implemented via `<ProtectedRoute>` wrapper
-
-## API Integration (Detected)
-
-**API Base URL**: `https://api.existing-app.com` (from `.env.production`)
-
-**API Calls Detected** (from `src/services/`):
-
-**Authentication & User APIs**:
-
-- POST /api/auth/login (`userService.login()`)
-- POST /api/auth/register (`userService.register()`)
-- POST /api/auth/refresh (`userService.refresh()`)
-- GET /api/users/:id (`userService.getUser()`)
-
-**Product APIs**:
-
-- GET /api/products (`productService.getProducts()`)
-  - Used in: ProductListPage
-- GET /api/products/:id (`productService.getProduct()`)
-  - Used in: ProductDetailPage
-
-**Order APIs**:
-
-- POST /api/orders (`orderService.createOrder()`)
-  - Used in: CheckoutPage
-- GET /api/orders (`orderService.getOrders()`)
-  - Used in: OrderHistoryPage
-- GET /api/orders/:id (`orderService.getOrder()`)
-  - Used in: OrderDetailPage
-
-**Cart APIs** ⚠️:
-
-- ❌ GET /api/cart - **NOT FOUND in backend** (Cart is client-side only)
-- ❌ POST /api/cart/items - **NOT FOUND in backend**
-
-**Total**: 9 API calls (2 undefined in backend)
-
-## Authentication (Detected)
-
-**Token Storage**: localStorage (detected in `auth.store.ts`)
-
-- `access_token` stored in localStorage
-- `refresh_token` stored in localStorage
-
-**Token Refresh**: Automatic (Axios interceptor in `api.client.ts`)
-
-- Intercepts 401 responses
-- Calls POST /api/auth/refresh
-- Retries original request
-
-## Deployment (User Provided)
-
-- Platform: Vercel
-- Build Command: `npm run build`
-- Output Directory: `dist`
-
-## Gaps and Recommendations
-
-**Gaps Identified**:
-
-1. ⚠️ Cart APIs called but don't exist in backend (client-side cart only)
-2. ⚠️ Token storage in localStorage (insecure for XSS attacks)
-3. ⚠️ No API error boundary (crashes on network errors)
-4. ⚠️ No loading states for API calls
-
-**Recommendations**:
-
-1. Document that Cart is client-side only OR add Cart APIs to backend
-2. Move to HttpOnly cookies for token storage
-3. Add ErrorBoundary component
-4. Add consistent loading states (Suspense, skeleton screens)
-```
-
-**Output**: `existing-app-web/docs/brownfield-architecture.md` (30-50 pages)
-
----
-
-### Step 4: Document iOS Architecture (Architect)
-
-```bash
-cd existing-app-ios
-
-# Install Orchestrix (installs all agents)
+# Mobile repo
+cd ../my-app-ios
 npx orchestrix install
-
-# Create core-config.yaml
-cat > core-config.yaml << EOF
-project:
-  name: Existing App - iOS
-  mode: multi-repo
-  version: 1.0.0
-
-  multi_repo:
-    role: ios
-
-document_locations:
-  architecture: docs/brownfield-architecture.md
-EOF
-
-# Document architecture
-@architect
-*document-project
 ```
 
-**Architect will**:
+**Configuration**: Repository configuration will be completed in **Step 1.3** after creating the Product repository. Installation creates the default structure only.
 
-1. Analyze existing iOS codebase
-2. Generate `docs/brownfield-architecture.md`
+#### 1.1: Analyze Each Implementation Repository
 
-**Output**: `existing-app-ios/docs/brownfield-architecture.md` (30-50 pages)
-
----
-
-## Phase 2: Aggregate System Architecture
-
-Now create a Product repository and aggregate system architecture from implementation repos.
-
-### Step 5: Create Product Repository
+**In each implementation repository**:
 
 ```bash
-# Create Product repo
-mkdir existing-app-product
-cd existing-app-product
+cd my-app-backend
+@architect *document-project
+# Output: docs/existing-system-analysis.md
+```
+
+```bash
+cd my-app-web
+@architect *document-project
+# Output: docs/existing-system-analysis.md
+```
+
+```bash
+cd my-app-ios
+@architect *document-project
+# Output: docs/existing-system-analysis.md
+```
+
+**What This Does**:
+
+- Analyzes current tech stack and architecture
+- Documents existing APIs (backend provides, frontend consumes)
+- Identifies technical debt
+- Records current coding standards
+
+**Output**: Each repository has `docs/existing-system-analysis.md`
+
+#### 1.2: Create Product Repository (if not exists)
+
+```bash
+cd /path/to/projects
+mkdir my-app-product
+cd my-app-product
 git init
-
-# Install Orchestrix (installs all agents)
 npx orchestrix install
+```
 
-# Create core-config.yaml
-cat > core-config.yaml << EOF
+#### 1.3: Configure Implementation Repositories
+
+**Step 1: Set Project Type**
+
+Edit `core-config.yaml` in Product repository:
+
+```yaml
 project:
-  name: Existing App
+  name: My App
   mode: multi-repo
-  version: 1.0.0
 
   multi_repo:
     role: product
-
-    # List implementation repositories
-    implementation_repos:
-      - repository_id: existing-app-backend
-        path: ../existing-app-backend
-        type: backend
-      - repository_id: existing-app-web
-        path: ../existing-app-web
-        type: frontend
-      - repository_id: existing-app-ios
-        path: ../existing-app-ios
-        type: ios
-
-document_locations:
-  architecture: docs/architecture/system-architecture.md
-EOF
 ```
 
----
+**Step 2: Configure Implementation Repositories**
 
-### Step 6: Aggregate System Architecture (Architect)
+In the same `core-config.yaml`, configure the `implementation_repos` section under `multi_repo`:
+
+```yaml
+project:
+  mode: multi-repo
+  multi_repo:
+    role: product
+
+    # Define implementation repositories
+    implementation_repos:
+      - repository_id: my-app-backend # Unique ID (must match Epic YAML)
+        path: ../my-app-backend # Relative or absolute path
+        type: backend # Repository type
+      - repository_id: my-app-web
+        path: ../my-app-web
+        type: frontend
+      - repository_id: my-app-ios
+        path: ../my-app-ios
+        type: ios # Native iOS (Swift/SwiftUI)
+      - repository_id: my-app-android
+        path: ../my-app-android
+        type: android # Native Android (Kotlin/Java)
+      # OR for cross-platform mobile:
+      # - repository_id: my-app-mobile
+      #   path: ../my-app-mobile
+      #   type: mobile # Flutter/React Native
+```
+
+**Note**: The `repository_id` field is required for proper Epic-to-Repository mapping and must match the `repository` field in Epic YAML files.
+
+**Available Repository Types**: `backend`, `frontend`, `ios`, `android`, `mobile` (Flutter/React Native), `shared`, `admin`
+
+**💡 Path Tips**:
+
+- Paths are relative to Product repository
+- Use `../` to go up one directory
+- Example: If Product repo is at `/projects/my-app-product` and backend is at `/projects/my-app-backend`, use `../my-app-backend`
+
+#### 1.4: Aggregate System Analysis
+
+**In Product repository**:
 
 ```bash
-cd existing-app-product
-
-# Activate Architect agent
-@architect
-
-# Select command
-*aggregate-system-architecture
+@architect *aggregate-system-analysis
 ```
 
-**Architect will**:
+**What This Does**:
 
-1. Read brownfield-architecture.md from each implementation repo
-2. Extract system-level information:
-   - Repository topology
-   - Tech stacks
-   - API endpoints (from backend)
-   - API calls (from frontend/iOS)
-   - Authentication mechanism
-   - Data format standards
-   - Deployment platforms
-3. Identify gaps and inconsistencies:
-   - APIs called by frontend/iOS but not provided by backend
-   - APIs provided by backend but not used by any client
-   - Inconsistent authentication mechanisms
-   - Inconsistent data formats
-4. Generate `docs/architecture/system-architecture.md`
+- Reads `existing-system-analysis.md` from each implementation repo
+- Analyzes cross-repository integration
+- Identifies API contracts (who provides, who consumes)
+- Detects API alignment issues
+- Documents system-level technical debt
+- Highlights integration gaps
 
-**Example Aggregated System Architecture**:
+**Output**: `docs/existing-system-integration.md`
 
-````markdown
-# System Architecture (Aggregated from Brownfield)
+**Example Output Sections**:
 
-> **Status**: Aggregated from 3 implementation repositories on 2025-01-14
-
+```markdown
 ## Repository Topology
 
-| Repository           | Type           | Tech Stack                    | Status        |
-| -------------------- | -------------- | ----------------------------- | ------------- |
-| existing-app-backend | Backend        | Node.js + NestJS + PostgreSQL | ✅ Documented |
-| existing-app-web     | Frontend (Web) | React + TypeScript + Vite     | ✅ Documented |
-| existing-app-ios     | Mobile (iOS)   | Swift + SwiftUI               | ✅ Documented |
+| Repository     | Type     | Responsibility | Tech Stack           |
+| -------------- | -------- | -------------- | -------------------- |
+| my-app-backend | backend  | REST APIs      | Node.js 20 + Express |
+| my-app-web     | frontend | Web UI         | React 18 + Next.js   |
+| my-app-ios     | ios      | iOS app        | Swift 5 + SwiftUI    |
 
-## API Contracts Summary
+## Cross-Repository API Contracts
 
-**Backend Provides** (13 endpoints):
+**Backend Provides** (11 endpoints):
 
-**Authentication & User APIs**:
-
-- POST /api/auth/login - User login
-- POST /api/auth/register - User registration
-- POST /api/auth/refresh - Refresh access token
-- GET /api/users/:id - Get user profile
-- PUT /api/users/:id - Update user profile
-
-**Product APIs**:
-
-- GET /api/products - List products (paginated)
-- GET /api/products/:id - Get product details
-- POST /api/products - Create product (Admin only)
-- PUT /api/products/:id - Update product (Admin only)
-- DELETE /api/products/:id - Delete product (Admin only)
-
-**Order APIs**:
-
-- POST /api/orders - Create order
-- GET /api/orders - List orders (filtered by userId)
-- GET /api/orders/:id - Get order details
+- POST /api/auth/login
+- GET /api/tasks
+- ...
 
 **Frontend Consumes** (9 endpoints):
 
-- ✅ POST /api/auth/login
-- ✅ POST /api/auth/register
-- ✅ POST /api/auth/refresh
-- ✅ GET /api/users/:id
-- ✅ GET /api/products
-- ✅ GET /api/products/:id
-- ✅ POST /api/orders
-- ✅ GET /api/orders
-- ✅ GET /api/orders/:id
+- ✅ POST /api/auth/login (aligned)
+- ❌ GET /api/hardware/config (backend doesn't provide!)
 
-**iOS Consumes** (9 endpoints):
+**API Alignment**: 82% (9/11 aligned)
 
-- ✅ POST /api/auth/login
-- ✅ POST /api/auth/register
-- ✅ POST /api/auth/refresh
-- ✅ GET /api/users/:id
-- ✅ GET /api/products
-- ✅ GET /api/products/:id
-- ✅ POST /api/orders
-- ✅ GET /api/orders
-- ✅ GET /api/orders/:id
+## Technical Debt (System-Level)
 
-## Integration Strategy
+1. Backend provides unused APIs
+2. Frontend token storage uses localStorage (XSS risk)
+3. No API documentation (OpenAPI spec missing)
+```
 
-**Authentication**:
-
-- Mechanism: JWT (JSON Web Tokens)
-- Access Token Lifetime: 15 minutes
-- Refresh Token Lifetime: 7 days
-- Token Storage:
-  - Web: localStorage (⚠️ Security risk - recommend HttpOnly cookies)
-  - iOS: Keychain ✅
-
-**Data Format**:
-
-- Content-Type: application/json
-- Date Format: ISO 8601
-- Pagination: Offset-based (`page`, `limit`)
-
-**Error Handling**:
-
-- Error Response Format:
-  ```json
-  {
-    "statusCode": 400,
-    "message": "Validation failed",
-    "error": "Bad Request"
-  }
-  ```
-````
-
-- HTTP Status Codes: 400, 401, 403, 404, 500
-
-## Deployment Architecture
-
-- **Backend**: AWS ECS (Docker) + RDS PostgreSQL + ALB
-- **Frontend**: Vercel (Static site)
-- **iOS**: App Store (TestFlight for beta)
-- **CI/CD**: GitHub Actions (all repos)
-
-## Gaps and Inconsistencies
-
-**API Alignment**:
-
-- ✅ All frontend API calls are provided by backend
-- ✅ All iOS API calls are provided by backend
-- ⚠️ Backend provides 4 APIs not used by any client:
-  - PUT /api/users/:id
-  - POST /api/products (Admin API)
-  - PUT /api/products/:id (Admin API)
-  - DELETE /api/products/:id (Admin API)
-
-**Authentication**:
-
-- ⚠️ Inconsistent token storage:
-  - Web: localStorage (security risk)
-  - iOS: Keychain (secure)
-  - **Recommendation**: Move Web to HttpOnly cookies
-
-**Data Format**:
-
-- ✅ Consistent: All repos use JSON + ISO 8601
-- ⚠️ Pagination inconsistency:
-  - Backend: Offset-based (`page`, `limit`)
-  - iOS: Expects cursor-based (not implemented yet)
-  - **Recommendation**: Document offset pagination as standard OR migrate to cursor
-
-**Error Handling**:
-
-- ⚠️ Inconsistent error response format:
-  - Most endpoints: `{ statusCode, message, error }`
-  - Some endpoints: `{ error: { code, message } }`
-  - **Recommendation**: Standardize to one format
-
-## Recommendations
-
-**High Priority**:
-
-1. 🔴 Fix Web token storage (move to HttpOnly cookies)
-2. 🔴 Standardize error response format across all backend endpoints
-3. 🟡 Document unused Admin APIs (or remove if not needed)
-4. 🟡 Align pagination strategy (offset vs cursor)
-
-**Medium Priority**: 5. 🟢 Generate OpenAPI specification from backend routes 6. 🟢 Add API rate limiting 7. 🟢 Implement API versioning (e.g., /api/v1/)
-
-**Low Priority**: 8. ⚪ Add ErrorBoundary in Web app 9. ⚪ Add loading states in Web app 10. ⚪ Consider adding Cart APIs to backend (currently client-side only)
-
-````
-
-**Output**: `existing-app-product/docs/architecture/system-architecture.md` (20-30 pages)
+**Key Benefit**: You now have a complete picture of your multi-repository system integration.
 
 ---
 
-## Phase 3: Extract and Validate API Contracts
+### Step 2: Define Enhancement Requirements
 
-Now extract API contracts and validate alignment.
+**Goal**: Define WHAT to build based on your understanding of the existing integrated system.
 
-### Step 7: Extract API Contracts (Architect)
+**Agent**: `@pm`
+**Command**: `*create-doc brownfield-prd`
+**Output**: `docs/prd.md`
+
+**Prerequisites**:
+
+- ✅ **REQUIRED**: `docs/existing-system-integration.md` (from Step 1)
+
+#### How It Works
+
+**In Product repository**:
 
 ```bash
-cd existing-app-product
-
-@architect
-*extract-api-contracts
-````
-
-**Architect will**:
-
-1. Scan backend code for route definitions
-2. Extract endpoint details:
-   - Method, path, params
-   - Request/response schemas
-   - Authentication requirements
-3. Scan frontend/iOS code for API calls
-4. Cross-validate:
-   - APIs called by clients exist in backend
-   - APIs provided by backend are used by clients
-5. Generate `docs/architecture/api-contracts.md`
-
-**Example API Contracts Document**:
-
-````markdown
-# API Contracts
-
-> **Status**: Extracted from backend code on 2025-01-14
-
-## Backend APIs (Extracted from Code)
-
-### POST /api/auth/login
-
-**File**: `src/auth/auth.controller.ts:25`
-
-**Request**:
-
-```json
-{
-  "email": "string (required, email format)",
-  "password": "string (required, min 8 chars)"
-}
-```
-````
-
-**Response (200)**:
-
-```json
-{
-  "access_token": "string (JWT)",
-  "refresh_token": "string (JWT)",
-  "expires_in": 900,
-  "user": {
-    "id": "uuid",
-    "email": "string",
-    "role": "user | admin"
-  }
-}
+@pm *create-doc brownfield-prd
 ```
 
-**Error Response (401)**:
+**Automatic Mode Detection**:
 
-```json
-{
-  "statusCode": 401,
-  "message": "Invalid credentials",
-  "error": "Unauthorized"
-}
+- PM checks `core-config.yaml` for `implementation_repos` key
+- If present → **Multi-Repo Mode**: Reads `docs/existing-system-integration.md`
+- If absent → Single-Repo Mode: Reads `docs/existing-system-analysis.md`
+
+**What PM Will Do**:
+
+1. Load existing system integration analysis
+2. Ask about enhancement goals
+3. Understand cross-repository constraints
+4. Define requirements that respect existing integration patterns
+5. Plan enhancement scope across repositories
+6. Generate PRD
+
+**Example Interaction**:
+
+```
+PM: I've loaded the existing system integration analysis. I see:
+  - 3 repositories: backend (Node.js), web (React), ios (Swift)
+  - 11 backend APIs, 9 consumed by clients
+  - Technical debt: No OpenAPI spec, localStorage XSS risk
+
+What enhancement do you want to build?
+
+User: I want to add AI-powered recommendations across all platforms
+
+PM: Based on your existing system, I recommend:
+  - Backend: New /api/recommendations endpoint
+  - Web: Recommendation component in React
+  - iOS: Recommendation view in SwiftUI
+  - Addresses technical debt by adding OpenAPI spec for new API
+
+This requires changes in all 3 repositories. Shall I proceed?
 ```
 
-**Authentication**: None (public endpoint)
+**Output**: `docs/prd.md` with multi-repository enhancement plan
 
-**Consumed by**:
+**PRD Includes**:
 
-- ✅ Web: `src/services/user.service.ts:10`
-- ✅ iOS: `Services/AuthService.swift:45`
+- Enhancement goals (based on existing system understanding)
+- Functional requirements (FR1, FR2, ...)
+- Non-functional requirements (NFR1, NFR2, ...)
+- **Compatibility requirements** (CR1, CR2, ...) - Critical for brownfield
+- **Repository impact assessment** (which repos need changes)
+- Epic and story structure (cross-repository coordination)
+
+**Epic Format** (YAML code blocks embedded in PRD):
+
+```yaml
+epic_id: 1
+title: "User Authentication"
+description: |
+  Implement complete authentication system across all platforms
+
+stories:
+  - id: "1.1"
+    title: "Backend - Auth API"
+    repository_type: backend  # Used for story filtering by SM
+    acceptance_criteria_summary: |
+      User can register and login...
+    provides_apis:
+      - "POST /api/auth/login"
+    ...
+
+  - id: "1.2"
+    title: "Frontend - Login UI"
+    repository_type: frontend
+    consumes_apis:
+      - "POST /api/auth/login"
+    cross_repo_dependencies:
+      - "1.1 - Backend auth API must be complete"
+    ...
+```
+
+**Note**: Epic YAML blocks will be preserved during PRD sharding (Step 4).
 
 ---
 
-### GET /api/products
+### Step 3: Design Enhanced System Architecture
 
-**File**: `src/products/product.controller.ts:40`
+**Goal**: Design HOW to build the enhancement with **improved standards** across all repositories.
 
-**Query Parameters**:
+**Agent**: `@architect`
+**Command**: `*create-system-architecture`
+**Output**: `docs/system-architecture.md` (multi-repo Product repo mode)
 
-- `page`: number (optional, default: 1)
-- `limit`: number (optional, default: 20, max: 100)
+**Prerequisites**:
 
-**Response (200)**:
+- ✅ **REQUIRED**: `docs/prd.md` (from Step 2)
+- ✅ **REQUIRED**: `docs/existing-system-integration.md` (from Step 1)
 
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "name": "string",
-      "description": "string",
-      "price": number,
-      "stock_quantity": number,
-      "created_at": "ISO 8601"
-    }
-  ],
-  "meta": {
-    "page": number,
-    "limit": number,
-    "total": number
-  }
-}
-```
+#### How It Works
 
-**Authentication**: None (public endpoint)
-
-**Consumed by**:
-
-- ✅ Web: `src/services/product.service.ts:20`
-- ✅ iOS: `Services/ProductService.swift:30`
-
----
-
-### PUT /api/users/:id
-
-**File**: `src/users/user.controller.ts:60`
-
-**Authentication**: Required (JWT, same user or admin)
-
-**Consumed by**:
-
-- ❌ **NOT USED** by any client
-
-**Recommendation**: Document or consider removing
-
----
-
-## Frontend API Calls (Extracted from Code)
-
-**Web**:
-
-- POST /api/auth/login (`src/services/user.service.ts:10`) → ✅ Backend provides
-- POST /api/auth/register (`src/services/user.service.ts:25`) → ✅ Backend provides
-- POST /api/auth/refresh (`src/services/user.service.ts:40`) → ✅ Backend provides
-- GET /api/users/:id (`src/services/user.service.ts:55`) → ✅ Backend provides
-- GET /api/products (`src/services/product.service.ts:20`) → ✅ Backend provides
-- GET /api/products/:id (`src/services/product.service.ts:35`) → ✅ Backend provides
-- POST /api/orders (`src/services/order.service.ts:15`) → ✅ Backend provides
-- GET /api/orders (`src/services/order.service.ts:30`) → ✅ Backend provides
-- GET /api/orders/:id (`src/services/order.service.ts:45`) → ✅ Backend provides
-
-**Total**: 9 API calls, **9 aligned** ✅
-
-**iOS**:
-
-- [Similar list]
-  **Total**: 9 API calls, **9 aligned** ✅
-
-## Validation Summary
-
-**✅ API Alignment**: 100%
-
-- All frontend API calls exist in backend
-- All iOS API calls exist in backend
-- No undefined APIs called
-
-**⚠️ Unused APIs**: 4
-
-- PUT /api/users/:id
-- POST /api/products
-- PUT /api/products/:id
-- DELETE /api/products/:id
-
-**Recommendations**:
-
-1. Document unused Admin APIs (or remove if truly unused)
-2. Consider adding API usage tracking
-
-````
-
-**Output**: `existing-app-product/docs/architecture/api-contracts.md` (15-25 pages)
-
----
-
-## Phase 4: Create PRD from Architecture
-
-Optionally, create a PRD from the documented architecture to guide future development.
-
-### Step 8: Create Brownfield PRD (PM)
+**In Product repository**:
 
 ```bash
-cd existing-app-product
+@architect *create-system-architecture
+```
 
-@pm
-*create-doc brownfield-prd-tmpl.yaml
-````
+**Automatic Mode Detection**:
 
-**PM will**:
+- Architect checks for `existing-system-integration.md`
+- If present → **Brownfield Multi-Repo Mode**
+- Otherwise → Greenfield Mode
 
-1. Load system-architecture.md
-2. Load api-contracts.md
-3. Interview user about:
-   - Product goals and vision
-   - Target users
-   - Competitive landscape
-   - Feature priorities
-4. Generate PRD based on existing architecture
+**What Architect Will Do**:
 
-**Brownfield PRD Structure**:
+1. Load PRD and existing system integration analysis
+2. Understand current repository topology and integration patterns
+3. Design enhanced system architecture that:
+   - **Respects existing constraints** (tech stacks, deployment)
+   - **Improves upon poor practices** (adds OpenAPI, fixes security issues)
+   - **Maintains compatibility** where necessary
+   - **Coordinates across repositories**
+4. Define improved integration patterns
+5. Generate system architecture document
+
+**Output**: `docs/system-architecture.md` (will be sharded to `docs/architecture/` in Step 4)
+
+**Key Sections**:
 
 ```markdown
-# PRD (Brownfield)
+## Repository Topology (Enhanced)
 
-## Executive Summary
+| Repository     | Type     | New Responsibilities  | Tech Stack           | Status   |
+| -------------- | -------- | --------------------- | -------------------- | -------- |
+| my-app-backend | backend  | + Recommendations API | Node.js 20 + Express | Enhanced |
+| my-app-web     | frontend | + Recommendation UI   | React 18 + Next.js   | Enhanced |
+| my-app-ios     | ios      | + Recommendation View | Swift 5 + SwiftUI    | Enhanced |
 
-This PRD documents the existing E-Commerce App as of 2025-01-14, based on reverse-engineered architecture.
+## API Contracts Summary (New + Improved)
 
-## Current Features
+**New APIs**:
 
-**1. User Authentication**
+- GET /api/recommendations (with OpenAPI spec ✅)
+- POST /api/recommendations/feedback
 
-- User registration (email + password)
-- User login (JWT tokens)
-- Token refresh (automatic)
-- User profile management
+**Improved APIs**:
 
-**2. Product Catalog**
+- All existing APIs now have OpenAPI spec
 
-- Browse products (paginated list)
-- View product details
-- Search products (to be implemented)
+## Integration Strategy (Improved)
 
-**3. Order Management**
+**Authentication**: JWT (existing, maintained)
+**Data Format**: JSON + ISO 8601 (existing, maintained)
+**API Documentation**: OpenAPI 3.0 (NEW - improvement!)
+**Token Storage**:
 
-- Create orders
-- View order history
-- View order details
+- Web: HttpOnly cookies (IMPROVED from localStorage)
+- iOS: Keychain (existing, maintained)
 
-**4. Shopping Cart**
+## Deployment Architecture (Enhanced)
 
-- Add/remove items (client-side only, no backend)
-- View cart
-- Proceed to checkout
+[Defines deployment strategy for enhancements]
 
-## Architecture Context
+## Cross-Cutting Concerns (Improved)
 
-**Implementation Status**: Brownfield (existing codebase)
-**System Architecture**: docs/architecture/system-architecture.md
-**API Contracts**: docs/architecture/api-contracts.md
-
-**Repository Structure**: Multi-repository
-
-- Backend: existing-app-backend
-- Frontend (Web): existing-app-web
-- Mobile (iOS): existing-app-ios
-
-## Future Epics (Priority Order)
-
-**Epic 1: Fix Security Issues** (High Priority)
-
-- Story 1.1: Move Web token storage to HttpOnly cookies
-- Story 1.2: Implement CSRF protection
-- Story 1.3: Add rate limiting
-
-**Epic 2: Standardize Error Handling** (High Priority)
-
-- Story 2.1: Standardize error response format
-- Story 2.2: Add ErrorBoundary in Web app
-- Story 2.3: Add consistent error messages
-
-**Epic 3: Add Product Search** (Medium Priority)
-
-- Story 3.1: Backend: Add product search endpoint
-- Story 3.2: Web: Add search bar to ProductListPage
-- Story 3.3: iOS: Add search functionality
-
-**Epic 4: Server-Side Shopping Cart** (Medium Priority)
-
-- Story 4.1: Backend: Add Cart APIs
-- Story 4.2: Web: Migrate to server-side cart
-- Story 4.3: iOS: Migrate to server-side cart
-
-...
+[Defines improved security, performance, observability]
 ```
 
-**Output**: `existing-app-product/docs/prd.md` (40-60 pages)
+**Key Benefit**: You now have a coordinated architecture that improves upon the existing system while maintaining compatibility.
+
+---
+
+## After Architecture: Development Phase
+
+Once you have the enhanced system architecture, proceed with standard Orchestrix development workflow:
+
+### Step 4: Shard System Documents (Product Repo Only)
+
+**Agent**: `@po`
+**Command**: `*shard`
+**Location**: **Product repository** (not implementation repos)
+
+```bash
+# In Product repository
+@po *shard
+```
+
+**What This Does**:
+
+- ✅ Shards `docs/prd.md` → `docs/prd/*.md` (preserves epic YAML blocks embedded in PRD)
+- ✅ Shards `docs/system-architecture.md` → `docs/system-architecture/*.md` (multiple system-level architecture files)
+- ❌ Does NOT shard implementation repository architectures (those are sharded separately in each repo)
+
+**Important Clarifications**:
+
+1. **What gets sharded here**: Only **system-level** documents in Product repo (PRD and system architecture)
+2. **Epic storage**: Epics are embedded as YAML code blocks in PRD's "Epic Planning" section, preserved after sharding
+3. **What does NOT get sharded**: Implementation repository architectures (backend/frontend/mobile)
+4. **Why separate**: System architecture coordinates all repos; implementation architectures detail execution
+5. **Timing**: Run this **after** creating system-architecture.md, **before** creating implementation architectures
+
+**Output** (in Product repo):
+
+```
+docs/
+├── prd/                       # ⭐ Sharded from prd.md (contains epic YAML blocks)
+│   ├── 01-overview.md
+│   ├── 02-requirements.md
+│   ├── 03-epic-planning.md    # Contains epic YAML blocks with cross-repo story mapping
+│   └── 04-appendix.md
+└── system-architecture/       # ⭐ Sharded from system-architecture.md
+    ├── 00-system-overview.md      # System-level coordination docs
+    ├── 01-repository-topology.md  # Which repos exist, how they relate
+    ├── 02-api-contracts.md        # Cross-repo API contracts
+    ├── 03-integration-strategy.md # Auth, data formats, error handling
+    ├── 04-deployment.md           # Deployment coordination
+    └── 05-cross-cutting-concerns.md # Security, performance, observability
+```
+
+**Note**: Epic YAML blocks (defined in Step 2) are preserved in `prd/03-epic-planning.md` after sharding.
+
+### Step 5: Create Repository-Specific Architectures
+
+**For each implementation repository**, configure Product repo link and create detailed architecture:
+
+#### Step 5.1: Configure Product Repo Link (Each Repo)
+
+**⚠️ REQUIRED**: Before creating implementation architectures, link each repo to Product repo.
+
+**Backend Repository** (`my-app-backend/core-config.yaml`):
+
+```yaml
+project:
+  name: My App Backend
+  mode: multi-repo
+
+  multi_repo:
+    role: backend
+    product_repo_path: ../my-app-product
+```
+
+**Frontend Repository** (`my-app-web/core-config.yaml`):
+
+```yaml
+project:
+  name: My App Web
+  mode: multi-repo
+
+  multi_repo:
+    role: frontend
+    product_repo_path: ../my-app-product
+```
+
+**Mobile Repository** (`my-app-ios/core-config.yaml`):
+
+```yaml
+project:
+  name: My App iOS
+  mode: multi-repo
+
+  multi_repo:
+    role: ios
+    product_repo_path: ../my-app-product
+```
+
+**💡 Path Configuration**:
+
+- Use **relative path** from implementation repo to Product repo
+- Example: If repos are siblings (`/projects/my-app-backend` and `/projects/my-app-product`), use `../my-app-product`
+- Verify with: `ls $PRODUCT_REPO_PATH` should show Product repo contents
+
+#### Step 5.2: Create Implementation Architectures
+
+**Backend Repository**:
+
+```bash
+cd my-app-backend
+@architect *create-backend-architecture
+# Reads: ../my-app-product/docs/architecture/system-architecture.md
+# Output: docs/architecture.md (backend-specific)
+```
+
+**Frontend Repository**:
+
+```bash
+cd my-app-web
+@architect *create-frontend-architecture
+# Reads: ../my-app-product/docs/architecture/system-architecture.md
+# Output: docs/architecture.md (frontend-specific)
+```
+
+**Mobile Repository**:
+
+```bash
+cd my-app-ios
+@architect *create-mobile-architecture
+# Reads: ../my-app-product/docs/architecture/system-architecture.md
+# Output: docs/architecture.md (ios-specific)
+```
+
+**What This Does**:
+
+- Reads system-architecture.md from Product repo (via `product_repo.path`)
+- Extracts relevant parts for this specific repository
+- Generates detailed implementation architecture
+- Includes improved coding standards from Step 3
+
+#### Step 5.3: Shard Implementation Architectures (Each Repo)
+
+**After creating implementation architectures**, shard them in each repository.
+
+**Important**: In implementation repositories, `@po *shard` only shards the Architecture document (`docs/architecture.md`). PRD sharding is skipped because PRD is managed in the Product repository.
+
+#### In Backend Repository:
+
+```bash
+cd my-app-backend
+
+# Shard backend architecture
+@po *shard
+# Expected output:
+# - ℹ️ Skipping PRD sharding (implementation repository)
+# - ✅ Architecture sharded: docs/architecture.md → docs/architecture/*.md
+```
+
+#### In Frontend Repository:
+
+```bash
+cd my-app-web
+
+# Shard frontend architecture
+@po *shard
+# Expected output:
+# - ℹ️ Skipping PRD sharding (implementation repository)
+# - ✅ Architecture sharded: docs/architecture.md → docs/architecture/*.md
+```
+
+#### In Mobile Repository:
+
+```bash
+cd my-app-ios
+
+# Shard mobile architecture
+@po *shard
+# Expected output:
+# - ℹ️ Skipping PRD sharding (implementation repository)
+# - ✅ Architecture sharded: docs/architecture.md → docs/architecture/*.md
+```
+
+**What Gets Sharded**:
+
+```
+# Backend repo after sharding
+docs/architecture/
+├── 00-architecture-overview.md
+├── 01-tech-stack.md
+├── 02-source-tree.md
+├── 03-coding-standards.md        # ⭐ Dev auto-loads
+├── 04-component-architecture.md  # Controllers, services, repos
+├── 05-database-schema.md         # Tables, relationships
+├── 06-api-endpoints.md           # Detailed API specs
+└── 07-testing-strategy.md
+
+# Frontend repo after sharding
+docs/architecture/
+├── 00-architecture-overview.md
+├── 01-tech-stack.md
+├── 02-source-tree.md
+├── 03-coding-standards.md        # ⭐ Dev auto-loads
+├── 04-component-architecture.md  # React components, state
+├── 05-routing.md                 # Routes, navigation
+├── 06-api-integration.md         # API client, hooks
+└── 07-testing-strategy.md
+```
+
+**Why This Step Matters**:
+
+- Dev agents **automatically load** sharded architecture files (especially `coding-standards.md`, `tech-stack.md`, `source-tree.md`)
+- Makes architecture easier to consume (smaller files)
+- Each repository has its own detailed implementation guidance
+
+### Step 6: Create Stories
+
+**In Product repository** (for cross-repository coordination):
+
+```bash
+@sm *create-next-story
+```
+
+**Or in each implementation repository** (for repository-specific stories):
+
+```bash
+cd my-app-backend
+@sm *create-next-story
+
+cd my-app-web
+@sm *create-next-story
+```
+
+**How SM finds epics**:
+
+- SM reads epic YAML blocks from Product Repo's `docs/prd/*.md` files (sharded PRD)
+- Filters stories by `repository_type` matching current repo's role (backend/frontend/ios/android)
+- Creates only the stories assigned to this repository
+- Respects cross-repository dependencies
+
+### Step 7: Implement and Review
+
+**Standard Dev/QA Cycle** (in each implementation repository):
+
+```bash
+# In my-app-backend
+@dev *implement {story_id}
+@qa *review {story_id}
+
+# In my-app-web
+@dev *implement {story_id}
+@qa *review {story_id}
+```
+
+**Critical**: Dev agents automatically load the **improved** architecture from each repository's `docs/architecture/` (sharded files).
+
+---
+
+## Document Roles Explained
+
+### 📄 `existing-system-integration.md` (Product Repo)
+
+**Role**: System-level integration analysis
+**Path**: Product repo `docs/existing-system-integration.md`
+**Content**: Current state of multi-repository integration (as-is)
+**Sharded?**: ❌ No (intermediate analysis document)
+**Dev Loads?**: ❌ No
+**Used By**: PM (Step 2), Architect (Step 3)
+**Scope**: System-wide (all repositories)
+
+**Example Content**:
+
+- Repository Topology (which repos exist, what they do)
+- Cross-Repository API Contracts (API alignment analysis)
+- Integration Patterns (auth, data formats, error handling)
+- Technical Debt (system-level issues)
+- Deployment Architecture (current state)
+
+### 📄 `existing-system-analysis.md` (Implementation Repos)
+
+**Role**: Individual repository analysis
+**Path**: Each implementation repo `docs/existing-system-analysis.md`
+**Content**: Current state of single repository (as-is)
+**Sharded?**: ❌ No
+**Dev Loads?**: ❌ No
+**Used By**: Architect (for aggregation in Step 1)
+**Scope**: Single repository
+
+**Example Content** (from backend repo):
+
+- Tech Stack: Node.js 20, Express 4, PostgreSQL 15
+- APIs Provided: 11 endpoints (listed)
+- Technical Debt: No tests, no API docs
+- Coding Standards: No linter, inconsistent naming
+
+### 📄 `prd.md` (Product Repo)
+
+**Role**: Requirements document with embedded epic definitions
+**Path**: Product repo `docs/prd.md`
+**Content**: What to build (multi-repository enhancement plan) + epic YAML blocks
+**Sharded?**: ✅ Yes → `docs/prd/*.md` (epic YAML blocks preserved in sharded files)
+**Dev Loads?**: ❌ No (PO and SM use it)
+**Used By**: Architect (Step 3), PO (sharding), SM (story creation)
+**Scope**: System-wide
+
+**Example Content**:
+
+- Enhancement goals (AI recommendations)
+- Functional requirements (FR1, FR2, ...)
+- Repository impact assessment (backend + web + ios)
+- **Epic Planning section** with YAML code blocks:
+  - Epic definitions with cross-repository story mapping
+  - Stories with `repository_type` field for filtering
+  - Cross-repo dependencies and API contracts
+
+### 📄 `architecture/system-architecture.md` (Product Repo)
+
+**Role**: **Final system-level architecture** with improvements
+**Path**: Product repo `docs/architecture/system-architecture.md`
+**Content**: How to build enhancement (improved, coordinated)
+**Sharded?**: ✅ Yes → Multiple files
+**Dev Loads?**: ❌ No (used to generate repo-specific architectures)
+**Used By**: Architect (for creating repo-specific architectures)
+**Scope**: System-wide coordination
+
+**Example Content**:
+
+- Repository Topology (enhanced)
+- API Contracts Summary (new + improved)
+- Integration Strategy (improved patterns)
+- Deployment Architecture (enhanced)
+- Cross-Cutting Concerns (improved security, performance)
+
+### 📄 `architecture.md` (Implementation Repos)
+
+**Role**: Detailed implementation architecture for specific repository
+**Path**: Each implementation repo `docs/architecture.md`
+**Content**: How to implement changes in THIS repository
+**Sharded?**: ✅ Yes → `docs/architecture/*.md`
+**Dev Loads?**: ✅ **YES** (Dev automatically loads sharded files)
+**Used By**: Dev (implementation), QA (review)
+**Scope**: Single repository
+
+**Example Content** (backend repo):
+
+- Tech Stack (for this repo)
+- API Endpoints (detailed request/response schemas)
+- Database Schema (tables, relationships)
+- Component Architecture (controllers, services, repositories)
+- Improved Coding Standards (ESLint, tests, OpenAPI)
+
+**Key Difference**: System architecture coordinates; implementation architecture details execution.
 
 ---
 
 ## Best Practices
 
-### 1. Document Implementation Repos First
+### 1. Always Follow the 3-Step Sequence
 
-✅ **Do**: Document each implementation repo independently
-❌ **Don't**: Try to create system architecture without implementation docs
-
-**Why**: Bottom-up aggregation needs detailed architecture from each repo.
-
----
-
-### 2. Configure implementation_repos in Product Repo
-
-```yaml
-# In existing-app-product/core-config.yaml
-project:
-  mode: multi-repo
-  multi_repo:
-    role: product
-    implementation_repos:
-      - repository_id: existing-app-backend
-        path: ../existing-app-backend
-        type: backend
-      - repository_id: existing-app-web
-        path: ../existing-app-web
-        type: frontend
-      - repository_id: existing-app-ios
-        path: ../existing-app-ios
-        type: ios
+```
+Step 1 (System Analysis) → Step 2 (PRD) → Step 3 (System Architecture)
 ```
 
-**Why**: Architect agent needs to know which repos to scan for aggregation.
+**Why**: Each step depends on previous steps. Skipping breaks the workflow.
+
+### 2. Use Web Interface for Step 1
+
+**Recommendation**: Use Gemini (1M+ tokens) or Claude Web for Step 1 (aggregation).
+
+**Why**: Analyzing multiple repositories requires large context window.
+
+### 3. Be Honest in Step 1
+
+Document reality, not aspirations:
+
+- ✅ "API alignment: 60% (6/10 APIs unused)" (honest)
+- ❌ "API alignment: Perfect" (wishful thinking)
+
+### 4. Improve in Step 3
+
+Use Step 3 to define better standards:
+
+- Existing: "No API docs" → Architecture: "OpenAPI 3.0 spec for all APIs"
+- Existing: "localStorage tokens" → Architecture: "HttpOnly cookies"
+- Existing: "No integration tests" → Architecture: "Cross-repo integration test suite"
+
+### 5. Coordinate Deployment
+
+Plan deployment order across repositories:
+
+```markdown
+## Deployment Strategy (in system-architecture.md)
+
+**Deployment Order**:
+
+1. Backend: Deploy new /api/recommendations endpoint (backward compatible)
+2. Web: Deploy recommendation UI (consumes new API)
+3. iOS: Deploy recommendation view (consumes new API)
+
+**Rollback Strategy**: Backend API is backward compatible, can rollback clients independently
+```
+
+### 6. Maintain API Compatibility
+
+Define API versioning strategy:
+
+```markdown
+## API Versioning (in system-architecture.md)
+
+**Strategy**: Additive changes only (v1 maintained for backward compatibility)
+
+- v1 endpoints: Existing, maintained
+- v2 endpoints: New recommendations API
+```
 
 ---
 
-### 3. Review and Validate Gaps
+## Example Scenario
 
-After aggregation, **carefully review** the Gaps and Recommendations section:
+**Scenario**: Adding AI recommendations to e-commerce system (3 repos: backend, web, iOS)
 
-- API alignment issues
-- Security vulnerabilities
-- Inconsistent patterns
-- Unused code
-
-**Create stories to fix critical issues before adding new features.**
-
----
-
-### 4. Link Implementation Repos to Product Repo
-
-After system architecture is created, update implementation repos:
+**Command Sequence**:
 
 ```bash
-cd existing-app-backend
+# Step 1: Install & Analyze (each implementation repo)
+cd ecommerce-{backend,web,ios}
+npx orchestrix install
+# Edit core-config.yaml: mode: multi-repo, role: {backend|frontend|ios}
+@architect *document-project
 
-# Edit core-config.yaml
-cat >> core-config.yaml << EOF
+# Step 1: Create Product repo & aggregate
+cd ecommerce-product
+npx orchestrix install
+# Edit core-config.yaml: mode: multi-repo, role: product, implementation_repos: [...]
+@architect *aggregate-system-analysis
 
-  multi_repo:
-    product_repo_path: ../existing-app-product
-EOF
+# Step 2-3: Requirements & Architecture (Product repo)
+@pm *create-doc brownfield-prd
+@architect *create-system-architecture
+
+# Step 4: Shard system docs (Product repo)
+@po *shard
+
+# Step 5: Create implementation architectures (each repo)
+cd ../ecommerce-{backend,web,ios}
+# Edit core-config.yaml: product_repo_path: ../ecommerce-product
+@architect *create-{backend|frontend|mobile}-architecture
+@po *shard
+
+# Step 6-7: Development (each repo)
+@sm *create-next-story
+@dev *implement {story_id}
+@qa *review {story_id}
 ```
 
-**Why**: Future stories in implementation repos can reference system-architecture.md.
+**Key Outcomes**: Cross-repo API alignment improved from 60% → 100%, added OpenAPI specs, migrated from localStorage to HttpOnly cookies.
 
 ---
 
-## Common Issues
+## Related Guides
 
-### Issue 1: "No brownfield-architecture.md found"
-
-**Error**:
-
-```
-❌ ERROR: No architecture docs found in implementation repos
-```
-
-**Solution**:
-
-1. Run `*document-project` in each implementation repo first
-2. Verify `docs/brownfield-architecture.md` exists
-3. Then run `*aggregate-system-architecture` in Product repo
+- **Single-Repository Brownfield**: See [BROWNFIELD_ENHANCEMENT_GUIDE.md](./BROWNFIELD_ENHANCEMENT_GUIDE.md)
+- **Multi-Repository Greenfield**: See [MULTI_REPO_GREENFIELD_GUIDE.md](./MULTI_REPO_GREENFIELD_GUIDE.md)
+- **General Brownfield**: See [04-Brownfield 开发指南.md](./04-Brownfield%20开发指南.md)
 
 ---
 
-### Issue 2: "API calls don't match backend"
-
-**Warning**:
-
-```
-⚠️ Frontend calls GET /api/cart but backend doesn't provide it
-```
-
-**Solution**:
-
-1. **Option A**: Add Cart APIs to backend (make cart server-side)
-2. **Option B**: Document that cart is client-side only
-3. Update system-architecture.md with the decision
-
----
-
-### Issue 3: "Token storage security risk"
-
-**Warning**:
-
-```
-⚠️ Web stores tokens in localStorage (XSS vulnerability)
-```
-
-**Solution**:
-
-1. Create Story: "Migrate Web token storage to HttpOnly cookies"
-2. Update backend to return tokens in HttpOnly cookies
-3. Update frontend to remove localStorage token handling
-4. Test token refresh flow
-
----
-
-## Summary
-
-**Brownfield Workflow** (Bottom-Up):
-
-```
-Implementation Repos:
-  Step 1: Setup Backend repo
-  Step 2: Architect → brownfield-architecture.md (backend)
-  Step 3: Setup Frontend repo
-  Step 4: Architect → brownfield-architecture.md (frontend)
-  Step 5: Setup iOS repo
-  Step 6: Architect → brownfield-architecture.md (iOS)
-
-Product Repo:
-  Step 7: Setup Product repo (configure implementation_repos)
-  Step 8: Architect → Aggregate system-architecture.md
-  Step 9: Architect → Extract api-contracts.md
-  Step 10: PM → Create brownfield PRD (optional)
-
-Next Steps:
-  - Review gaps and create fix stories
-  - Link implementation repos to Product repo
-  - Start using Orchestrix for new features
-```
-
-**Key Success Factors**:
-
-- ✅ Bottom-Up: Document implementation repos first, then aggregate
-- ✅ Validation: Automatic validation identifies gaps and inconsistencies
-- ✅ API Contracts: Extracted from code, validated across repos
-- ✅ Future-Ready: PRD guides future development with existing context
-
----
-
-## Next Steps
-
-1. Try the [Multi-Repository Greenfield Guide](./MULTI_REPO_GREENFIELD_GUIDE.md) for new features
-2. Read the [Core Architecture](./02-核心架构.md) for deep technical details
-3. See [Workflow Guide](./03-工作流程指南.md) for advanced workflow patterns
-
----
-
-**Questions or Issues?**
-
-- GitHub Issues: https://github.com/anthropics/orchestrix/issues
-- Documentation: https://github.com/anthropics/orchestrix/tree/main/docs
+**🎉 Ready to enhance your multi-repo system? Start with Step 1: Analyze each repository with `@architect *document-project`**
