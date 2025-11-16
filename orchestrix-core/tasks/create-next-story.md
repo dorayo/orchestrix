@@ -426,8 +426,9 @@ Use `next_story_definition` (from Step 2.3) which contains:
 
 Execute `{root}/tasks/utils/load-architecture-context.md`:
 - `story_type`: From epic (Backend | Frontend | FullStack)
-- `architecture_sharded`: From config
-- `architecture_location`: From config
+
+# Note: The utility automatically reads architecture configuration from LOCAL core-config.yaml
+# (architectureFile, architectureSharded, architectureShardedLocation)
 
 Use returned `context` for Dev Notes. Cite sources: `[Source: docs/architecture/{file}.md#{section}]`
 

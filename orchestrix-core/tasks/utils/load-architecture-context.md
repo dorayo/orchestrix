@@ -5,28 +5,67 @@ Load relevant architecture documents based on story type, supporting both sharde
 
 ## Input Parameters
 - `story_type`: Backend | Frontend | FullStack
-- `architecture_sharded`: boolean (true if architecture is split into multiple files)
-- `architecture_location`: path to architecture directory or file
 
 ## Output
 Returns a structured context object containing loaded architecture information.
 
 ## Execution
 
+### Step 0: Read Configuration from core-config.yaml
+
+**CRITICAL**: Always read architecture paths from the LOCAL `core-config.yaml`, never hardcode or guess paths.
+
+```bash
+# Read architecture configuration from LOCAL core-config.yaml
+ARCH_FILE=$(grep "architectureFile:" core-config.yaml | awk '{print $2}')
+ARCH_SHARDED=$(grep "architectureSharded:" core-config.yaml | awk '{print $2}')
+ARCH_LOCATION=$(grep "architectureShardedLocation:" core-config.yaml | awk '{print $2}')
+
+# Validate configuration
+if [ -z "$ARCH_FILE" ]; then
+  echo "❌ ERROR: architectureFile not found in core-config.yaml"
+  exit 1
+fi
+
+# Determine which path to use based on sharded setting
+if [ "$ARCH_SHARDED" = "true" ]; then
+  ARCHITECTURE_PATH="$ARCH_LOCATION"
+  ARCHITECTURE_MODE="sharded"
+  echo "📁 Using sharded architecture from: $ARCHITECTURE_PATH"
+else
+  ARCHITECTURE_PATH="$ARCH_FILE"
+  ARCHITECTURE_MODE="monolithic"
+  echo "📄 Using monolithic architecture from: $ARCHITECTURE_PATH"
+fi
+
+# Verify the path exists
+if [ ! -e "$ARCHITECTURE_PATH" ]; then
+  echo "⚠️ WARNING: Architecture path does not exist: $ARCHITECTURE_PATH"
+  echo "Please ensure architecture document exists before loading context"
+  exit 1
+fi
+```
+
+**Important Notes**:
+- NEVER try to load architecture from product repository path (e.g., `../product-repo/docs/`)
+- Implementation repositories have their OWN architecture documents in their LOCAL `docs/` directory
+- The `core-config.yaml` in each repository points to its OWN architecture, not the product repo's
+- Product repo has `system-architecture.md`, implementation repos have `architecture.md`
+
 ### Step 1: Determine Loading Strategy
 
-**If `architecture_sharded: true`:**
-- Read index file from `{architecture_location}/index.md`
+**If `ARCH_SHARDED = true` (sharded mode):**
+- Read index file from `$ARCHITECTURE_PATH/index.md`
 - Parse index to identify available architecture documents
-- Use index to locate specific document files
+- Use index to locate specific document files in `$ARCHITECTURE_PATH` directory
 
-**If `architecture_sharded: false`:**
-- Use monolithic architecture file at `{architecture_location}`
+**If `ARCH_SHARDED = false` (monolithic mode):**
+- Use monolithic architecture file at `$ARCHITECTURE_PATH`
 - Parse sections within the single file
 
 **Error Handling:**
-- If architecture_location not found: Log error, return empty context with error flag
-- If index.md missing (sharded mode): Log warning, attempt to discover files automatically
+- If ARCHITECTURE_PATH not found: Already handled in Step 0
+- If index.md missing (sharded mode): Log warning, attempt to discover files automatically in `$ARCHITECTURE_PATH`
 
 ### Step 2: Load Documents by Story Type
 
@@ -177,28 +216,32 @@ context:
 ```markdown
 Execute: utils/load-architecture-context.md
 - story_type: Backend
-- architecture_sharded: true
-- architecture_location: .architecture/
 
-Result: Context with Backend + common documents loaded
+# Utility reads from core-config.yaml:
+#   architectureSharded: true
+#   architectureShardedLocation: docs/architecture
+
+Result: Context with Backend + common documents loaded from docs/architecture/
 ```
 
 ### Example 2: Frontend Story with Monolithic Architecture
 ```markdown
 Execute: utils/load-architecture-context.md
 - story_type: Frontend
-- architecture_sharded: false
-- architecture_location: docs/architecture.md
 
-Result: Context with Frontend + common sections extracted
+# Utility reads from core-config.yaml:
+#   architectureSharded: false
+#   architectureFile: docs/architecture.md
+
+Result: Context with Frontend + common sections extracted from docs/architecture.md
 ```
 
 ### Example 3: Full-Stack Story
 ```markdown
 Execute: utils/load-architecture-context.md
 - story_type: FullStack
-- architecture_sharded: true
-- architecture_location: .architecture/
+
+# Utility reads from core-config.yaml automatically
 
 Result: Context with all Backend + Frontend documents loaded
 ```
@@ -218,8 +261,9 @@ This utility is designed to be called from:
 
 Execute: utils/load-architecture-context.md
 - story_type: {extracted from epic or story}
-- architecture_sharded: {from project config}
-- architecture_location: {from project config}
+
+# Note: The utility automatically reads architecture_sharded and
+# architecture_location from the LOCAL core-config.yaml
 
 Store result in `architecture_context` variable.
 
