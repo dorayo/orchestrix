@@ -1,3 +1,10 @@
+## [10.3.3](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.2...v10.3.3) (2025-11-16)
+
+
+### Bug Fixes
+
+* **dev:** prevent loading architecture from product repo path ([f8778ec](https://github.com/dorayo/ORCHESTRIX/commit/f8778ec8daca59e213cee91fcabc620f4c26056f))
+
 ## [10.3.2](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.1...v10.3.2) (2025-11-16)
 
 
