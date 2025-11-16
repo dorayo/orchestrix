@@ -865,58 +865,65 @@ Present the completed system architecture document and provide next steps.
 
 ---
 
-📋 **NEXT STEPS**:
+📋 **NEXT STEPS** (Multi-Repo Workflow):
 
-1. **PO: Review and Approve System Architecture**
-   - Validate repository topology matches PRD
-   - Confirm API categories cover all features
-   - Approve deployment strategy
+**Step 3 ✅ COMPLETE**: System Architecture Created
+  - Output: docs/system-architecture.md
 
-2. **PM: Update PRD (if needed)**
-   - Add repository assignments to each Story
-   - Ensure Epic mapping aligns with repo topology
+**Step 4 (Next - In Product Repo)**: Shard System Documents
+  ```bash
+  @po *shard
+  # Shards PRD → docs/prd/*.md (preserves epic YAML blocks)
+  # Shards system-architecture.md → docs/system-architecture/*.md
+  # Output: Sharded docs ready for implementation repos
+  ```
 
-3. **Teams: Create Implementation Repositories**
-   - Set up repository structure
-   - Configure CI/CD pipelines
-   - Reference system-architecture.md in each repo
+**Step 5 (In Each Implementation Repository)**: Create & Shard Implementation Architectures
 
-4. **Architect: Generate Detailed Architectures**
+  **5.1 Configure Product Repo Link** (in each implementation repo):
+  ```bash
+  cd {{project}}-backend
+  # Edit core-config.yaml:
+  # project:
+  #   mode: multi-repo
+  #   multi_repo:
+  #     role: backend
+  #     repository_id: {{project}}-backend
+  #     product_repo_path: ../{{project}}-product
+  ```
 
-   **In Backend Repository**:
-   ```bash
-   cd {{project}}-backend
-   # Configure: project.mode = multi-repo
-   #            project.multi_repo.role = backend
-   #            project.multi_repo.product_repo_path = ../{{project}}-product
-   @architect *create-backend-architecture
-   # Output: docs/architecture.md (detailed backend architecture)
-   ```
+  **5.2 Create Implementation Architecture**:
+  ```bash
+  @architect *create-backend-architecture
+  # Reads: ../{{project}}-product/docs/system-architecture.md
+  # Output: docs/architecture.md (backend-specific implementation details)
+  ```
 
-   **In Frontend Repository**:
-   ```bash
-   cd {{project}}-web
-   # Configure: project.mode = multi-repo
-   #            project.multi_repo.role = frontend
-   #            project.multi_repo.product_repo_path = ../{{project}}-product
-   @architect *create-frontend-architecture
-   # Output: docs/architecture.md (detailed frontend architecture)
-   ```
+  **5.3 Shard Implementation Architecture**:
+  ```bash
+  @po *shard
+  # Skips PRD sharding (implementation repo)
+  # Shards architecture.md → docs/architecture/*.md
+  # Output: Sharded architecture for Dev agents to auto-load
+  ```
 
-   **In Mobile Repositories**:
-   ```bash
-   cd {{project}}-ios
-   @architect *create-mobile-architecture
-   # Output: docs/architecture.md (detailed iOS architecture)
+  **Repeat for all implementation repos**:
+  - Frontend: `@architect *create-frontend-architecture`
+  - Mobile (iOS): `@architect *create-mobile-architecture`
+  - Mobile (Android): `@architect *create-mobile-architecture`
 
-   cd {{project}}-android
-   @architect *create-mobile-architecture
-   # Output: docs/architecture.md (detailed Android architecture)
-   ```
+**Step 6 (Development - In Each Implementation Repo)**: Create Stories & Implement
+  ```bash
+  @sm *create-next-story
+  # Reads epics from: {product_repo}/docs/prd/*.md
+  # Filters by: repository_type matching current repo role
+  # Creates stories only for this repository
 
-5. **SM: Begin Story Creation**
-   - Stories will reference both system-architecture.md and repo-level architecture.md
-   - Cross-repo dependencies tracked via Epic YAML
+  @dev *implement {story_id}
+  # Auto-loads: docs/architecture/*.md (sharded files)
+
+  @qa *review {story_id}
+  ```
 
 ---
 
@@ -944,7 +951,7 @@ All implementation repositories will reference this document to ensure alignment
 
 ## Success Criteria
 
-- ✅ System architecture document exists at `docs/architecture/system-architecture.md`
+- ✅ System architecture document exists at `docs/system-architecture.md` (Product repo) or `docs/architecture.md` (single-repo)
 - ✅ All repositories identified and documented in Repository Topology
 - ✅ API categories cover all PRD functional requirements
 - ✅ Integration strategy is complete (auth, data, errors, logging)

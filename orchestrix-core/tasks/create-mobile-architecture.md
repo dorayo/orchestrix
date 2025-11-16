@@ -42,8 +42,8 @@ if [ "$PROJECT_MODE" != "multi-repo" ] || [[ "$PROJECT_ROLE" != "ios" && "$PROJE
 fi
 
 # Check if product repo path is configured
-PRODUCT_REPO_PATH=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
-if [ -z "$PRODUCT_REPO_PATH" ]; then
+PRODUCT_REPO_PATH_RAW=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
+if [ -z "$PRODUCT_REPO_PATH_RAW" ]; then
   echo "❌ ERROR: multi_repo.product_repo_path not configured in core-config.yaml"
   echo "Add this to core-config.yaml:"
   echo "project:"
@@ -53,6 +53,23 @@ if [ -z "$PRODUCT_REPO_PATH" ]; then
   echo "    product_repo_path: ../my-project-product  # Adjust path to your Product repo"
   exit 1
 fi
+
+# Resolve relative path to absolute path
+if [[ "$PRODUCT_REPO_PATH_RAW" = /* ]]; then
+  # Already absolute path
+  PRODUCT_REPO_PATH="$PRODUCT_REPO_PATH_RAW"
+else
+  # Relative path - resolve from current directory
+  PRODUCT_REPO_PATH=$(cd "$PRODUCT_REPO_PATH_RAW" 2>/dev/null && pwd)
+  if [ $? -ne 0 ] || [ -z "$PRODUCT_REPO_PATH" ]; then
+    echo "❌ ERROR: Product repo not found at: $PRODUCT_REPO_PATH_RAW"
+    echo "   Tried to resolve from: $(pwd)"
+    echo "   Check if the path is correct and the directory exists"
+    exit 1
+  fi
+fi
+
+echo "📍 Product repo resolved to: $PRODUCT_REPO_PATH"
 
 # Check if system architecture exists
 SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/system-architecture.md"
@@ -81,8 +98,8 @@ Load the system-level architecture as a CONSTRAINT for this detailed architectur
 **Step 1.1: Load System Architecture**
 
 ```bash
-# Read system architecture
-PRODUCT_REPO_PATH=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
+# Read system architecture (path already resolved in validation)
+# PRODUCT_REPO_PATH is the absolute path set during prerequisite validation
 SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/system-architecture.md"
 
 echo "📄 Reading system architecture from: $SYSTEM_ARCH"

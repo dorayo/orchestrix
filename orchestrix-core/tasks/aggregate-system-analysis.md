@@ -22,7 +22,7 @@ Generate a **system-level analysis document** for existing (brownfield) multi-re
 ## Prerequisites
 
 **Required Setup**:
-- ✅ Product repository exists with `core-config.yaml` (type: `product-planning`)
+- ✅ Product repository exists with `core-config.yaml` (mode: `multi-repo`, role: `product`)
 - ✅ At least 2 implementation repositories exist
 - ✅ Each implementation repo has `docs/existing-system-analysis.md` (generated via `*document-project`)
 
@@ -35,15 +35,21 @@ Generate a **system-level analysis document** for existing (brownfield) multi-re
 # Product repository: my-app-product/core-config.yaml
 project:
   name: My App
-  type: product-planning
+  mode: multi-repo
 
-implementation_repos:
-  - path: ../my-app-backend
-    type: backend
-  - path: ../my-app-web
-    type: frontend
-  - path: ../my-app-ios
-    type: ios
+  multi_repo:
+    role: product
+
+    implementation_repos:
+      - repository_id: my-app-backend
+        path: ../my-app-backend
+        type: backend
+      - repository_id: my-app-web
+        path: ../my-app-web
+        type: frontend
+      - repository_id: my-app-ios
+        path: ../my-app-ios
+        type: ios
 ```
 
 **Recommended Environment**:
@@ -55,10 +61,14 @@ implementation_repos:
 Before starting, validate prerequisites:
 
 ```bash
-# Check project type
-PROJECT_TYPE=$(grep "type:" core-config.yaml | awk '{print $2}')
-if [ "$PROJECT_TYPE" != "product-planning" ]; then
-  echo "❌ ERROR: Project type is '$PROJECT_TYPE', expected 'product-planning'"
+# Check project mode and role
+PROJECT_MODE=$(grep -A 1 "^project:" core-config.yaml | grep "mode:" | awk '{print $2}')
+PROJECT_ROLE=$(grep -A 5 "multi_repo:" core-config.yaml | grep "^\s*role:" | awk '{print $2}')
+
+if [ "$PROJECT_MODE" != "multi-repo" ] || [ "$PROJECT_ROLE" != "product" ]; then
+  echo "❌ ERROR: Invalid project configuration"
+  echo "   Current: mode='$PROJECT_MODE', role='$PROJECT_ROLE'"
+  echo "   Expected: mode='multi-repo', role='product'"
   echo "This task should run in Product repository"
   exit 1
 fi
@@ -592,24 +602,59 @@ Present the completed document and next steps.
   @pm *create-doc brownfield-prd
   # PM will automatically detect multi-repo mode
   # Will read: docs/existing-system-integration.md
-  # Output: docs/prd.md
+  # Output: docs/prd.md (with embedded epic YAML blocks)
   ```
 
-**Step 3 (After PRD)**: Design Improved System Architecture
+**Step 3 (After PRD)**: Design Enhanced System Architecture
   ```bash
   @architect *create-system-architecture
-  # Will detect brownfield mode from PRD
+  # Will detect brownfield mode
   # Will read: docs/prd.md + docs/existing-system-integration.md
-  # Output: docs/architecture/system-architecture.md (with improvements)
+  # Output: docs/system-architecture.md (with improvements)
   ```
 
-**Step 4**: Create Implementation Architectures in Each Repo
+**Step 4 (After Architecture)**: Shard System Documents (Product Repo)
+  ```bash
+  @po *shard
+  # Shards PRD → docs/prd/*.md (preserves epic YAML)
+  # Shards system-architecture.md → docs/system-architecture/*.md
+  ```
+
+**Step 5 (In Each Implementation Repo)**: Create & Shard Implementation Architectures
+
+  **5.1 Configure Product Repo Link** (in each implementation repo):
   ```bash
   cd ../{{backend_repo}}
-  @architect *create-backend-architecture
+  # Edit core-config.yaml:
+  # project:
+  #   mode: multi-repo
+  #   multi_repo:
+  #     role: backend
+  #     product_repo_path: ../{{product_repo}}
+  ```
 
-  cd ../{{frontend_repo}}
-  @architect *create-frontend-architecture
+  **5.2 Create Implementation Architecture**:
+  ```bash
+  @architect *create-backend-architecture
+  # Reads: {product_repo}/docs/system-architecture.md
+  # Output: docs/architecture.md (backend-specific)
+  ```
+
+  **5.3 Shard Implementation Architecture**:
+  ```bash
+  @po *shard
+  # Skips PRD (managed in Product repo)
+  # Shards architecture.md → docs/architecture/*.md
+  ```
+
+  **Repeat for all repos**: frontend, ios, android, etc.
+
+**Step 6 (Development)**: Create Stories & Implement
+  ```bash
+  # In each implementation repo
+  @sm *create-next-story  # Reads epics from Product repo, filters by repository_type
+  @dev *implement {story_id}
+  @qa *review {story_id}
   ```
 
 ---

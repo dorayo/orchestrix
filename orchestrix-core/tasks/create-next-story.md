@@ -246,8 +246,8 @@ fi
 # Pseudo-code
 
 if CURRENT_REPO_TYPE == "monolith":
-    # Monolith mode: Include all stories or filter by repository_type: monolith
-    my_stories = [s for s in all_stories if s.get('repository_type') == 'monolith' or len(all_stories) > 0]
+    # Monolith mode: Include stories with repository_type='monolith' OR stories without repository_type field
+    my_stories = [s for s in all_stories if s.get('repository_type') in ['monolith', None, '']]
 else:
     # Multi-repo mode: Filter by matching repository_type
     my_stories = [s for s in all_stories if s.get('repository_type') == CURRENT_REPO_TYPE]
