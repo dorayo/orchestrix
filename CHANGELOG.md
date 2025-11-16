@@ -1,3 +1,10 @@
+## [10.3.4](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.3...v10.3.4) (2025-11-16)
+
+
+### Bug Fixes
+
+* **multi-repo:** optimize brownfield workflow implementation ([b780dbb](https://github.com/dorayo/ORCHESTRIX/commit/b780dbbf2c04fc4872d2df24e0f7e63c260db243))
+
 ## [10.3.3](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.2...v10.3.3) (2025-11-16)
 
 
