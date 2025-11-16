@@ -4,8 +4,10 @@
 
 Verify SM agent permissions via `{root}/data/story-status-transitions.yaml`:
 - `can_create_story: true` and `can_set_initial_status: true`
-- For existing stories: status must be `Blocked` or `RequiresRevision`
+- **No status prerequisite**: SM can create next story regardless of previous story status
 - On failure: HALT with error
+
+**Rationale**: Allows SM to create stories in advance for planning purposes, while other status transitions (Dev, QA, Architect) continue to enforce their dependencies.
 
 ## Execution
 

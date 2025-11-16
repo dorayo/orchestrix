@@ -32,6 +32,62 @@ class Installer {
     }
   }
 
+  /**
+   * Backup existing core-config.yaml to project root before installation
+   * @param {string} installDir - Project directory
+   * @returns {Promise<string|null>} - Backup file path or null if no backup needed
+   */
+  async backupCoreConfig(installDir) {
+    const fs = require("fs-extra");
+    const existingConfigPath = path.join(installDir, ".orchestrix-core", "core-config.yaml");
+    const backupPath = path.join(installDir, "core-config.yaml.backup");
+
+    try {
+      // Check if existing config exists
+      if (await fs.pathExists(existingConfigPath)) {
+        // Backup to project root
+        await fs.copy(existingConfigPath, backupPath);
+        console.log(chalk.cyan(`📦 已备份配置文件: core-config.yaml.backup`));
+        return backupPath;
+      }
+    } catch (error) {
+      console.warn(chalk.yellow(`警告: 备份配置文件失败: ${error.message}`));
+    }
+    return null;
+  }
+
+  /**
+   * Restore backed up core-config.yaml after installation
+   * @param {string} installDir - Project directory
+   * @param {string} backupPath - Backup file path
+   */
+  async restoreCoreConfig(installDir, backupPath) {
+    const fs = require("fs-extra");
+    const targetConfigPath = path.join(installDir, ".orchestrix-core", "core-config.yaml");
+    const templatePath = path.join(installDir, ".orchestrix-core", "core-config.template.yaml");
+
+    try {
+      if (backupPath && await fs.pathExists(backupPath)) {
+        // Restore backup, overwriting the newly generated config
+        await fs.copy(backupPath, targetConfigPath, { overwrite: true });
+
+        // Clean up backup file
+        await fs.remove(backupPath);
+
+        console.log(chalk.green(`✅ 已恢复用户配置: core-config.yaml`));
+        console.log(chalk.cyan(`💡 提示: 如有配置变化，请对照 core-config.template.yaml 手动调整`));
+
+        // Check if template exists to notify user
+        if (await fs.pathExists(templatePath)) {
+          console.log(chalk.dim(`   模板位置: .orchestrix-core/core-config.template.yaml`));
+        }
+      }
+    } catch (error) {
+      console.warn(chalk.yellow(`警告: 恢复配置文件失败: ${error.message}`));
+      console.warn(chalk.yellow(`备份文件保留在: ${backupPath}`));
+    }
+  }
+
   async compileAgentConfigurations(spinner) {
     try {
       const compiler = new YamlCompiler({ verbose: false });
@@ -720,6 +776,10 @@ class Installer {
         }
       }
 
+      // Backup existing core-config.yaml before update
+      spinner.text = "正在备份用户配置...";
+      const configBackupPath = await this.backupCoreConfig(installDir);
+
       // Perform update by re-running installation
       spinner.text = versionCompare === 0 ? "Reinstalling files..." : "Updating files...";
       const config = {
@@ -730,7 +790,13 @@ class Installer {
       };
 
       await this.performFreshInstall(config, installDir, spinner, { isUpdate: true });
-      
+
+      // Restore user's core-config.yaml after update
+      if (configBackupPath) {
+        spinner.text = "正在恢复用户配置...";
+        await this.restoreCoreConfig(installDir, configBackupPath);
+      }
+
       // Clean up .yml files that now have .yaml counterparts
       spinner.text = "正在清理旧的 .yml 文件...";
       await this.cleanupLegacyYmlFiles(installDir, spinner);
@@ -760,10 +826,17 @@ class Installer {
       spinner.text = "Restoring files...";
       const sourceBase = configLoader.getOrchestrixCorePath();
       const filesToRestore = [...integrity.missing, ...integrity.modified];
-      
+
       for (const file of filesToRestore) {
         // Skip the manifest file itself
         if (file.endsWith('install-manifest.yaml')) continue;
+
+        // Skip core-config.yaml to preserve user configuration
+        if (file.endsWith('core-config.yaml')) {
+          console.log(chalk.cyan(`  保留用户配置: ${file} (未恢复)`));
+          console.log(chalk.dim(`    提示: 如需更新配置，请参考 core-config.template.yaml`));
+          continue;
+        }
         
         const relativePath = file.replace('.orchestrix-core/', '');
         const destPath = path.join(installDir, file);
@@ -834,20 +907,30 @@ class Installer {
   async performReinstall(config, installDir, spinner) {
     spinner.start("Preparing to reinstall Orchestrix...");
 
+    // Backup existing core-config.yaml before removing
+    spinner.text = "正在备份用户配置...";
+    const configBackupPath = await this.backupCoreConfig(installDir);
+
     // Remove existing .orchestrix-core
     const orchestrixCorePath = path.join(installDir, ".orchestrix-core");
     if (await fileManager.pathExists(orchestrixCorePath)) {
       spinner.text = "Removing existing installation...";
       await fileManager.removeDirectory(orchestrixCorePath);
     }
-    
+
     spinner.text = "Installing fresh copy...";
     const result = await this.performFreshInstall(config, installDir, spinner, { isUpdate: true });
-    
+
+    // Restore user's core-config.yaml after reinstall
+    if (configBackupPath) {
+      spinner.text = "正在恢复用户配置...";
+      await this.restoreCoreConfig(installDir, configBackupPath);
+    }
+
     // Clean up .yml files that now have .yaml counterparts
     spinner.text = "正在清理旧的 .yml 文件...";
     await this.cleanupLegacyYmlFiles(installDir, spinner);
-    
+
     return result;
   }
 
