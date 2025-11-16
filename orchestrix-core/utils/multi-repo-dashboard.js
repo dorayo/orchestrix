@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const { glob } = require('glob');
-const { checkCrossRepoDependencies } = require('./dependency-checker.js');
+const { checkCrossRepoDependencies } = require('../../tools/utils/dependency-checker.js');
 
 /**
  * Generate multi-repo dashboard
