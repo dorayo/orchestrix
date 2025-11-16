@@ -139,7 +139,7 @@ echo "📁 Target: docs/prd/"
 echo ""
 
 # Use md-tree to shard PRD
-md-tree --input "$PRD_FILE" --output docs/prd
+md-tree explode "$PRD_FILE" docs/prd
 
 if [ $? -ne 0 ]; then
   echo "❌ ERROR: PRD sharding failed"
@@ -283,7 +283,7 @@ if [ -n "$ARCH_FILE" ] && [ -f "$ARCH_FILE" ]; then
   echo ""
 
   # Use md-tree for sharding
-  md-tree --input "$ARCH_FILE" --output "$ARCH_DIR"
+  md-tree explode "$ARCH_FILE" "$ARCH_DIR"
 
   if [ $? -eq 0 ]; then
     echo "✅ Architecture sharded to: $ARCH_DIR/"
