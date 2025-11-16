@@ -1,3 +1,10 @@
+## [10.3.2](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.1...v10.3.2) (2025-11-16)
+
+
+### Bug Fixes
+
+* **po-shard:** correct md-tree command syntax for document sharding ([b2c5fc6](https://github.com/dorayo/ORCHESTRIX/commit/b2c5fc6436c9c3ac7f654102a06c919757f38af4))
+
 ## [10.3.1](https://github.com/dorayo/ORCHESTRIX/compare/v10.3.0...v10.3.1) (2025-11-15)
 
 
