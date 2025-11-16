@@ -1,3 +1,10 @@
+## [10.4.2](https://github.com/dorayo/ORCHESTRIX/compare/v10.4.1...v10.4.2) (2025-11-16)
+
+
+### Bug Fixes
+
+* **multi-repo:** correct dependency-checker import path in dashboard ([7e1afe2](https://github.com/dorayo/ORCHESTRIX/commit/7e1afe226e645869ca3d2b38326907fefb1a5d1f))
+
 ## [10.4.1](https://github.com/dorayo/ORCHESTRIX/compare/v10.4.0...v10.4.1) (2025-11-16)
 
 
