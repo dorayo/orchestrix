@@ -102,22 +102,25 @@ log "Last 2000 chars: examining ${#last_output} bytes for HANDOFF pattern"
 
 # HANDOFF pattern matching (multiple patterns for flexibility)
 # Try multiple patterns in order of preference
+# IMPORTANT: Patterns WITH arguments must be checked BEFORE patterns without arguments
 
 target_agent=""
 raw_command=""
 
+# Pattern 1: Standard format with arguments - 🎯 HANDOFF TO agent: *command args
+# Match any arguments on the same line (non-greedy to stop at line break)
+if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[^\n\r]+) ]]; then
+    target_agent="${BASH_REMATCH[1]}"
+    # Trim trailing whitespace from command
+    raw_command=$(echo "${BASH_REMATCH[2]}" | sed 's/[[:space:]]*$//')
+    log "Matched Pattern 1: Standard HANDOFF format (with arguments)"
+
 # Pattern 0: Standard format without arguments - 🎯 HANDOFF TO agent: *command (no args)
-# This pattern is checked FIRST to handle commands like *draft that don't take arguments
-if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]*($|[^a-zA-Z0-9.]) ]]; then
+# This pattern is checked AFTER Pattern 1 to avoid matching commands with arguments
+elif [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]*($|[^a-zA-Z0-9.]) ]]; then
     target_agent="${BASH_REMATCH[1]}"
     raw_command="${BASH_REMATCH[2]}"
     log "Matched Pattern 0: Standard HANDOFF format (no arguments)"
-
-# Pattern 1: Standard format with arguments - 🎯 HANDOFF TO agent: *command args
-elif [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[0-9.]+) ]]; then
-    target_agent="${BASH_REMATCH[1]}"
-    raw_command="${BASH_REMATCH[2]}"
-    log "Matched Pattern 1: Standard HANDOFF format (with arguments)"
 
 # Pattern 2: Next command format - Next command: *review 5.2 (for QA agent)
 # More flexible command pattern: \*[a-z0-9-]+ followed by arguments
