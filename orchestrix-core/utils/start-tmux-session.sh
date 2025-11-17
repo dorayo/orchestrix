@@ -36,11 +36,12 @@ fi
 echo "🚀 Creating tmux session: $SESSION_NAME"
 tmux new-session -d -s "$SESSION_NAME" -n "Arch" -c "$WORK_DIR"
 
-# Configure status bar for better display
+# Configure status bar for better display (clean, no window flags)
 tmux set-option -t "$SESSION_NAME" status-left-length 20
 tmux set-option -t "$SESSION_NAME" status-right-length 60
-tmux set-option -t "$SESSION_NAME" window-status-format "#I:#W"
-tmux set-option -t "$SESSION_NAME" window-status-current-format "#I:#W*"
+tmux set-option -t "$SESSION_NAME" window-status-format " #I:#W "
+tmux set-option -t "$SESSION_NAME" window-status-current-format " #I:#W* "
+tmux set-option -t "$SESSION_NAME" window-status-separator ""
 
 # Set environment variables for Architect window
 tmux send-keys -t "$SESSION_NAME:0" "export AGENT_ID=architect" C-m
