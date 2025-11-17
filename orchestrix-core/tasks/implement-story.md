@@ -6,6 +6,76 @@
 - CONFIG_PATH accessible
 - Required standards files available (coding-standards.md, testing-strategy.md)
 
+## Step 0: Idempotency Check (MANDATORY - Fast Exit to Save Tokens)
+
+**Purpose**: Prevent re-implementing already completed stories
+
+**Read Story File**: `{devStoryLocation}/{story_id}.md`
+
+**Extract**: Story.status
+
+**Check if Already Implemented**:
+
+- **If status = "Review"**:
+  ```
+  ℹ️ STORY ALREADY IMPLEMENTED (In QA Review)
+  Story: {story_id}
+  Status: Review
+
+  Implementation already completed. Story is currently under QA review.
+
+  Next actions:
+  - QA is reviewing: Wait for QA feedback
+  - To check QA progress: Switch to QA window
+  - If QA found issues: QA will send back to Dev with *review-qa {story_id}
+
+  💡 TIP: Don't re-implement. Wait for QA feedback or start a new story.
+
+  HALT: Implementation already completed ✋
+  ```
+
+- **If status = "Done"**:
+  ```
+  ℹ️ STORY ALREADY COMPLETE (Passed QA)
+  Story: {story_id}
+  Status: Done
+
+  Story has been implemented AND passed QA review.
+
+  Next actions:
+  - Story is ready for deployment
+  - To commit: *finalize-commit {story_id} (if not committed)
+  - To start new story: Switch to SM and run *draft
+
+  💡 TIP: This story is complete. Focus on new work!
+
+  HALT: Story already done ✅
+  ```
+
+- **If status NOT in ["Approved", "TestDesignComplete"]**:
+  ```
+  ⚠️ STORY NOT READY FOR IMPLEMENTATION
+  Story: {story_id}
+  Current Status: {current_status}
+
+  Required status: Approved | TestDesignComplete
+  Current status: {current_status}
+
+  Next actions:
+  - If "AwaitingArchReview": Architect needs to review (*review-story {story_id})
+  - If "RequiresRevision": SM needs to revise (*revise-story {story_id})
+  - If "AwaitingTestDesign": QA needs test design (*test-design {story_id})
+  - If "Blocked": Fix blockers via SM (*correct-course {story_id})
+
+  HALT: Prerequisites not met ⛔
+  ```
+
+**If Status is "Approved" or "TestDesignComplete"**:
+- ✅ Log: "Idempotency check passed - proceeding with implementation"
+- Continue to Agent Permission Check
+
+---
+
 ## Agent Permission Check (MANDATORY)
 
 **Execute**: `{root}/tasks/utils/validate-agent-permission.md`
