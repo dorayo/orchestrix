@@ -1,3 +1,10 @@
+## [11.2.4](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.3...v11.2.4) (2025-11-17)
+
+
+### Bug Fixes
+
+* **tmux:** fix handoff command truncation and Unicode character corruption ([5bc7ae8](https://github.com/dorayo/ORCHESTRIX/commit/5bc7ae85414648860e41a8930ecfa59c2ad89992))
+
 ## [11.2.3](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.2...v11.2.3) (2025-11-17)
 
 
