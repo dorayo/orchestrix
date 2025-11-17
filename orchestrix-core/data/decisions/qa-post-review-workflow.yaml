@@ -27,14 +27,14 @@ inputs:
       low: { type: number }
 
 rules:
-  # PASS + Done: Story complete, execute git commit
+  # PASS + Done: Story complete, execute git commit then handoff to SM
   - condition: "gate_result == 'PASS' AND final_status == 'Done'"
     result:
       workflow_action: finalize_commit
       requires_git_commit: true
-      handoff_target: NONE
+      handoff_target: SM
       reasoning: "Story meets all quality criteria and is approved for commit"
-      next_command: "*finalize-commit {story_id}"
+      next_command: "*draft"
       completion_status: complete
     metadata:
       priority: "critical"
@@ -154,7 +154,7 @@ output:
     description: "Whether git commit should be executed"
   handoff_target:
     type: string
-    description: "Target agent for handoff (NONE, DEV, ARCHITECT, SM, HUMAN)"
+    description: "Target agent for handoff (SM, DEV, ARCHITECT, HUMAN, NONE)"
   reasoning:
     type: string
     description: "Explanation for the decision"
@@ -195,8 +195,8 @@ examples:
     output:
       workflow_action: finalize_commit
       requires_git_commit: true
-      handoff_target: NONE
-      next_command: "*finalize-commit {story_id}"
+      handoff_target: SM
+      next_command: "*draft"
       completion_status: complete
 
   - input:
