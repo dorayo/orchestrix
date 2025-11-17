@@ -274,8 +274,7 @@ Based on the review outcome, output the appropriate handoff (use exact format):
 Story: {story_id} → Status: Escalated
 Reason: {escalation_reason}
 
-🎯 HANDOFF TO ARCHITECT:
-*review-escalation {story_id}
+🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
 
 #### Gate PASS (Story Complete):
@@ -329,8 +328,7 @@ Gate: {CONCERNS|FAIL} | Issues: {issues_count} ({critical}C, {high}H, {medium}M)
 
 Review: docs/qa/reviews/{story_id}-qa-r{review_round}.md
 
-🎯 HANDOFF TO DEV:
-*review-qa {story_id}
+🎯 HANDOFF TO dev: *review-qa {story_id}
 ```
 
 #### Gate FAIL with Major Rework:
@@ -341,8 +339,7 @@ Gate: FAIL | Critical Issues: {critical_count}
 
 Review: docs/qa/reviews/{story_id}-qa-r{review_round}.md
 
-🎯 HANDOFF TO DEV:
-*review-qa {story_id}
+🎯 HANDOFF TO dev: *review-qa {story_id}
 ⚠️ Major rework required
 ```
 
@@ -352,8 +349,7 @@ Review: docs/qa/reviews/{story_id}-qa-r{review_round}.md
 Story: {story_id} → Status: Escalated
 Reason: No improvement after {review_round} rounds
 
-🎯 HANDOFF TO ARCHITECT:
-*review-escalation {story_id}
+🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
 
 **CRITICAL**: The handoff command (e.g., `*review {story_id}`) MUST be clearly visible as the final line of your output.

@@ -664,17 +664,17 @@ Based on `next_action` from Step 8C, output the appropriate handoff message:
 
 - If `next_action` = `handoff_to_architect`:
   ```
-  Next: Architect please execute command `review-story {epicNum}.{storyNum}`
+  🎯 HANDOFF TO architect: *review-story {epicNum}.{storyNum}
   ```
 
 - If `next_action` = `handoff_to_dev`:
   ```
-  Next: Dev please execute command `implement-story {epicNum}.{storyNum}`
+  🎯 HANDOFF TO dev: *implement-story {epicNum}.{storyNum}
   ```
 
 - If `next_action` = `handoff_to_qa_test_design`:
   ```
-  Next: QA please execute command `test-design {epicNum}.{storyNum}`
+  🎯 HANDOFF TO qa: *test-design {epicNum}.{storyNum}
   ```
 
 - If `next_action` = `sm_revise_story`:

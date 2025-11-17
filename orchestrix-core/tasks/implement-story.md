@@ -269,8 +269,7 @@ Story ready for review.
 Story: 2.3 → Status: Review
 [Full handoff message]
 
-🎯 HANDOFF TO QA:
-*review 2.3
+🎯 HANDOFF TO qa: *review 2.3
 ```
 
 ---

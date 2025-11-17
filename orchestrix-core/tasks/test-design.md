@@ -153,8 +153,7 @@ Story: {epic}.{story} → Status: Approved
 📋 Test Design: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 📊 {total} scenarios ({unit}U, {int}I, {e2e}E) | P0:{p0} P1:{p1} P2:{p2}
 
-🎯 HANDOFF TO DEV:
-*develop-story {epic}.{story}
+🎯 HANDOFF TO dev: *develop-story {epic}.{story}
 ```
 
 **CRITICAL**: The handoff command `*develop-story {story_id}` MUST be the last line of your output.

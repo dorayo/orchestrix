@@ -272,8 +272,7 @@ Previous QA Feedback:
 
 Recommendation: Architectural review needed
 
-🎯 HANDOFF TO ARCHITECT:
-*review-escalation {story_id}
+🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
 
 ## Blocking Conditions

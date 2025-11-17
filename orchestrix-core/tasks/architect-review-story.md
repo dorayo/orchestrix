@@ -458,8 +458,7 @@ Test Design Level: {test_design_level}
 
 Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
-🎯 HANDOFF TO QA:
-*test-design {story_id}
+🎯 HANDOFF TO qa: *test-design {story_id}
 ```
 
 #### If Approved + No Test Design (Simple):
@@ -470,8 +469,7 @@ Score: {score}/10 | Decision: Approved
 
 Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
-🎯 HANDOFF TO DEV:
-*develop-story {story_id}
+🎯 HANDOFF TO dev: *develop-story {story_id}
 ```
 
 #### If Requires Revision:
@@ -482,8 +480,7 @@ Score: {score}/10 | Critical: {critical_count} | Major: {major_count}
 
 Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
-🎯 HANDOFF TO SM:
-*revise-story {story_id}
+🎯 HANDOFF TO sm: *revise-story {story_id}
 ```
 
 #### If Escalated:

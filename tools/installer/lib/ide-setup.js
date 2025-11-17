@@ -176,13 +176,16 @@ class IdeSetup {
       await this.setupClaudeCodeForPackage(installDir, packInfo.name, packSlashPrefix, packAgents, packTasks, rootPath);
     }
   }
-  
+
+  // Install tmux automation files
+  await this.setupTmuxAutomation(installDir);
+
   // Summary
   console.log(chalk.green(`\n✅ Claude Code 双模式集成完成:`));
   console.log(chalk.dim(`   • Sub Agents: .claude/agents/ (${subagentsCount} 个优化代理)`));
   console.log(chalk.dim(`   • Commands: .claude/commands/ (${coreAgents.length} 个命令 + ${coreTasks.length} 个任务)`));
   console.log(chalk.dim(`   • 使用方式: 在 Claude Code 中直接选择 Sub Agent 或使用 /命令`));
-  
+
   return true;
  }
 
@@ -342,6 +345,67 @@ class IdeSetup {
 
     const displayName = packageName === "core" ? "Orchestrix 核心系统" : packageName;
     console.log(chalk.green(`\n✓ 已为 ${displayName} 创建 Claude Code 命令 (代理: ${agentIds.length}个, 任务: ${taskIds.length}个)`));
+  }
+
+  /**
+   * Setup tmux automation for Claude Code
+   * Installs handoff-detector hook and settings configuration
+   */
+  async setupTmuxAutomation(installDir) {
+    const hooksDir = path.join(installDir, ".claude", "hooks");
+    const settingsPath = path.join(installDir, ".claude", "settings.local.json");
+    const commonHooksPath = path.dirname(path.dirname(path.dirname(path.dirname(__filename))));
+
+    // Ensure hooks directory exists
+    await fileManager.ensureDirectory(hooksDir);
+
+    // Copy handoff-detector.sh
+    const sourceHookPath = path.join(commonHooksPath, "common", "hooks", "handoff-detector.sh");
+    const targetHookPath = path.join(hooksDir, "handoff-detector.sh");
+
+    if (await fileManager.pathExists(sourceHookPath)) {
+      await fileManager.copyFile(sourceHookPath, targetHookPath);
+
+      // Ensure script is executable
+      try {
+        await fs.chmod(targetHookPath, 0o755);
+      } catch (error) {
+        console.warn(chalk.yellow(`Warning: Could not set executable permission on hook script: ${error.message}`));
+      }
+
+      console.log(chalk.dim(`   • TMUX Hook: .claude/hooks/handoff-detector.sh`));
+    } else {
+      console.warn(chalk.yellow(`Warning: Hook script template not found at ${sourceHookPath}`));
+    }
+
+    // Handle settings.local.json - merge if exists, create if not
+    const sourceSettingsPath = path.join(commonHooksPath, "common", "hooks", "settings.local.json");
+
+    if (await fileManager.pathExists(sourceSettingsPath)) {
+      const hookConfig = JSON.parse(await fs.readFile(sourceSettingsPath, 'utf8'));
+
+      let existingSettings = {};
+      if (await fileManager.pathExists(settingsPath)) {
+        try {
+          existingSettings = JSON.parse(await fs.readFile(settingsPath, 'utf8'));
+        } catch (error) {
+          console.warn(chalk.yellow(`Warning: Could not parse existing settings.local.json: ${error.message}`));
+        }
+      }
+
+      // Merge hook configuration
+      if (!existingSettings.hooks) {
+        existingSettings.hooks = {};
+      }
+      if (!existingSettings.hooks.Stop) {
+        existingSettings.hooks.Stop = hookConfig.hooks.Stop;
+
+        await fs.writeFile(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
+        console.log(chalk.dim(`   • TMUX Config: .claude/settings.local.json`));
+      } else {
+        console.log(chalk.dim(`   • TMUX Config: .claude/settings.local.json (existing Stop hook preserved)`));
+      }
+    }
   }
 
   async setupWindsurf(installDir, selectedAgent) {
