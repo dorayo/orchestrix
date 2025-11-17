@@ -1,3 +1,69 @@
+# [11.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.4.2...v11.0.0) (2025-11-17)
+
+
+### Bug Fixes
+
+* **automation:** correct tmux pane navigation instructions ([92bd846](https://github.com/dorayo/ORCHESTRIX/commit/92bd846d8f38e3b37189cfb71768b9e141f4f628))
+* **automation:** fix hook script errors and status bar display ([0b30213](https://github.com/dorayo/ORCHESTRIX/commit/0b30213e110dbaabb10a3b231b3d15c86d7b5450))
+* **automation:** fix regex syntax errors in handoff-detector hook ([9f78eba](https://github.com/dorayo/ORCHESTRIX/commit/9f78eba6c61f63cfbad3fe259d212efe5c7268aa))
+* **automation:** remove auto-activation of agents in tmux script ([7cfea5f](https://github.com/dorayo/ORCHESTRIX/commit/7cfea5f8df1eef1724be687cf9ceb2015483b74b))
+* **automation:** remove window flags from status bar for cleaner display ([56fb456](https://github.com/dorayo/ORCHESTRIX/commit/56fb4562560ed3a2be67725e8d8751f9c09c732e))
+
+
+### Code Refactoring
+
+* **automation:** change from panes to windows for simpler navigation ([1fc98eb](https://github.com/dorayo/ORCHESTRIX/commit/1fc98eb500a630ae33866f5961538f5a2eb335b2))
+
+
+### Features
+
+* **automation:** add tmux multi-agent automation with auto-handoff ([9227a1d](https://github.com/dorayo/ORCHESTRIX/commit/9227a1dda9ab2353138a2a4cf2cd0f9ed3fe2a3d))
+* **automation:** implement tmux-based multi-agent HANDOFF automation ([ccfe0e4](https://github.com/dorayo/ORCHESTRIX/commit/ccfe0e4a0a581e48633062ad7d0e3dbab19471cb))
+* **tasks:** add idempotency checks to prevent duplicate work ([af484d6](https://github.com/dorayo/ORCHESTRIX/commit/af484d65a5ed07e175328c68ff9c5764d50e883b))
+* **tasks:** add idempotency checks with smart HANDOFF to all review tasks ([b9d290f](https://github.com/dorayo/ORCHESTRIX/commit/b9d290f05458a941c07a422d6a2b6d7ebd149c0c))
+* **tasks:** add robust multi-strategy status extraction ([7ceb522](https://github.com/dorayo/ORCHESTRIX/commit/7ceb5223ae062d91110a2eab34db6b13928dedb7))
+
+
+### Reverts
+
+* restore window flags in status bar ([749fc8d](https://github.com/dorayo/ORCHESTRIX/commit/749fc8d981f36d5241afa251a5e8cd2beaf56edd))
+
+
+### BREAKING CHANGES
+
+* **automation:** tmux layout changed from 2x2 pane layout to 4 separate windows
+
+Why this change:
+- Pane navigation was confusing for users (Ctrl+b → q + number)
+- Window navigation is much simpler (Ctrl+b → 0/1/2/3 directly)
+- Each agent gets full screen space
+- Matches user mental model (like browser tabs)
+- Status bar clearly shows all windows
+
+Changes:
+- start-tmux-session.sh: Create 4 windows instead of 4 panes
+- handoff-detector.sh: Send commands to windows instead of panes
+- Updated all instructions and help text
+
+New Layout:
+- Window 0: Architect (Ctrl+b → 0)
+- Window 1: SM (Ctrl+b → 1)
+- Window 2: Dev (Ctrl+b → 2)
+- Window 3: QA (Ctrl+b → 3)
+
+Navigation:
+  Ctrl+b → 0/1/2/3  Jump directly to window
+  Ctrl+b → n        Next window
+  Ctrl+b → p        Previous window
+  Ctrl+b → w        List all windows
+
+Bottom status bar shows: [0:Architect] [1:SM*] [2:Dev] [3:QA]
+(* indicates current window)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [10.4.2](https://github.com/dorayo/ORCHESTRIX/compare/v10.4.1...v10.4.2) (2025-11-16)
 
 
