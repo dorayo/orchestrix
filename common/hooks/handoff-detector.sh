@@ -3,7 +3,7 @@
 # Trigger: When Claude completes a response
 # Function: Detect HANDOFF pattern in output and automatically send commands to target agents
 
-set -euo pipefail
+set -eo pipefail  # Removed -u to avoid issues with optional environment variables
 
 # Configuration
 SESSION_NAME="orchestrix"
@@ -32,6 +32,7 @@ while IFS= read -r line; do
     hook_data+="$line"$'\n'
 done
 
+# Get current agent ID, default to "unknown" if not set
 current_agent="${AGENT_ID:-unknown}"
 log "Stop Hook triggered for agent: $current_agent"
 
