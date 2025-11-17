@@ -82,30 +82,22 @@ tmux send-keys -t "$SESSION_NAME:0.3" "echo ''" C-m
 tmux select-layout -t "$SESSION_NAME:0" tiled
 
 # ============================================
-# Start Claude Code and activate agents
+# Start Claude Code (but don't auto-activate agents)
 # ============================================
 
-echo "🤖 Starting Claude Code agents..."
+echo "🤖 Starting Claude Code in all panes..."
 
 # Pane 0 - Architect
 tmux send-keys -t "$SESSION_NAME:0.0" "cc" C-m
-sleep 2  # Wait for Claude Code to start
-tmux send-keys -t "$SESSION_NAME:0.0" "/Orchestrix:agents:architect" C-m
 
 # Pane 1 - SM
 tmux send-keys -t "$SESSION_NAME:0.1" "cc" C-m
-sleep 2
-tmux send-keys -t "$SESSION_NAME:0.1" "/Orchestrix:agents:sm" C-m
 
 # Pane 2 - Dev
 tmux send-keys -t "$SESSION_NAME:0.2" "cc" C-m
-sleep 2
-tmux send-keys -t "$SESSION_NAME:0.2" "/Orchestrix:agents:dev" C-m
 
 # Pane 3 - QA
 tmux send-keys -t "$SESSION_NAME:0.3" "cc" C-m
-sleep 2
-tmux send-keys -t "$SESSION_NAME:0.3" "/Orchestrix:agents:qa" C-m
 
 # Select SM pane (bottom-left) to start workflow
 tmux select-pane -t "$SESSION_NAME:0.1"
@@ -122,19 +114,29 @@ echo "  │ 1: SM        │ 3: QA        │"
 echo "  └──────────────┴──────────────┘"
 echo ""
 echo "🎯 Next Steps:"
-echo "  1. Wait for all agents to load (about 10 seconds)"
-echo "  2. In SM pane (bottom-left), enter: 1"
-echo "  3. The Stop Hook will automatically handle agent handoffs"
+echo "  1. ⏱️  Wait for Claude Code to fully start in all panes (~10-15 seconds)"
+echo "     - You'll see the Claude Code prompt when ready"
+echo ""
+echo "  2. 🚀 Manually activate agents in each pane:"
+echo "     - Pane 0 (Architect): /Orchestrix:agents:architect"
+echo "     - Pane 1 (SM):        /Orchestrix:agents:sm"
+echo "     - Pane 2 (Dev):       /Orchestrix:agents:dev"
+echo "     - Pane 3 (QA):        /Orchestrix:agents:qa"
+echo ""
+echo "  3. 🎬 Start automation:"
+echo "     - Switch to SM pane: Ctrl+b → 1"
+echo "     - Enter: 1  (or *draft)"
+echo "     - Watch the magic happen! ✨"
 echo ""
 echo "⌨️  tmux shortcuts:"
-echo "  Ctrl+b → o    Switch to next pane"
-echo "  Ctrl+b → ;    Switch to previous pane"
-echo "  Ctrl+b → ↑↓←→ Switch panes with arrow keys"
-echo "  Ctrl+b → z    Maximize/minimize current pane"
-echo "  Ctrl+b → d    Detach session (runs in background)"
-echo "  Ctrl+b → [    Enter scroll mode (view history)"
+echo "  Ctrl+b → 0/1/2/3  Jump to specific pane"
+echo "  Ctrl+b → o        Switch to next pane"
+echo "  Ctrl+b → z        Maximize/minimize current pane"
+echo "  Ctrl+b → d        Detach session (runs in background)"
+echo "  Ctrl+b → [        Scroll mode (press q to exit)"
 echo ""
-echo "📝 Reconnect to session: tmux attach -t orchestrix"
+echo "📝 Monitor handoffs: tail -f /tmp/orchestrix-handoff.log"
+echo "📝 Reconnect: tmux attach -t orchestrix"
 echo ""
 
 # Attach to session
