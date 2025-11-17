@@ -669,7 +669,7 @@ Based on `next_action` from Step 8C, output the appropriate handoff message:
 
 - If `next_action` = `handoff_to_dev`:
   ```
-  🎯 HANDOFF TO dev: *implement-story {epicNum}.{storyNum}
+  🎯 HANDOFF TO dev: *develop-story {epicNum}.{storyNum}
   ```
 
 - If `next_action` = `handoff_to_qa_test_design`:

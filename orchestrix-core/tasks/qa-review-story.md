@@ -14,7 +14,7 @@ required:
 
 **Purpose**: Prevent re-reviewing already passed stories
 
-**Read Story File**: `{devStoryLocation}/{story_id}.md`
+**Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md` to find the story file (handles both `5.2.md` and `5.2.20241117.md` formats)
 
 **Extract**: Story.status
 
@@ -38,24 +38,71 @@ required:
   **HALT: QA already passed ✅**
 
 - **If status NOT in ["Review"]**:
-  ```
-  ⚠️ STORY NOT READY FOR QA REVIEW
-  Story: {story_id}
-  Current Status: {current_status}
 
-  Story must be in "Review" status for QA.
+  **Determine appropriate handoff based on current status**:
 
-  Required status: Review
-  Current status: {current_status}
+  - **If status = "Approved"**:
+    ```
+    ℹ️ STORY NOT STARTED YET
+    Story: {story_id}
+    Current Status: Approved
 
-  Next actions:
-  - If "Approved": Dev must implement (*implement-story {story_id})
-  - If "AwaitingTestDesign": QA must design tests (*test-design {story_id})
-  - If "InProgress": Wait for Dev to complete
-  - If "AwaitingArchReview": Wait for Architect
+    Story has been approved but not yet implemented.
+    Dev needs to start implementation.
 
-  (No HANDOFF - prerequisites not met)
-  ```
+    🎯 HANDOFF TO dev: *develop-story {story_id}
+    ```
+
+  - **If status = "AwaitingTestDesign"**:
+    ```
+    ℹ️ STORY NEEDS TEST DESIGN
+    Story: {story_id}
+    Current Status: AwaitingTestDesign
+
+    Story needs QA test design before Dev can implement.
+
+    🎯 HANDOFF TO qa: *test-design {story_id}
+    ```
+
+  - **If status = "InProgress"**:
+    ```
+    ℹ️ STORY IN DEVELOPMENT
+    Story: {story_id}
+    Current Status: InProgress
+
+    Story is currently being worked on by Dev.
+    Waiting for Dev to complete and set Status = "Review".
+
+    🎯 HANDOFF TO dev: *develop-story {story_id}
+    ```
+
+  - **If status = "AwaitingArchReview"**:
+    ```
+    ℹ️ STORY NEEDS ARCHITECT REVIEW
+    Story: {story_id}
+    Current Status: AwaitingArchReview
+
+    Story needs Architect review before implementation.
+
+    🎯 HANDOFF TO architect: *review-story {story_id}
+    ```
+
+  - **If status in ["Blocked", "RequiresRevision", "Escalated"]**:
+    ```
+    ⚠️ STORY BLOCKED OR NEEDS REVISION
+    Story: {story_id}
+    Current Status: {current_status}
+
+    Story requires human intervention or SM revision.
+
+    Next actions:
+    - If "Blocked": SM must resolve blockers (*correct-course {story_id})
+    - If "RequiresRevision": SM must revise story (*revise-story {story_id})
+    - If "Escalated": Wait for Architect decision
+
+    (No HANDOFF - human intervention required)
+    ```
+
   **HALT: Prerequisites not met ⛔**
 
 **If status = "Review"**:

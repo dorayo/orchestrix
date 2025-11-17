@@ -8,7 +8,7 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
 **Purpose**: Prevent re-reviewing already approved stories
 
-**Read Story File**: `docs/stories/{story_id}.md`
+**Read Story File**: Use glob pattern `docs/stories/{story_id}.*.md` to find the story file (handles both `5.2.md` and `5.2.20241117.md` formats)
 
 **Extract**:
 - Story.status
@@ -24,7 +24,7 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
   Architect review already completed. Story ready for Dev implementation.
 
-  🎯 HANDOFF TO dev: *implement-story {story_id}
+  🎯 HANDOFF TO dev: *develop-story {story_id}
   ```
   **HALT: Review completed, Dev handoff sent ✋**
 

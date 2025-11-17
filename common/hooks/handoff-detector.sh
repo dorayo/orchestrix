@@ -1,98 +1,124 @@
 #!/bin/bash
 # Claude Code Stop Hook - HANDOFF Detector
-# Trigger: When Claude completes a response
-# Function: Detect HANDOFF pattern in output and automatically send commands to target agents
+# Uses tmux capture-pane to read Claude's output
 
-set -eo pipefail  # Removed -u to avoid issues with optional environment variables
+set -eo pipefail
 
 # Configuration
 SESSION_NAME="orchestrix"
 LOG_FILE="/tmp/orchestrix-handoff.log"
 
-# Agent to window mapping (using windows instead of panes)
-declare -A AGENT_TO_WINDOW=(
-    ["architect"]="0"
-    ["sm"]="1"
-    ["dev"]="2"
-    ["qa"]="3"
-    ["orchestrix-orchestrator"]="0"  # orchestrator also sends to architect
-    ["ux-expert"]="0"  # if UX expert needed, map to architect
-)
+# Agent to window mapping (Bash 3.2 compatible)
+get_agent_window() {
+    local agent="$1"
+    case "$agent" in
+        architect) echo "0" ;;
+        sm) echo "1" ;;
+        dev) echo "2" ;;
+        qa) echo "3" ;;
+        orchestrix-orchestrator) echo "0" ;;
+        ux-expert) echo "0" ;;
+        *) echo "" ;;
+    esac
+}
 
-# Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
 }
 
-# Read hook data from stdin
-# Note: Depending on Claude Code Hook implementation, might need to read from file or other sources
-# Using simple stdin reading here
-hook_data=""
-while IFS= read -r line; do
-    hook_data+="$line"$'\n'
-done
-
-# Get current agent ID, default to "unknown" if not set
+# Get current agent ID
 current_agent="${AGENT_ID:-unknown}"
-log "Stop Hook triggered for agent: $current_agent"
+log "========== Hook triggered for agent: $current_agent =========="
 
-# Debug: Log the received data length and last 200 chars
-data_length=${#hook_data}
-log "Received data length: $data_length bytes"
-if [ $data_length -gt 0 ]; then
-    last_chars="${hook_data: -200}"
-    log "Last 200 chars: ${last_chars//$'\n'/\\n}"
+# Get current window from agent mapping
+current_window=$(get_agent_window "$current_agent")
+
+if [ -z "$current_window" ]; then
+    log "ERROR: Unknown current agent '$current_agent'"
+    exit 0
 fi
 
-# HANDOFF pattern matching
-# Format: 🎯 HANDOFF TO <target_agent>: <command>
-PATTERN='🎯 HANDOFF TO ([a-zA-Z0-9_-]+): (.+)'
+log "Current agent: $current_agent (window $current_window)"
 
-if [[ "$hook_data" =~ $PATTERN ]]; then
+# Check if tmux session exists
+if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    log "ERROR: tmux session '$SESSION_NAME' not found"
+    exit 0
+fi
+
+# Capture the pane output (last 200 lines, which should include HANDOFF message)
+pane_output=$(tmux capture-pane -t "$SESSION_NAME:$current_window" -p -S -200 2>/dev/null || echo "")
+
+if [ -z "$pane_output" ]; then
+    log "ERROR: Could not capture pane output"
+    exit 0
+fi
+
+log "Captured pane output: ${#pane_output} bytes"
+
+# Extract last 1000 characters (HANDOFF should be at the end)
+last_output="${pane_output: -1000}"
+log "Last 1000 chars: ${last_output//[$'\n']/ }"
+
+# HANDOFF pattern matching (flexible regex)
+PATTERN='🎯 \*?HANDOFF TO ([a-zA-Z0-9_-]+): \*?(.+)'
+
+if [[ "$pane_output" =~ $PATTERN ]]; then
     target_agent="${BASH_REMATCH[1]}"
-    command="${BASH_REMATCH[2]}"
+    raw_command="${BASH_REMATCH[2]}"
 
-    log "HANDOFF detected: from=$current_agent, target=$target_agent, command=$command"
+    # Clean up command: remove ALL whitespace/newlines, ensure it starts with *
+    # Remove newlines, carriage returns, and extra spaces
+    raw_command=$(echo "$raw_command" | tr -d '\n\r' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+
+    if [[ "$raw_command" != \** ]]; then
+        command="*${raw_command}"
+    else
+        command="$raw_command"
+    fi
+
+    log "✓ HANDOFF detected: $current_agent → $target_agent"
+    log "  Raw command: $raw_command"
+    log "  Final command: $command"
 
     # Find target window
-    target_window="${AGENT_TO_WINDOW[$target_agent]:-}"
+    target_window=$(get_agent_window "$target_agent")
 
     if [ -z "$target_window" ]; then
-        log "ERROR: Unknown agent '$target_agent', no window mapping found"
+        log "ERROR: Unknown target agent '$target_agent'"
         echo "❌ Unknown agent: $target_agent" >&2
-        exit 1
+        exit 0
     fi
 
-    # Check if tmux session exists
-    if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-        log "ERROR: tmux session '$SESSION_NAME' not found"
-        echo "❌ tmux session '$SESSION_NAME' does not exist" >&2
-        exit 1
+    # Prevent sending to same window
+    if [ "$target_window" = "$current_window" ]; then
+        log "WARNING: Target window is same as current window, skipping"
+        exit 0
     fi
 
-    # Use tmux send-keys to send command to target window
-    log "Sending command to window $target_window: $command"
+    # Send command to target window
+    log "→ Sending to window $target_window: $command"
 
-    # Add short delay to ensure target window is ready
+    # Wait a bit for window to be ready
     sleep 0.5
 
-    # Send command to window (format: session:window)
-    tmux send-keys -t "$SESSION_NAME:$target_window" "$command" C-m
-
-    if [ $? -eq 0 ]; then
-        log "SUCCESS: Command sent to $target_agent (window $target_window)"
-        echo "✅ Command sent to $target_agent" >&2
-
-        # Optional: play notification sound
-        # afplay /System/Library/Sounds/Glass.aiff 2>/dev/null &
+    # Send command and press Enter to submit (C-m = Enter)
+    # Send twice to ensure Claude Code receives and processes it
+    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null; then
+        sleep 0.1
+        if tmux send-keys -t "$SESSION_NAME:$target_window" C-m 2>/dev/null; then
+            log "✓ SUCCESS: Command sent to $target_agent"
+            echo "✅ HANDOFF: $current_agent → $target_agent" >&2
+        else
+            log "ERROR: Failed to send Enter key"
+        fi
     else
         log "ERROR: Failed to send command via tmux"
         echo "❌ Failed to send command" >&2
-        exit 1
     fi
 else
-    log "No HANDOFF pattern found in output (agent: $current_agent)"
+    log "No HANDOFF pattern found in pane output"
 fi
 
-# Return success to continue normal flow
+log "========== Hook complete =========="
 exit 0

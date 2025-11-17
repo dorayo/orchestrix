@@ -270,14 +270,28 @@ Add a detailed Change Log entry to document the QA fixes applied:
 
 Based on the status set in step 5, output the appropriate handoff message:
 
-- If status is `Review`:
+- **If status = `Review`** (all fixes completed):
   ```
-  Next: QA please execute command `review {story_id}`
+  ✅ QA FIXES COMPLETE
+  Story: {story_id} → Status: Review
+
+  All QA-identified issues have been addressed:
+  - {issue_count} issues fixed
+  - All tests passing
+  - Ready for QA re-review
+
+  🎯 HANDOFF TO qa: *review {story_id}
   ```
 
-- If status is `InProgress`:
+- **If status = `InProgress`** (still working on fixes):
   ```
-  Dev continues fixing, will set status to Review when complete
+  🔧 QA FIXES IN PROGRESS
+  Story: {story_id} → Status: InProgress
+
+  Dev is still working on addressing QA feedback.
+  Will complete fixes and set Status = Review when ready.
+
+  (No HANDOFF - work in progress)
   ```
 
 ### 7) Do NOT Edit Gate Files

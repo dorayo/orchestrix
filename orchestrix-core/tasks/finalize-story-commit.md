@@ -29,7 +29,7 @@ This task can be executed by:
 
 **1.1. Load Story File**:
 
-- Read Story file from `{project.storiesLocation}/{story_id}.md`
+- Read Story file using glob pattern `{project.storiesLocation}/{story_id}.*.md` (handles both `5.2.md` and `5.2.20241117.md` formats)
 - Extract:
   - `story_id`
   - `story_title`
@@ -191,7 +191,7 @@ Update Story file's `## Change Log` section by adding a new table row:
 
 **4.2. Save Story File**:
 
-- Write updated Story file back to `{project.storiesLocation}/{story_id}.md`
+- Write updated Story file back to the same path found in Step 1.1 (maintains original filename with or without timestamp)
 - Verify file write succeeded
 
 ---

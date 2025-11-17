@@ -10,7 +10,7 @@
 
 **Purpose**: Prevent re-implementing already completed stories
 
-**Read Story File**: `{devStoryLocation}/{story_id}.md`
+**Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md` to find the story file (handles both `5.2.md` and `5.2.20241117.md` formats)
 
 **Extract**: Story.status
 
