@@ -1,3 +1,10 @@
+## [11.2.5](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.4...v11.2.5) (2025-11-17)
+
+
+### Bug Fixes
+
+* **tmux:** fix QA to Dev handoff loop issue in automated workflow ([0d093fa](https://github.com/dorayo/ORCHESTRIX/commit/0d093fa0fb21c580d55e82f693d5a935ab8a3a7b))
+
 ## [11.2.4](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.3...v11.2.4) (2025-11-17)
 
 
