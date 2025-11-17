@@ -110,7 +110,7 @@ raw_command=""
 # Pattern 1: Standard format with arguments - 🎯 HANDOFF TO agent: *command args
 # Match any arguments on the same line (non-greedy to stop at line break)
 if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[^\n\r]+) ]]; then
-    target_agent="${BASH_REMATCH[1]}"
+    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
     # Trim trailing whitespace from command
     raw_command=$(echo "${BASH_REMATCH[2]}" | sed 's/[[:space:]]*$//')
     log "Matched Pattern 1: Standard HANDOFF format (with arguments)"
@@ -118,7 +118,7 @@ if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-
 # Pattern 0: Standard format without arguments - 🎯 HANDOFF TO agent: *command (no args)
 # This pattern is checked AFTER Pattern 1 to avoid matching commands with arguments
 elif [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]*($|[^a-zA-Z0-9.]) ]]; then
-    target_agent="${BASH_REMATCH[1]}"
+    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
     raw_command="${BASH_REMATCH[2]}"
     log "Matched Pattern 0: Standard HANDOFF format (no arguments)"
 
@@ -151,6 +151,9 @@ fi
 
 if [[ -n "$target_agent" && -n "$raw_command" ]]; then
 
+    # Normalize target_agent to lowercase (defensive, already done in patterns)
+    target_agent=$(echo "$target_agent" | tr '[:upper:]' '[:lower:]')
+
     # Clean up command: remove ALL whitespace/newlines, ensure it starts with *
     # Remove newlines, carriage returns, and extra spaces
     raw_command=$(echo "$raw_command" | tr -d '\n\r' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
@@ -176,8 +179,8 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     target_window=$(get_agent_window "$target_agent")
 
     if [ -z "$target_window" ]; then
-        log "ERROR: Unknown target agent '$target_agent'"
-        echo "❌ Unknown agent: $target_agent" >&2
+        log "ERROR: Unknown target agent '$target_agent' (supported: architect, sm, dev, qa)"
+        echo "❌ Unknown agent: $target_agent (supported: architect, sm, dev, qa)" >&2
         exit 0
     fi
 

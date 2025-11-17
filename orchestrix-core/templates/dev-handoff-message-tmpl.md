@@ -19,7 +19,7 @@ Self-Review Results:
 
 ⚠️ Warnings: {list any: open_issues, dev_feedback, minor issues OR "none"}
 
-🎯 HANDOFF TO QA:
+🎯 HANDOFF TO qa:
 *review {story_id}
 ```
 

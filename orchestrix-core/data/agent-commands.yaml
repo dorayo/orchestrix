@@ -210,7 +210,7 @@ common_mistakes_to_avoid:
     note: "Dev's primary command is develop-story, not implement-story"
 
   - mistake: "Using full sentence format: 'Next: QA please execute *review'"
-    correct: "🎯 HANDOFF TO QA:\n*review {story_id}"
+    correct: "🎯 HANDOFF TO qa:\n*review {story_id}"
     note: "Use structured format with emoji prefix"
 
   - mistake: "Forgetting the asterisk: 'review 1.3'"

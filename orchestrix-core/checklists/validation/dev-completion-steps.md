@@ -125,7 +125,7 @@ Self-Review Results:
 
 ⚠️ Warnings: {list or "none"}
 
-🎯 HANDOFF TO QA:
+🎯 HANDOFF TO qa:
 *review {story_id}
 ```
 
