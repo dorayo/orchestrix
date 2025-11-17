@@ -60,12 +60,46 @@ log "Captured pane output: ${#pane_output} bytes"
 last_output="${pane_output: -1000}"
 log "Last 1000 chars: ${last_output//[$'\n']/ }"
 
-# HANDOFF pattern matching (flexible regex)
-PATTERN='🎯 \*?HANDOFF TO ([a-zA-Z0-9_-]+): \*?(.+)'
+# HANDOFF pattern matching (multiple patterns for flexibility)
+# Try multiple patterns in order of preference
 
-if [[ "$pane_output" =~ $PATTERN ]]; then
+target_agent=""
+raw_command=""
+
+# Pattern 1: Standard format - 🎯 HANDOFF TO agent: *command
+if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[0-9.]+) ]]; then
     target_agent="${BASH_REMATCH[1]}"
     raw_command="${BASH_REMATCH[2]}"
+    log "Matched Pattern 1: Standard HANDOFF format"
+
+# Pattern 2: Next command format - Next command: *review 5.2 (for QA agent)
+# More flexible command pattern: \*[a-z0-9-]+ followed by arguments
+elif [[ "$pane_output" =~ Next[[:space:]]+command:[[:space:]]*(\*[a-z0-9-]+[[:space:]]+[0-9.]+)[[:space:]]*\(for[[:space:]]+([a-zA-Z0-9_-]+)[[:space:]]+agent\) ]]; then
+    raw_command="${BASH_REMATCH[1]}"
+    target_agent=$(echo "${BASH_REMATCH[2]}" | tr '[:upper:]' '[:lower:]')
+    log "Matched Pattern 2: Next command format"
+
+# Pattern 3: Simple Next format - Next: QA please execute command *review 5.2
+elif [[ "$pane_output" =~ Next:[[:space:]]*([A-Z]+)[[:space:]]+please[[:space:]]+execute[[:space:]]+command[[:space:]]+(\*[a-z0-9-]+[[:space:]]+[^[:space:]]+) ]]; then
+    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+    raw_command="${BASH_REMATCH[2]}"
+    log "Matched Pattern 3: Next please execute format"
+
+# Pattern 4: Agent instruction format - QA agent: execute *review 5.2
+elif [[ "$pane_output" =~ ([A-Z]+)[[:space:]]+agent:[[:space:]]*execute[[:space:]]+(\*[a-z0-9-]+[[:space:]]+[^[:space:]]+) ]]; then
+    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+    raw_command="${BASH_REMATCH[2]}"
+    log "Matched Pattern 4: Agent execute format"
+
+# Pattern 5: Fallback - any line with "for <AGENT> agent" near a command
+# Matches: *review 5.2 anywhere before (for QA agent)
+elif [[ "$pane_output" =~ (\*[a-z0-9-]+[[:space:]]+[0-9]+\.[0-9]+).*\(for[[:space:]]+([a-zA-Z0-9_-]+)[[:space:]]+agent\) ]]; then
+    raw_command="${BASH_REMATCH[1]}"
+    target_agent=$(echo "${BASH_REMATCH[2]}" | tr '[:upper:]' '[:lower:]')
+    log "Matched Pattern 5: Fallback command + agent format"
+fi
+
+if [[ -n "$target_agent" && -n "$raw_command" ]]; then
 
     # Clean up command: remove ALL whitespace/newlines, ensure it starts with *
     # Remove newlines, carriage returns, and extra spaces
