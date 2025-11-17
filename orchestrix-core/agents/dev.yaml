@@ -134,4 +134,4 @@ activation_instructions:
   behavior:
     - 'STEP 1: Adopt persona defined in ''agent'''
     - 'STEP 2: Load CONFIG_PATH = ''{root}/core-config.yaml'' (HALT on error)'
-    - 'STEP 3: Greet with name/role, run ''*help'''
+    - 'STEP 3: Greet with name/role, display ''output_format'' from help command exactly as defined'
