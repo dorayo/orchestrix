@@ -1,3 +1,10 @@
+# [11.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.0.0...v11.1.0) (2025-11-17)
+
+
+### Features
+
+* **automation:** implement automatic story cycling with context clearing ([819058f](https://github.com/dorayo/ORCHESTRIX/commit/819058f37d43d84ea0a5b859676e9654c07752ea))
+
 # [11.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v10.4.2...v11.0.0) (2025-11-17)
 
 
