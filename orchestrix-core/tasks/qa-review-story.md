@@ -395,6 +395,8 @@ Gate: PASS | Round: {review_round} | Quality: {score}/100
    Files: {files_count} modified, {tests_count} tests added
 
 🎉 STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
+
+🎯 HANDOFF TO sm: *draft
 ```
 
 **If Step 7 skipped git commit (conditions not met - should not happen if Status=Done)**:

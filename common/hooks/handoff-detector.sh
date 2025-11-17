@@ -26,6 +26,46 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
 }
 
+# Function to handle *draft command with context clearing
+handle_draft_command() {
+    log "========== SPECIAL HANDLER: *draft command =========="
+    log "Clearing all agent contexts and reloading..."
+
+    # Step 1: Clear all windows
+    log "Step 1: Clearing all windows (0, 1, 2, 3)"
+    for window in 0 1 2 3; do
+        log "  Clearing window $window"
+        tmux send-keys -t "$SESSION_NAME:$window" "/clear" C-m
+    done
+
+    log "Waiting 10s for clear to complete..."
+    sleep 10
+
+    # Step 2: Reload agents in each window
+    log "Step 2: Reloading agents"
+    log "  Window 0: Loading architect agent"
+    tmux send-keys -t "$SESSION_NAME:0" "/Orchestrix:agents:architect" C-m
+
+    log "  Window 1: Loading sm agent"
+    tmux send-keys -t "$SESSION_NAME:1" "/Orchestrix:agents:sm" C-m
+
+    log "  Window 2: Loading dev agent"
+    tmux send-keys -t "$SESSION_NAME:2" "/Orchestrix:agents:dev" C-m
+
+    log "  Window 3: Loading qa agent"
+    tmux send-keys -t "$SESSION_NAME:3" "/Orchestrix:agents:qa" C-m
+
+    log "Waiting 45s for agents to load..."
+    sleep 45
+
+    # Step 3: Execute *draft in SM window
+    log "Step 3: Executing *draft in SM window"
+    tmux send-keys -t "$SESSION_NAME:1" "*draft" C-m
+
+    log "✓ SUCCESS: *draft command executed with fresh contexts"
+    echo "✅ CONTEXT CLEARED + AGENTS RELOADED → SM: *draft" >&2
+}
+
 # Get current agent ID
 current_agent="${AGENT_ID:-unknown}"
 log "========== Hook triggered for agent: $current_agent =========="
@@ -66,11 +106,18 @@ log "Last 1000 chars: ${last_output//[$'\n']/ }"
 target_agent=""
 raw_command=""
 
-# Pattern 1: Standard format - 🎯 HANDOFF TO agent: *command
-if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[0-9.]+) ]]; then
+# Pattern 0: Standard format without arguments - 🎯 HANDOFF TO agent: *command (no args)
+# This pattern is checked FIRST to handle commands like *draft that don't take arguments
+if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]*($|[^a-zA-Z0-9.]) ]]; then
     target_agent="${BASH_REMATCH[1]}"
     raw_command="${BASH_REMATCH[2]}"
-    log "Matched Pattern 1: Standard HANDOFF format"
+    log "Matched Pattern 0: Standard HANDOFF format (no arguments)"
+
+# Pattern 1: Standard format with arguments - 🎯 HANDOFF TO agent: *command args
+elif [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[0-9.]+) ]]; then
+    target_agent="${BASH_REMATCH[1]}"
+    raw_command="${BASH_REMATCH[2]}"
+    log "Matched Pattern 1: Standard HANDOFF format (with arguments)"
 
 # Pattern 2: Next command format - Next command: *review 5.2 (for QA agent)
 # More flexible command pattern: \*[a-z0-9-]+ followed by arguments
@@ -114,6 +161,13 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     log "✓ HANDOFF detected: $current_agent → $target_agent"
     log "  Raw command: $raw_command"
     log "  Final command: $command"
+
+    # Special handling for *draft command - clear all contexts and reload agents
+    if [[ "$target_agent" == "sm" && "$command" == "*draft" ]]; then
+        handle_draft_command
+        log "========== Hook complete (draft handler) =========="
+        exit 0
+    fi
 
     # Find target window
     target_window=$(get_agent_window "$target_agent")

@@ -266,7 +266,9 @@ Add a detailed Change Log entry to document the QA fixes applied:
 ---
 ```
 
-### 6) Output Handoff Message
+### 6) Output Handoff Message (MANDATORY - FINAL STEP)
+
+**CRITICAL**: This step is MANDATORY and must ALWAYS be executed as the final action of this task. The handoff message ensures seamless agent transitions in the automated workflow.
 
 Based on the status set in step 5, output the appropriate handoff message:
 
@@ -294,6 +296,8 @@ Based on the status set in step 5, output the appropriate handoff message:
   (No HANDOFF - work in progress)
   ```
 
+**IMPORTANT**: The handoff command (e.g., `*review {story_id}`) MUST be clearly visible as the final line of your output.
+
 ### 7) Do NOT Edit Gate Files
 
 - Dev does not modify gate YAML. If fixes address issues, request QA to re-run `review-story` to update the gate
@@ -316,7 +320,7 @@ Based on the status set in step 5, output the appropriate handoff message:
 - Dev Agent Record includes reference to QA review round number
 - Change Log entry references QA review round number
 - Status set according to Status Rule (intelligent assessment)
-- Handoff message output based on status
+- **MANDATORY**: Clear handoff message output as final step (Step 6)
 
 ## Example: Story 2.2
 
@@ -334,7 +338,18 @@ Fix plan:
 - In Dev Agent Record, note: "Fixes applied based on QA review round 1"
 - In Change Log, add entry: "2024-01-15: Applied fixes for QA review round 1 - added missing tests for AC2 and AC4"
 - Set Status to `Review` (all issues resolved)
-- Output: "Next: QA please execute command `review 2.2`"
+- **Output handoff message**:
+  ```
+  ✅ QA FIXES COMPLETE
+  Story: 2.2 → Status: Review
+
+  All QA-identified issues have been addressed:
+  - 2 issues fixed (AC2 and AC4 coverage gaps)
+  - All tests passing
+  - Ready for QA re-review
+
+  🎯 HANDOFF TO qa: *review 2.2
+  ```
 
 ## Key Principles
 
@@ -345,4 +360,4 @@ Fix plan:
 - Gate ownership remains with QA; Dev signals readiness via Status
 - Support for multi-round QA reviews with proper tracking
 - Intelligent status setting based on Dev's assessment of fix completeness
-- Clear handoff messages for seamless agent transitions
+- **MANDATORY handoff messages for seamless agent transitions in automated workflows**
