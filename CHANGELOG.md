@@ -1,3 +1,10 @@
+## [11.2.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.0...v11.2.1) (2025-11-17)
+
+
+### Bug Fixes
+
+* **tmux:** correct handoff-detector argument parsing order ([3f52e9f](https://github.com/dorayo/ORCHESTRIX/commit/3f52e9fa7eee1d53ce09382f38f22b939bf4242c))
+
 # [11.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.1.2...v11.2.0) (2025-11-17)
 
 
