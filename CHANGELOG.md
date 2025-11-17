@@ -1,3 +1,10 @@
+# [11.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.1.2...v11.2.0) (2025-11-17)
+
+
+### Features
+
+* **sm:** add idempotency check to *draft command ([b98dcbc](https://github.com/dorayo/ORCHESTRIX/commit/b98dcbc5f831e97215ec9fea7704dd5bc990a7a8))
+
 ## [11.1.2](https://github.com/dorayo/ORCHESTRIX/compare/v11.1.1...v11.1.2) (2025-11-17)
 
 
