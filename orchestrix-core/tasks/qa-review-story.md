@@ -16,7 +16,10 @@ required:
 
 **Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md` to find the story file (handles both `5.2.md` and `5.2.20241117.md` formats)
 
-**Extract**: Story.status
+**Extract Status**: !include tasks/utils/extract-story-status.md
+
+- Uses robust multi-strategy extraction (handles standard format, bold format, Change Log fallback, keyword search)
+- Returns: `{status}` = valid enum value, `{strategy_used}` = which strategy succeeded
 
 **Check if Already Reviewed**:
 
