@@ -1,3 +1,10 @@
+## [11.2.3](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.2...v11.2.3) (2025-11-17)
+
+
+### Bug Fixes
+
+* **tmux:** fix handoff-detector case sensitivity issue ([f9ca61a](https://github.com/dorayo/ORCHESTRIX/commit/f9ca61a1497c888dd719b220176fdf8bbd4ce1a0))
+
 ## [11.2.2](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.1...v11.2.2) (2025-11-17)
 
 
