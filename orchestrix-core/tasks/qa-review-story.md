@@ -10,6 +10,60 @@ required:
   - story_path: '{devStoryLocation}/{epic}.{story}.*.md'
 ```
 
+## Step 0: Idempotency Check (MANDATORY - Fast Exit to Save Tokens)
+
+**Purpose**: Prevent re-reviewing already passed stories
+
+**Read Story File**: `{devStoryLocation}/{story_id}.md`
+
+**Extract**: Story.status
+
+**Check if Already Reviewed**:
+
+- **If status = "Done"**:
+  ```
+  ✅ STORY ALREADY PASSED QA
+  Story: {story_id}
+  Status: Done
+
+  QA review already completed and passed.
+  Story is ready for deployment.
+
+  💡 TIP: Story is complete. Commit or start new work.
+  - To commit: *finalize-commit {story_id}
+  - For new work: Switch to SM and run *draft
+
+  (No HANDOFF - workflow complete)
+  ```
+  **HALT: QA already passed ✅**
+
+- **If status NOT in ["Review"]**:
+  ```
+  ⚠️ STORY NOT READY FOR QA REVIEW
+  Story: {story_id}
+  Current Status: {current_status}
+
+  Story must be in "Review" status for QA.
+
+  Required status: Review
+  Current status: {current_status}
+
+  Next actions:
+  - If "Approved": Dev must implement (*implement-story {story_id})
+  - If "AwaitingTestDesign": QA must design tests (*test-design {story_id})
+  - If "InProgress": Wait for Dev to complete
+  - If "AwaitingArchReview": Wait for Architect
+
+  (No HANDOFF - prerequisites not met)
+  ```
+  **HALT: Prerequisites not met ⛔**
+
+**If status = "Review"**:
+- ✅ Log: "Idempotency check passed - proceeding with QA review"
+- Continue to Validation
+
+---
+
 ## Validation
 
 1. Verify QA agent identity

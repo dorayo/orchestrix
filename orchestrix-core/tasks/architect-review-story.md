@@ -4,6 +4,77 @@
 
 Conduct comprehensive technical accuracy review of SM-created story against architecture standards.
 
+## Step 0: Idempotency Check (MANDATORY - Fast Exit to Save Tokens)
+
+**Purpose**: Prevent re-reviewing already approved stories
+
+**Read Story File**: `docs/stories/{story_id}.md`
+
+**Extract**:
+- Story.status
+- Story metadata (test_design_level if available)
+
+**Check if Already Reviewed**:
+
+- **If status = "Approved"**:
+  ```
+  ℹ️ STORY ALREADY APPROVED (Simple - No Test Design)
+  Story: {story_id}
+  Status: Approved
+
+  Architect review already completed. Story ready for Dev implementation.
+
+  🎯 HANDOFF TO dev: *implement-story {story_id}
+  ```
+  **HALT: Review completed, Dev handoff sent ✋**
+
+- **If status = "AwaitingTestDesign"**:
+  ```
+  ℹ️ STORY ALREADY APPROVED (Needs Test Design)
+  Story: {story_id}
+  Status: AwaitingTestDesign
+  Test Design Level: {test_design_level}
+
+  Architect review already completed. Forwarding to QA for test design.
+
+  🎯 HANDOFF TO qa: *test-design {story_id}
+  ```
+  **HALT: Review completed, QA handoff sent ✋**
+
+- **If status in ["InProgress", "Review", "Done"]**:
+  ```
+  ℹ️ STORY ALREADY IN DEV/QA WORKFLOW
+  Story: {story_id}
+  Status: {current_status}
+
+  Story has passed Architect review and is now in development workflow.
+
+  💡 TIP: Story is beyond review stage. No action needed.
+
+  (No HANDOFF - story in later stages)
+  ```
+  **HALT: Story beyond review stage ✅**
+
+- **If status = "Blocked"**:
+  ```
+  ⚠️ STORY BLOCKED
+  Story: {story_id}
+  Status: Blocked
+
+  Story is blocked. SM needs to resolve blockers first.
+
+  Next action: SM must fix blockers via *correct-course {story_id}
+
+  (No HANDOFF - waiting for SM)
+  ```
+  **HALT: Story blocked ⛔**
+
+**If status in ["AwaitingArchReview", "RequiresRevision"]**:
+- ✅ Log: "Idempotency check passed - proceeding with review"
+- Continue to Execution Steps
+
+---
+
 ### Execution Steps:
 1. Load story file from docs/stories/
 2. Load relevant architecture documents based on story type

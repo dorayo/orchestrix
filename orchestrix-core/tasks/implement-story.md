@@ -22,35 +22,26 @@
   Story: {story_id}
   Status: Review
 
-  Implementation already completed. Story is currently under QA review.
+  Implementation already completed. Forwarding to QA for review.
 
-  Next actions:
-  - QA is reviewing: Wait for QA feedback
-  - To check QA progress: Switch to QA window
-  - If QA found issues: QA will send back to Dev with *review-qa {story_id}
-
-  💡 TIP: Don't re-implement. Wait for QA feedback or start a new story.
-
-  HALT: Implementation already completed ✋
+  🎯 HANDOFF TO qa: *review {story_id}
   ```
+  **HALT: Implementation already completed, QA handoff sent ✋**
 
 - **If status = "Done"**:
   ```
-  ℹ️ STORY ALREADY COMPLETE (Passed QA)
+  ✅ STORY ALREADY COMPLETE (Passed QA)
   Story: {story_id}
   Status: Done
 
   Story has been implemented AND passed QA review.
+  Story is ready for deployment.
 
-  Next actions:
-  - Story is ready for deployment
-  - To commit: *finalize-commit {story_id} (if not committed)
-  - To start new story: Switch to SM and run *draft
+  💡 TIP: This story is complete. Start new work via SM *draft
 
-  💡 TIP: This story is complete. Focus on new work!
-
-  HALT: Story already done ✅
+  (No HANDOFF - workflow complete)
   ```
+  **HALT: Story already done ✅**
 
 - **If status NOT in ["Approved", "TestDesignComplete"]**:
   ```
