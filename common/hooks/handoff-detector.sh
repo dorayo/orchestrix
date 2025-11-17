@@ -108,8 +108,8 @@ target_agent=""
 raw_command=""
 
 # Pattern 1: Standard format with arguments - 🎯 HANDOFF TO agent: *command args
-# Match any arguments on the same line (non-greedy to stop at line break)
-if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[^\n\r]+) ]]; then
+# Match command + story ID only (format: command epic.story like 5.3)
+if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[0-9]+\.[0-9]+) ]]; then
     target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
     # Trim trailing whitespace from command
     raw_command=$(echo "${BASH_REMATCH[2]}" | sed 's/[[:space:]]*$//')
@@ -157,6 +157,12 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     # Clean up command: remove ALL whitespace/newlines, ensure it starts with *
     # Remove newlines, carriage returns, and extra spaces
     raw_command=$(echo "$raw_command" | tr -d '\n\r' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+
+    # Remove Unicode symbols and non-ASCII characters, keep only alphanumeric, dots, spaces, asterisks, and hyphens
+    raw_command=$(echo "$raw_command" | LC_ALL=C sed 's/[^a-zA-Z0-9. *-]//g')
+
+    # Clean up any extra spaces that might have been introduced
+    raw_command=$(echo "$raw_command" | tr -s ' ' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
 
     if [[ "$raw_command" != \** ]]; then
         command="*${raw_command}"
