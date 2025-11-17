@@ -9,8 +9,8 @@ set -euo pipefail
 SESSION_NAME="orchestrix"
 LOG_FILE="/tmp/orchestrix-handoff.log"
 
-# Agent to pane mapping
-declare -A AGENT_TO_PANE=(
+# Agent to window mapping (using windows instead of panes)
+declare -A AGENT_TO_WINDOW=(
     ["architect"]="0"
     ["sm"]="1"
     ["dev"]="2"
@@ -45,11 +45,11 @@ if [[ "$hook_data" =~ $PATTERN ]]; then
 
     log "HANDOFF detected: from=$current_agent, target=$target_agent, command=$command"
 
-    # Find target pane
-    target_pane="${AGENT_TO_PANE[$target_agent]:-}"
+    # Find target window
+    target_window="${AGENT_TO_WINDOW[$target_agent]:-}"
 
-    if [ -z "$target_pane" ]; then
-        log "ERROR: Unknown agent '$target_agent', no pane mapping found"
+    if [ -z "$target_window" ]; then
+        log "ERROR: Unknown agent '$target_agent', no window mapping found"
         echo "❌ Unknown agent: $target_agent" >&2
         exit 1
     fi
@@ -61,17 +61,17 @@ if [[ "$hook_data" =~ $PATTERN ]]; then
         exit 1
     fi
 
-    # Use tmux send-keys to send command to target pane
-    log "Sending command to pane $target_pane: $command"
+    # Use tmux send-keys to send command to target window
+    log "Sending command to window $target_window: $command"
 
-    # Add short delay to ensure target pane is ready
+    # Add short delay to ensure target window is ready
     sleep 0.5
 
-    # Send command
-    tmux send-keys -t "$SESSION_NAME:0.$target_pane" "$command" C-m
+    # Send command to window (format: session:window)
+    tmux send-keys -t "$SESSION_NAME:$target_window" "$command" C-m
 
     if [ $? -eq 0 ]; then
-        log "SUCCESS: Command sent to $target_agent (pane $target_pane)"
+        log "SUCCESS: Command sent to $target_agent (window $target_window)"
         echo "✅ Command sent to $target_agent" >&2
 
         # Optional: play notification sound
