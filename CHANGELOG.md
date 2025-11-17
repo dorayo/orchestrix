@@ -1,3 +1,10 @@
+## [11.1.2](https://github.com/dorayo/ORCHESTRIX/compare/v11.1.1...v11.1.2) (2025-11-17)
+
+
+### Bug Fixes
+
+* **agents:** ensure agents display output_format with * prefix ([4135541](https://github.com/dorayo/ORCHESTRIX/commit/413554189c5fbab776debd3dd25f5379fc615c8e))
+
 ## [11.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.1.0...v11.1.1) (2025-11-17)
 
 
