@@ -1,3 +1,10 @@
+## [11.2.2](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.1...v11.2.2) (2025-11-17)
+
+
+### Bug Fixes
+
+* **agents:** ensure command list displays with * prefix ([6de4d3b](https://github.com/dorayo/ORCHESTRIX/commit/6de4d3b590ff3a034fc2d05f02d580ab856a9819))
+
 ## [11.2.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.0...v11.2.1) (2025-11-17)
 
 
