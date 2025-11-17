@@ -518,6 +518,8 @@ Add entry:
 
 ### Output 3: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
 
+**CRITICAL**: The handoff message below MUST be the absolute last line of your output. Do NOT add any summaries, recommendations, tips, or explanations after the handoff.
+
 Based on decision, output the appropriate handoff using exact format:
 
 #### If Approved + Test Design Needed:
@@ -553,6 +555,8 @@ Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
 🎯 HANDOFF TO sm: *revise-story {story_id}
 ```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
 
 #### If Escalated:
 ```

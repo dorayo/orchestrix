@@ -354,6 +354,11 @@ Before ending this task, verify:
 
 **If ALL [x] above**: Output handoff message NOW and END.
 
+**CRITICAL HANDOFF RULE**:
+- The `🎯 HANDOFF TO qa: *review {story_id}` MUST be the absolute last line
+- Do NOT output summaries, tips, next steps, or any other content after handoff
+- STOP immediately after outputting the handoff command
+
 ## Refs
 - contract-driven-phases.md, coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md
 - dev-self-review.md, validate-implementation.md

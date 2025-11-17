@@ -86,8 +86,8 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
     exit 0
 fi
 
-# Capture the pane output (last 200 lines, which should include HANDOFF message)
-pane_output=$(tmux capture-pane -t "$SESSION_NAME:$current_window" -p -S -200 2>/dev/null || echo "")
+# Capture the pane output (last 300 lines to ensure we catch HANDOFF even with extra content)
+pane_output=$(tmux capture-pane -t "$SESSION_NAME:$current_window" -p -S -300 2>/dev/null || echo "")
 
 if [ -z "$pane_output" ]; then
     log "ERROR: Could not capture pane output"
@@ -96,9 +96,9 @@ fi
 
 log "Captured pane output: ${#pane_output} bytes"
 
-# Extract last 1000 characters (HANDOFF should be at the end)
-last_output="${pane_output: -1000}"
-log "Last 1000 chars: ${last_output//[$'\n']/ }"
+# Extract last 2000 characters (increased from 1000 to handle cases where extra content follows HANDOFF)
+last_output="${pane_output: -2000}"
+log "Last 2000 chars: examining ${#last_output} bytes for HANDOFF pattern"
 
 # HANDOFF pattern matching (multiple patterns for flexibility)
 # Try multiple patterns in order of preference

@@ -658,7 +658,9 @@ Add entry to Story Change Log:
 - Decision results with reasoning
 - Final status and next action
 
-### 10. Output Handoff
+### 10. Output Handoff (FINAL STEP - NOTHING AFTER THIS)
+
+**CRITICAL**: This handoff message MUST be the absolute last line of your output. Do NOT add any summaries, tips, available commands, test requirements, or any other content after the handoff message.
 
 Based on `next_action` from Step 8C, output the appropriate handoff message:
 
@@ -681,5 +683,7 @@ Based on `next_action` from Step 8C, output the appropriate handoff message:
   ```
   Story blocked - SM must revise before proceeding
   ```
+
+**STOP HERE**: Do not output anything after the handoff message. This is required for automated workflow detection.
 
 
