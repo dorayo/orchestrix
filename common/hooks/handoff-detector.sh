@@ -36,6 +36,14 @@ done
 current_agent="${AGENT_ID:-unknown}"
 log "Stop Hook triggered for agent: $current_agent"
 
+# Debug: Log the received data length and last 200 chars
+data_length=${#hook_data}
+log "Received data length: $data_length bytes"
+if [ $data_length -gt 0 ]; then
+    last_chars="${hook_data: -200}"
+    log "Last 200 chars: ${last_chars//$'\n'/\\n}"
+fi
+
 # HANDOFF pattern matching
 # Format: 🎯 HANDOFF TO <target_agent>: <command>
 PATTERN='🎯 HANDOFF TO ([a-zA-Z0-9_-]+): (.+)'
