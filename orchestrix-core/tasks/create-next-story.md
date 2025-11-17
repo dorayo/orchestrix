@@ -11,7 +11,181 @@ Verify SM agent permissions via `{root}/data/story-status-transitions.yaml`:
 
 ## Execution
 
-### 0. Repository Type Detection (Multi-Repo Support)
+### 0. Idempotency Check (MANDATORY - if story_id provided)
+
+**Purpose**: Handle cases where user specifies a story ID that already exists (e.g., `*draft 5.3`)
+
+**Step 0.1: Check if story_id parameter is provided**
+
+- If NO story_id parameter provided → **SKIP to Step 1** (create next uncreated story - existing behavior)
+- If story_id parameter IS provided → Continue with idempotency check below
+
+**Step 0.2: Load configuration and locate story file**
+
+Load `{root}/core-config.yaml` and extract `devStoryLocation`.
+
+Use glob pattern to find story file: `{devStoryLocation}/{story_id}*.md`
+- Example: `docs/stories/5.3*.md` matches both `5.3.md` and `5.3-frontend-order-query.md`
+
+**Step 0.3: Check if story exists**
+
+- **If story file NOT found**:
+  ```
+  ❌ STORY NOT FOUND
+
+  Story ID: {story_id}
+  Expected location: {devStoryLocation}/{story_id}*.md
+
+  This story does not exist yet.
+
+  💡 TIP:
+  - To create the next uncreated story: *draft (no parameters)
+  - To create a specific story, ensure it doesn't already exist
+
+  HALT: Story {story_id} not found ⛔
+  ```
+  **HALT execution**
+
+- **If story file found** → Continue to Step 0.4
+
+**Step 0.4: Extract current status from story file**
+
+Read the story file and extract `Story.status` field.
+
+**Step 0.5: Output appropriate handoff based on status**
+
+Based on the current status, output the corresponding handoff message and HALT:
+
+- **If status = "Blocked"**:
+  ```
+  ⚠️ STORY BLOCKED
+  Story: {story_id}
+  Status: Blocked
+
+  This story has quality issues that must be fixed before proceeding.
+
+  Next action: SM needs to fix blockers
+
+  🎯 Use: *correct-course {story_id}
+  ```
+  **HALT: Story blocked, needs SM correction ⚠️**
+
+- **If status = "AwaitingArchReview"**:
+  ```
+  ⏳ STORY AWAITING ARCHITECT REVIEW
+  Story: {story_id}
+  Status: AwaitingArchReview
+
+  This story is waiting for technical review from Architect.
+
+  🎯 HANDOFF TO architect: *review-story {story_id}
+  ```
+  **HALT: Forwarded to Architect ✋**
+
+- **If status = "RequiresRevision"**:
+  ```
+  ✏️ STORY REQUIRES REVISION
+  Story: {story_id}
+  Status: RequiresRevision
+
+  Architect has requested revisions to this story.
+
+  Next action: SM needs to revise per Architect feedback
+
+  🎯 Use: *revise {story_id}
+  ```
+  **HALT: Story needs SM revision ✏️**
+
+- **If status = "Approved"**:
+  ```
+  ✅ STORY APPROVED - READY FOR DEVELOPMENT
+  Story: {story_id}
+  Status: Approved
+
+  This story has been approved and is ready for implementation.
+
+  🎯 HANDOFF TO dev: *develop-story {story_id}
+  ```
+  **HALT: Forwarded to Dev ✋**
+
+- **If status = "TestDesignComplete"**:
+  ```
+  ✅ STORY READY - TEST DESIGN COMPLETE
+  Story: {story_id}
+  Status: TestDesignComplete
+
+  This story has test design completed and is ready for implementation.
+
+  🎯 HANDOFF TO dev: *develop-story {story_id}
+  ```
+  **HALT: Forwarded to Dev ✋**
+
+- **If status = "AwaitingTestDesign"**:
+  ```
+  ⏳ STORY AWAITING TEST DESIGN
+  Story: {story_id}
+  Status: AwaitingTestDesign
+
+  This story is waiting for QA to design tests.
+
+  🎯 HANDOFF TO qa: *test-design {story_id}
+  ```
+  **HALT: Forwarded to QA for test design ✋**
+
+- **If status = "InProgress"**:
+  ```
+  🔨 STORY IN PROGRESS
+  Story: {story_id}
+  Status: InProgress
+
+  This story is currently being implemented by Dev.
+
+  💡 No action needed - Dev is working on this story.
+  ```
+  **HALT: Story in progress ✋**
+
+- **If status = "Review"**:
+  ```
+  🔍 STORY IN QA REVIEW
+  Story: {story_id}
+  Status: Review
+
+  This story is currently being reviewed by QA.
+
+  🎯 HANDOFF TO qa: *review {story_id}
+  ```
+  **HALT: Forwarded to QA ✋**
+
+- **If status = "Done"**:
+  ```
+  ✅ STORY COMPLETE
+  Story: {story_id}
+  Status: Done
+
+  This story has been implemented and passed QA review.
+  Story is ready for deployment.
+
+  💡 TIP: Start next story via *draft (no parameters)
+  ```
+  **HALT: Story already complete ✅**
+
+- **If status is any other value**:
+  ```
+  ℹ️ STORY EXISTS
+  Story: {story_id}
+  Status: {current_status}
+
+  This story already exists. Current status: {current_status}
+
+  💡 TIP: To create the next uncreated story, use: *draft (no parameters)
+  ```
+  **HALT: Story exists with unknown status ⚠️**
+
+**End of Idempotency Check - All paths above HALT here**
+
+---
+
+### 1. Repository Type Detection (Multi-Repo Support)
 
 **Read `{root}/core-config.yaml`**:
 
