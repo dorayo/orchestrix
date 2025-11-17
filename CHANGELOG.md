@@ -1,3 +1,10 @@
+## [11.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.1.0...v11.1.1) (2025-11-17)
+
+
+### Bug Fixes
+
+* **automation:** enforce HANDOFF must be final output + increase hook capture range ([6d574e0](https://github.com/dorayo/ORCHESTRIX/commit/6d574e003dfc750d3d5d116da19c59e71e906bc6))
+
 # [11.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.0.0...v11.1.0) (2025-11-17)
 
 
