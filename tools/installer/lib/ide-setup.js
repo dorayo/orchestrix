@@ -354,13 +354,16 @@ class IdeSetup {
   async setupTmuxAutomation(installDir) {
     const hooksDir = path.join(installDir, ".claude", "hooks");
     const settingsPath = path.join(installDir, ".claude", "settings.local.json");
-    const commonHooksPath = path.dirname(path.dirname(path.dirname(path.dirname(__filename))));
+
+    // Use configLoader to get the correct base path
+    const configLoader = require("./config-loader");
+    const basePath = configLoader.getBasePath();
 
     // Ensure hooks directory exists
     await fileManager.ensureDirectory(hooksDir);
 
     // Copy handoff-detector.sh
-    const sourceHookPath = path.join(commonHooksPath, "common", "hooks", "handoff-detector.sh");
+    const sourceHookPath = path.join(basePath, "common", "hooks", "handoff-detector.sh");
     const targetHookPath = path.join(hooksDir, "handoff-detector.sh");
 
     if (await fileManager.pathExists(sourceHookPath)) {
@@ -369,17 +372,18 @@ class IdeSetup {
       // Ensure script is executable
       try {
         await fs.chmod(targetHookPath, 0o755);
+        console.log(chalk.green(`   ✅ TMUX Hook: .claude/hooks/handoff-detector.sh`));
       } catch (error) {
-        console.warn(chalk.yellow(`Warning: Could not set executable permission on hook script: ${error.message}`));
+        console.error(chalk.red(`   ❌ Error: Could not set executable permission on hook script: ${error.message}`));
+        throw error; // Stop installation if we can't set permissions
       }
-
-      console.log(chalk.dim(`   • TMUX Hook: .claude/hooks/handoff-detector.sh`));
     } else {
-      console.warn(chalk.yellow(`Warning: Hook script template not found at ${sourceHookPath}`));
+      console.error(chalk.red(`   ❌ Error: Hook script template not found at ${sourceHookPath}`));
+      throw new Error(`Missing required file: ${sourceHookPath}`);
     }
 
     // Handle settings.local.json - merge if exists, create if not
-    const sourceSettingsPath = path.join(commonHooksPath, "common", "hooks", "settings.local.json");
+    const sourceSettingsPath = path.join(basePath, "common", "hooks", "settings.local.json");
 
     if (await fileManager.pathExists(sourceSettingsPath)) {
       const hookConfig = JSON.parse(await fs.readFile(sourceSettingsPath, 'utf8'));
@@ -405,7 +409,43 @@ class IdeSetup {
       } else {
         console.log(chalk.dim(`   • TMUX Config: .claude/settings.local.json (existing Stop hook preserved)`));
       }
+    } else {
+      console.error(chalk.red(`   ❌ Error: Settings template not found at ${sourceSettingsPath}`));
+      throw new Error(`Missing required file: ${sourceSettingsPath}`);
     }
+
+    // Copy start-tmux-session.sh to .orchestrix-core/utils/
+    const tmuxScriptDir = path.join(installDir, ".orchestrix-core", "utils");
+    await fileManager.ensureDirectory(tmuxScriptDir);
+
+    const sourceTmuxScript = path.join(basePath, "orchestrix-core", "utils", "start-tmux-session.sh");
+    const targetTmuxScript = path.join(tmuxScriptDir, "start-tmux-session.sh");
+
+    if (await fileManager.pathExists(sourceTmuxScript)) {
+      // Read the template and replace {root} placeholder
+      let scriptContent = await fs.readFile(sourceTmuxScript, 'utf8');
+      scriptContent = scriptContent.replace(/\{root\}/g, '.orchestrix-core');
+
+      // Write the processed script
+      await fs.writeFile(targetTmuxScript, scriptContent, 'utf8');
+
+      // Make it executable
+      try {
+        await fs.chmod(targetTmuxScript, 0o755);
+        console.log(chalk.green(`   ✅ TMUX Launcher: .orchestrix-core/utils/start-tmux-session.sh`));
+      } catch (error) {
+        console.error(chalk.red(`   ❌ Error: Could not set executable permission on tmux launcher: ${error.message}`));
+        throw error;
+      }
+    } else {
+      console.error(chalk.red(`   ❌ Error: TMUX launcher script not found at ${sourceTmuxScript}`));
+      throw new Error(`Missing required file: ${sourceTmuxScript}`);
+    }
+
+    console.log(chalk.cyan(`\n   💡 TMUX自动化已安装！使用方法：`));
+    console.log(chalk.dim(`      1. 启动会话: ./.orchestrix-core/utils/start-tmux-session.sh`));
+    console.log(chalk.dim(`      2. 在SM窗口输入 1 开始工作流`));
+    console.log(chalk.dim(`      3. 观察agents自动协作`));
   }
 
   async setupWindsurf(installDir, selectedAgent) {

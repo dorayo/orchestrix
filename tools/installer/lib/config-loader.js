@@ -181,6 +181,11 @@ class ConfigLoader {
     return path.join(__dirname, '..', '..', '..', 'orchestrix-core');
   }
 
+  getBasePath() {
+    // Get the project root path (parent of orchestrix-core)
+    return path.join(__dirname, '..', '..', '..');
+  }
+
   getDistPath() {
     // Get the path to dist directory relative to the installer
     return path.join(__dirname, '..', '..', '..', 'dist');
