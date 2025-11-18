@@ -1,3 +1,10 @@
+# [11.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.6...v11.3.0) (2025-11-18)
+
+
+### Features
+
+* **sm:** improve draft command to auto-create non-existent stories ([098a546](https://github.com/dorayo/ORCHESTRIX/commit/098a5465433e6c0dc9d4ec0d0801f39d7d8dae74))
+
 ## [11.2.6](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.5...v11.2.6) (2025-11-18)
 
 
