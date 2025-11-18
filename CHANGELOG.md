@@ -1,3 +1,10 @@
+## [11.2.6](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.5...v11.2.6) (2025-11-18)
+
+
+### Bug Fixes
+
+* **installer:** fix missing tmux automation files during installation ([b05275f](https://github.com/dorayo/ORCHESTRIX/commit/b05275f164e46444753007028df16f6d5339996f))
+
 ## [11.2.5](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.4...v11.2.5) (2025-11-17)
 
 
