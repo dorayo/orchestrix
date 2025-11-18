@@ -31,20 +31,11 @@ Use glob pattern to find story file: `{devStoryLocation}/{story_id}*.md`
 
 - **If story file NOT found**:
   ```
-  ❌ STORY NOT FOUND
-
-  Story ID: {story_id}
-  Expected location: {devStoryLocation}/{story_id}*.md
-
-  This story does not exist yet.
-
-  💡 TIP:
-  - To create the next uncreated story: *draft (no parameters)
-  - To create a specific story, ensure it doesn't already exist
-
-  HALT: Story {story_id} not found ⛔
+  📝 Story {story_id} does not exist yet. Creating it now...
   ```
-  **HALT execution**
+  **Continue to Step 1** to create the specified story
+
+  Note: Set `next_story_id = {story_id}` for use in later steps to create this specific story instead of searching for the next uncreated one.
 
 - **If story file found** → Continue to Step 0.4
 
@@ -455,6 +446,32 @@ fi
 ```
 
 #### 2.3 Identify Next Story to Create
+
+**Check if story_id was specified by user (from Step 0.3)**:
+
+If `next_story_id` was set in Step 0.3 (user specified a story ID that doesn't exist):
+```python
+# Use the specified story ID
+specified_story_id = next_story_id  # Set from Step 0.3
+
+# Find this story in the available stories
+next_story = None
+for story in my_stories:
+    if story['id'] == specified_story_id:
+        next_story = story
+        break
+
+if next_story is None:
+    # The specified story ID is not in the epic definitions
+    announce(f"❌ Story {specified_story_id} is not defined in the Epic Planning section")
+    announce("Available story IDs for this repository:")
+    for s in my_stories:
+        announce(f"  - {s['id']}: {s['title']}")
+    exit(1)
+
+announce(f"📌 Creating specified story: {next_story['id']} - {next_story['title']}")
+```
+Else (no story_id specified, find next uncreated):
 
 **List existing stories** in `{devStoryLocation}`:
 - Extract story IDs from directory names (pattern: `{epicNum}.{storyNum}-*`)

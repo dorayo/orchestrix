@@ -33,19 +33,19 @@ commands:
   - help:
       description: "Show numbered command list, wait for selection"
       output_format:
-        - "[1] *draft [{story_id}] — create next story or check existing"
+        - "[1] *draft [{story_id}] — create next story or create/check specified"
         - "[2] *revise {story_id} — revise from feedback"
         - "[3] *correct-course {story_id} — fix issues"
         - "[4] *story-checklist — validate quality"
         - "[5] *exit — exit"
 
   - draft:
-      description: "Create next story from epic (or check status if story_id provided)"
+      description: "Create next story from epic (or create/check specified story if story_id provided)"
       task: create-next-story.md
       params:
         - name: story_id
           required: false
-          description: "Optional story ID (e.g., 5.3). If provided, checks story status and outputs handoff. If omitted, creates next uncreated story."
+          description: "Optional story ID (e.g., 5.3). If provided and exists, checks status and outputs handoff. If provided but doesn't exist, creates that specific story. If omitted, creates next uncreated story."
   
   - revise:
       description: "Revise story based on architect feedback"
