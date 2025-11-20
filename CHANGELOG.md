@@ -1,3 +1,10 @@
+## [11.5.4](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.3...v11.5.4) (2025-11-20)
+
+
+### Bug Fixes
+
+* **hook:** properly send Enter key in tmux send-keys commands ([2467f12](https://github.com/dorayo/ORCHESTRIX/commit/2467f1238ad364311e1f5969cfa5b3f50e81a121))
+
 ## [11.5.3](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.2...v11.5.3) (2025-11-20)
 
 
