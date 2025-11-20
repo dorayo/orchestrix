@@ -300,71 +300,51 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    - If validation fails: HALT
    - **MUST UPDATE Story Status field before proceeding**
 
-7. **AUTOMATIC GIT COMMIT** (Conditional - executes if Gate=PASS and Status=Done):
+7. **DETERMINE POST-REVIEW WORKFLOW** (REQUIRED - Always Execute):
 
-   **7.1. Check Commit Conditions**:
+   **7.1. Execute Post-Review Decision**:
 
-   Read the following from previous steps:
-   - `gate_result` from Step 4 (gate file)
-   - `story_status` from Step 6 (updated Status field)
-
-   **7.2. Execute Finalize Commit (ONLY IF gate_result=PASS AND story_status=Done)**:
-
-   If conditions are NOT met:
-   - Skip to Step 8 (OUTPUT HANDOFF MESSAGE)
-
-   If conditions ARE met:
-   - Execute the following git commit process (based on `finalize-story-commit.md`):
-
-   **A. Collect Commit Metadata**:
-   - From Story file: `story_id`, `story_title`, key ACs (up to 3), File List count
-   - From Gate file: `review_round`, `quality_score`
-   - From Dev Agent Record: tests added count (if available)
-
-   **B. Execute Git Commit**:
-   ```bash
-   # Stage all changes (story file + code changes)
-   git add -A
-
-   # Create commit with conventional commit format
-   git commit -m "$(cat <<'EOF'
-   feat(story-{story_id}): complete story {story_title}
-
-   Story: {story_id} - {story_title}
-
-   **Implemented**:
-   {list key ACs from story - use actual values}
-
-   **Files Modified**: {count} files
-   **Tests Added**: {count} tests
-   **QA Gate**: PASS (Round {review_round})
-
-   Quality Score: {quality_score}/100
-
-   🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-   Co-Authored-By: Claude <noreply@anthropic.com>
-   EOF
-   )"
+   Use `make-decision.md` to determine next actions:
+   ```yaml
+   decision_type: qa-post-review-workflow
+   context:
+     gate_result: {from Step 4 gate file}
+     final_status: {from Step 6 status field}
+     review_round: {current_round}
+     issues_by_severity:
+       critical: {critical_count}
+       high: {high_count}
+       medium: {medium_count}
+       low: {low_count}
    ```
 
-   **IMPORTANT**: Replace all `{placeholders}` with actual values from metadata. Do not leave any placeholders in the commit message.
+   **Store decision result for Step 8 handoff**:
+   - `workflow_action` (e.g., finalize_commit, handoff_dev, escalate_architect)
+   - `requires_git_commit` (boolean)
+   - `handoff_target` (e.g., SM, dev, architect)
+   - `reasoning` (explanation of the decision)
+   - `next_command` (command to execute)
 
-   **C. Verify Commit Succeeded**:
-   ```bash
-   # Get commit hash
-   git log -1 --oneline
-   ```
+   **7.2. Execute Git Commit (Conditional)**:
 
-   **D. Update Story Change Log**:
-   Add new table row:
-   ```markdown
-   | {current_date} | Git commit created: `{commit_hash}` - Story finalized and committed to repository | QA |
-   ```
+   **IF** decision result `requires_git_commit == true`:
 
-   **E. Store Commit Result**:
-   - If commit succeeded: Store commit_hash for handoff message
-   - If commit failed: Store error message for handoff warning
+   Execute `finalize-story-commit.md` task with `story_id` parameter.
+   This task will:
+   - Collect commit metadata from Story, Gate, and Dev Agent Record
+   - Stage all changes with `git add -A`
+   - Create conventional commit with proper formatting
+   - Verify commit succeeded and capture commit hash
+   - Update Story Change Log with commit entry
+   - Return commit result (success with hash OR error message)
+
+   **Store commit result** for Step 8 handoff:
+   - If succeeded: `commit_hash` and `commit_message`
+   - If failed: `commit_error`
+
+   **ELSE** (`requires_git_commit == false`):
+
+   Skip commit execution, proceed to Step 8 with decision result only
 
 8. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
 
@@ -383,12 +363,14 @@ Reason: {escalation_reason}
 
 #### Gate PASS (Story Complete):
 
-**If Step 7 executed git commit successfully**:
+**Use Step 7 decision result to determine handoff format**:
+
+**If `requires_git_commit == true` AND commit succeeded**:
 ```
 ✅ STORY COMPLETE
 Story: {story_id} → Status: Done
 Gate: PASS | Round: {review_round} | Quality: {score}/100
-{result.reasoning}
+{decision.reasoning}
 
 📦 Git Commit: {commit_hash}
    Message: feat(story-{story_id}): {story_title}
@@ -396,34 +378,34 @@ Gate: PASS | Round: {review_round} | Quality: {score}/100
 
 🎉 STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
 
-🎯 HANDOFF TO sm: *draft
+🎯 HANDOFF TO {decision.handoff_target}: {decision.next_command}
 ```
 
-**If Step 7 skipped git commit (conditions not met - should not happen if Status=Done)**:
-```
-✅ QA REVIEW COMPLETE
-Story: {story_id} → Status: Done
-Gate: PASS | Round: {review_round} | Quality: {score}/100
-{result.reasoning}
-
-⚠️ Git commit was NOT created (unexpected state)
-
-🎯 MANUAL ACTION REQUIRED:
-Verify story status and run: *finalize-commit {story_id}
-```
-
-**If Step 7 git commit failed**:
+**If `requires_git_commit == true` BUT commit failed**:
 ```
 ✅ QA REVIEW COMPLETE - COMMIT FAILED
 Story: {story_id} → Status: Done
 Gate: PASS | Round: {review_round} | Quality: {score}/100
+{decision.reasoning}
 
-⚠️ Git commit failed: {error_message}
+⚠️ Git commit failed: {commit_error}
 
 🎯 RETRY COMMIT:
 *finalize-commit {story_id}
 
 Or investigate git error and retry manually.
+```
+
+**If `requires_git_commit == false`**:
+```
+✅ QA REVIEW COMPLETE
+Story: {story_id} → Status: Done
+Gate: PASS | Round: {review_round} | Quality: {score}/100
+{decision.reasoning}
+
+💡 Note: Story marked complete but commit deferred (check decision reasoning)
+
+🎯 HANDOFF TO {decision.handoff_target}: {decision.next_command}
 ```
 
 #### Gate CONCERNS/FAIL (Need Dev Fix):
