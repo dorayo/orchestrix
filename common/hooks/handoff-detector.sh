@@ -248,6 +248,9 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
 
     # ========== STEP 1: Clear current agent context ==========
     log "Step 1: Clearing current agent ($current_agent) context in window $current_window"
+    log "Waiting 10s before sending /clear..."
+    sleep 10
+
     if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null && \
        tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
         log "✓ Clear command sent to current agent"
@@ -255,8 +258,8 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         log "ERROR: Failed to send /clear to current agent"
     fi
 
-    log "Waiting 5s for clear to complete..."
-    sleep 5
+    log "Waiting 10s for clear to complete..."
+    sleep 10
 
     # ========== STEP 2: Reload current agent ==========
     current_agent_cmd=$(get_agent_command "$current_agent")
