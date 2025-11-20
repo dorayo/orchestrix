@@ -1,3 +1,10 @@
+## [11.5.8](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.7...v11.5.8) (2025-11-20)
+
+
+### Bug Fixes
+
+* **hook:** increase implicit command detection window to 20 lines ([5c74a1b](https://github.com/dorayo/ORCHESTRIX/commit/5c74a1bafae3a6bfd1649188daef1d10199d9bc4))
+
 ## [11.5.7](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.6...v11.5.7) (2025-11-20)
 
 
