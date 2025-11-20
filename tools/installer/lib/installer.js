@@ -525,6 +525,11 @@ class Installer {
       await fileManager.createManifest(installDir, config, files);
     }
 
+    // Initialize cumulative registries if existing stories are found
+    if (config.installType === "full") {
+      await this.initializeCumulativeRegistries(installDir, spinner);
+    }
+
     spinner.succeed("安装完成！");
     this.showSuccessMessage(config, installDir, options);
   }
@@ -1834,6 +1839,213 @@ class Installer {
     }
 
     return null;
+  }
+
+  /**
+   * Initialize cumulative registries from existing stories
+   * @param {string} installDir - Installation directory
+   * @param {object} spinner - Spinner object for status updates
+   */
+  async initializeCumulativeRegistries(installDir, spinner) {
+    const fs = require('fs-extra');
+    const yaml = require('js-yaml');
+
+    try {
+      // Load core-config.yaml to get story location
+      const coreConfigPath = path.join(installDir, '.orchestrix-core', 'core-config.yaml');
+
+      if (!(await fs.pathExists(coreConfigPath))) {
+        // No core config, skip initialization
+        return;
+      }
+
+      const coreConfigContent = await fs.readFile(coreConfigPath, 'utf8');
+      const coreConfig = yaml.load(coreConfigContent);
+
+      // Get story location from config
+      const storyLocation = coreConfig.locations?.devStoryLocation || 'docs/stories';
+      const storyDir = path.join(installDir, storyLocation);
+
+      // Check if story directory exists
+      if (!(await fs.pathExists(storyDir))) {
+        // No stories directory, skip initialization
+        spinner.text = 'No existing stories found, skipping registry initialization';
+        return;
+      }
+
+      // Check if there are any story files
+      const glob = require('glob');
+      const storyFiles = glob.sync('**/*.story.md', { cwd: storyDir });
+
+      if (storyFiles.length === 0) {
+        // No story files, skip initialization
+        spinner.text = 'No story files found, registries will be created as stories are completed';
+        return;
+      }
+
+      // Count Done stories
+      let doneCount = 0;
+      for (const file of storyFiles) {
+        const content = await fs.readFile(path.join(storyDir, file), 'utf8');
+        if (content.match(/\*\*Current Status\*\*:\s*Done/)) {
+          doneCount++;
+        }
+      }
+
+      if (doneCount === 0) {
+        // No completed stories, skip initialization
+        spinner.text = `Found ${storyFiles.length} stories, but none are completed yet`;
+        return;
+      }
+
+      // Found completed stories, initialize registries
+      spinner.text = `Found ${doneCount} completed stories, initializing cumulative registries...`;
+
+      console.log(chalk.cyan(`\n📊 检测到 ${doneCount} 个已完成的故事`));
+      console.log(chalk.cyan('正在初始化累积注册表...'));
+      console.log(chalk.dim('这将扫描所有已完成的故事并生成数据库/API/模型注册表'));
+
+      // Create a message for the user about how to use init-registries command
+      console.log(chalk.yellow('\n⚠️  注意: 当前自动初始化使用简化逻辑'));
+      console.log(chalk.cyan('首次安装后，建议使用 SM Agent 的命令来生成完整注册表:'));
+      console.log(chalk.white('  /sm init-registries'));
+      console.log(chalk.dim('  或者'));
+      console.log(chalk.white('  *init-registries'));
+      console.log(chalk.dim('\n这将执行完整的注册表生成流程，包括结构化数据提取\n'));
+
+      // Create placeholder registries
+      const devDocLocation = coreConfig.locations?.devDocLocation || 'docs/dev';
+      const devDocDir = path.join(installDir, devDocLocation);
+      await fs.ensureDir(devDocDir);
+
+      // Create placeholder database registry
+      const databaseRegistryContent = `# Database Cumulative Registry
+
+> Auto-generated during Orchestrix installation
+> Run \`*init-registries\` via SM Agent for complete initialization
+
+## Registry Metadata
+
+**Last Updated**: ${new Date().toISOString()}
+**Total Stories Detected**: ${doneCount}
+**Status**: Placeholder - Awaiting full initialization
+
+## Next Steps
+
+This is a placeholder registry created during installation.
+
+To generate the full registry with all database schema details:
+
+1. Open Claude Code or your IDE
+2. Switch to SM Agent: \`/sm\`
+3. Run: \`*init-registries\`
+
+This will scan all completed stories and populate this registry with:
+- Database tables and fields
+- Schema evolution timeline
+- Migration history
+- Naming conventions
+
+---
+
+_For more information, see: .orchestrix-core/tasks/init-cumulative-registries.md_
+`;
+
+      await fs.writeFile(
+        path.join(devDocDir, 'database-registry.md'),
+        databaseRegistryContent,
+        'utf8'
+      );
+
+      // Create placeholder API registry
+      const apiRegistryContent = `# API Cumulative Registry
+
+> Auto-generated during Orchestrix installation
+> Run \`*init-registries\` via SM Agent for complete initialization
+
+## Registry Metadata
+
+**Last Updated**: ${new Date().toISOString()}
+**Total Stories Detected**: ${doneCount}
+**Status**: Placeholder - Awaiting full initialization
+
+## Next Steps
+
+This is a placeholder registry created during installation.
+
+To generate the full registry with all API endpoint details:
+
+1. Open Claude Code or your IDE
+2. Switch to SM Agent: \`/sm\`
+3. Run: \`*init-registries\`
+
+This will scan all completed stories and populate this registry with:
+- API endpoints (method, path, auth)
+- Request/response schemas
+- Endpoints by story timeline
+- API coverage matrix
+
+---
+
+_For more information, see: .orchestrix-core/tasks/init-cumulative-registries.md_
+`;
+
+      await fs.writeFile(
+        path.join(devDocDir, 'api-registry.md'),
+        apiRegistryContent,
+        'utf8'
+      );
+
+      // Create placeholder models registry
+      const modelsRegistryContent = `# Models & Types Cumulative Registry
+
+> Auto-generated during Orchestrix installation
+> Run \`*init-registries\` via SM Agent for complete initialization
+
+## Registry Metadata
+
+**Last Updated**: ${new Date().toISOString()}
+**Total Stories Detected**: ${doneCount}
+**Status**: Placeholder - Awaiting full initialization
+
+## Next Steps
+
+This is a placeholder registry created during installation.
+
+To generate the full registry with all model/type details:
+
+1. Open Claude Code or your IDE
+2. Switch to SM Agent: \`/sm\`
+3. Run: \`*init-registries\`
+
+This will scan all completed stories and populate this registry with:
+- TypeScript interfaces
+- Zod validation schemas
+- Enums and constants
+- Classes and DTOs
+- Models by story timeline
+
+---
+
+_For more information, see: .orchestrix-core/tasks/init-cumulative-registries.md_
+`;
+
+      await fs.writeFile(
+        path.join(devDocDir, 'models-registry.md'),
+        modelsRegistryContent,
+        'utf8'
+      );
+
+      console.log(chalk.green(`\n✅ 已创建占位符注册表文件:`));
+      console.log(chalk.dim(`   ${path.join(devDocLocation, 'database-registry.md')}`));
+      console.log(chalk.dim(`   ${path.join(devDocLocation, 'api-registry.md')}`));
+      console.log(chalk.dim(`   ${path.join(devDocLocation, 'models-registry.md')}`));
+
+    } catch (error) {
+      // Don't fail installation if registry initialization fails
+      console.log(chalk.yellow(`\n⚠️  累积注册表初始化时出现问题: ${error.message}`));
+      console.log(chalk.dim('安装将继续，您可以稍后使用 SM Agent 的 *init-registries 命令'));
+    }
   }
 }
 

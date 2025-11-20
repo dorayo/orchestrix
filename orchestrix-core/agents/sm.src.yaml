@@ -23,6 +23,10 @@ agent:
     - "Multi-Repo Mode (role: backend/frontend/ios/android/mobile/implementation): Only create stories for THIS repository, load epics from product repo"
     - "Monolith Mode: Create all stories (existing behavior)"
     - "Check cross-repo dependencies before creating stories (Stage 1: Manual warning)"
+    - "CUMULATIVE CONTEXT (NEW): Load accumulated database/API/model changes from previous stories via load-cumulative-context.md"
+    - "In Dev Notes, include 'Accumulated Context from Previous Stories' section listing existing resources to REUSE/EXTEND"
+    - "Verify no duplicate table names, API endpoints, or model names when designing new story"
+    - "Mark resources as REUSE (import existing) vs EXTEND (inherit and add) vs CREATE (brand new)"
 
 workflow_rules:
   # SM-specific rules (common rules inherited via $include)
@@ -37,7 +41,8 @@ commands:
         - "[2] *revise {story_id} — revise from feedback"
         - "[3] *correct-course {story_id} — fix issues"
         - "[4] *story-checklist — validate quality"
-        - "[5] *exit — exit"
+        - "[5] *init-registries — initialize/refresh cumulative registries"
+        - "[6] *exit — exit"
 
   - draft:
       description: "Create next story from epic (or create/check specified story if story_id provided)"
@@ -46,20 +51,24 @@ commands:
         - name: story_id
           required: false
           description: "Optional story ID (e.g., 5.3). If provided and exists, checks status and outputs handoff. If provided but doesn't exist, creates that specific story. If omitted, creates next uncreated story."
-  
+
   - revise:
       description: "Revise story based on architect feedback"
       task: revise-story-from-architect-feedback.md
-  
+
   - correct-course:
       description: "Fix issues or adjust story direction"
       task: correct-course.md
-  
+
   - story-checklist:
       description: "Run comprehensive story quality validation"
       task: execute-checklist.md
       checklist: assessment/sm-story-quality.md
-  
+
+  - init-registries:
+      description: "Initialize or refresh cumulative registries from existing completed stories"
+      task: init-cumulative-registries.md
+
   - exit:
       description: "Exit SM persona"
 
@@ -71,8 +80,13 @@ dependencies:
     - frontend-user-confirmation.md
     - execute-checklist.md
     - make-decision.md
+    - init-cumulative-registries.md
+    - utils/load-cumulative-context.md
   templates:
     - story-tmpl.yaml
+    - database-registry-tmpl.yaml
+    - api-registry-tmpl.yaml
+    - models-registry-tmpl.yaml
   checklists:
     - assessment/sm-story-quality.md
   data:

@@ -625,6 +625,43 @@ Execute `{root}/tasks/utils/load-architecture-context.md`:
 
 Use returned `context` for Dev Notes. Cite sources: `[Source: docs/architecture/{file}.md#{section}]`
 
+### 4.5. Load Cumulative Context from Previous Stories (MANDATORY)
+
+**Purpose**: Load accumulated database/API/model changes from all completed stories to prevent duplicate resource creation and ensure consistency.
+
+Execute `{root}/tasks/utils/load-cumulative-context.md`:
+- Input: `devStoryLocation` (from config)
+- Output: `cumulative_context` object
+
+**What is loaded**:
+- **Database Registry**: All tables and fields created in previous stories
+- **API Registry**: All endpoints created in previous stories
+- **Models Registry**: All TypeScript interfaces, Zod schemas, enums created in previous stories
+
+**Handle Empty Registries**:
+- If registries don't exist (first story in project), utility creates empty registries
+- No error - proceed normally
+
+**Success Output Example**:
+```
+✅ Cumulative Context Loaded Successfully
+
+Database Registry: 5 tables, 42 fields (from 7 stories)
+API Registry: 24 endpoints, 15 schemas (from 7 stories)
+Models Registry: 32 models/types (from 7 stories)
+
+Cumulative context ready for Dev Notes population (Step 6).
+```
+
+**Use cumulative_context in Step 6**:
+- Populate "Accumulated Context from Previous Stories" section in Dev Notes
+- List relevant existing resources this story should REUSE or EXTEND
+- Prevent SM from designing duplicate tables/endpoints/models
+
+**Critical**: This step ensures Dev Notes include both:
+1. Static architecture baseline (from Step 4)
+2. Evolved state from previous story implementations (from Step 4.5)
+
 ### 5. Verify Structure Alignment
 
 Cross-reference requirements with `context.file_structure`. Document conflicts in "Project Structure Notes".
@@ -633,9 +670,82 @@ Cross-reference requirements with `context.file_structure`. Document conflicts i
 
 Create `{devStoryLocation}/{epicNum}.{storyNum}.story.md` using `{root}/templates/story-tmpl.yaml`:
 - Fill all sections per template
-- Use `context` from Step 4 for Dev Notes
+- Use `context` from Step 4 for Dev Notes (architecture baseline)
+- **NEW**: Use `cumulative_context` from Step 4.5 for Dev Notes "Accumulated Context from Previous Stories" section
 - Include structure alignment from Step 5
 - Follow Field-Level API Contract format for API/shared data stories
+
+**Populating "Accumulated Context from Previous Stories" in Dev Notes**:
+
+**For Backend/FullStack Stories**:
+1. **Existing Database Schema**:
+   - Review `cumulative_context.database.tables`
+   - Identify tables/fields relevant to this story:
+     - Tables this story will INSERT into (list fields to use)
+     - Tables this story will SELECT from (list fields to read)
+     - Tables this story will UPDATE (list fields to modify)
+     - Tables this story will reference via FK (list relationship)
+   - For each relevant item, include:
+     ```markdown
+     - Table: `users` [Story: 1.1, File: migrations/create_users.sql]
+       - Fields to REUSE: id (uuid), email (varchar), created_at (timestamp)
+       - Action: SELECT/INSERT/UPDATE/FK reference
+     ```
+   - If planning to create NEW table, verify it doesn't already exist in cumulative_context
+   - If planning to add NEW field to existing table, verify field doesn't already exist
+
+2. **Existing API Endpoints**:
+   - Review `cumulative_context.api.endpoints`
+   - Identify endpoints this story will:
+     - Call/consume from frontend or other services
+     - Extend (e.g., add new query params to existing endpoint)
+   - For each relevant endpoint:
+     ```markdown
+     - Endpoint: `GET /api/users/:id` [Story: 1.2, File: src/api/users/get.ts]
+       - Auth: JWT Bearer
+       - Response Schema: UserResponse
+       - Action: Will CALL this endpoint from order creation flow
+     ```
+   - If planning to create NEW endpoint, verify it doesn't already exist
+
+3. **Existing Shared Models**:
+   - Review `cumulative_context.models`
+   - Identify models/types/schemas this story should:
+     - REUSE as-is (import existing type)
+     - EXTEND (create interface that extends existing)
+     - REFERENCE (use as type annotation)
+   - For each relevant model:
+     ```markdown
+     - Interface: `IUser` [Story: 1.1, File: src/types/user.ts]
+       - Action: REUSE for type annotation in order.user_id field
+     - Zod Schema: `UserSchema` [Story: 1.1, File: src/schemas/user.ts]
+       - Action: IMPORT and use in composite schema
+     ```
+   - If planning to create NEW model, check for similar existing models (e.g., "UserDto" vs "UserResponse")
+
+**For Frontend Stories**:
+- Focus on API endpoints to consume
+- Focus on shared types/interfaces to reuse
+- Database schema less relevant (unless story involves database migrations)
+
+**If No Relevant Accumulated Context**:
+If `cumulative_context` is empty OR no relevant resources exist for this story:
+```markdown
+## Accumulated Context from Previous Stories
+
+No relevant accumulated context found. This story will create new resources:
+- New tables: [list]
+- New endpoints: [list]
+- New models: [list]
+```
+
+**Critical Checks Before Finalizing Dev Notes**:
+- [ ] Verified no duplicate table names planned
+- [ ] Verified no duplicate endpoint paths (method + path) planned
+- [ ] Verified no duplicate model/interface names planned
+- [ ] All resources to REUSE are documented with source story and file location
+- [ ] All resources to EXTEND are documented with base type and extension rationale
+- [ ] All NEW resources are justified (not duplicates of existing resources)
 
 **If MULTI-REPO MODE**: Add multi-repo context section after the main story sections:
 

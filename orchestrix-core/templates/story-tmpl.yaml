@@ -249,7 +249,14 @@ sections:
       - If known add Relevant Source Tree info that relates to this story
       - If there were important notes from previous story that are relevant to this one, include them here
       - MANDATORY: Include **Technical Preferences Summary** section with key technical choices and constraints from architecture docs
-      - MANDATORY: Include **Field-Level API Contract** section when story involves API request/response payloads or shared data models. 
+      - MANDATORY: Include **Accumulated Context from Previous Stories** section (NEW - loaded via load-cumulative-context.md):
+        - **Existing Database Schema**: List tables and fields created in previous stories that are relevant to this story
+        - **Existing API Endpoints**: List endpoints created in previous stories that this story may interact with or extend
+        - **Existing Shared Models**: List TypeScript interfaces, Zod schemas, enums that this story should reuse
+        - For each item, include: Name, Type, Added in Story X.Y, File Location
+        - Mark items to REUSE vs items to EXTEND vs new items to CREATE
+        - This prevents creating duplicate resources and ensures consistency
+      - MANDATORY: Include **Field-Level API Contract** section when story involves API request/response payloads or shared data models.
         - Table format with columns: Field | Type | Required | Used In (Request/Response/UI/DB) | Notes
         - Values must be consistent with Data Models and API Specifications from architecture docs
         - This table acts as the authoritative alignment for frontend/backend/QA
@@ -261,10 +268,10 @@ sections:
       - MANDATORY: Include **Testing Integrity Requirements** section with immutable test rules
       - MANDATORY: Include **Technical Constraints** section listing version requirements, performance/security rules, and integration constraints
       - MANDATORY: Include **Technical Extraction Verification Summary** section with completion rate and flagged issues from Step 5
-      - Every technical detail MUST include its source reference: [Source: docs/architecture/{filename}.md#{section}]
+      - Every technical detail MUST include its source reference: [Source: docs/architecture/{filename}.md#{section}] or [Source: Cumulative Registry - Story X.Y]
       - If information for a category is not found in the architecture docs, explicitly state: "No specific guidance found in architecture docs"
-      - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents directly. 
-        These notes, together with the Tasks/Subtasks, must give the Dev Agent complete context to implement the story, 
+      - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents directly.
+        These notes, together with the Tasks/Subtasks, must give the Dev Agent complete context to implement the story,
         meeting all Acceptance Criteria and completing all tasks/subtasks with minimal overhead.
     elicit: true
     owner: scrum-master
@@ -335,26 +342,173 @@ sections:
         instruction: Record the specific AI agent model and version used for development
         owner: dev-agent
         editors: [dev-agent]
-        
+
       - id: implementation-summary
         title: Implementation Summary
         instruction: Provide a 3-5 sentence high-level summary of the implementation, including key technical decisions, challenges overcome, and final outcomes
         owner: dev-agent
         editors: [dev-agent]
-        
+
+      - id: database-changes
+        title: Database Changes (Structured)
+        instruction: |
+          NEW: Structured field for database changes (replaces manual description in implementation summary).
+          Format as YAML. Use this structure for ALL database-related changes.
+          This data is used to automatically update the cumulative database registry.
+
+          Example:
+          ```yaml
+          tables_created:
+            - name: orders
+              description: "Stores customer orders"
+              fields:
+                - name: id
+                  type: uuid
+                  constraints: primary key, default gen_random_uuid()
+                - name: user_id
+                  type: uuid
+                  constraints: not null
+                  references: users.id
+              indexes:
+                - name: idx_orders_user_id
+                  fields: user_id
+                  type: btree
+              foreign_keys:
+                - name: fk_orders_user
+                  local_field: user_id
+                  references: users.id
+                  on_delete: CASCADE
+
+          tables_modified:
+            - name: users
+              fields_added:
+                - name: last_login_at
+                  type: timestamp
+                  constraints: nullable
+              indexes_added:
+                - name: idx_users_last_login
+                  fields: last_login_at
+                  type: btree
+
+          migrations:
+            - filename: 20250120_create_orders_table.sql
+              tables_affected: [orders]
+              type: create
+              status: applied
+          ```
+
+          If no database changes in this story, leave empty or set to: `{}`
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        format: yaml
+
+      - id: api-endpoints-created
+        title: API Endpoints Created (Structured)
+        instruction: |
+          NEW: Structured field for API endpoints (replaces manual description in implementation summary).
+          Format as YAML. Use this structure for ALL API endpoints created/modified.
+          This data is used to automatically update the cumulative API registry.
+
+          Example:
+          ```yaml
+          - method: POST
+            path: /api/orders
+            description: "Create a new order"
+            file_path: src/api/orders/create.ts
+            auth_required: true
+            auth_type: JWT Bearer
+            request_schema: CreateOrderRequest
+            request_body: "{ user_id, items[], shipping_address }"
+            success_status: 201
+            success_response: "{ order_id, status, created_at }"
+            success_schema: OrderResponse
+            error_responses:
+              - status: 400
+                description: "Invalid request data"
+              - status: 401
+                description: "Unauthorized"
+            notes: "Supports bulk item creation. Max 50 items per order."
+
+          - method: GET
+            path: /api/orders/:id
+            description: "Get order details by ID"
+            file_path: src/api/orders/get.ts
+            auth_required: true
+            auth_type: JWT Bearer
+            request_params: "id (uuid)"
+            success_status: 200
+            success_schema: OrderResponse
+            error_responses:
+              - status: 404
+                description: "Order not found"
+          ```
+
+          If no API changes in this story, leave empty or set to: `[]`
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        format: yaml
+
+      - id: shared-models-created
+        title: Shared Models Created (Structured)
+        instruction: |
+          NEW: Structured field for models/types/schemas (replaces manual description in implementation summary).
+          Format as YAML. Use this structure for ALL shared models, types, interfaces, schemas created.
+          This data is used to automatically update the cumulative models registry.
+
+          Example:
+          ```yaml
+          interfaces:
+            - name: IOrder
+              file_path: src/types/order.ts
+              category: entity
+              description: "Order entity interface"
+
+          zod_schemas:
+            - name: OrderSchema
+              file_path: src/schemas/order.ts
+              inferred_type: IOrder
+              description: "Zod validation schema for orders"
+
+          enums:
+            - name: OrderStatus
+              file_path: src/types/order.ts
+              values: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED]
+              description: "Order status enum"
+
+          classes:
+            - name: OrderService
+              file_path: src/services/order.service.ts
+              category: service
+              description: "Business logic for order management"
+
+          dtos:
+            - name: CreateOrderDto
+              file_path: src/dtos/order.dto.ts
+              purpose: request
+              description: "DTO for order creation request"
+          ```
+
+          If no model changes in this story, leave empty or set to: `{}`
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        format: yaml
+
       - id: file-list
         title: File List
         instruction: List all files created, modified, or affected during story implementation
         owner: dev-agent
         editors: [dev-agent]
-        
+
       - id: dev-log-reference
         title: Dev Log Reference
         template: "docs/dev/logs/{story-id}-dev-log.md"
         instruction: Reference to the detailed development log file containing complete implementation history, technical decisions, issues encountered, and phase-by-phase progress
         owner: dev-agent
         editors: [dev-agent]
-        
+
       - id: open-issues
         title: Open Issues
         instruction: |

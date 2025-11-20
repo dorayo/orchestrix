@@ -1,0 +1,147 @@
+name: "Database Cumulative Registry"
+description: "Tracks all database tables and fields added across all stories. Auto-updated by Dev Agent after each story completion."
+
+version: "1.0.0"
+
+sections:
+  - id: metadata
+    title: "Registry Metadata"
+    content: |
+      **Last Updated**: {{last_updated}}
+      **Total Stories Tracked**: {{total_stories}}
+      **Repository**: {{repository_id}}
+      **Mode**: {{project_mode}}
+
+  - id: tables
+    title: "Database Tables Registry"
+    content: |
+      This section lists all database tables created or modified across all stories in chronological order.
+
+      {{#each tables}}
+      ### Table: `{{name}}`
+
+      **Created in Story**: {{created_in_story}}
+      **Status**: {{status}}
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      #### Fields
+
+      | Field Name | Type | Constraints | Added in Story | Notes |
+      |------------|------|-------------|----------------|-------|
+      {{#each fields}}
+      | `{{name}}` | {{type}} | {{constraints}} | {{added_in_story}} | {{notes}} |
+      {{/each}}
+
+      {{#if indexes}}
+      #### Indexes
+
+      | Index Name | Fields | Type | Added in Story |
+      |------------|--------|------|----------------|
+      {{#each indexes}}
+      | `{{name}}` | {{fields}} | {{type}} | {{added_in_story}} |
+      {{/each}}
+      {{/if}}
+
+      {{#if foreign_keys}}
+      #### Foreign Keys
+
+      | FK Name | Local Field | References | Added in Story |
+      |---------|-------------|------------|----------------|
+      {{#each foreign_keys}}
+      | `{{name}}` | `{{local_field}}` | `{{references}}` | {{added_in_story}} |
+      {{/each}}
+      {{/if}}
+
+      ---
+
+      {{/each}}
+
+  - id: migrations
+    title: "Database Migrations History"
+    content: |
+      Chronological list of all database migrations across stories.
+
+      | Migration File | Story | Tables Affected | Type | Status |
+      |----------------|-------|-----------------|------|--------|
+      {{#each migrations}}
+      | `{{filename}}` | {{story_id}} | {{tables_affected}} | {{type}} | {{status}} |
+      {{/each}}
+
+  - id: schema_evolution
+    title: "Schema Evolution Timeline"
+    content: |
+      High-level view of database schema evolution by story.
+
+      {{#each story_timeline}}
+      #### Story {{story_id}}: {{story_title}}
+
+      - **Tables Created**: {{tables_created}}
+      - **Tables Modified**: {{tables_modified}}
+      - **Fields Added**: {{fields_added}}
+      - **Indexes Added**: {{indexes_added}}
+      - **Migration File**: `{{migration_file}}`
+
+      {{/each}}
+
+  - id: naming_conventions
+    title: "Naming Conventions & Patterns"
+    content: |
+      Detected naming conventions and patterns across the database schema.
+
+      **Table Naming**: {{table_naming_pattern}}
+      **Field Naming**: {{field_naming_pattern}}
+      **Primary Key Pattern**: {{primary_key_pattern}}
+      **Foreign Key Pattern**: {{foreign_key_pattern}}
+      **Timestamp Fields**: {{timestamp_fields_pattern}}
+      **Soft Delete Pattern**: {{soft_delete_pattern}}
+
+  - id: reference_integrity
+    title: "Referential Integrity Map"
+    content: |
+      Visual representation of table relationships and foreign key dependencies.
+
+      ```
+      {{referential_integrity_diagram}}
+      ```
+
+      **Total Relationships**: {{total_relationships}}
+      **Orphaned Tables**: {{orphaned_tables}}
+
+usage_instructions: |
+  ## For SM Agent (Story Creation)
+
+  1. Load this registry before drafting Dev Notes
+  2. Check if planned tables/fields already exist
+  3. Reference existing fields in Dev Notes: [Reuse field from Story X.Y]
+  4. For new fields, follow detected naming conventions
+
+  ## For Dev Agent (Story Implementation)
+
+  1. Load this registry in Step 1 (Context Loading)
+  2. Before creating tables/fields, validate against registry
+  3. If conflict detected (duplicate table/field), HALT and escalate
+  4. After implementation, update this registry via update-database-registry.md
+
+  ## For Architect (Technical Review)
+
+  1. Review this registry to understand current schema state
+  2. Verify story's database changes align with evolution timeline
+  3. Check for consistency with naming conventions
+
+auto_update_trigger: |
+  This registry is automatically updated by Dev Agent after:
+  - Story status changes to "Done"
+  - Dev Agent Record contains structured database_changes field
+  - Migration files are committed to repository
+
+validation_rules:
+  - rule: "No duplicate table names"
+    severity: "HALT"
+  - rule: "No duplicate field names within same table"
+    severity: "HALT"
+  - rule: "All foreign keys must reference existing tables"
+    severity: "HALT"
+  - rule: "Naming conventions must be consistent"
+    severity: "WARN"
+  - rule: "All tables must have primary key"
+    severity: "WARN"

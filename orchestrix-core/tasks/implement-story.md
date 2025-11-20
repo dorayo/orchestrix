@@ -170,11 +170,30 @@ Previous Rounds: {N-1}
 Previous Issues: {summary if exists}
 ```
 
-### 1. Load Context
+### 1. Load Context (ALL MANDATORY)
 - Story (status: Approved/TestDesignComplete)
 - Standards (CONFIG_PATH.devLoadAlwaysFiles)
 - QA test design (if exists)
-- Architecture (utils/load-architecture-context.md if needed)
+- Architecture (utils/load-architecture-context.md - MANDATORY, not optional)
+- **NEW**: Cumulative Context (utils/load-cumulative-context.md - MANDATORY)
+
+**Load Cumulative Context**:
+Execute `{root}/tasks/utils/load-cumulative-context.md`:
+- Input: `devStoryLocation` (from config)
+- Output: `cumulative_context` object with database/API/models registries
+
+**Purpose**: Understand what resources (tables, endpoints, models) already exist from previous stories to avoid creating duplicates and ensure consistency.
+
+**Success Output**:
+```
+✅ Cumulative Context Loaded
+
+Database Registry: 5 tables, 42 fields (from 7 stories)
+API Registry: 24 endpoints, 15 schemas (from 7 stories)
+Models Registry: 32 models/types (from 7 stories)
+
+Cumulative context loaded for conflict validation (Step 2.5).
+```
 
 Validate status + sections → HALT if invalid
 
@@ -212,6 +231,145 @@ Validate status + sections → HALT if invalid
 5. **Continue from current_subtask** with rules reinforced
 
 **Why this matters**: In story spanning 4+ sessions, LLM forgets rules. Explicitly re-loading them from Resumption Guide prevents rule decay.
+
+### 2.5. Validate Against Cumulative Context (MANDATORY)
+
+**Purpose**: STRICT validation to detect conflicts between story's planned changes and existing resources from previous stories. **HALT on critical conflicts**.
+
+Execute `{root}/tasks/utils/validate-against-cumulative-context.md`:
+- Input: `story` (current story), `cumulative_context` (from Step 1)
+- Output: `validation_result` with status: HALT | WARN | PASS
+
+**What is Validated**:
+
+1. **Database Conflicts (HALT level)**:
+   - No duplicate table names
+   - No duplicate field names within same table
+   - Foreign key references must exist in cumulative context
+   - Naming conventions must be consistent
+
+2. **API Endpoint Conflicts (HALT level)**:
+   - No exact duplicate endpoints (same method + path)
+   - Similar endpoints detected (fuzzy match) → WARN with suggestion
+   - API pattern consistency checked
+
+3. **Model/Type Conflicts (HALT level)**:
+   - No duplicate model/interface names
+   - Similar models detected (>70% overlap) → WARN with reuse suggestion
+   - Naming convention consistency checked
+
+**Possible Outcomes**:
+
+**Outcome A: PASS**
+```
+✅ Cumulative Context Validation PASSED
+
+- Database: No conflicts detected
+- API: No conflicts detected
+- Models: No conflicts detected
+
+All naming conventions followed. Proceeding to Step 3 (Implementation).
+```
+→ **Action**: Proceed to Step 3
+
+---
+
+**Outcome B: WARN (Non-blocking)**
+```
+⚠️ Cumulative Context Validation PASSED WITH WARNINGS
+
+Warnings detected:
+1. Similar endpoint: Existing POST /api/users/register (Story 1.2) vs Planned POST /api/auth/signup
+   → Recommendation: Review if these are duplicate operations
+2. Naming convention: Planned table 'OrderItems' (PascalCase) vs existing convention (snake_case)
+   → Suggestion: Use 'order_items' for consistency
+
+✅ You may proceed to Step 3, but address warnings in Dev Log.
+```
+→ **Action**:
+1. Log warnings to Dev Log
+2. Document justifications for warnings (e.g., why 'signup' vs 'register' are different)
+3. Proceed to Step 3
+
+---
+
+**Outcome C: HALT (Critical Conflict)**
+```
+❌ Cumulative Context Validation FAILED - HALTING IMPLEMENTATION
+
+🚨 CRITICAL CONFLICTS DETECTED:
+
+Conflict #1: Duplicate Table
+- Table 'orders' already exists (created in Story 1.3)
+- Current story: 2.5 plans to CREATE table 'orders'
+- Resolution: Story 2.5 cannot create a table that already exists
+
+Conflict #2: Duplicate API Endpoint
+- Endpoint 'POST /api/orders' already exists (Story 1.3, file: src/api/orders/create.ts)
+- Current story: 2.5 plans to CREATE 'POST /api/orders'
+- Resolution: Remove from story or change to UPDATE existing endpoint
+
+🛑 IMPLEMENTATION HALTED
+
+Required Actions:
+1. Review story Dev Notes and identify conflicting resources
+2. Update story to REUSE or EXTEND existing resources instead of creating duplicates
+3. Escalate to SM if story design is fundamentally flawed
+4. Re-submit story for validation after fixes
+
+DO NOT PROCEED TO STEP 3 UNTIL ALL HALT-LEVEL CONFLICTS ARE RESOLVED.
+```
+→ **Action**:
+1. **DO NOT IMPLEMENT** - Stop immediately
+2. Log conflict details to Dev Log
+3. Update story status to "Blocked"
+4. Create issue for SM with conflict details
+5. Escalate: "Story blocked due to resource conflicts. See Dev Log for details."
+6. **HALT** - Do not proceed to Step 3
+
+---
+
+**Integration with Dev Log**:
+
+Add validation result to Dev Log:
+```markdown
+## Step 2.5: Cumulative Context Validation
+
+Executed: utils/validate-against-cumulative-context.md
+
+Result: [PASS | WARN | HALT]
+
+{validation_result.report_markdown}
+
+{If HALT}
+🛑 IMPLEMENTATION HALTED due to critical conflicts.
+Escalating to SM for story redesign.
+
+{If WARN}
+⚠️ Warnings logged. Proceeding with justifications documented.
+
+{If PASS}
+✅ No conflicts. Proceeding to implementation.
+```
+
+---
+
+**Critical Importance**:
+
+This step is the **primary mechanism** to prevent the story isolation problem:
+- Detects duplicate database tables/fields before they are created
+- Detects duplicate API endpoints before they are implemented
+- Detects duplicate models/types before they are defined
+- Ensures consistency with accumulated project context
+
+**Skipping this step WILL result in**:
+- Duplicate resources across stories
+- Inconsistent naming patterns
+- Conflicting database schemas
+- API endpoint duplication
+- Type system fragmentation
+
+**DO NOT SKIP THIS STEP UNDER ANY CIRCUMSTANCES.**
 
 ### 3. Implement Tasks
 Per task/subtask:
@@ -280,9 +438,180 @@ This completion phase has **TWO MANDATORY GATES** that must be executed in order
 
 ---
 
+### 7.5. Update Cumulative Registries (MANDATORY)
+
+**Purpose**: Automatically update cumulative registries with this story's database/API/model changes for future stories to reference.
+
+**⚠️ CRITICAL**: Only execute if GATE 1 = PASS and story involves database/API/model changes.
+
+**Step 1: Update Dev Agent Record with Structured Fields**
+
+Before updating registries, ensure Dev Agent Record contains structured data in these fields:
+- `database-changes` (YAML format)
+- `api-endpoints-created` (YAML format)
+- `shared-models-created` (YAML format)
+
+See story template (`{root}/templates/story-tmpl.yaml`) for field structure and examples.
+
+**If fields are already populated**: Skip to Step 2
+
+**If fields are NOT populated**: Populate them now based on your implementation:
+
+**Example for Backend Story**:
+```yaml
+database-changes:
+  tables_created:
+    - name: orders
+      description: "Customer orders table"
+      fields:
+        - name: id
+          type: uuid
+          constraints: primary key, default gen_random_uuid()
+        - name: user_id
+          type: uuid
+          constraints: not null
+          references: users.id
+        - name: total_amount
+          type: decimal(10,2)
+          constraints: not null
+      indexes:
+        - name: idx_orders_user_id
+          fields: user_id
+          type: btree
+      foreign_keys:
+        - name: fk_orders_user
+          local_field: user_id
+          references: users.id
+          on_delete: CASCADE
+  migrations:
+    - filename: 20250120_create_orders_table.sql
+      tables_affected: [orders]
+      type: create
+      status: applied
+
+api-endpoints-created:
+  - method: POST
+    path: /api/orders
+    description: "Create new order"
+    file_path: src/api/orders/create.ts
+    auth_required: true
+    auth_type: JWT Bearer
+    request_schema: CreateOrderRequest
+    success_status: 201
+    success_schema: OrderResponse
+
+shared-models-created:
+  interfaces:
+    - name: IOrder
+      file_path: src/types/order.ts
+      category: entity
+  zod_schemas:
+    - name: OrderSchema
+      file_path: src/schemas/order.ts
+      inferred_type: IOrder
+```
+
+---
+
+**Step 2: Update Database Registry**
+
+**If story involved database changes**:
+
+Execute `{root}/tasks/utils/update-database-registry.md`:
+- Input: `story` (current story with Dev Agent Record)
+- Output: Updated `{devDocLocation}/database-registry.md`
+
+**Success Output**:
+```
+✅ Database Registry Updated
+
+Story 1.3 changes merged:
+- Tables created: 1 (orders)
+- Tables modified: 0
+- Fields added: 5
+- Indexes added: 1
+- Migrations recorded: 1
+
+Registry: docs/dev/database-registry.md
+Total stories tracked: 8
+Total tables: 5
+Total fields: 42
+```
+
+**If no database changes**: Skip this sub-step
+
+---
+
+**Step 3: Update API Registry**
+
+**If story involved API changes**:
+
+Execute `{root}/tasks/utils/update-api-registry.md`:
+- Input: `story` (current story with Dev Agent Record)
+- Output: Updated `{devDocLocation}/api-registry.md`
+
+**Success Output**:
+```
+✅ API Registry Updated
+
+Story 1.3 changes merged:
+- Endpoints created: 2 (POST /api/orders, GET /api/orders/:id)
+- Schemas created: 2 (CreateOrderRequest, OrderResponse)
+
+Registry: docs/dev/api-registry.md
+Total stories tracked: 8
+Total endpoints: 28
+```
+
+**If no API changes**: Skip this sub-step
+
+---
+
+**Step 4: Verify Registry Updates**
+
+**Verification Checks**:
+- [ ] Registry files exist and are readable
+- [ ] Story data successfully merged
+- [ ] No errors during update
+- [ ] Backup files created (in case rollback needed)
+
+**If any check fails**:
+1. Log error to Dev Log
+2. Attempt manual registry update
+3. If critical failure, document in Dev Agent Record: "⚠️ Registry update failed - manual sync required"
+4. DO NOT halt story completion (registries can be regenerated later)
+
+**If all checks pass**:
+```
+✅ Cumulative Registries Updated Successfully
+
+All registries synchronized with Story {story_id} changes.
+Future stories will see accumulated context from this story.
+```
+
+---
+
+**Critical Importance**:
+
+This step closes the loop:
+1. Step 1 (Context Loading) → Loaded existing context
+2. Step 2.5 (Validation) → Validated no conflicts
+3. Step 3 (Implementation) → Created new resources
+4. **Step 7.5 (Registry Update) → Recorded new resources for future stories** ← THIS STEP
+
+**Skipping this step BREAKS the system**:
+- Next story won't see this story's database tables
+- Next story won't see this story's API endpoints
+- Next story won't see this story's models/types
+- Result: Story isolation problem continues
+
+**DO NOT SKIP THIS STEP.**
+
+---
+
 #### GATE 2: COMPLETION STEPS CHECKLIST (Execution) ✅
 
-**⚠️ CRITICAL**: Only execute if GATE 1 = PASS
+**⚠️ CRITICAL**: Only execute if GATE 1 = PASS AND Step 7.5 (Registry Update) = COMPLETE
 
 **Execute**: `{root}/tasks/execute-checklist.md` with `{root}/checklists/validation/dev-completion-steps.md`
 

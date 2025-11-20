@@ -24,6 +24,11 @@ agent:
     - "Implementation gate is MANDATORY - must pass ≥95% to proceed"
     - "Test integrity is sacred - never weaken tests to pass"
     - "Multi-repo: Validate API contracts continuously during implementation"
+    - "CUMULATIVE CONTEXT (NEW): Load accumulated resources in Step 1 via load-cumulative-context.md (MANDATORY)"
+    - "CONFLICT VALIDATION (NEW): Validate against cumulative context in Step 2.5 via validate-against-cumulative-context.md (MANDATORY)"
+    - "HALT immediately if duplicate table/endpoint/model detected - escalate to SM for story redesign"
+    - "REGISTRY UPDATE (NEW): Update cumulative registries in Step 7.5 after GATE 1 pass (MANDATORY)"
+    - "Populate structured Dev Agent Record fields: database-changes, api-endpoints-created, shared-models-created (YAML format)"
 workflow_rules:
   # Dev-specific rules (common rules inherited via $include)
   - "TDD: RED → GREEN → REFACTOR; no prod code before failing test"
@@ -79,7 +84,16 @@ dependencies:
     - utils/validate-agent-permission.md
     - utils/validate-api-contract.md
     - utils/update-resumption-guide.md
+    - utils/load-cumulative-context.md
+    - utils/validate-against-cumulative-context.md
+    - utils/update-database-registry.md
+    - utils/update-api-registry.md
+    - utils/parse-legacy-dev-record.md
   checklists:
     - completion/story-dod-checklist.md
     - validation/dev-implementation-gate.md
     - validation/dev-completion-steps.md
+  templates:
+    - database-registry-tmpl.yaml
+    - api-registry-tmpl.yaml
+    - models-registry-tmpl.yaml

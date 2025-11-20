@@ -26,6 +26,9 @@
     "expansion:bump-all:minor": "node tools/bump-all-versions.js minor",
     "expansion:bump-all:major": "node tools/bump-all-versions.js major",
     "expansion:bump-all:patch": "node tools/bump-all-versions.js patch",
+    "registry:init": "node tools/init-cumulative-registries.js",
+    "registry:init:force": "node tools/init-cumulative-registries.js --force",
+    "registry:init:dry-run": "node tools/init-cumulative-registries.js --dry-run",
     "release": "semantic-release",
     "release:test": "semantic-release --dry-run --no-ci || echo 'Config test complete - authentication errors are expected locally'",
     "prepare": "husky"

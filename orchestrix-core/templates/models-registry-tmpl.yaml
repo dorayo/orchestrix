@@ -1,0 +1,301 @@
+name: "Models & Types Cumulative Registry"
+description: "Tracks all shared models, types, interfaces, and schemas created across all stories. Auto-updated by Dev Agent after each story completion."
+
+version: "1.0.0"
+
+sections:
+  - id: metadata
+    title: "Registry Metadata"
+    content: |
+      **Last Updated**: {{last_updated}}
+      **Total Stories Tracked**: {{total_stories}}
+      **Total Models**: {{total_models}}
+      **Repository**: {{repository_id}}
+      **Mode**: {{project_mode}}
+
+  - id: typescript_interfaces
+    title: "TypeScript Interfaces"
+    content: |
+      All TypeScript interfaces defined across stories for type safety and code contracts.
+
+      {{#each interfaces}}
+      ### `{{name}}`
+
+      **Added in Story**: {{story_id}}
+      **File**: `{{file_path}}`
+      **Category**: {{category}}
+      **Status**: {{status}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      **Properties**:
+      {{#each properties}}
+      - `{{name}}`: `{{type}}` {{#if optional}}(optional){{/if}} {{#if description}}- {{description}}{{/if}}
+      {{/each}}
+
+      {{#if extends}}**Extends**: {{extends}}{{/if}}
+      {{#if implements}}**Implements**: {{implements}}{{/if}}
+
+      **Used by Stories**: {{used_by_stories}}
+      {{#if used_in_files}}**Used in Files**: {{used_in_files}}{{/if}}
+
+      {{#if related_interfaces}}
+      **Related Interfaces**: {{related_interfaces}}
+      {{/if}}
+
+      ---
+
+      {{/each}}
+
+  - id: zod_schemas
+    title: "Zod Validation Schemas"
+    content: |
+      All Zod schemas used for runtime validation and type inference.
+
+      {{#each zod_schemas}}
+      ### `{{name}}`
+
+      **Added in Story**: {{story_id}}
+      **File**: `{{file_path}}`
+      **Category**: {{category}}
+      **Status**: {{status}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      **Schema Definition**:
+      {{#if inferred_type}}- **Inferred Type**: `{{inferred_type}}`{{/if}}
+      {{#if base_type}}- **Base Type**: `{{base_type}}`{{/if}}
+
+      **Fields**:
+      {{#each fields}}
+      - `{{name}}`: {{zod_type}} {{#if validations}}[{{validations}}]{{/if}} {{#if description}}- {{description}}{{/if}}
+      {{/each}}
+
+      **Used by**: {{used_by}}
+      {{#if validation_rules}}**Validation Rules**: {{validation_rules}}{{/if}}
+
+      {{#if related_schemas}}
+      **Related Schemas**: {{related_schemas}}
+      {{/if}}
+
+      ---
+
+      {{/each}}
+
+  - id: enums
+    title: "Enums & Constants"
+    content: |
+      All enumeration types and constant definitions across stories.
+
+      {{#each enums}}
+      ### `{{name}}`
+
+      **Added in Story**: {{story_id}}
+      **File**: `{{file_path}}`
+      **Type**: {{type}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      **Values**:
+      {{#each values}}
+      - `{{key}}` = {{value}} {{#if description}}- {{description}}{{/if}}
+      {{/each}}
+
+      **Used by Stories**: {{used_by_stories}}
+
+      ---
+
+      {{/each}}
+
+  - id: utility_types
+    title: "Utility Types & Helpers"
+    content: |
+      Generic utility types, helper types, and type transformations.
+
+      {{#each utility_types}}
+      ### `{{name}}`
+
+      **Added in Story**: {{story_id}}
+      **File**: `{{file_path}}`
+      **Category**: {{category}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      **Definition**: `{{definition}}`
+
+      {{#if use_cases}}**Use Cases**: {{use_cases}}{{/if}}
+      **Used by Stories**: {{used_by_stories}}
+
+      ---
+
+      {{/each}}
+
+  - id: class_models
+    title: "Class-Based Models"
+    content: |
+      Object-oriented models with methods and business logic.
+
+      {{#each classes}}
+      ### `{{name}}`
+
+      **Added in Story**: {{story_id}}
+      **File**: `{{file_path}}`
+      **Category**: {{category}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      {{#if extends}}**Extends**: `{{extends}}`{{/if}}
+      {{#if implements}}**Implements**: {{implements}}{{/if}}
+
+      **Properties**:
+      {{#each properties}}
+      - `{{visibility}} {{name}}`: `{{type}}` {{#if description}}- {{description}}{{/if}}
+      {{/each}}
+
+      **Methods**:
+      {{#each methods}}
+      - `{{visibility}} {{name}}({{parameters}})`: `{{return_type}}` {{#if description}}- {{description}}{{/if}}
+      {{/each}}
+
+      **Used by Stories**: {{used_by_stories}}
+
+      ---
+
+      {{/each}}
+
+  - id: dto_models
+    title: "Data Transfer Objects (DTOs)"
+    content: |
+      DTOs used for API requests, responses, and data transformation.
+
+      {{#each dtos}}
+      ### `{{name}}`
+
+      **Added in Story**: {{story_id}}
+      **File**: `{{file_path}}`
+      **Purpose**: {{purpose}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      **Properties**:
+      {{#each properties}}
+      - `{{name}}`: `{{type}}` {{#if optional}}(optional){{/if}} {{#if description}}- {{description}}{{/if}}
+      {{/each}}
+
+      {{#if validation_schema}}**Validation Schema**: `{{validation_schema}}`{{/if}}
+      {{#if related_endpoint}}**Related Endpoint**: `{{related_endpoint}}`{{/if}}
+
+      **Used by Stories**: {{used_by_stories}}
+
+      ---
+
+      {{/each}}
+
+  - id: models_by_story
+    title: "Models by Story"
+    content: |
+      Chronological view of model/type creation across stories.
+
+      {{#each stories}}
+      ### Story {{story_id}}: {{story_title}}
+
+      **Created**:
+      {{#if interfaces}}- **Interfaces**: {{interfaces}}{{/if}}
+      {{#if zod_schemas}}- **Zod Schemas**: {{zod_schemas}}{{/if}}
+      {{#if enums}}- **Enums**: {{enums}}{{/if}}
+      {{#if classes}}- **Classes**: {{classes}}{{/if}}
+      {{#if dtos}}- **DTOs**: {{dtos}}{{/if}}
+
+      {{/each}}
+
+  - id: type_hierarchy
+    title: "Type Hierarchy & Relationships"
+    content: |
+      Visual representation of inheritance, composition, and dependencies between types.
+
+      ```
+      {{type_hierarchy_diagram}}
+      ```
+
+      **Key Relationships**:
+      {{#each relationships}}
+      - `{{source}}` {{relationship_type}} `{{target}}` ({{description}})
+      {{/each}}
+
+  - id: naming_patterns
+    title: "Naming Patterns & Conventions"
+    content: |
+      Detected naming conventions across all models and types.
+
+      **Interface Naming**: {{interface_naming}}
+      **Type Naming**: {{type_naming}}
+      **Enum Naming**: {{enum_naming}}
+      **DTO Naming**: {{dto_naming}}
+      **Schema Naming**: {{schema_naming}}
+
+      **File Organization Pattern**: {{file_organization}}
+      **Export Pattern**: {{export_pattern}}
+
+  - id: reusability_analysis
+    title: "Reusability Analysis"
+    content: |
+      Analysis of model reuse across stories.
+
+      **Most Reused Models**:
+      {{#each most_reused}}
+      - `{{name}}`: Used in {{usage_count}} stories
+      {{/each}}
+
+      **Orphaned Models** (unused after creation):
+      {{#each orphaned}}
+      - `{{name}}` (Created in Story {{story_id}}, File: {{file_path}})
+      {{/each}}
+
+      **Duplicate Candidates** (similar models that could be unified):
+      {{#each duplicates}}
+      - `{{model1}}` (Story {{story1}}) ≈ `{{model2}}` (Story {{story2}}) - Similarity: {{similarity}}%
+      {{/each}}
+
+usage_instructions: |
+  ## For SM Agent (Story Creation)
+
+  1. Load this registry before drafting Dev Notes
+  2. Check if similar models/types already exist
+  3. Reference existing models: [Reuse type from Story X.Y]
+  4. Suggest extending existing models instead of creating new ones
+  5. Follow detected naming conventions for new types
+
+  ## For Dev Agent (Story Implementation)
+
+  1. Load this registry in Step 1 (Context Loading)
+  2. Before creating types/models:
+     - Check for exact matches (HALT if duplicate name)
+     - Check for similar models (WARN with reuse suggestion)
+     - Consider extending existing types instead of creating new ones
+  3. Prefer composition over duplication
+  4. After implementation, update this registry via update-models-registry.md
+
+  ## For Architect (Technical Review)
+
+  1. Review this registry to understand type system evolution
+  2. Verify story's type design aligns with existing patterns
+  3. Check for proper use of inheritance vs composition
+  4. Identify opportunities for type refactoring/unification
+
+auto_update_trigger: |
+  This registry is automatically updated by Dev Agent after:
+  - Story status changes to "Done"
+  - Dev Agent Record contains structured shared_models_created field
+  - Model/type definition files are committed to repository
+
+validation_rules:
+  - rule: "No duplicate model/type names across codebase"
+    severity: "HALT"
+  - rule: "All exported types must have JSDoc descriptions"
+    severity: "WARN"
+  - rule: "DTOs should have corresponding Zod schemas"
+    severity: "WARN"
+  - rule: "Naming conventions must be consistent"
+    severity: "WARN"
+  - rule: "Similar models (>80% similarity) should be unified"
+    severity: "WARN"

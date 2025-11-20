@@ -1,0 +1,239 @@
+name: "API Cumulative Registry"
+description: "Tracks all API endpoints created across all stories. Auto-updated by Dev Agent after each story completion."
+
+version: "1.0.0"
+
+sections:
+  - id: metadata
+    title: "Registry Metadata"
+    content: |
+      **Last Updated**: {{last_updated}}
+      **Total Stories Tracked**: {{total_stories}}
+      **Total Endpoints**: {{total_endpoints}}
+      **Repository**: {{repository_id}}
+      **Mode**: {{project_mode}}
+      **API Base URL**: {{api_base_url}}
+
+  - id: endpoints
+    title: "API Endpoints Registry"
+    content: |
+      Complete list of all API endpoints implemented across stories, organized by resource.
+
+      {{#each resources}}
+      ## Resource: {{name}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+      **Base Path**: `{{base_path}}`
+
+      {{#each endpoints}}
+      ### `{{method}} {{path}}`
+
+      **Added in Story**: {{story_id}}
+      **Implementation File**: `{{file_path}}`
+      **Status**: {{status}}
+
+      {{#if description}}**Description**: {{description}}{{/if}}
+
+      **Request**:
+      {{#if request_params}}
+      - **Path Parameters**: {{request_params}}
+      {{/if}}
+      {{#if request_query}}
+      - **Query Parameters**: {{request_query}}
+      {{/if}}
+      {{#if request_body}}
+      - **Request Body**: {{request_body}}
+      - **Schema**: `{{request_schema}}`
+      {{/if}}
+      {{#if auth_required}}
+      - **Authentication**: {{auth_type}}
+      {{/if}}
+
+      **Response**:
+      - **Success ({{success_status}})**: {{success_response}}
+      {{#if success_schema}}- **Schema**: `{{success_schema}}`{{/if}}
+      {{#if error_responses}}
+      - **Error Responses**:
+      {{#each error_responses}}
+        - `{{status}}`: {{description}}
+      {{/each}}
+      {{/if}}
+
+      {{#if related_endpoints}}
+      **Related Endpoints**:
+      {{#each related_endpoints}}
+      - `{{method}} {{path}}` (Story {{story_id}})
+      {{/each}}
+      {{/if}}
+
+      {{#if notes}}**Notes**: {{notes}}{{/if}}
+
+      ---
+
+      {{/each}}
+      {{/each}}
+
+  - id: endpoints_by_story
+    title: "Endpoints by Story"
+    content: |
+      Chronological view of API development across stories.
+
+      {{#each stories}}
+      ### Story {{story_id}}: {{story_title}}
+
+      **Endpoints Added**:
+      {{#each endpoints}}
+      - `{{method}} {{path}}` - {{description}}
+      {{/each}}
+
+      **Schemas Created**:
+      {{#each schemas}}
+      - `{{name}}` ({{type}}) - {{file_path}}
+      {{/each}}
+
+      {{/each}}
+
+  - id: api_patterns
+    title: "API Design Patterns"
+    content: |
+      Detected patterns and conventions across all API endpoints.
+
+      **URL Naming Convention**: {{url_naming}}
+      **Resource Naming**: {{resource_naming}}
+      **HTTP Method Usage**:
+      - GET: {{get_count}} endpoints
+      - POST: {{post_count}} endpoints
+      - PUT: {{put_count}} endpoints
+      - PATCH: {{patch_count}} endpoints
+      - DELETE: {{delete_count}} endpoints
+
+      **Authentication Patterns**:
+      {{#each auth_patterns}}
+      - {{type}}: {{count}} endpoints
+      {{/each}}
+
+      **Versioning Strategy**: {{versioning_strategy}}
+      **Pagination Pattern**: {{pagination_pattern}}
+      **Error Response Format**: {{error_format}}
+
+  - id: schemas_registry
+    title: "Request/Response Schemas"
+    content: |
+      All Zod schemas, TypeScript interfaces, and validation schemas used in API endpoints.
+
+      {{#each schemas}}
+      ### `{{name}}`
+
+      **Type**: {{type}}
+      **Added in Story**: {{story_id}}
+      **File**: `{{file_path}}`
+      **Used by Endpoints**: {{endpoint_count}}
+
+      {{#if fields}}
+      **Fields**:
+      {{#each fields}}
+      - `{{name}}`: {{type}} {{#if required}}(required){{/if}} {{#if description}}- {{description}}{{/if}}
+      {{/each}}
+      {{/if}}
+
+      {{#if related_schemas}}
+      **Related Schemas**: {{related_schemas}}
+      {{/if}}
+
+      ---
+
+      {{/each}}
+
+  - id: authentication
+    title: "Authentication & Authorization"
+    content: |
+      Summary of authentication and authorization mechanisms across API endpoints.
+
+      **Authentication Methods**:
+      {{#each auth_methods}}
+      - {{method}}: {{description}} ({{endpoint_count}} endpoints)
+      {{/each}}
+
+      **Protected Endpoints**: {{protected_count}} / {{total_endpoints}}
+      **Public Endpoints**: {{public_count}} / {{total_endpoints}}
+
+      {{#if role_based_access}}
+      **Role-Based Access Control**:
+      {{#each roles}}
+      - {{role_name}}: Can access {{endpoint_count}} endpoints
+      {{/each}}
+      {{/if}}
+
+  - id: api_dependencies
+    title: "API Dependencies & Integration"
+    content: |
+      Cross-endpoint dependencies and integration points.
+
+      {{#each dependencies}}
+      ### {{endpoint_path}}
+
+      **Depends on**:
+      {{#each depends_on}}
+      - `{{method}} {{path}}` ({{reason}})
+      {{/each}}
+
+      **Used by**:
+      {{#each used_by}}
+      - `{{method}} {{path}}` ({{reason}})
+      {{/each}}
+
+      {{/each}}
+
+  - id: api_coverage
+    title: "API Coverage Matrix"
+    content: |
+      CRUD operation coverage for each resource.
+
+      | Resource | Create (POST) | Read (GET) | Update (PUT/PATCH) | Delete (DELETE) | List (GET) |
+      |----------|---------------|------------|-------------------|-----------------|------------|
+      {{#each coverage}}
+      | {{resource}} | {{create}} | {{read}} | {{update}} | {{delete}} | {{list}} |
+      {{/each}}
+
+usage_instructions: |
+  ## For SM Agent (Story Creation)
+
+  1. Load this registry before drafting Dev Notes
+  2. Check if planned API endpoints already exist
+  3. Verify consistency with existing API patterns
+  4. Reference existing schemas: [Reuse schema from Story X.Y]
+  5. For new endpoints, follow detected naming conventions
+
+  ## For Dev Agent (Story Implementation)
+
+  1. Load this registry in Step 1 (Context Loading)
+  2. Before creating endpoints, validate against registry:
+     - HALT if exact endpoint (method + path) already exists
+     - WARN if similar endpoint exists (suggest alternative naming)
+  3. Check for reusable schemas before creating new ones
+  4. After implementation, update this registry via update-api-registry.md
+
+  ## For Architect (Technical Review)
+
+  1. Review this registry to understand API evolution
+  2. Verify story's API design aligns with existing patterns
+  3. Check for consistent authentication/authorization approach
+  4. Validate RESTful principles and naming conventions
+
+auto_update_trigger: |
+  This registry is automatically updated by Dev Agent after:
+  - Story status changes to "Done"
+  - Dev Agent Record contains structured api_endpoints_created field
+  - API implementation files are committed to repository
+
+validation_rules:
+  - rule: "No duplicate endpoints (same method + path)"
+    severity: "HALT"
+  - rule: "All endpoints must use consistent naming pattern"
+    severity: "WARN"
+  - rule: "All POST/PUT/PATCH endpoints must have request schema"
+    severity: "WARN"
+  - rule: "All endpoints must have error response handling"
+    severity: "WARN"
+  - rule: "Protected endpoints must specify authentication method"
+    severity: "HALT"
