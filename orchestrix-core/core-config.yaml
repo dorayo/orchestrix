@@ -55,4 +55,4 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
-version: 11.5.2
+version: 11.5.3

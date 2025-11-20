@@ -1,3 +1,10 @@
+## [11.5.3](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.2...v11.5.3) (2025-11-20)
+
+
+### Bug Fixes
+
+* **hook:** remove 'set -e' to prevent non-blocking exit code errors ([d4e062a](https://github.com/dorayo/ORCHESTRIX/commit/d4e062adae085e183d06bc797f32296f32f63cf9))
+
 ## [11.5.2](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.1...v11.5.2) (2025-11-20)
 
 
