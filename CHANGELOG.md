@@ -1,3 +1,10 @@
+# [11.5.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.4.1...v11.5.0) (2025-11-20)
+
+
+### Features
+
+* **tmux:** add implicit command detection for handoff automation ([8a2e96c](https://github.com/dorayo/ORCHESTRIX/commit/8a2e96c032f311c7d9f069718ef600e4d2431a20))
+
 ## [11.4.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.4.0...v11.4.1) (2025-11-20)
 
 
