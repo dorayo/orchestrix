@@ -24,55 +24,84 @@
 
 ---
 
-## Phase 1: Setup & Foundation
+## Phase 1: Test-Driven Implementation
 
-[[LLM: Document setup: environment, dependencies, foundation code, decisions, issues]]
+[[LLM: Document TDD implementation: contracts, tests, features by priority (P0→P1→P2), decisions, issues]]
 
-### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
+### 1.1 Technical Contracts
+**Status:** {{contractStatus}} | **Time:** {{contractStartTime}} - {{contractEndTime}}
 
-**Implementation:** {{implementationDetails}}  
-**Decisions:** {{keyDecisions}}  
-**Issues:** {{issuesEncountered}}
+**Contracts Defined:** {{contractsCreated}}
+**Schemas:** {{schemasCreated}}
+**Decisions:** {{contractDecisions}}
+
+### 1.2 P0 Features (Critical Path)
+**Status:** {{p0Status}} | **Time:** {{p0StartTime}} - {{p0EndTime}}
+
+**Tests Written:** {{p0TestsWritten}} (RED phase)
+**Implementation:** {{p0Implementation}} (GREEN phase)
+**Refactoring:** {{p0Refactoring}} (REFACTOR phase)
+**Tests Passing:** {{p0TestsPassing}}/{{p0TestsTotal}}
+**Decisions:** {{p0Decisions}}
+**Issues:** {{p0Issues}}
+
+### 1.3 P1 Features (Important)
+**Status:** {{p1Status}} | **Time:** {{p1StartTime}} - {{p1EndTime}}
+
+**Tests Written:** {{p1TestsWritten}} (RED phase)
+**Implementation:** {{p1Implementation}} (GREEN phase)
+**Refactoring:** {{p1Refactoring}} (REFACTOR phase)
+**Tests Passing:** {{p1TestsPassing}}/{{p1TestsTotal}}
+**Decisions:** {{p1Decisions}}
+**Issues:** {{p1Issues}}
+
+### 1.4 P2 Features (Nice-to-Have)
+**Status:** {{p2Status}} | **Time:** {{p2StartTime}} - {{p2EndTime}}
+
+**Tests Written:** {{p2TestsWritten}} (RED phase)
+**Implementation:** {{p2Implementation}} (GREEN phase)
+**Refactoring:** {{p2Refactoring}} (REFACTOR phase)
+**Tests Passing:** {{p2TestsPassing}}/{{p2TestsTotal}}
+**Decisions:** {{p2Decisions}}
+**Issues:** {{p2Issues}}
 
 ---
 
-## Phase 2: Core Implementation
+## Phase 2: Quality Assurance
 
-[[LLM: Document core functionality, business logic, features, technical decisions]]
+[[LLM: Document integration testing, edge cases, performance optimization, QA prep]]
 
-### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
+### 2.1 Integration Testing
+**Status:** {{integrationStatus}} | **Time:** {{integrationStartTime}} - {{integrationEndTime}}
 
-**Implementation:** {{implementationDetails}}  
-**Decisions:** {{keyDecisions}}  
-**Issues:** {{issuesEncountered}}
+**Integration Tests:** {{integrationTests}}
+**E2E Workflows:** {{e2eWorkflows}}
+**Test Results:** {{integrationResults}}
+**Issues:** {{integrationIssues}}
 
----
+### 2.2 Edge Case Handling
+**Status:** {{edgeCaseStatus}} | **Time:** {{edgeCaseStartTime}} - {{edgeCaseEndTime}}
 
-## Phase 3: Testing & Validation
+**Edge Cases Tested:** {{edgeCasesTested}}
+**Error Handling:** {{errorHandling}}
+**Boundary Conditions:** {{boundaryConditions}}
+**Issues:** {{edgeCaseIssues}}
 
-[[LLM: Document tests, execution results, bugs, coverage, validation]]
+### 2.3 Performance Optimization
+**Status:** {{performanceStatus}} | **Time:** {{performanceStartTime}} - {{performanceEndTime}}
 
-### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
+**Bottlenecks Identified:** {{bottlenecks}}
+**Optimizations Applied:** {{optimizations}}
+**Performance Results:** {{performanceResults}}
+**Issues:** {{performanceIssues}}
 
-**Implementation:** {{implementationDetails}}  
-**Results:** {{testResults}}  
-**Issues:** {{issuesEncountered}}
+### 2.4 QA Review Preparation
+**Status:** {{qaRepStatus}} | **Time:** {{qaPrepStartTime}} - {{qaPrepEndTime}}
 
----
-
-## Phase 4: Integration & Finalization
-
-[[LLM: Document integration, adjustments, docs, cleanup, requirement verification]]
-
-### {{subtaskId}}: {{subtaskTitle}}
-**Status:** {{subtaskStatus}} | **Time:** {{subtaskStartTime}} - {{subtaskEndTime}}
-
-**Implementation:** {{implementationDetails}}  
-**Decisions:** {{keyDecisions}}  
-**Issues:** {{issuesEncountered}}
+**All ACs Met:** {{allACsMet}}
+**Tests Passing:** {{totalTestsPassing}}/{{totalTestsTotal}}
+**Dev Log Complete:** {{devLogComplete}}
+**Dev Agent Record Updated:** {{recordUpdated}}
 
 ---
 

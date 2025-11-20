@@ -1,23 +1,13 @@
 # Extract API Contracts
 
-## Purpose
-
-Extract and document API contracts from existing backend code. This task analyzes backend repositories to identify all API endpoints, generate documentation, and optionally create an OpenAPI specification.
-
-**Use Case**: You have an existing backend with API endpoints defined in code, and you want to:
-- Document all available APIs
-- Generate API reference documentation
-- Create OpenAPI/Swagger specification
-- Validate frontend API calls against backend APIs
+Extract and document API contracts from existing backend code.
 
 **What This Task Does**:
-- Scans backend code for API endpoint definitions (routes, controllers)
+- Scans backend code for API endpoint definitions
 - Extracts HTTP methods, paths, parameters, request/response schemas
-- Documents authentication requirements per endpoint
+- Documents authentication requirements
 - Generates API contract documentation
 - Optionally generates OpenAPI 3.0 specification
-
-**IMPORTANT**: This task focuses ONLY on API contract extraction, not full architecture. For complete system architecture aggregation, use `aggregate-system-architecture.md`.
 
 ## Prerequisites
 
@@ -25,7 +15,7 @@ Extract and document API contracts from existing backend code. This task analyze
 - ✅ Backend repository exists with API code
 - ✅ Project type is `backend` in `core-config.yaml`
 
-**Supported Backend Frameworks**:
+**Supported Frameworks**:
 - Express (Node.js)
 - NestJS (Node.js)
 - FastAPI (Python)
@@ -33,18 +23,12 @@ Extract and document API contracts from existing backend code. This task analyze
 - Spring Boot (Java)
 - Ruby on Rails (Ruby)
 
-**Recommended Environment**:
-- 💻 IDE (Claude Code, Cursor, etc.) - Recommended for code analysis
-- 🌐 Web interface - Also suitable
-
 ## Validation
 
 ```bash
-# Check project type
 PROJECT_TYPE=$(grep "type:" core-config.yaml | awk '{print $2}')
 if [ "$PROJECT_TYPE" != "backend" ]; then
   echo "❌ ERROR: Project type is '$PROJECT_TYPE', expected 'backend'"
-  echo "This task should run in Backend repository"
   exit 1
 fi
 
@@ -56,8 +40,6 @@ echo "✅ Prerequisites validated. Proceeding with API contract extraction..."
 ## Task Instructions
 
 ### Step 1: Detect Backend Framework
-
-Identify the backend framework to determine extraction strategy.
 
 **Framework Detection**:
 ```bash
@@ -103,7 +85,7 @@ fi
 🔍 **Backend Framework Detected**: {{framework}}
 **Routes Location**: {{routes_path}}
 
-Is this correct? (If wrong, please specify framework and routes location)
+Is this correct?
 ```
 
 ---
@@ -112,7 +94,7 @@ Is this correct? (If wrong, please specify framework and routes location)
 
 Extract API endpoints from route files.
 
-**Express (Node.js) Example**:
+**Express Example**:
 ```typescript
 // src/routes/auth.routes.ts
 router.post('/api/auth/register', authController.register);
@@ -123,19 +105,15 @@ router.post('/api/auth/logout', authMiddleware, authController.logout);
 **Extraction Pattern**:
 - Method: `post`, `get`, `put`, `delete`, `patch`
 - Path: `/api/auth/register`
-- Middleware: `authMiddleware` (indicates authentication required)
+- Middleware: `authMiddleware` (auth required)
 - Handler: `authController.register`
 
 **NestJS Example**:
 ```typescript
-// src/auth/auth.controller.ts
 @Controller('api/auth')
 export class AuthController {
   @Post('register')
   async register(@Body() dto: RegisterDto) { ... }
-
-  @Post('login')
-  async login(@Body() dto: LoginDto) { ... }
 
   @Post('logout')
   @UseGuards(AuthGuard)
@@ -145,19 +123,14 @@ export class AuthController {
 
 **Extraction Pattern**:
 - Controller path: `/api/auth`
-- Method decorator: `@Post('register')` → POST
+- Method: `@Post('register')` → POST
 - Route: `/api/auth/register`
-- Guard: `@UseGuards(AuthGuard)` → authentication required
+- Guard: `@UseGuards(AuthGuard)` → auth required
 
-**FastAPI (Python) Example**:
+**FastAPI Example**:
 ```python
-# app/routers/auth.py
 @router.post("/api/auth/register")
 async def register(user: UserCreate):
-    ...
-
-@router.post("/api/auth/login")
-async def login(credentials: LoginRequest):
     ...
 
 @router.post("/api/auth/logout", dependencies=[Depends(get_current_user)])
@@ -168,24 +141,22 @@ async def logout():
 **Extraction Pattern**:
 - Decorator: `@router.post`
 - Path: `/api/auth/register`
-- Dependency: `dependencies=[Depends(get_current_user)]` → authentication required
+- Dependency: `dependencies=[Depends(get_current_user)]` → auth required
 
 ---
 
 ### Step 3: Extract Endpoint Details
 
-For each discovered endpoint, extract detailed information.
-
-**Information to Extract**:
+For each endpoint, extract:
 
 1. **HTTP Method**: GET, POST, PUT, DELETE, PATCH
 2. **Path**: `/api/auth/register`
-3. **Path Parameters**: e.g., `:id` in `/api/users/:id`
-4. **Query Parameters**: e.g., `?status=active&limit=10`
-5. **Request Body Schema**: DTO or schema definition
-6. **Response Schema**: Return type or schema
-7. **Authentication Required**: Yes/No (check for middleware/guards/dependencies)
-8. **Authorization**: Required roles (if RBAC)
+3. **Path Parameters**: `:id` in `/api/users/:id`
+4. **Query Parameters**: `?status=active&limit=10`
+5. **Request Body Schema**: DTO or schema
+6. **Response Schema**: Return type
+7. **Authentication Required**: Yes/No
+8. **Authorization**: Required roles
 9. **Rate Limiting**: If defined
 10. **Description**: Comment or docstring
 
@@ -204,9 +175,9 @@ router.post(
 
 // Controller
 async register(req: Request, res: Response) {
-  const { email, password, name } = req.body; // Request body
+  const { email, password, name } = req.body;
   const user = await authService.register(email, password, name);
-  res.status(201).json(user); // Response: User object
+  res.status(201).json(user);
 }
 
 // Schema (Zod)
@@ -226,7 +197,7 @@ interface User {
 }
 ```
 
-**Extracted Endpoint Documentation**:
+**Extracted Documentation**:
 ```markdown
 ### POST /api/auth/register
 
@@ -237,9 +208,9 @@ interface User {
 **Request Body**:
 ```json
 {
-  "email": "user@example.com",    // Required, valid email
-  "password": "SecurePass123!",   // Required, min 8 characters
-  "name": "John Doe"              // Required, min 1 character
+  "email": "user@example.com",
+  "password": "SecurePass123!",
+  "name": "John Doe"
 }
 ```
 
@@ -255,21 +226,18 @@ interface User {
 ```
 
 **Errors**:
-- `400 Bad Request`: Validation failed (invalid email, weak password)
+- `400 Bad Request`: Validation failed
 - `409 Conflict`: Email already exists
-- `500 Internal Server Error`: Unexpected error
 ```
 
 ---
 
 ### Step 4: Group Endpoints into Categories
 
-Organize endpoints by logical grouping.
-
-**Common Grouping Strategies**:
-1. **By Resource**: Users, Products, Orders, etc.
-2. **By Feature**: Authentication, Task Management, Reporting
-3. **By Route Prefix**: `/api/auth/*`, `/api/tasks/*`, `/api/users/*`
+Organize by logical grouping:
+1. By Resource: Users, Products, Orders
+2. By Feature: Authentication, Task Management
+3. By Route Prefix: `/api/auth/*`, `/api/tasks/*`
 
 **Example Grouping**:
 
@@ -288,10 +256,6 @@ Organize endpoints by logical grouping.
 **Description**: Invalidate user session
 **Authentication**: Required (JWT)
 
-### POST /api/auth/refresh
-**Description**: Refresh access token using refresh token
-**Authentication**: Required (Refresh Token)
-
 ---
 
 ## Task Management APIs
@@ -300,20 +264,8 @@ Organize endpoints by logical grouping.
 **Description**: List all tasks (paginated)
 **Authentication**: Required (JWT)
 
-### GET /api/tasks/:id
-**Description**: Get task details by ID
-**Authentication**: Required (JWT)
-
 ### POST /api/tasks
 **Description**: Create new task
-**Authentication**: Required (JWT)
-
-### PUT /api/tasks/:id
-**Description**: Update existing task
-**Authentication**: Required (JWT)
-
-### DELETE /api/tasks/:id
-**Description**: Delete task (soft delete)
 **Authentication**: Required (JWT)
 ```
 
@@ -321,20 +273,16 @@ Organize endpoints by logical grouping.
 
 ### Step 5: Generate OpenAPI Specification (Optional)
 
-Generate OpenAPI 3.0 specification for API documentation tools (Swagger, Redoc).
+Generate OpenAPI 3.0 specification:
 
-**OpenAPI Template**:
 ```yaml
 openapi: 3.0.0
 info:
   title: {{project_name}} API
   version: {{api_version}}
-  description: {{api_description}}
 servers:
   - url: https://api.example.com
     description: Production
-  - url: https://dev-api.example.com
-    description: Development
 
 security:
   - bearerAuth: []
@@ -343,19 +291,15 @@ paths:
   /api/auth/register:
     post:
       summary: Register new user
-      tags:
-        - Authentication
-      security: []  # Public endpoint
+      tags: [Authentication]
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - email
-                - password
-                - name
+              required: [email, password, name]
               properties:
                 email:
                   type: string
@@ -365,7 +309,6 @@ paths:
                   minLength: 8
                 name:
                   type: string
-                  minLength: 1
       responses:
         '201':
           description: User created successfully
@@ -377,38 +320,6 @@ paths:
           description: Validation error
         '409':
           description: Email already exists
-
-  /api/tasks:
-    get:
-      summary: List all tasks
-      tags:
-        - Tasks
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: cursor
-          in: query
-          schema:
-            type: string
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            maximum: 100
-      responses:
-        '200':
-          description: Task list returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Task'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
 
 components:
   securitySchemes:
@@ -432,73 +343,28 @@ components:
         role:
           type: string
           enum: [admin, user]
-        createdAt:
-          type: string
-          format: date-time
-
-    Task:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        title:
-          type: string
-        description:
-          type: string
-        status:
-          type: string
-          enum: [todo, in_progress, done]
-        priority:
-          type: string
-          enum: [low, medium, high]
-        createdAt:
-          type: string
-          format: date-time
-
-    Pagination:
-      type: object
-      properties:
-        cursor:
-          type: string
-        hasMore:
-          type: boolean
-        limit:
-          type: integer
 ```
 
-**Save OpenAPI Spec**:
-```bash
-# Save to docs/api-contracts.yaml
-OUTPUT_PATH="docs/api-contracts.yaml"
-```
+Save to `docs/api-contracts.yaml`
 
 ---
 
 ### Step 6: Validate Frontend API Calls (Optional)
 
-If frontend repositories exist, validate their API calls against extracted backend APIs.
+If frontend repositories exist, validate their API calls.
 
 **Step 6.1: Scan Frontend API Service Files**
 
 ```bash
-# Example: Scan React/TypeScript frontend
 grep -r "apiClient\." src/services/ | grep -E "get|post|put|delete"
 ```
 
-**Extracted Frontend API Calls**:
+**Extracted Frontend Calls**:
 ```typescript
-// src/services/auth.service.ts
 apiClient.post('/api/auth/register', data);
 apiClient.post('/api/auth/login', data);
-apiClient.post('/api/auth/logout');
-
-// src/services/task.service.ts
 apiClient.get('/api/tasks', { params });
-apiClient.get(`/api/tasks/${id}`);
 apiClient.post('/api/tasks', data);
-apiClient.put(`/api/tasks/${id}`, data);
-apiClient.delete(`/api/tasks/${id}`);
 ```
 
 **Step 6.2: Cross-Reference with Backend APIs**
@@ -509,39 +375,25 @@ apiClient.delete(`/api/tasks/${id}`);
 **Backend APIs Provided** (11 endpoints):
 1. ✅ POST /api/auth/register
 2. ✅ POST /api/auth/login
-3. ✅ POST /api/auth/logout
-4. ⚠️ POST /api/auth/refresh (not consumed by frontend)
-5. ✅ GET /api/users/me
-6. ⚠️ PUT /api/users/me (not consumed by frontend)
-7. ✅ GET /api/tasks
-8. ✅ GET /api/tasks/:id
-9. ✅ POST /api/tasks
-10. ✅ PUT /api/tasks/:id
-11. ✅ DELETE /api/tasks/:id
+3. ⚠️ POST /api/auth/refresh (not consumed by frontend)
+4. ✅ GET /api/tasks
+5. ✅ POST /api/tasks
 
-**Frontend APIs Consumed** (9 endpoints):
+**Frontend APIs Consumed** (4 endpoints):
 1. ✅ POST /api/auth/register → Backend provides ✓
 2. ✅ POST /api/auth/login → Backend provides ✓
-3. ✅ POST /api/auth/logout → Backend provides ✓
-4. ✅ GET /api/users/me → Backend provides ✓
-5. ✅ GET /api/tasks → Backend provides ✓
-6. ✅ GET /api/tasks/:id → Backend provides ✓
-7. ✅ POST /api/tasks → Backend provides ✓
-8. ✅ PUT /api/tasks/:id → Backend provides ✓
-9. ✅ DELETE /api/tasks/:id → Backend provides ✓
+3. ✅ GET /api/tasks → Backend provides ✓
+4. ✅ POST /api/tasks → Backend provides ✓
 
-**Validation Result**: ✅ 100% Alignment (9/9 frontend calls have corresponding backend endpoints)
+**Validation Result**: ✅ 100% Alignment (4/4 calls have backend endpoints)
 
-**Unused Backend APIs** (2):
+**Unused Backend APIs** (1):
 - POST /api/auth/refresh (may be used by mobile)
-- PUT /api/users/me (profile editing not yet implemented)
 ```
 
 ---
 
 ### Step 7: Generate API Contracts Document
-
-Create final API contracts documentation.
 
 **Step 7.1: Prepare Output**
 
@@ -563,24 +415,22 @@ OUTPUT_PATH="docs/api-contracts.md"
 
 ## Overview
 
-This document specifies all API endpoints provided by the {{backend_repo_name}} backend.
-
-**Total Endpoints**: {{endpoint_count}}
-**Authentication**: JWT (Bearer token)
+Total Endpoints: {{endpoint_count}}
+Authentication: JWT (Bearer token)
 
 ---
 
 ## Authentication
 
-All authenticated endpoints require a valid JWT access token in the Authorization header:
+All authenticated endpoints require JWT access token:
 
 ```
 Authorization: Bearer <access_token>
 ```
 
-**Token Acquisition**: Obtain access token via `POST /api/auth/login`
-**Token Lifetime**: 15 minutes
-**Token Refresh**: Use `POST /api/auth/refresh` with refresh token
+Token Acquisition: `POST /api/auth/login`
+Token Lifetime: 15 minutes
+Token Refresh: `POST /api/auth/refresh`
 
 ---
 
@@ -592,20 +442,19 @@ Authorization: Bearer <access_token>
 
 ## Data Models
 
-[Include schema definitions for common data types: User, Task, etc.]
+[Include schema definitions]
 
 ---
 
 ## Error Responses
 
-All endpoints use a standard error response format:
+Standard error format:
 
 ```json
 {
   "error": {
     "code": "ERROR_CODE",
     "message": "Human-readable error message",
-    "details": { ... },
     "timestamp": "2025-01-14T10:30:00Z",
     "request_id": "uuid"
   }
@@ -614,7 +463,7 @@ All endpoints use a standard error response format:
 
 **Common Error Codes**:
 - `VALIDATION_ERROR`: Request validation failed
-- `AUTHENTICATION_ERROR`: Invalid or missing auth token
+- `AUTHENTICATION_ERROR`: Invalid/missing auth token
 - `AUTHORIZATION_ERROR`: Insufficient permissions
 - `NOT_FOUND`: Resource not found
 - `RATE_LIMIT_EXCEEDED`: Too many requests
@@ -623,44 +472,37 @@ All endpoints use a standard error response format:
 
 ## Rate Limiting
 
-- **Authentication Endpoints**: 10 requests/minute per IP
-- **General Endpoints**: 100 requests/minute per authenticated user
+- Authentication Endpoints: 10 requests/minute per IP
+- General Endpoints: 100 requests/minute per user
 
 ---
 
 ## Appendix
 
-### Extraction Metadata
-
-**Extraction Date**: {{extraction_date}}
+**Extraction Date**: {{date}}
 **Backend Framework**: {{framework}}
 **Extraction Method**: Code analysis
-**Confidence Level**: High (extracted from route definitions and controllers)
 ```
 
 ---
 
 ### Step 8: Output Handoff
 
-Present completed documentation and next steps.
-
-**Success Output**:
 ```
 ✅ API CONTRACTS EXTRACTED
 
 📄 Generated Documents:
 - docs/api-contracts.md ({{line_count}} lines)
 {{#if openapi_generated}}
-- docs/api-contracts.yaml (OpenAPI 3.0 specification)
+- docs/api-contracts.yaml (OpenAPI 3.0)
 {{/if}}
 
 📊 **Extraction Summary**:
 
-**Total Endpoints Extracted**: {{endpoint_count}}
+**Total Endpoints**: {{endpoint_count}}
 **API Categories**: {{category_count}}
 - {{category_1}}: {{count_1}} endpoints
 - {{category_2}}: {{count_2}} endpoints
-- {{category_3}}: {{count_3}} endpoints
 
 **Authentication**:
 - Public endpoints: {{public_count}}
@@ -671,89 +513,38 @@ Present completed documentation and next steps.
 **Frontend Validation**:
 - Frontend API calls: {{frontend_call_count}}
 - Alignment: {{alignment_percent}}% ({{aligned_count}}/{{frontend_call_count}})
-- Undefined API calls: {{undefined_count}}
 {{/if}}
 
 ---
 
 📋 **NEXT STEPS**:
 
-1. **Review API Contracts**:
-   - Verify endpoint list is complete
-   - Check request/response schemas
-   - Validate authentication requirements
-
-2. **Share with Frontend Team**:
-   - Provide docs/api-contracts.md to frontend developers
-   {{#if openapi_generated}}
-   - Import docs/api-contracts.yaml into Swagger UI or Postman
-   {{/if}}
-
-3. **Update System Architecture** (if exists):
-   - Add extracted APIs to system-architecture.md API Contracts Summary section
-   - Ensure consistency across documentation
-
-4. **Consider API Improvements**:
-   {{#if unused_apis}}
-   - Review unused APIs: {{unused_apis}}
-   {{/if}}
-   - Add missing endpoints if frontend needs them
-   - Improve documentation comments in code
-
-5. **Keep Contracts Updated**:
-   - Re-run extraction when APIs change
-   - Consider automated tools: Swagger/OpenAPI codegen, API testing
-
----
+1. Review API Contracts
+2. Share with Frontend Team
+3. Update System Architecture (if exists)
+4. Consider API Improvements
+5. Keep Contracts Updated
 
 🎉 **API contracts are now documented!**
-
-Developers can reference docs/api-contracts.md for all available endpoints.
 ```
 
 ---
-
-## Notes for Agent Execution
-
-- **Framework-Specific**: Adjust extraction patterns based on detected framework. Each framework has different routing patterns.
-
-- **Schema Extraction**: Try to extract TypeScript types, Zod schemas, DTOs, or docstrings for request/response schemas. If not available, note "Schema not defined in code".
-
-- **Confidence Levels**: Be transparent about extraction quality. If route definitions are clear, confidence is High. If inferred from controllers only, confidence is Medium.
-
-- **OpenAPI Optional**: Only generate OpenAPI spec if user requests it or if it adds significant value.
-
-## Success Criteria
-
-- ✅ API contracts document exists at `docs/api-contracts.md`
-- ✅ All endpoints are extracted and documented
-- ✅ Endpoints are grouped by category
-- ✅ Request/response schemas documented (or noted as missing)
-- ✅ Authentication requirements specified per endpoint
-- ✅ (Optional) OpenAPI specification generated
-- ✅ (Optional) Frontend API calls validated against backend
 
 ## Error Handling
 
 **If backend framework cannot be detected**:
 ```
-⚠️ WARNING: Could not automatically detect backend framework
+⚠️ WARNING: Could not detect backend framework
 
 Please specify:
-1. Framework (Express, NestJS, FastAPI, Django, Spring Boot, Rails)
-2. Routes location (e.g., src/routes, app/routers, config/routes.rb)
+1. Framework (Express, NestJS, FastAPI, etc.)
+2. Routes location (e.g., src/routes)
 
-Or provide manual guidance on how to find API endpoints in your codebase.
+Or provide guidance on finding endpoints in your codebase.
 ```
 
 ## Related Tasks
 
-- **Prerequisites**: None (can run on any backend repo)
-- **Related**: `aggregate-system-architecture.md` (uses API extraction as part of aggregation)
-- **Follow-up**: Update system-architecture.md with extracted API contracts
-
-## Version History
-
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0.0 | 2025-01-14 | Initial creation for Phase 3 | Orchestrix Team |
+- **Prerequisites**: None
+- **Related**: `aggregate-system-architecture.md`
+- **Follow-up**: Update system-architecture.md

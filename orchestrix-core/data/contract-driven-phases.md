@@ -1,177 +1,89 @@
-# 4-Phase Contract-Driven Development Strategy
+# TDD-First 2-Phase Development Strategy
 
 ## Core Principles
 
 1. **Contract-First**: Define interfaces/types before implementation
-2. **Incremental**: Build and validate in small steps
-3. **Early Testing**: Test contracts with mocks before real implementation
-4. **Continuous Integration**: Wire components together progressively
-5. **No Orphaned Code**: Every piece must be integrated and tested
+2. **Test-Driven**: Write tests before code (RED → GREEN → REFACTOR)
+3. **Priority-Based**: Implement by priority (P0 → P1 → P2)
+4. **No Mock Skeletons**: Write complete implementations guided by tests
 
-## Phase 1: Contract Definition
+## Phase 1: Test-Driven Implementation
 
-**Goal**: Define interfaces, types, and error contracts before any implementation.
+### 1.1 Define Technical Contracts
 
-**Key Actions**:
-- Create TypeScript interfaces for all entities and services
-- Document method signatures with JSDoc (params, returns, throws)
-- Define custom error classes for all failure scenarios
-- Specify validation rules in comments
+- Create interfaces, types, schemas
+- Document method signatures with JSDoc
+- Define custom error classes
+- Define validation schemas (e.g., Zod)
+- Specify API request/response types
 
-**Example Pattern**:
+### 1.2 Implement P0 Features (TDD Cycle)
 
-```typescript
-// Define entity, input, service interface, and error classes
-export interface User { id: string; email: string; /* ... */ }
-export interface CreateUserInput { email: string; /* ... */ }
+**RED**: Write P0 tests first (must fail)
+**GREEN**: Implement to pass tests
+**REFACTOR**: Improve code while keeping tests green
 
-export interface IUserService {
-  /** @throws {ValidationError} @throws {DuplicateEmailError} */
-  createUser(input: CreateUserInput): Promise<User>;
-  /** @throws {UserNotFoundError} */
-  findById(id: string): Promise<User>;
-}
+### 1.3 Implement P1 Features (TDD Cycle)
 
-export class ValidationError extends Error { /* ... */ }
-export class DuplicateEmailError extends Error { /* ... */ }
-```
+**RED**: Write P1 tests
+**GREEN**: Implement P1 features
+**REFACTOR**: Improve P1 code
+Verify all P0 + P1 tests pass
 
-## Phase 2: Contract Testing
+### 1.4 Implement P2 Features (TDD Cycle, if time permits)
 
-**Goal**: Validate contracts are complete and testable using mock implementations.
+**RED**: Write P2 tests
+**GREEN**: Implement P2 features
+**REFACTOR**: Improve P2 code
+Verify all tests pass
 
-**Key Actions**:
-- Create mock class implementing the interface
-- Write tests for all methods (happy path + error cases)
-- Verify all documented errors are thrown correctly
-- Test edge cases and boundary conditions
+## Phase 2: Quality Assurance
 
-**Example Pattern**:
+### 2.1 Integration Testing
 
-```typescript
-// Create simple mock implementing interface
-class MockUserService implements IUserService {
-  private users = new Map<string, User>();
-  async createUser(input: CreateUserInput): Promise<User> {
-    if (!input.email.includes('@')) throw new ValidationError('email', 'Invalid');
-    if (this.users.has(input.email)) throw new DuplicateEmailError(input.email);
-    // ... create and return user
-  }
-  // ... other methods
-}
-
-// Test all methods and error conditions
-describe('IUserService Contract', () => {
-  it('should create user with valid input', async () => { /* ... */ });
-  it('should throw ValidationError for invalid email', async () => { /* ... */ });
-  it('should throw DuplicateEmailError for existing email', async () => { /* ... */ });
-});
-```
-
-## Phase 3: Incremental Implementation
-
-**Goal**: Implement real components one at a time, replacing mocks while keeping tests passing.
-
-**Key Actions**:
-- Implement one component completely before moving to next
-- Run contract tests after each implementation
-- Add implementation-specific tests for internal logic
-- Integrate with existing components progressively
-- Refactor while maintaining contract compliance
-
-**Example Pattern**:
-
-```typescript
-// Real implementation with dependencies
-export class UserService implements IUserService {
-  constructor(
-    private readonly repository: UserRepository,
-    private readonly passwordHasher: PasswordHasher,
-    private readonly emailValidator: EmailValidator
-  ) {}
-
-  async createUser(input: CreateUserInput): Promise<User> {
-    if (!this.emailValidator.isValid(input.email)) {
-      throw new ValidationError('email', 'Invalid email format');
-    }
-    const existing = await this.repository.findByEmail(input.email);
-    if (existing) throw new DuplicateEmailError(input.email);
-    
-    const hashedPassword = await this.passwordHasher.hash(input.password);
-    return this.repository.create({ ...input, passwordHash: hashedPassword });
-  }
-  // ... other methods
-}
-
-// Test implementation-specific logic with mocked dependencies
-describe('UserService Implementation', () => {
-  it('should hash password before storing', async () => { /* ... */ });
-  it('should trim whitespace from name', async () => { /* ... */ });
-});
-```
-
-## Phase 4: Integration & Wiring
-
-**Goal**: Connect all components and validate end-to-end workflows.
-
-**Key Actions**:
-- Set up dependency injection container
-- Wire all components together
 - Write integration tests with real dependencies
-- Test complete user workflows
-- Validate error handling across boundaries
+- Test component interactions and data flow
+- Test error scenarios across boundaries
+- Validate end-to-end workflows
 
-**Example Pattern**:
+### 2.2 Edge Case Handling
 
-```typescript
-// Set up DI container
-export class Container {
-  async initialize() {
-    const db = new DatabaseConnection(process.env.DATABASE_URL!);
-    const userRepository = new UserRepository(db);
-    const userService = new UserService(userRepository, new PasswordHasher(), new EmailValidator());
-    this.services.set('userService', userService);
-  }
-}
+- Test boundary conditions (empty, null, max lengths)
+- Test error states and graceful degradation
+- Add loading states and user feedback
+- Test concurrent operations
 
-// Integration tests with real dependencies
-describe('User Workflow Integration', () => {
-  it('should complete full user creation and retrieval workflow', async () => {
-    const created = await userService.createUser({ email: 'test@example.com', /* ... */ });
-    const foundById = await userService.findById(created.id);
-    expect(foundById).toEqual(created);
-  });
-  
-  it('should prevent duplicate email registration', async () => {
-    await userService.createUser({ email: 'dup@example.com', /* ... */ });
-    await expect(userService.createUser({ email: 'dup@example.com', /* ... */ }))
-      .rejects.toThrow(DuplicateEmailError);
-  });
-});
-```
+### 2.3 Performance Optimization (if applicable)
 
-## Workflow Flow
+- Identify performance bottlenecks
+- Optimize database queries (indexes, batch ops)
+- Implement caching where appropriate
+- Verify performance meets requirements
 
-Phase 1 → Phase 2 → Phase 3 → Phase 4
-(Contracts) → (Mock Tests) → (Real Implementation) → (Integration)
+### 2.4 QA Review Preparation
 
-## Common Patterns
-
-**Repository**: `interface IRepository<T> { create/findById/update/delete }`  
-**Service with DI**: Inject dependencies via constructor  
-**Error Hierarchy**: Custom error classes extending base `AppError`
+- Verify all acceptance criteria met
+- Ensure all tests pass
+- Complete Dev Log
+- Update Dev Agent Record
+- Update story status to Review
 
 ## Quick Checklist
 
-**Phase 1**: ✓ Interfaces defined ✓ Methods documented ✓ Errors typed  
-**Phase 2**: ✓ Mocks created ✓ All methods tested ✓ Error cases covered  
-**Phase 3**: ✓ Real implementation ✓ Contract tests pass ✓ No orphaned code  
-**Phase 4**: ✓ DI configured ✓ Integration tests pass ✓ E2E workflows validated
+**Phase 1.1**: ✓ Contracts ✓ Schemas ✓ Errors
+**Phase 1.2 (P0)**: ✓ Tests ✓ Implement ✓ Refactor ✓ Pass
+**Phase 1.3 (P1)**: ✓ Tests ✓ Implement ✓ Refactor ✓ Pass
+**Phase 1.4 (P2)**: ✓ Tests ✓ Implement ✓ Refactor ✓ Pass
+**Phase 2.1**: ✓ Integration tests ✓ E2E validated
+**Phase 2.2**: ✓ Edge cases ✓ Error handling
+**Phase 2.3**: ✓ Performance optimized
+**Phase 2.4**: ✓ All ACs met ✓ Ready for QA
 
 ## Anti-Patterns
 
-❌ Skip contract definition  
-❌ Incomplete error documentation  
-❌ Big bang integration  
-❌ Orphaned/untested code  
-❌ Frequent contract changes during implementation
+❌ Skip contract definition
+❌ Write implementation before tests
+❌ Write tests after implementation
+❌ Skip refactor phase
+❌ Implement all priorities at once
+❌ Skip integration tests
