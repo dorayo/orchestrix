@@ -96,9 +96,15 @@ fi
 
 log "Captured pane output: ${#pane_output} bytes"
 
-# Extract last 2000 characters (increased from 1000 to handle cases where extra content follows HANDOFF)
+# Extract last 2000 characters for reference
 last_output="${pane_output: -2000}"
-log "Last 2000 chars: examining ${#last_output} bytes for HANDOFF pattern"
+log "Captured ${#pane_output} bytes total, examining full output for HANDOFF pattern"
+
+# DEBUG: Log last 500 chars to help diagnose issues
+log "DEBUG: Last 500 chars of output:"
+echo "---START-OUTPUT---" >> "$LOG_FILE"
+echo "${pane_output: -500}" >> "$LOG_FILE"
+echo "---END-OUTPUT---" >> "$LOG_FILE"
 
 # HANDOFF pattern matching (multiple patterns for flexibility)
 # Try multiple patterns in order of preference
@@ -117,7 +123,8 @@ if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-
 
 # Pattern 0: Standard format without arguments - 🎯 HANDOFF TO agent: *command (no args)
 # This pattern is checked AFTER Pattern 1 to avoid matching commands with arguments
-elif [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]*($|[^a-zA-Z0-9.]) ]]; then
+# Using stricter end-of-line match to avoid false positives
+elif [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]*$ ]]; then
     target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
     raw_command="${BASH_REMATCH[2]}"
     log "Matched Pattern 0: Standard HANDOFF format (no arguments)"
