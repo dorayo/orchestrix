@@ -1,3 +1,10 @@
+## [11.5.7](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.6...v11.5.7) (2025-11-20)
+
+
+### Performance Improvements
+
+* **core:** optimize task and template files for token efficiency ([fa2e68e](https://github.com/dorayo/ORCHESTRIX/commit/fa2e68e465b0a361e256f9ac2e01af577d6a023d))
+
 ## [11.5.6](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.5...v11.5.6) (2025-11-20)
 
 
