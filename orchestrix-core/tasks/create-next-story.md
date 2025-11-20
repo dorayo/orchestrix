@@ -679,123 +679,37 @@ Create story file using `{root}/templates/story-tmpl.yaml`:
 - Use `context` from Step 4 for Dev Notes (architecture baseline)
 - **NEW**: Use `cumulative_context` from Step 4.5 for Dev Notes "Accumulated Context from Previous Stories" section
 - Include structure alignment from Step 5
-- Follow Field-Level API Contract format for API/shared data stories
+- Follow optimized Dev Notes guidelines (see below)
 
-**Populating "Accumulated Context from Previous Stories" in Dev Notes**:
+**OPTIMIZED Dev Notes Guidelines** (Target: ~200 lines total):
 
-**For Backend/FullStack Stories**:
-1. **Existing Database Schema**:
-   - Review `cumulative_context.database.tables`
-   - Identify tables/fields relevant to this story:
-     - Tables this story will INSERT into (list fields to use)
-     - Tables this story will SELECT from (list fields to read)
-     - Tables this story will UPDATE (list fields to modify)
-     - Tables this story will reference via FK (list relationship)
-   - For each relevant item, include:
-     ```markdown
-     - Table: `users` [Story: 1.1, File: migrations/create_users.sql]
-       - Fields to REUSE: id (uuid), email (varchar), created_at (timestamp)
-       - Action: SELECT/INSERT/UPDATE/FK reference
-     ```
-   - If planning to create NEW table, verify it doesn't already exist in cumulative_context
-   - If planning to add NEW field to existing table, verify field doesn't already exist
+Follow the optimized template structure in `story-tmpl.yaml`:
+- **Technical Constraints Summary** (~20 lines): Story-specific constraints with architecture doc references
+- **Accumulated Context** (~30 lines): Compact table format listing relevant resources from previous stories
+- **Database Design** (~40 lines): Design decisions and rationale, NOT full SQL
+- **Data Models** (~40 lines): Interface contracts and business rules, NOT full implementations
+- **File Locations** (~20 lines): Exact paths per project structure
+- **Testing Requirements** (~30 lines): Framework references + story-specific test priorities
+- **Technical Constraints** (~20 lines): Version/performance/security constraints unique to this story
 
-2. **Existing API Endpoints**:
-   - Review `cumulative_context.api.endpoints`
-   - Identify endpoints this story will:
-     - Call/consume from frontend or other services
-     - Extend (e.g., add new query params to existing endpoint)
-   - For each relevant endpoint:
-     ```markdown
-     - Endpoint: `GET /api/users/:id` [Story: 1.2, File: src/api/users/get.ts]
-       - Auth: JWT Bearer
-       - Response Schema: UserResponse
-       - Action: Will CALL this endpoint from order creation flow
-     ```
-   - If planning to create NEW endpoint, verify it doesn't already exist
+**Key Principles**:
+- Reference architecture docs via: `[→ file.md#section]` - DO NOT copy-paste
+- Use compact tables for accumulated context - list key fields only, not full schemas
+- Record design DECISIONS (WHY), not implementation DETAILS (WHAT)
+- Reference full schemas/code in migration files/entity files - DO NOT embed
 
-3. **Existing Shared Models**:
-   - Review `cumulative_context.models`
-   - Identify models/types/schemas this story should:
-     - REUSE as-is (import existing type)
-     - EXTEND (create interface that extends existing)
-     - REFERENCE (use as type annotation)
-   - For each relevant model:
-     ```markdown
-     - Interface: `IUser` [Story: 1.1, File: src/types/user.ts]
-       - Action: REUSE for type annotation in order.user_id field
-     - Zod Schema: `UserSchema` [Story: 1.1, File: src/schemas/user.ts]
-       - Action: IMPORT and use in composite schema
-     ```
-   - If planning to create NEW model, check for similar existing models (e.g., "UserDto" vs "UserResponse")
+**Critical Checks Before Finalizing**:
+- [ ] Dev Notes total < 200 lines
+- [ ] No full schema copies (only references)
+- [ ] No architecture doc copy-paste
+- [ ] All external references use [→ file.md#section] format
+- [ ] Accumulated context uses compact table format
 
-**For Frontend Stories**:
-- Focus on API endpoints to consume
-- Focus on shared types/interfaces to reuse
-- Database schema less relevant (unless story involves database migrations)
+**Detailed examples**: See template `story-tmpl.yaml` Dev Notes sections for placeholder-based examples
 
-**If No Relevant Accumulated Context**:
-If `cumulative_context` is empty OR no relevant resources exist for this story:
-```markdown
-## Accumulated Context from Previous Stories
+**If MULTI-REPO MODE**: Populate Multi-Repository Context section per template (auto-filled from epic YAML: repository, provides_apis, consumes_apis, dependencies)
 
-No relevant accumulated context found. This story will create new resources:
-- New tables: [list]
-- New endpoints: [list]
-- New models: [list]
-```
-
-**Critical Checks Before Finalizing Dev Notes**:
-- [ ] Verified no duplicate table names planned
-- [ ] Verified no duplicate endpoint paths (method + path) planned
-- [ ] Verified no duplicate model/interface names planned
-- [ ] All resources to REUSE are documented with source story and file location
-- [ ] All resources to EXTEND are documented with base type and extension rationale
-- [ ] All NEW resources are justified (not duplicates of existing resources)
-
-**If MULTI-REPO MODE**: Add multi-repo context section after the main story sections:
-
-```markdown
-## Multi-Repo Context
-
-- **Repository**: {next_story_definition.repository}
-- **Repository Type**: {next_story_definition.repository_type}
-- **Epic**: Epic {next_story_epic.epic_id} - {next_story_epic.title}
-
-{{#if next_story_definition.provides_apis}}
-### APIs Provided by This Story
-
-{{#each next_story_definition.provides_apis}}
-- `{{this}}` - See [API Contracts]({product_repo_path}/docs/architecture/api-contracts.md)
-{{/each}}
-
-**Responsibility**: This story MUST implement these APIs exactly as defined in the API contract.
-{{/if}}
-
-{{#if next_story_definition.consumes_apis}}
-### APIs Consumed by This Story
-
-{{#each next_story_definition.consumes_apis}}
-- `{{this}}` - Defined in [API Contracts]({product_repo_path}/docs/architecture/api-contracts.md)
-{{/each}}
-
-**Responsibility**: This story MUST consume these APIs exactly as defined in the API contract.
-{{/if}}
-
-{{#if next_story_definition.dependencies}}
-### Cross-Repo Dependencies
-
-⚠️ This story depends on the following stories being completed first:
-
-{{#each next_story_definition.dependencies}}
-- **Story {{this}}** (Repository: {{lookup dependency_repos this}})
-  - Must be Status = Done before starting this story
-  - Check status: `{product_repo_path}/../{repository}/docs/stories/{{this}}-*/story.md`
-{{/each}}
-{{/if}}
-```
-
-**Use deliverables from epic**: Populate Acceptance Criteria using `next_story_definition.deliverables` as a starting point
+**Use deliverables from epic**: Populate Acceptance Criteria using `next_story_definition.deliverables`
 
 ### 7. Quality Assessment
 
@@ -814,147 +728,47 @@ If validation fails: Set Status = `Blocked`, document in Change Log, HALT
 
 ### 8. Execute Decisions
 
-**Decision Execution Strategy**: Use Decision Evaluator SubAgent with fallback to inline execution.
+Execute 3 sequential decisions using `{root}/tasks/make-decision.md`:
 
-Reference: `{root}/tasks/utils/call-decision-evaluator.md` for invocation pattern.
-
-#### 8A. Determine Architect Review Requirement
-
-**Primary: Call Decision Evaluator SubAgent**
-
-```
-@decision-evaluator Please execute decision evaluation:
-
-Decision Type: sm-architect-review-needed
-Context:
-  quality_score: {{quality_score from Step 7}}
-  complexity_indicators: {{complexity_indicators from Step 7}}
-
-Please return the structured result.
-```
-
-**Expected SubAgent Response:**
+#### 8A. Architect Review Requirement
 ```yaml
-status: success
 decision_type: sm-architect-review-needed
-result: [REQUIRED | NOT_REQUIRED | BLOCKED]
-reasoning: "{{explanation}}"
-next_action: "{{action}}"
+context:
+  quality_score: {{from Step 7}}
+  complexity_indicators: {{from Step 7}}
+result: architect_review_result (REQUIRED | NOT_REQUIRED | BLOCKED)
 ```
 
-**Extract Result:**
-- `architect_review_result` = SubAgent response `result` field
-- Store full response as `architect_review_decision`
-
-**Fallback (if SubAgent fails or timeout >30s):**
-```
-⚠️ SubAgent unavailable, using inline fallback
-
-Execute: {root}/tasks/make-decision.md
-Input:
-  decision_type: sm-architect-review-needed
-  context:
-    quality_score: {{quality_score}}
-    complexity_indicators: {{complexity_indicators}}
-
-Extract: architect_review_result = result
-```
-
-#### 8B. Determine Test Design Level
-
-**Primary: Call Decision Evaluator SubAgent**
-
-```
-@decision-evaluator Please execute decision evaluation:
-
-Decision Type: sm-test-design-level
-Context:
-  complexity_indicators: {{complexity_indicators from Step 7}}
-  quality_score: {{quality_score from Step 7}}
-  security_sensitive: {{security_sensitive from Step 7}}
-
-Please return the structured result.
-```
-
-**Expected SubAgent Response:**
+#### 8B. Test Design Level
 ```yaml
-status: success
 decision_type: sm-test-design-level
-result: [Simple | Standard | Comprehensive]
-reasoning: "{{explanation}}"
-next_action: "{{action}}"
+context:
+  complexity_indicators: {{from Step 7}}
+  quality_score: {{from Step 7}}
+  security_sensitive: {{from Step 7}}
+result: test_design_level (Simple | Standard | Comprehensive)
 ```
 
-**Extract Result:**
-- `test_design_level` = SubAgent response `result` field
-- Store full response as `test_design_decision`
-
-**Fallback (if SubAgent fails or timeout >30s):**
-```
-⚠️ SubAgent unavailable, using inline fallback
-
-Execute: {root}/tasks/make-decision.md
-Input:
-  decision_type: sm-test-design-level
-  context:
-    complexity_indicators: {{complexity_indicators}}
-    quality_score: {{quality_score}}
-    security_sensitive: {{security_sensitive}}
-
-Extract: test_design_level = result
-```
-
-#### 8C. Determine Story Status
-
-**Primary: Call Decision Evaluator SubAgent**
-
-```
-@decision-evaluator Please execute decision evaluation:
-
-Decision Type: sm-story-status
-Context:
-  architect_review_result: {{architect_review_result from 8A}}
-  test_design_level: {{test_design_level from 8B}}
-
-Please return the structured result.
-```
-
-**Expected SubAgent Response:**
+#### 8C. Story Status
 ```yaml
-status: success
 decision_type: sm-story-status
-result: [TestDesignComplete | AwaitingArchReview | RequiresRevision | Blocked | Escalated]
-reasoning: "{{explanation}}"
-next_action: [handoff_to_architect | handoff_to_dev | handoff_to_qa_test_design | ...]
+context:
+  architect_review_result: {{from 8A}}
+  test_design_level: {{from 8B}}
+result:
+  final_status: (TestDesignComplete | AwaitingArchReview | RequiresRevision | Blocked | Escalated)
+  next_action: (handoff_to_architect | handoff_to_dev | handoff_to_qa_test_design | sm_revise_story)
 ```
 
-**Extract Result:**
-- `final_status` = SubAgent response `result` field
-- `next_action` = SubAgent response `next_action` field
-- Store full response as `story_status_decision`
-- **Apply**: Set story status to `final_status`
+**Apply**: Set story Status field to `final_status`
 
-**Fallback (if SubAgent fails or timeout >30s):**
+**Decision Summary**:
 ```
-⚠️ SubAgent unavailable, using inline fallback
-
-Execute: {root}/tasks/make-decision.md
-Input:
-  decision_type: sm-story-status
-  context:
-    architect_review_result: {{architect_review_result}}
-    test_design_level: {{test_design_level}}
-
-Extract: final_status = result, next_action = next_action
-```
-
-**Decision Summary:**
-```
-Story Decision Results:
+📊 Story Decisions:
 - Architect Review: {{architect_review_result}}
 - Test Design Level: {{test_design_level}}
-- Story Status: {{final_status}}
-- Next Action: {{next_action}}
+- Status: {{final_status}}
+- Next: {{next_action}}
 ```
 
 ### 9. Record Change Log

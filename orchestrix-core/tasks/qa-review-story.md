@@ -350,94 +350,12 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 ### Handoff Messages
 
-Based on the review outcome, output the appropriate handoff (use exact format):
+Output appropriate handoff based on review outcome. Use template: `{root}/templates/qa-handoff-message-tmpl.md`
 
-#### Architecture Escalation:
-```
-⚠️ ESCALATED TO ARCHITECT
-Story: {story_id} → Status: Escalated
-Reason: {escalation_reason}
+**Handoff Formats**:
+- **Architecture Escalation**: `🎯 HANDOFF TO architect: *review-escalation {story_id}`
+- **Gate PASS + Commit Success**: `🎉 STORY {story_id} DONE - COMMITTED` + `🎯 HANDOFF TO {target}: {command}`
+- **Gate PASS + Commit Failed**: `⚠️ COMMIT FAILED` + `🎯 RETRY COMMIT: *finalize-commit {story_id}`
+- **Gate CONCERNS/FAIL**: `⚠️ ISSUES FOUND` + `🎯 HANDOFF TO dev: *review-qa {story_id}`
 
-🎯 HANDOFF TO architect: *review-escalation {story_id}
-```
-
-#### Gate PASS (Story Complete):
-
-**Use Step 7 decision result to determine handoff format**:
-
-**If `requires_git_commit == true` AND commit succeeded**:
-```
-✅ STORY COMPLETE
-Story: {story_id} → Status: Done
-Gate: PASS | Round: {review_round} | Quality: {score}/100
-{decision.reasoning}
-
-📦 Git Commit: {commit_hash}
-   Message: feat(story-{story_id}): {story_title}
-   Files: {files_count} modified, {tests_count} tests added
-
-🎉 STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
-
-🎯 HANDOFF TO {decision.handoff_target}: {decision.next_command}
-```
-
-**If `requires_git_commit == true` BUT commit failed**:
-```
-✅ QA REVIEW COMPLETE - COMMIT FAILED
-Story: {story_id} → Status: Done
-Gate: PASS | Round: {review_round} | Quality: {score}/100
-{decision.reasoning}
-
-⚠️ Git commit failed: {commit_error}
-
-🎯 RETRY COMMIT:
-*finalize-commit {story_id}
-
-Or investigate git error and retry manually.
-```
-
-**If `requires_git_commit == false`**:
-```
-✅ QA REVIEW COMPLETE
-Story: {story_id} → Status: Done
-Gate: PASS | Round: {review_round} | Quality: {score}/100
-{decision.reasoning}
-
-💡 Note: Story marked complete but commit deferred (check decision reasoning)
-
-🎯 HANDOFF TO {decision.handoff_target}: {decision.next_command}
-```
-
-#### Gate CONCERNS/FAIL (Need Dev Fix):
-```
-⚠️ QA REVIEW COMPLETE - ISSUES FOUND
-Story: {story_id} → Status: Review (Round {review_round})
-Gate: {CONCERNS|FAIL} | Issues: {issues_count} ({critical}C, {high}H, {medium}M)
-
-Review: docs/qa/reviews/{story_id}-qa-r{review_round}.md
-
-🎯 HANDOFF TO dev: *review-qa {story_id}
-```
-
-#### Gate FAIL with Major Rework:
-```
-❌ QA REVIEW COMPLETE - MAJOR REWORK REQUIRED
-Story: {story_id} → Status: Review (Round {review_round})
-Gate: FAIL | Critical Issues: {critical_count}
-
-Review: docs/qa/reviews/{story_id}-qa-r{review_round}.md
-
-🎯 HANDOFF TO dev: *review-qa {story_id}
-⚠️ Major rework required
-```
-
-#### Escalate to Architect (No Improvement):
-```
-🚨 ESCALATED - NO IMPROVEMENT
-Story: {story_id} → Status: Escalated
-Reason: No improvement after {review_round} rounds
-
-🎯 HANDOFF TO architect: *review-escalation {story_id}
-```
-
-**CRITICAL**: The handoff command (e.g., `*review {story_id}`) MUST be clearly visible as the final line of your output.
+**CRITICAL**: Handoff command MUST be the final line of output. No summaries/tips after handoff.

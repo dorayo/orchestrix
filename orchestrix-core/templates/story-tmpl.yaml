@@ -244,68 +244,235 @@ sections:
   - id: dev-notes
     title: Dev Notes
     instruction: |
-      Populate relevant information, only what was pulled from actual artifacts from docs folder, relevant to this story:
-      - Do not invent information
-      - If known add Relevant Source Tree info that relates to this story
-      - If there were important notes from previous story that are relevant to this one, include them here
-      - MANDATORY: Include **Technical Preferences Summary** section with key technical choices and constraints from architecture docs
-      - MANDATORY: Include **Accumulated Context from Previous Stories** section (NEW - loaded via load-cumulative-context.md):
-        - **Existing Database Schema**: List tables and fields created in previous stories that are relevant to this story
-        - **Existing API Endpoints**: List endpoints created in previous stories that this story may interact with or extend
-        - **Existing Shared Models**: List TypeScript interfaces, Zod schemas, enums that this story should reuse
-        - For each item, include: Name, Type, Added in Story X.Y, File Location
-        - Mark items to REUSE vs items to EXTEND vs new items to CREATE
-        - This prevents creating duplicate resources and ensures consistency
-      - MANDATORY: Include **Field-Level API Contract** section when story involves API request/response payloads or shared data models.
-        - Table format with columns: Field | Type | Required | Used In (Request/Response/UI/DB) | Notes
-        - Values must be consistent with Data Models and API Specifications from architecture docs
-        - This table acts as the authoritative alignment for frontend/backend/QA
-      - MANDATORY: Include **Data Models** section with schemas, validation rules, and relationships (with references)
-      - MANDATORY: Include **API Specifications** section with endpoint details, request/response formats, authentication, and error handling rules
-      - MANDATORY: Include **Component Specifications** section with props, state, and integration requirements for UI components
-      - MANDATORY: Include **File Locations** section with exact file paths for new code according to project structure
-      - MANDATORY: Include **Testing Requirements** section listing test standards, cases, and strategies from testing-strategy.md
-      - MANDATORY: Include **Testing Integrity Requirements** section with immutable test rules
-      - MANDATORY: Include **Technical Constraints** section listing version requirements, performance/security rules, and integration constraints
-      - MANDATORY: Include **Technical Extraction Verification Summary** section with completion rate and flagged issues from Step 5
-      - Every technical detail MUST include its source reference: [Source: docs/architecture/{filename}.md#{section}] or [Source: Cumulative Registry - Story X.Y]
-      - If information for a category is not found in the architecture docs, explicitly state: "No specific guidance found in architecture docs"
-      - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents directly.
-        These notes, together with the Tasks/Subtasks, must give the Dev Agent complete context to implement the story,
-        meeting all Acceptance Criteria and completing all tasks/subtasks with minimal overhead.
+      **OPTIMIZATION PRINCIPLE**: Dev Notes record STORY-SPECIFIC information only.
+      Do NOT copy-paste architecture documents. Use references instead.
+
+      **Core Guidelines**:
+      - Reference architecture docs via: [→ docs/architecture/{file}.md#{section}]
+      - For accumulated context: Use compact table format (Name | Story | Action | Key Info)
+      - For database/API designs: Record DECISIONS, not full schemas (schemas live in migration files/code)
+      - Keep Dev Notes under 200 lines total
+
+      **MANDATORY Sections**:
+      1. **Technical Constraints Summary** (Simplified - ~20 lines)
+         - Key tech stack choices with references to arch docs
+         - Story-specific constraints and decisions ONLY
+         - NO copy-paste of entire arch doc sections
+
+      2. **Accumulated Context** (Table Format - ~30 lines)
+         - Format: | Resource | Source Story | Action | Key Fields/Info |
+         - Example: | users table | 1.1 | REUSE | id, email (full schema in Story 1.1) |
+         - NO full schema copies, just references
+
+      3. **Database/API Design** (Decision-Focused - ~40 lines)
+         - Design decisions and rationale (WHY this approach)
+         - Key constraints (unique indexes, FK decisions, enum choices)
+         - Reference to full schemas: "See migration file: V10_001_02__*.sql"
+         - NO embedding 200+ line CREATE TABLE statements
+
+      4. **Data Models** (Contract-Focused - ~40 lines)
+         - Interface/DTO names and key field contracts
+         - Critical business rules and validations
+         - Reference: "Full implementation in {ClassName}.java/ts"
+         - NO embedding complete 150+ line class definitions
+
+      5. **File Locations** (~20 lines)
+         - Exact paths for new files per project structure
+         - Migration file names
+         - Entity/Service/Controller locations
+
+      6. **Testing Requirements** (~30 lines)
+         - Test frameworks and patterns [→ testing-strategy.md]
+         - Story-specific test priorities (P0/P1/P2)
+         - Coverage requirements
+         - Test Integrity Rules (reference standard rules)
+
+      7. **Technical Constraints** (~20 lines)
+         - Version requirements [→ tech-stack.md]
+         - Performance/security rules for THIS story
+         - Integration constraints specific to this story
+
+      **TOTAL TARGET**: ~200 lines (vs previous 600+ lines)
     elicit: true
     owner: scrum-master
     editors: [scrum-master]
     sections:
-      - id: technical-preferences-summary
-        title: Technical Preferences Summary
+      - id: technical-constraints-summary
+        title: Technical Constraints Summary
         instruction: |
-          Extract and summarize key technical preferences and constraints that apply to this story:
-          - Technology stack choices and version requirements
-          - Architecture patterns and conventions to follow
-          - Development practices and coding standards
-          - Library/framework preferences and restrictions
-          - Performance, security, or integration constraints
-          - Source all information with references: [Source: architecture/{filename}.md#{section}]
+          **Story-Specific Technical Constraints** (Keep under 20 lines):
+          - List only constraints UNIQUE to this story
+          - Reference common tech stack: [→ tech-stack.md#{section}]
+          - Reference coding standards: [→ coding-standards.md#{section}]
+          - NO copying entire architecture document sections
+
+          Example Format:
+          **Tech Stack** (full details in architecture docs):
+          - {Primary Technology}: {version/details} [→ tech-stack.md#{Section}]
+          - {Naming Convention}: {format description} [→ coding-standards.md#{Section}]
+
+          **Story-Specific Constraints**:
+          - {Business Rule 1}: {constraint description with specifics}
+          - {Business Rule 2}: {constraint description with specifics}
+          - {Deferred Dependency}: {reason for deferral to future epic/story}
         elicit: true
         owner: scrum-master
         editors: [scrum-master]
-      - id: testing-standards
-        title: Testing
+
+      - id: accumulated-context
+        title: Accumulated Context (From Previous Stories)
         instruction: |
-          List Relevant Testing Standards from Architecture the Developer needs to conform to:
-          - Test file location
-          - Test standards
-          - Testing frameworks and patterns to use
-          - Any specific testing requirements for this story
-          
-          CRITICAL - Test Integrity Rules:
-          - Tests represent requirements and are AUTHORITATIVE - they define what "correct" means
-          - NEVER modify test expectations, assertions, or acceptance criteria to make tests pass
-          - If tests fail, fix the IMPLEMENTATION, not the tests
-          - Distinguish between "requirement tests" (immutable business logic) and "implementation tests" (adjustable technical details)
-          - Any test modifications require explicit business justification and approval
-          - Tests are the executable expression of requirements and must be preserved
+          **Compact Table Format** (Keep under 30 lines):
+          List ONLY resources relevant to THIS story. Use table format.
+
+          | Resource Type | Name | Source Story | Action | Key Info |
+          |--------------|------|--------------|--------|----------|
+          | Table | {table_name} | {X.Y} | REUSE/EXTEND/FK | {key_fields} (full schema in Story {X.Y}) |
+          | Endpoint | {METHOD /path} | {X.Y} | CALL/EXTEND | {brief_signature} |
+          | Model | {IModelName} | {X.Y} | REUSE/EXTEND | {action_description} |
+
+          **DO NOT**:
+          - Copy full table schemas (just list key fields)
+          - Copy full API request/response definitions (just summary)
+          - Copy full interface definitions (just name + extension info)
+
+          **Reference**: Full schemas available in original Story Dev Agent Records or cumulative registry
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: database-design
+        title: Database Design
+        instruction: |
+          **Design Decisions** (Keep under 40 lines):
+          Record WHY decisions were made, not full SQL.
+
+          **Tables Created/Modified**:
+          - Table: {table_name}
+            - Purpose: {business purpose description}
+            - Key decisions:
+              * {field_name} {TYPE} {CONSTRAINT} - {rationale for this design choice}
+              * {enum_field} ENUM - {why enum instead of varchar/int}
+              * {fk_field} FK DEFERRED - {reason for deferral, if applicable}
+            - Indexes: {list critical indexes and their purpose}
+            - FKs: {list foreign keys and referential actions}
+
+          **Full Schema Reference**:
+          - Migration: {path/to/migration/file.sql}
+          - See migration file for complete CREATE TABLE statement ({N} fields, {M} indexes, {K} FKs)
+
+          **DO NOT**: Embed full CREATE TABLE SQL here
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: data-models
+        title: Data Models
+        instruction: |
+          **Model Contracts** (Keep under 40 lines):
+          Define interfaces and key business rules, NOT full implementations.
+
+          **Entities/DTOs**:
+          - {EntityName} Entity
+            - Package: {package.path}
+            - Key fields: {field1} ({type}), {field2} ({type}), {critical_field} ({type} {constraint})
+            - Enums: {EnumName1} ({values_summary}), {EnumName2} ({values_summary})
+            - Annotations: {framework-specific annotations summary}
+
+          - Validation Rules:
+            * {field_name}: {validation rule description}
+            * {field_name}: {constraint description}
+            * {field_name}: {business rule description}
+
+          **Full Implementation Reference**:
+          - Entity code created by Dev Agent in: {path/to/entity/file}
+          - Complete field list ({N} fields) in implementation
+
+          **DO NOT**: Embed full class/interface definition here
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: file-locations
+        title: File Locations
+        instruction: |
+          **Exact File Paths** (Keep under 20 lines):
+          List paths for new files per project structure [→ source-tree.md].
+
+          **Database Migrations** (if applicable):
+          - {module}/src/main/resources/db/migration/{version}__{description}.sql
+          - {module}/src/main/resources/db/migration/{version}__{description}.sql
+
+          **Entity & Data Access** (if applicable):
+          - {module}/src/main/java/{package}/entity/{EntityName}.java
+          - {module}/src/main/java/{package}/mapper/{EntityName}Mapper.java
+          - {module}/src/main/resources/mapper/{EntityName}Mapper.xml
+
+          **Business Logic** (if applicable):
+          - {module}/src/main/java/{package}/service/I{Service}Service.java
+          - {module}/src/main/java/{package}/service/impl/{Service}ServiceImpl.java
+          - {module}/src/main/java/{package}/validator/{ValidatorName}.java
+
+          **Tests** (if applicable):
+          - {module}/src/test/java/{package}/mapper/{Entity}MapperTest.java
+          - {module}/src/test/java/{package}/service/{Service}ServiceTest.java
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: testing-requirements
+        title: Testing Requirements
+        instruction: |
+          **Test Strategy** (Keep under 30 lines):
+          Reference testing standards, list story-specific priorities.
+
+          **Frameworks** [→ testing-strategy.md#Framework]:
+          - {Test Framework 1} ({version/purpose})
+          - {Test Framework 2} ({annotations/utilities summary})
+          - {Test Database/Mocking Framework}
+
+          **Coverage Requirements** [→ testing-strategy.md#Coverage]:
+          - Unit test coverage > {threshold}% (line coverage via {tool})
+          - Critical paths 100% coverage: {critical_feature_1}, {critical_feature_2}, {critical_feature_3}
+
+          **Story-Specific Test Priorities**:
+          - P0: {highest_priority_test_areas}
+          - P1: {medium_priority_test_areas}
+          - P2: {lowest_priority_test_areas}
+
+          **Test Integrity Rules** [→ testing-strategy.md#Test Integrity]:
+          - Tests define "correct" behavior - NEVER modify assertions to make tests pass
+          - Fix IMPLEMENTATION, not tests
+          - Requirement tests (business logic) are immutable
+          - Implementation tests (technical details) are adjustable
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: technical-constraints
+        title: Technical Constraints
+        instruction: |
+          **Story-Specific Constraints** (Keep under 20 lines):
+          List constraints unique to THIS story, reference common constraints.
+
+          **Version Requirements** [→ tech-stack.md]:
+          - {Technology 1}: {min_version}+ ({reason for minimum version})
+          - {Technology 2}: {version} ({required feature/capability})
+          - {Language/Runtime}: {version}+ ({language features used})
+
+          **Performance** (Story-Specific):
+          - {Operation}: < {threshold}ms ({context/justification})
+          - {Operation}: < {threshold}ms ({optimization strategy if applicable})
+
+          **Security** [→ coding-standards.md#Security]:
+          - {Security Rule 1}: {requirement description}
+          - {Data Protection}: {masking/encryption requirement}
+          - {Uniqueness Constraint}: {enforcement mechanism}
+
+          **Integration Constraints**:
+          - {System/Tool Constraint}: {immutability/compatibility rule}
+          - {Referential Integrity}: {FK behavior specification}
+          - {Legacy System}: {access restrictions if applicable}
         elicit: true
         owner: scrum-master
         editors: [scrum-master]
@@ -526,149 +693,27 @@ sections:
             Date Raised: {{date_raised}}
             Status: {{status}}
         
-  - id: quality-assessment-metadata
-    title: Quality Assessment Metadata
+  - id: story-decisions
+    title: Story Decisions (Read-Only After Creation)
     instruction: |
-      This section is populated by the SM Agent during quality check (two-phase assessment).
-      Phase 1: Structure Validation (gate condition - must be 100%)
-      Phase 2: Technical Quality Score (0-10) + Complexity Detection (0-7 indicators)
+      **OPTIMIZED**: Compact record of SM's initial quality assessment and decisions.
+      Populated once during story creation. Subsequent agents read-only.
+      Replaces verbose Quality Assessment Metadata with essential decisions only.
     owner: scrum-master
     editors: [scrum-master]
-    sections:
-      - id: structure-validation
-        title: Structure Validation
-        instruction: Phase 1 gate condition - must pass 100% before technical quality assessment
-        owner: scrum-master
-        editors: [scrum-master]
-        fields:
-          - id: structure_validation_passed
-            title: Structure Validation Passed
-            type: boolean
-            instruction: Whether all structure validation criteria passed (100% required)
-            
-          - id: structure_completion_rate
-            title: Structure Completion Rate
-            type: percentage
-            instruction: Percentage of structure validation criteria passed (must be 100%)
-            
-          - id: structure_validation_date
-            title: Validation Date
-            type: timestamp
-            instruction: Timestamp when structure validation was performed
-            
-          - id: failed_criteria
-            title: Failed Criteria
-            type: list
-            instruction: List of structure validation criteria that failed (empty if all passed)
-            
-      - id: technical-quality-assessment
-        title: Technical Quality Assessment
-        instruction: Phase 2 assessment - only performed if structure validation passed
-        owner: scrum-master
-        editors: [scrum-master]
-        fields:
-          - id: technical_quality_score
-            title: Technical Quality Score
-            type: number
-            range: 0-10
-            instruction: Overall technical quality score (50% technical extraction + 50% implementation readiness)
-            
-          - id: technical_extraction_score
-            title: Technical Extraction Score
-            type: number
-            range: 0-10
-            instruction: Score for technical extraction quality (architecture info, preferences alignment, source references)
-            
-          - id: technical_extraction_completion_rate
-            title: Technical Extraction Completion Rate
-            type: percentage
-            instruction: Percentage of technical extraction completed (minimum 80% required)
-            
-          - id: implementation_readiness_score
-            title: Implementation Readiness Score
-            type: number
-            range: 0-10
-            instruction: Score for implementation readiness (dev notes quality, testing strategy, implementability)
-            
-          - id: assessment_date
-            title: Assessment Date
-            type: timestamp
-            instruction: Timestamp when technical quality assessment was performed
-            
-      - id: complexity-detection
-        title: Complexity Detection
-        instruction: Detection of complexity indicators in Story content
-        owner: scrum-master
-        editors: [scrum-master]
-        fields:
-          - id: complexity_indicators_detected
-            title: Complexity Indicators Detected
-            type: number
-            range: 0-7
-            instruction: Count of complexity indicators detected
-            
-          - id: detected_indicators_list
-            title: Detected Indicators List
-            type: checklist
-            instruction: List of specific complexity indicators detected
-            items:
-              - API contract changes (endpoints, request/response schemas)
-              - Database schema modifications (tables, columns, relationships)
-              - New architectural patterns (not following existing patterns)
-              - Cross-service dependencies (integration with other services)
-              - Security-sensitive operations (authentication, authorization, encryption)
-              - Performance-critical features (high-traffic, real-time, large data)
-              - Core architecture document modifications
-              
-          - id: complexity_detection_date
-            title: Detection Date
-            type: timestamp
-            instruction: Timestamp when complexity detection was performed
-            
-      - id: decision-matrix-result
-        title: Decision Matrix Result
-        instruction: Result from applying decision matrix based on quality score and complexity
-        owner: scrum-master
-        editors: [scrum-master]
-        fields:
-          - id: architect_review_recommendation
-            title: Architect Review Recommendation
-            type: choice
-            choices: [NOT_NEEDED, OPTIONAL, RECOMMENDED, N/A]
-            instruction: |
-              Recommendation based on decision matrix:
-              - NOT_NEEDED: High quality (≥8.0) + Low complexity (0 indicators)
-              - OPTIONAL: High quality (≥8.0) + Single complexity indicator (1)
-              - RECOMMENDED: High quality (≥8.0) + High complexity (≥2) OR Medium quality (6.0-7.9)
-              - N/A: Low quality (<6.0) or blocked status
-              
-          - id: decision_status
-            title: Decision Status
-            type: choice
-            choices: [Approved, AwaitingArchReview, Blocked]
-            instruction: Status determined by decision matrix based on quality score and complexity
-            
-          - id: decision_reasoning
-            title: Decision Reasoning
-            type: text
-            instruction: Explanation for the decision based on quality score, complexity indicators, and decision matrix rules
-            
-          - id: decision_date
-            title: Decision Date
-            type: timestamp
-            instruction: Timestamp when decision was made
-            
-          - id: quality_level
-            title: Quality Level
-            type: choice
-            choices: [excellent, good, insufficient]
-            instruction: "Quality level classification (excellent: ≥8.0, good: 6.0-7.9, insufficient: <6.0)"
-            
-          - id: risk_level
-            title: Risk Level
-            type: choice
-            choices: [low, low-medium, medium, medium-high, high]
-            instruction: Risk level based on quality and complexity combination
+    template: |
+      ```yaml
+      quality_score: {{quality_score}}/10
+      complexity: {{complexity_count}} indicators ({{complexity_summary}})
+      test_design_level: {{test_design_level}}
+      architect_review: {{architect_review_decision}} ({{reasoning}})
+      initial_status: {{initial_status}}
+      decided_at: {{timestamp}}
+      ```
+
+      **Complexity Indicators**: {{detected_indicators_list}}
+
+      **Decision Reasoning**: {{decision_reasoning}}
   
   - id: qa-test-design-metadata
     title: QA Test Design Metadata
@@ -759,336 +804,40 @@ sections:
         editors: [dev-agent]
         required: false
   
-  - id: architect-review-metadata
-    title: Architect Review Metadata
+  - id: review-status
+    title: Review Status (Live Updates)
     instruction: |
-      This section is populated by the Architect Agent during technical review.
-      Tracks review rounds, decisions, and outcomes.
-      Maximum 2 rounds of review allowed.
-      
-      **Warning Message Placement:** If Architect review is RECOMMENDED and user skips, a warning message box should be added 
-      immediately after this metadata section (before the Story section) to alert all stakeholders.
+      **OPTIMIZED**: Compact tracking of review status across workflow.
+      Replaces verbose Architect/QA Review Metadata with essential status only.
+      Detailed review reports stored in external files (docs/architecture/story-reviews/, docs/qa/reviews/).
     owner: scrum-master
-    editors: [scrum-master, architect-agent]
+    editors: [scrum-master, architect-agent, qa-agent]
     sections:
-      - id: review-rounds
-        title: Review Rounds
-        instruction: |
-          Tracks architect review rounds (maximum 2 rounds allowed).
-          Each review round is recorded with timestamp, score, and outcome.
+      - id: architect-review
+        title: Architect Review
+        template: |
+          {{#if no_review}}
+          Status: Not Required
+          {{else}}
+          **Latest Review**: Round {{latest_round}} ({{latest_date}})
+          **Score**: {{score}}/10 | **Decision**: {{decision}}
+          **Critical Issues**: {{critical_count}}
+          **Report**: [Review R{{latest_round}}]({{report_path}})
+          {{/if}}
         owner: architect-agent
         editors: [architect-agent]
-        fields:
-          - id: review_round
-            title: Current Review Round
-            type: number
-            range: 0-2
-            instruction: Current review round number (0 = no review yet, 1 = first review, 2 = second review)
-            
-          - id: total_reviews_conducted
-            title: Total Reviews Conducted
-            type: number
-            instruction: Total number of architect reviews conducted for this story
-            
-      - id: review-history
-        title: Review History
-        instruction: |
-          Historical record of all architect reviews conducted.
-          Each entry includes round number, date, score, decision, and key findings.
-          This is an append-only log.
-        owner: architect-agent
-        editors: [architect-agent]
-        type: list
-        item_template: |
-          - Round: {{round_number}}
-            Date: {{review_date}}
-            Reviewer: {{reviewer_id}}
-            Score: {{review_score}}/10
-            Decision: {{decision}}
-            Critical Issues: {{critical_issues_count}}
-            Key Findings: {{key_findings_summary}}
-            
-      - id: complexity-analysis
-        title: Complexity Analysis
-        instruction: Automatically populated by SM Agent during quality check (legacy - kept for backward compatibility)
-        owner: scrum-master
-        editors: [scrum-master]
-        fields:
-          - id: complexity_analysis_date
-            title: Analysis Date
-            type: timestamp
-            instruction: Timestamp when complexity analysis was performed
-            
-          - id: detected_indicators
-            title: Detected Indicators
-            type: checklist
-            instruction: List of complexity indicators detected in Story content
-            items:
-              - API contract changes (endpoints, request/response schemas)
-              - Database schema modifications (tables, columns, relationships)
-              - New architectural patterns (not following existing patterns)
-              - Cross-service dependencies (integration with other services)
-              - Security-sensitive operations (authentication, authorization, encryption)
-              - Performance-critical features (high-traffic, real-time, large data)
-              - Core architecture document modifications
-              
-          - id: total_indicators
-            title: Total Indicators Detected
-            type: number
-            instruction: Count of detected indicators (0-7)
-            
-          - id: recommendation
-            title: Architect Review Recommendation
-            type: choice
-            choices: [RECOMMENDED, OPTIONAL, NOT_NEEDED]
-            instruction: Recommendation based on complexity analysis and quality score
-            
-          - id: reasoning
-            title: Recommendation Reasoning
-            type: text
-            instruction: Specific explanation for the recommendation based on detected indicators and quality score
-            
-      - id: review-decision
-        title: Review Decision
-        instruction: User decision about whether to trigger architect review
-        owner: scrum-master
-        editors: [scrum-master, architect-agent]
-        fields:
-          - id: review_decision
-            title: Decision
-            type: choice
-            choices: [PENDING, COMPLETED, SKIPPED]
-            instruction: Current status of architect review decision
-            
-          - id: decision_date
-            title: Decision Date
-            type: timestamp
-            instruction: Timestamp when user made the review decision
-            
-          - id: decision_by
-            title: Decision By
-            type: text
-            instruction: Identifier of user who made the decision
-            
-      - id: review-completed
-        title: Review Completion Details
-        instruction: Populated when architect review is completed (conditional - only if review_decision = COMPLETED)
-        owner: architect-agent
-        editors: [architect-agent]
-        conditional: review_decision == "COMPLETED"
-        fields:
-          - id: review_date
-            title: Review Date
-            type: timestamp
-            instruction: Timestamp when architect review was completed
-            
-          - id: reviewer
-            title: Reviewer
-            type: text
-            instruction: Identifier of architect agent or human architect who performed review
-            
-          - id: outcome
-            title: Review Outcome
-            type: choice
-            choices: [approved, revise, escalate]
-            instruction: Result of architect review
-            
-          - id: review_score
-            title: Review Score
-            type: number
-            instruction: Score from architect review checklist (0-10)
-            
-          - id: findings
-            title: Review Findings
-            type: text
-            instruction: Summary of architect's findings, recommendations, and any issues identified
-            
-      - id: review-skipped
-        title: Review Skip Details
-        instruction: Populated when user decides to skip architect review (conditional - only if review_decision = SKIPPED)
-        owner: scrum-master
-        editors: [scrum-master]
-        conditional: review_decision == "SKIPPED"
-        fields:
-          - id: skip_reason
-            title: Skip Reason
-            type: text
-            instruction: User-provided reason for skipping the recommended architect review
-            required: true
-            
-          - id: skip_date
-            title: Skip Date
-            type: timestamp
-            instruction: Timestamp when review was skipped
-            
-          - id: skip_warning_acknowledged
-            title: Warning Acknowledged
-            type: boolean
-            instruction: Confirmation that user acknowledged the warning about skipping recommended review
-            
-      - id: dev-escalation
-        title: Dev Escalation
-        instruction: |
-          Populated by Dev Agent when implementation requires deviation from SM's technical approach
-          and needs Architect review for validation.
-        owner: dev-agent
-        editors: [dev-agent]
-        required: false
-        fields:
-          - id: escalation_flagged
-            title: Escalation Flagged
-            type: boolean
-            instruction: Whether Dev Agent has flagged this story for Architect review
-            
-          - id: escalation_date
-            title: Escalation Date
-            type: timestamp
-            instruction: Timestamp when Dev Agent flagged the escalation
-            
-          - id: deviation_reason
-            title: Deviation Reason
-            type: text
-            instruction: Explanation of why Dev Agent needs to deviate from SM's technical approach
-            
-          - id: impact_assessment
-            title: Impact Assessment
-            type: text
-            instruction: Dev Agent's assessment of the impact of the proposed deviation
-            
-          - id: alternative_approach
-            title: Alternative Approach
-            type: text
-            instruction: Dev Agent's proposed alternative technical approach
-    
-  - id: architect-review-summary
-    title: Architect Review Summary
-    instruction: |
-      Summary of Architect reviews with references to detailed reports.
-      Detailed review reports are stored in separate files for better organization.
-      This section provides quick access to review outcomes and links to full reports.
-    required: false
-    owner: architect-agent
-    editors: [architect-agent]
-    template: |
-      ## Architect Review Summary
 
-      {{#if no_reviews}}
-      No architect reviews conducted yet.
-      {{else}}
-      - **Total Reviews**: {{total_reviews}}
-      - **Latest Review**: {{latest_review_date}}
-      - **Latest Score**: {{latest_score}}/10
-      - **Latest Decision**: {{latest_decision}}
-      - **Critical Issues (Latest)**: {{latest_critical_count}}
-
-      ### Review Documents
-      {{#each review_documents}}
-      - Round {{round}}: [Arch Review R{{round}}]({{document_path}}) - Score: {{score}}/10 - Decision: {{decision}} - {{date}}
-      {{/each}}
-      {{/if}}
-
-      {{#if skipped_warning}}
-      > ⚠️ **Warning**: Architect review was RECOMMENDED but skipped by user.
-      > Reason: {{skip_reason}}
-      {{/if}}
-    
-  - id: qa-review-metadata
-    title: QA Review Metadata
-    instruction: |
-      This section is populated by the QA Agent during quality review.
-      Tracks QA review rounds (maximum 3 rounds allowed with progressive standards).
-      Round 1: Strict standards
-      Round 2: Moderate standards (50% issue reduction required)
-      Round 3: Pragmatic standards (no critical issues, acceptable technical debt)
-    owner: qa-agent
-    editors: [qa-agent]
-    sections:
-      - id: review-rounds
-        title: Review Rounds
-        instruction: Tracks QA review rounds and progressive standards
+      - id: qa-review
+        title: QA Review
+        template: |
+          {{#if no_review}}
+          Status: Not Started
+          {{else}}
+          **Latest Review**: Round {{latest_round}} ({{latest_date}})
+          **Gate**: {{gate}} | **Quality**: {{quality}}/100
+          **Issues**: {{resolved}}/{{total}} resolved
+          **Report**: [QA R{{latest_round}}]({{report_path}})
+          {{/if}}
         owner: qa-agent
         editors: [qa-agent]
-        fields:
-          - id: review_round
-            title: Current Review Round
-            type: number
-            range: 0-3
-            instruction: Current QA review round number (0 = no review yet, 1-3 = review rounds)
-            
-          - id: total_reviews_conducted
-            title: Total Reviews Conducted
-            type: number
-            instruction: Total number of QA reviews conducted for this story
-            
-      - id: review-history
-        title: Review History
-        instruction: |
-          Historical record of all QA reviews conducted.
-          Each entry includes round number, date, gate result, issues found, and improvement metrics.
-          This is an append-only log.
-        owner: qa-agent
-        editors: [qa-agent]
-        type: list
-        item_template: |
-          - Round: {{round_number}}
-            Date: {{review_date}}
-            Reviewer: {{reviewer_id}}
-            Gate: {{gate_result}}
-            Issues Found: {{total_issues}}
-            Critical Issues: {{critical_issues_count}}
-            High Severity Issues: {{high_severity_count}}
-            Issues from Previous Round: {{issues_from_previous_round}}
-            Issues Resolved: {{issues_resolved}}
-            Improvement Percentage: {{improvement_percentage}}%
-            Decision: {{decision}}
-            
-      - id: technical-debt
-        title: Technical Debt
-        instruction: |
-          Records any technical debt accepted during QA review (typically in Round 3).
-          Each entry includes description, impact assessment, and follow-up plan.
-        owner: qa-agent
-        editors: [qa-agent]
-        type: list
-        item_template: |
-          - Date: {{acceptance_date}}
-            Description: {{debt_description}}
-            Impact: {{impact_assessment}}
-            Severity: {{severity_level}}
-            Follow-up Plan: {{follow_up_plan}}
-            Accepted By: {{accepted_by}}
     
-  - id: qa-review-summary
-    title: QA Review Summary
-    instruction: |
-      Summary of QA reviews with references to detailed reports.
-      Detailed review reports are stored in separate files (docs/qa/reviews/).
-      Gate files are stored in docs/qa/gates/.
-      This section provides quick access to review outcomes and links to full reports.
-    required: false
-    owner: qa-agent
-    editors: [qa-agent]
-    template: |
-      ## QA Review Summary
-
-      {{#if no_reviews}}
-      No QA reviews conducted yet.
-      {{else}}
-      - **Total Reviews**: {{total_reviews}}
-      - **Latest Review**: {{latest_review_date}}
-      - **Latest Gate**: {{latest_gate}}
-      - **Final Quality Score**: {{final_quality_score}}/100
-      - **Total Issues Found**: {{total_issues_found}}
-      - **Total Issues Resolved**: {{total_issues_resolved}}
-      - **Overall Improvement**: {{overall_improvement}}%
-
-      ### Review History
-      {{#each review_history}}
-      - **Round {{round}}** ({{date}}): [QA Review R{{round}}]({{document_path}}) - {{gate}} - {{issues_count}} issues ({{improvement}}% improvement) {{#if waiver}}⚠️ WAIVED{{/if}}
-      {{/each}}
-
-      ### Final Gate
-      - **Gate File**: [{{gate_file_name}}]({{gate_file_path}})
-      - **Gate Result**: {{final_gate}}
-      - **Status Reason**: {{final_status_reason}}
-      {{/if}}

@@ -171,31 +171,15 @@ Previous Issues: {summary if exists}
 ```
 
 ### 1. Load Context (ALL MANDATORY)
-- Story (status: Approved/TestDesignComplete)
+
+Execute utility tasks to load required context:
+- Story (status: Approved/TestDesignComplete) - validate status, HALT if invalid
 - Standards (CONFIG_PATH.devLoadAlwaysFiles)
 - QA test design (if exists)
-- Architecture (utils/load-architecture-context.md - MANDATORY, not optional)
-- **NEW**: Cumulative Context (utils/load-cumulative-context.md - MANDATORY)
+- Architecture: `utils/load-architecture-context.md`
+- Cumulative Context: `utils/load-cumulative-context.md`
 
-**Load Cumulative Context**:
-Execute `{root}/tasks/utils/load-cumulative-context.md`:
-- Input: `devStoryLocation` (from config)
-- Output: `cumulative_context` object with database/API/models registries
-
-**Purpose**: Understand what resources (tables, endpoints, models) already exist from previous stories to avoid creating duplicates and ensure consistency.
-
-**Success Output**:
-```
-✅ Cumulative Context Loaded
-
-Database Registry: 5 tables, 42 fields (from 7 stories)
-API Registry: 24 endpoints, 15 schemas (from 7 stories)
-Models Registry: 32 models/types (from 7 stories)
-
-Cumulative context loaded for conflict validation (Step 2.5).
-```
-
-Validate status + sections → HALT if invalid
+**Cumulative Context** loads database/API/models registries from previous stories to avoid duplicates (used in Step 2.5)
 
 ### 2. Dev Log
 **Path**: `{devLogLocation}/{story-id}-dev-log.md`
@@ -234,142 +218,21 @@ Validate status + sections → HALT if invalid
 
 ### 2.5. Validate Against Cumulative Context (MANDATORY)
 
-**Purpose**: STRICT validation to detect conflicts between story's planned changes and existing resources from previous stories. **HALT on critical conflicts**.
-
 Execute `{root}/tasks/utils/validate-against-cumulative-context.md`:
-- Input: `story` (current story), `cumulative_context` (from Step 1)
-- Output: `validation_result` with status: HALT | WARN | PASS
+- Input: `story`, `cumulative_context` (from Step 1)
+- Output: `validation_result` (PASS | WARN | HALT)
 
-**What is Validated**:
+**Validates**:
+- Database: No duplicate tables/fields, FK references exist
+- API: No duplicate endpoints (method + path)
+- Models: No duplicate model/interface names
 
-1. **Database Conflicts (HALT level)**:
-   - No duplicate table names
-   - No duplicate field names within same table
-   - Foreign key references must exist in cumulative context
-   - Naming conventions must be consistent
+**Actions by Result**:
+- **PASS**: Proceed to Step 3
+- **WARN**: Log warnings to Dev Log, document justifications, proceed to Step 3
+- **HALT**: Stop immediately, set Status="Blocked", escalate to SM with conflict details
 
-2. **API Endpoint Conflicts (HALT level)**:
-   - No exact duplicate endpoints (same method + path)
-   - Similar endpoints detected (fuzzy match) → WARN with suggestion
-   - API pattern consistency checked
-
-3. **Model/Type Conflicts (HALT level)**:
-   - No duplicate model/interface names
-   - Similar models detected (>70% overlap) → WARN with reuse suggestion
-   - Naming convention consistency checked
-
-**Possible Outcomes**:
-
-**Outcome A: PASS**
-```
-✅ Cumulative Context Validation PASSED
-
-- Database: No conflicts detected
-- API: No conflicts detected
-- Models: No conflicts detected
-
-All naming conventions followed. Proceeding to Step 3 (Implementation).
-```
-→ **Action**: Proceed to Step 3
-
----
-
-**Outcome B: WARN (Non-blocking)**
-```
-⚠️ Cumulative Context Validation PASSED WITH WARNINGS
-
-Warnings detected:
-1. Similar endpoint: Existing POST /api/users/register (Story 1.2) vs Planned POST /api/auth/signup
-   → Recommendation: Review if these are duplicate operations
-2. Naming convention: Planned table 'OrderItems' (PascalCase) vs existing convention (snake_case)
-   → Suggestion: Use 'order_items' for consistency
-
-✅ You may proceed to Step 3, but address warnings in Dev Log.
-```
-→ **Action**:
-1. Log warnings to Dev Log
-2. Document justifications for warnings (e.g., why 'signup' vs 'register' are different)
-3. Proceed to Step 3
-
----
-
-**Outcome C: HALT (Critical Conflict)**
-```
-❌ Cumulative Context Validation FAILED - HALTING IMPLEMENTATION
-
-🚨 CRITICAL CONFLICTS DETECTED:
-
-Conflict #1: Duplicate Table
-- Table 'orders' already exists (created in Story 1.3)
-- Current story: 2.5 plans to CREATE table 'orders'
-- Resolution: Story 2.5 cannot create a table that already exists
-
-Conflict #2: Duplicate API Endpoint
-- Endpoint 'POST /api/orders' already exists (Story 1.3, file: src/api/orders/create.ts)
-- Current story: 2.5 plans to CREATE 'POST /api/orders'
-- Resolution: Remove from story or change to UPDATE existing endpoint
-
-🛑 IMPLEMENTATION HALTED
-
-Required Actions:
-1. Review story Dev Notes and identify conflicting resources
-2. Update story to REUSE or EXTEND existing resources instead of creating duplicates
-3. Escalate to SM if story design is fundamentally flawed
-4. Re-submit story for validation after fixes
-
-DO NOT PROCEED TO STEP 3 UNTIL ALL HALT-LEVEL CONFLICTS ARE RESOLVED.
-```
-→ **Action**:
-1. **DO NOT IMPLEMENT** - Stop immediately
-2. Log conflict details to Dev Log
-3. Update story status to "Blocked"
-4. Create issue for SM with conflict details
-5. Escalate: "Story blocked due to resource conflicts. See Dev Log for details."
-6. **HALT** - Do not proceed to Step 3
-
----
-
-**Integration with Dev Log**:
-
-Add validation result to Dev Log:
-```markdown
-## Step 2.5: Cumulative Context Validation
-
-Executed: utils/validate-against-cumulative-context.md
-
-Result: [PASS | WARN | HALT]
-
-{validation_result.report_markdown}
-
-{If HALT}
-🛑 IMPLEMENTATION HALTED due to critical conflicts.
-Escalating to SM for story redesign.
-
-{If WARN}
-⚠️ Warnings logged. Proceeding with justifications documented.
-
-{If PASS}
-✅ No conflicts. Proceeding to implementation.
-```
-
----
-
-**Critical Importance**:
-
-This step is the **primary mechanism** to prevent the story isolation problem:
-- Detects duplicate database tables/fields before they are created
-- Detects duplicate API endpoints before they are implemented
-- Detects duplicate models/types before they are defined
-- Ensures consistency with accumulated project context
-
-**Skipping this step WILL result in**:
-- Duplicate resources across stories
-- Inconsistent naming patterns
-- Conflicting database schemas
-- API endpoint duplication
-- Type system fragmentation
-
-**DO NOT SKIP THIS STEP UNDER ANY CIRCUMSTANCES.**
+**Critical**: This prevents duplicate resources. DO NOT SKIP.
 
 ### 3. Implement Tasks
 Per task/subtask:
@@ -636,57 +499,16 @@ This step closes the loop:
 
 ---
 
-#### Common Mistake: Premature Termination ❌
+#### Execution Checklist
 
-**WRONG** (Stopping after GATE 1):
-```
-✅ SELF-REVIEW PASSED
-Story ready for review.
+Complete both gates in sequence:
+- [ ] GATE 1 (Self-review) → PASS required
+- [ ] Step 7.5 (Registry Update) → COMPLETE required
+- [ ] GATE 2 (Completion steps) → 100% required
+- [ ] Story Status = "Review"
+- [ ] Handoff message as FINAL output (nothing after handoff command)
 
-[Agent stops here - WRONG!]
-```
-
-**CORRECT** (Complete both gates):
-```
-✅ SELF-REVIEW PASSED
-→ Proceeding to GATE 2: Completion Steps
-
-[Execute completion checklist]
-[Update all fields]
-[Verify 25/25 items complete]
-
-✅ IMPLEMENTATION COMPLETE
-Story: 2.3 → Status: Review
-[Full handoff message]
-
-🎯 HANDOFF TO qa: *review 2.3
-```
-
----
-
-#### Execution Checklist for You (LLM)
-
-Before ending this task, verify:
-
-- [ ] GATE 1 (Self-review) executed → Result: PASS
-- [ ] GATE 2 (Completion steps) executed → Result: 100%
-- [ ] Dev Log Final Summary written
-- [ ] Dev Agent Record updated with 7 fields
-- [ ] Change Log entry added to story
-- [ ] Story Status field = "Review" (actually changed)
-- [ ] Handoff message prepared
-- [ ] Handoff message output as FINAL action
-- [ ] Command `*review {story_id}` is last line
-- [ ] Task ended immediately after handoff
-
-**If ANY [ ] above**: You are NOT done. Complete missing items.
-
-**If ALL [x] above**: Output handoff message NOW and END.
-
-**CRITICAL HANDOFF RULE**:
-- The `🎯 HANDOFF TO qa: *review {story_id}` MUST be the absolute last line
-- Do NOT output summaries, tips, next steps, or any other content after handoff
-- STOP immediately after outputting the handoff command
+**CRITICAL**: Handoff message MUST be the absolute last line. Do NOT output summaries/tips after handoff.
 
 ## Refs
 - contract-driven-phases.md, coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md
