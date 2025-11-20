@@ -25,7 +25,8 @@ Verify SM agent permissions via `{root}/data/story-status-transitions.yaml`:
 Load `{root}/core-config.yaml` and extract `devStoryLocation`.
 
 Use glob pattern to find story file: `{devStoryLocation}/{story_id}*.md`
-- Example: `docs/stories/5.3*.md` matches both `5.3.md` and `5.3-frontend-order-query.md`
+- Example: `docs/stories/5.3*.md` matches `5.3-user-authentication-api.md`
+- Note: Glob pattern also matches legacy formats like `5.3.story.md` or `5.3.md` for backward compatibility
 
 **Step 0.3: Check if story exists**
 
@@ -668,7 +669,12 @@ Cross-reference requirements with `context.file_structure`. Document conflicts i
 
 ### 6. Populate Story Template
 
-Create `{devStoryLocation}/{epicNum}.{storyNum}.story.md` using `{root}/templates/story-tmpl.yaml`:
+Create story file using `{root}/templates/story-tmpl.yaml`:
+- **Filename**: Follow template's specification: `{devStoryLocation}/{epicNum}.{storyNum}-{story_title_short}.md`
+  - Extract story title from epic definition (from Step 2.3: `next_story_definition.title`)
+  - Convert title to kebab-case for `story_title_short` (lowercase, hyphens, no special chars)
+  - Example: Title "Redesign Locker Order Table" → `10.1-redesign-locker-order-table.md`
+  - Example: Title "User Authentication API" → `5.3-user-authentication-api.md`
 - Fill all sections per template
 - Use `context` from Step 4 for Dev Notes (architecture baseline)
 - **NEW**: Use `cumulative_context` from Step 4.5 for Dev Notes "Accumulated Context from Previous Stories" section
