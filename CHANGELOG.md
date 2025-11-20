@@ -1,3 +1,16 @@
+## [11.5.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.0...v11.5.1) (2025-11-20)
+
+
+### Bug Fixes
+
+* **installer:** prevent overwriting existing registry files during reinstall ([efa7c3b](https://github.com/dorayo/ORCHESTRIX/commit/efa7c3b7cd20432d5dae959ac24232ec59f397fd))
+* **sm:** standardize story filename format to match template specification ([fadcd0f](https://github.com/dorayo/ORCHESTRIX/commit/fadcd0f76129136d828a7900cbaff957099e8f91))
+
+
+### Performance Improvements
+
+* **story:** optimize story template and task files to reduce token consumption by 58% ([d059d2a](https://github.com/dorayo/ORCHESTRIX/commit/d059d2a2319598e6fdfa5e98d968f283aed805a1))
+
 # [11.5.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.4.1...v11.5.0) (2025-11-20)
 
 
