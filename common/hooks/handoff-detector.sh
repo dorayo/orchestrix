@@ -110,14 +110,15 @@ if [[ -n "$handoff_line" ]]; then
 fi
 
 # ========== LAYER 2: Implicit Command Detection ==========
-# Pattern 6: Implicit command detection - check last 5 lines for command patterns
+# Pattern 6: Implicit command detection - check last 20 lines for command patterns
 # This catches cases where agent outputs command without explicit "HANDOFF TO" marker
+# Note: We check last 20 lines because Claude Code UI may add separator lines after the command
 if [[ -z "$target_agent" || -z "$raw_command" ]]; then
-    log "No explicit HANDOFF found, checking last 5 lines for implicit commands..."
+    log "No explicit HANDOFF found, checking last 20 lines for implicit commands..."
 
-    # Extract last 5 lines from pane output
-    last_5_lines=$(echo "$pane_output" | tail -5)
-    log "Last 5 lines: $last_5_lines"
+    # Extract last 20 lines from pane output
+    last_20_lines=$(echo "$pane_output" | tail -20)
+    log "Last 20 lines: $last_20_lines"
 
     # Function to map command + current_agent → target_agent
     get_target_from_command() {
@@ -168,7 +169,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
     }
 
     # Pattern A: Command WITH story ID (*review 5.3)
-    if [[ "$last_5_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+    if [[ "$last_20_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
         detected_command="${BASH_REMATCH[1]}"
         detected_story_id="${BASH_REMATCH[2]}"
 
@@ -186,7 +187,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
         fi
 
     # Pattern B: Command WITHOUT story ID (*draft, *status, etc.)
-    elif [[ "$last_5_lines" =~ \*([a-z0-9-]+)[[:space:]]*$ ]]; then
+    elif [[ "$last_20_lines" =~ \*([a-z0-9-]+)[[:space:]]*$ ]]; then
         detected_command="${BASH_REMATCH[1]}"
 
         log "Detected implicit command without story ID: *$detected_command"
@@ -202,7 +203,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
             log "Command '$detected_command' from agent '$current_agent' has no known target"
         fi
     else
-        log "No implicit command pattern found in last 5 lines"
+        log "No implicit command pattern found in last 20 lines"
     fi
 fi
 
