@@ -1,3 +1,10 @@
+## [11.5.5](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.4...v11.5.5) (2025-11-20)
+
+
+### Performance Improvements
+
+* **hook:** adjust wait times for agent context clearing ([90d6294](https://github.com/dorayo/ORCHESTRIX/commit/90d6294a5d1850f8d175729ce6cfa8ff8ffac390))
+
 ## [11.5.4](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.3...v11.5.4) (2025-11-20)
 
 
