@@ -156,6 +156,87 @@ elif [[ "$pane_output" =~ (\*[a-z0-9-]+[[:space:]]+[0-9]+\.[0-9]+).*\(for[[:spac
     log "Matched Pattern 5: Fallback command + agent format"
 fi
 
+# Pattern 6: Implicit command detection - check last 3 lines for command patterns
+# This catches cases where agent outputs command without explicit "HANDOFF TO" marker
+if [[ -z "$target_agent" || -z "$raw_command" ]]; then
+    log "No explicit HANDOFF found, checking last 3 lines for implicit commands..."
+
+    # Extract last 3 lines from pane output
+    last_3_lines=$(echo "$pane_output" | tail -3)
+    log "Last 3 lines: $last_3_lines"
+
+    # Function to map command + current_agent → target_agent
+    get_target_from_command() {
+        local cmd="$1"
+        local current="$2"
+
+        case "$current" in
+            sm)
+                case "$cmd" in
+                    review-story) echo "architect" ;;
+                    develop-story) echo "dev" ;;
+                    test-design) echo "qa" ;;
+                    *) echo "" ;;
+                esac
+                ;;
+            architect)
+                case "$cmd" in
+                    develop-story) echo "dev" ;;
+                    test-design) echo "qa" ;;
+                    revise-story|revise) echo "sm" ;;
+                    review-escalation) echo "architect" ;;
+                    *) echo "" ;;
+                esac
+                ;;
+            dev)
+                case "$cmd" in
+                    review) echo "qa" ;;
+                    review-escalation) echo "architect" ;;
+                    review-qa) echo "qa" ;;
+                    *) echo "" ;;
+                esac
+                ;;
+            qa)
+                case "$cmd" in
+                    review-qa) echo "dev" ;;
+                    develop-story) echo "dev" ;;
+                    review-story) echo "architect" ;;
+                    review-escalation) echo "architect" ;;
+                    test-design) echo "qa" ;;
+                    *) echo "" ;;
+                esac
+                ;;
+            *)
+                echo ""
+                ;;
+        esac
+    }
+
+    # Match command pattern: *command story_id (e.g., *review 10.2)
+    if [[ "$last_3_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+        detected_command="${BASH_REMATCH[1]}"
+        detected_story_id="${BASH_REMATCH[2]}"
+
+        log "Detected implicit command: *$detected_command $detected_story_id"
+
+        # Get target agent based on command + current agent
+        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+        if [[ -n "$implicit_target" ]]; then
+            target_agent="$implicit_target"
+            raw_command="*${detected_command} ${detected_story_id}"
+            log "✓ Matched Pattern 6: Implicit command detection"
+            log "  Command: $detected_command"
+            log "  Story ID: $detected_story_id"
+            log "  Inferred target: $implicit_target"
+        else
+            log "Command '$detected_command' from agent '$current_agent' has no known target"
+        fi
+    else
+        log "No implicit command pattern found in last 3 lines"
+    fi
+fi
+
 if [[ -n "$target_agent" && -n "$raw_command" ]]; then
 
     # Normalize target_agent to lowercase (defensive, already done in patterns)
