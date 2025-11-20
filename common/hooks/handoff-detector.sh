@@ -246,7 +246,7 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         exit 0
     fi
 
-    # ========== STEP 1: Send command to target window ==========
+    # ========== STEP 1: Send command to target window (immediate) ==========
     log "Step 1: Sending command to target agent ($target_agent) in window $target_window"
     log "  Command: $command"
 
@@ -261,36 +261,60 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         exit 0
     fi
 
-    # ========== STEP 2: Clear current agent context ==========
-    log "Step 2: Clearing current agent ($current_agent) context in window $current_window"
+    # ========== STEP 2: Launch background process to clear & reload current agent ==========
+    log "Step 2: Launching background process to clear and reload current agent"
 
-    if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null && \
-       tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
-        log "✓ Clear command sent to current agent"
-    else
-        log "ERROR: Failed to send /clear to current agent"
-    fi
-
-    log "Waiting 5s for clear to complete..."
-    sleep 5
-
-    # ========== STEP 3: Reload current agent ==========
+    # Get agent command before launching background process
     current_agent_cmd=$(get_agent_command "$current_agent")
-    if [ -n "$current_agent_cmd" ]; then
-        log "Step 3: Reloading current agent ($current_agent) in window $current_window"
-        log "  Command: $current_agent_cmd"
-        if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" 2>/dev/null && \
+
+    # Launch background process (will run independently after hook exits)
+    (
+        # Log to the same file
+        log() {
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] [BG] $*" >> "$LOG_FILE"
+        }
+
+        log "Background process started for $current_agent (window $current_window)"
+
+        # Wait for hook to exit and agent to be ready
+        log "Waiting 2s for hook to exit..."
+        sleep 2
+
+        # Clear current agent context
+        log "Sending /clear to $current_agent..."
+        if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null && \
            tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
-            log "✓ Reload command sent to current agent"
+            log "✓ Clear command sent"
         else
-            log "ERROR: Failed to reload current agent"
+            log "ERROR: Failed to send /clear"
         fi
 
-        log "Waiting 15s for agent to load..."
-        sleep 15
-    else
-        log "WARNING: No reload command found for agent '$current_agent'"
-    fi
+        # Wait for clear to complete
+        log "Waiting 5s for clear to complete..."
+        sleep 5
+
+        # Reload agent
+        if [ -n "$current_agent_cmd" ]; then
+            log "Reloading $current_agent with command: $current_agent_cmd"
+            if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" 2>/dev/null && \
+               tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
+                log "✓ Reload command sent"
+            else
+                log "ERROR: Failed to reload agent"
+            fi
+
+            log "Waiting 15s for agent to load..."
+            sleep 15
+            log "✓ Agent reload complete"
+        else
+            log "WARNING: No reload command found for $current_agent"
+        fi
+
+        log "Background process complete"
+    ) >> "$LOG_FILE" 2>&1 &  # Run in background, redirect to log file
+
+    bg_pid=$!
+    log "✓ Background process launched (PID: $bg_pid) - will clear & reload after hook exits"
 else
     log "No HANDOFF pattern found in pane output"
 fi
