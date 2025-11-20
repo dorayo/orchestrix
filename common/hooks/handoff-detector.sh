@@ -248,7 +248,8 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
 
     # ========== STEP 1: Clear current agent context ==========
     log "Step 1: Clearing current agent ($current_agent) context in window $current_window"
-    if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" C-m 2>/dev/null; then
+    if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null && \
+       tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
         log "✓ Clear command sent to current agent"
     else
         log "ERROR: Failed to send /clear to current agent"
@@ -262,7 +263,8 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     if [ -n "$current_agent_cmd" ]; then
         log "Step 2: Reloading current agent ($current_agent) in window $current_window"
         log "  Command: $current_agent_cmd"
-        if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" C-m 2>/dev/null; then
+        if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" 2>/dev/null && \
+           tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
             log "✓ Reload command sent to current agent"
         else
             log "ERROR: Failed to reload current agent"
@@ -281,15 +283,11 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     # Wait a bit for window to be ready
     sleep 0.5
 
-    # Send command and press Enter to submit (C-m = Enter)
-    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null; then
-        sleep 0.1
-        if tmux send-keys -t "$SESSION_NAME:$target_window" C-m 2>/dev/null; then
-            log "✓ SUCCESS: Command sent to $target_agent"
-            echo "✅ HANDOFF: $current_agent → $target_agent (context cleared & reloaded)" >&2
-        else
-            log "ERROR: Failed to send Enter key"
-        fi
+    # Send command and press Enter to submit
+    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null && \
+       tmux send-keys -t "$SESSION_NAME:$target_window" "Enter" 2>/dev/null; then
+        log "✓ SUCCESS: Command sent to $target_agent"
+        echo "✅ HANDOFF: $current_agent → $target_agent (context cleared & reloaded)" >&2
     else
         log "ERROR: Failed to send command via tmux"
         echo "❌ Failed to send command" >&2
