@@ -22,48 +22,22 @@ get_agent_window() {
     esac
 }
 
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
+# Get agent startup command
+get_agent_command() {
+    local agent="$1"
+    case "$agent" in
+        architect) echo "/Orchestrix:agents:architect" ;;
+        sm) echo "/Orchestrix:agents:sm" ;;
+        dev) echo "/Orchestrix:agents:dev" ;;
+        qa) echo "/Orchestrix:agents:qa" ;;
+        orchestrix-orchestrator) echo "/Orchestrix:agents:orchestrix-orchestrator" ;;
+        ux-expert) echo "/Orchestrix:agents:ux-expert" ;;
+        *) echo "" ;;
+    esac
 }
 
-# Function to handle *draft command with context clearing
-handle_draft_command() {
-    log "========== SPECIAL HANDLER: *draft command =========="
-    log "Clearing all agent contexts and reloading..."
-
-    # Step 1: Clear all windows
-    log "Step 1: Clearing all windows (0, 1, 2, 3)"
-    for window in 0 1 2 3; do
-        log "  Clearing window $window"
-        tmux send-keys -t "$SESSION_NAME:$window" "/clear" C-m
-    done
-
-    log "Waiting 10s for clear to complete..."
-    sleep 10
-
-    # Step 2: Reload agents in each window
-    log "Step 2: Reloading agents"
-    log "  Window 0: Loading architect agent"
-    tmux send-keys -t "$SESSION_NAME:0" "/Orchestrix:agents:architect" C-m
-
-    log "  Window 1: Loading sm agent"
-    tmux send-keys -t "$SESSION_NAME:1" "/Orchestrix:agents:sm" C-m
-
-    log "  Window 2: Loading dev agent"
-    tmux send-keys -t "$SESSION_NAME:2" "/Orchestrix:agents:dev" C-m
-
-    log "  Window 3: Loading qa agent"
-    tmux send-keys -t "$SESSION_NAME:3" "/Orchestrix:agents:qa" C-m
-
-    log "Waiting 45s for agents to load..."
-    sleep 45
-
-    # Step 3: Execute *draft in SM window
-    log "Step 3: Executing *draft in SM window"
-    tmux send-keys -t "$SESSION_NAME:1" "*draft" C-m
-
-    log "✓ SUCCESS: *draft command executed with fresh contexts"
-    echo "✅ CONTEXT CLEARED + AGENTS RELOADED → SM: *draft" >&2
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
 }
 
 # Get current agent ID
@@ -256,13 +230,6 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     log "  Raw command: $raw_command"
     log "  Final command: $command"
 
-    # Special handling for *draft command - clear all contexts and reload agents
-    if [[ "$target_agent" == "sm" && "$command" == "*draft" ]]; then
-        handle_draft_command
-        log "========== Hook complete (draft handler) =========="
-        exit 0
-    fi
-
     # Find target window
     target_window=$(get_agent_window "$target_agent")
 
@@ -278,19 +245,47 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         exit 0
     fi
 
-    # Send command to target window
-    log "→ Sending to window $target_window: $command"
+    # ========== STEP 1: Clear current agent context ==========
+    log "Step 1: Clearing current agent ($current_agent) context in window $current_window"
+    if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" C-m 2>/dev/null; then
+        log "✓ Clear command sent to current agent"
+    else
+        log "ERROR: Failed to send /clear to current agent"
+    fi
+
+    log "Waiting 5s for clear to complete..."
+    sleep 5
+
+    # ========== STEP 2: Reload current agent ==========
+    current_agent_cmd=$(get_agent_command "$current_agent")
+    if [ -n "$current_agent_cmd" ]; then
+        log "Step 2: Reloading current agent ($current_agent) in window $current_window"
+        log "  Command: $current_agent_cmd"
+        if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" C-m 2>/dev/null; then
+            log "✓ Reload command sent to current agent"
+        else
+            log "ERROR: Failed to reload current agent"
+        fi
+
+        log "Waiting 15s for agent to load..."
+        sleep 15
+    else
+        log "WARNING: No reload command found for agent '$current_agent'"
+    fi
+
+    # ========== STEP 3: Send command to target window ==========
+    log "Step 3: Sending command to target agent ($target_agent) in window $target_window"
+    log "  Command: $command"
 
     # Wait a bit for window to be ready
     sleep 0.5
 
     # Send command and press Enter to submit (C-m = Enter)
-    # Send twice to ensure Claude Code receives and processes it
     if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null; then
         sleep 0.1
         if tmux send-keys -t "$SESSION_NAME:$target_window" C-m 2>/dev/null; then
             log "✓ SUCCESS: Command sent to $target_agent"
-            echo "✅ HANDOFF: $current_agent → $target_agent" >&2
+            echo "✅ HANDOFF: $current_agent → $target_agent (context cleared & reloaded)" >&2
         else
             log "ERROR: Failed to send Enter key"
         fi
