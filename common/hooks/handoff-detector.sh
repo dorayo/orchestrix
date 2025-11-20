@@ -106,64 +106,43 @@ echo "---START-OUTPUT---" >> "$LOG_FILE"
 echo "${pane_output: -500}" >> "$LOG_FILE"
 echo "---END-OUTPUT---" >> "$LOG_FILE"
 
-# HANDOFF pattern matching (multiple patterns for flexibility)
-# Try multiple patterns in order of preference
-# IMPORTANT: Patterns WITH arguments must be checked BEFORE patterns without arguments
+# HANDOFF pattern matching (two-layer strategy)
+# Layer 1: Explicit HANDOFF detection (grep-based)
+# Layer 2: Implicit command detection (fallback)
 
 target_agent=""
 raw_command=""
 
-# Pattern 1: Standard format with arguments - 🎯 HANDOFF TO agent: *command args
-# Match command + story ID only (format: command epic.story like 5.3)
-if [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+[[:space:]]+[0-9]+\.[0-9]+) ]]; then
-    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-    # Trim trailing whitespace from command
-    raw_command=$(echo "${BASH_REMATCH[2]}" | sed 's/[[:space:]]*$//')
-    log "Matched Pattern 1: Standard HANDOFF format (with arguments)"
+# ========== LAYER 1: Explicit HANDOFF Detection ==========
+# Extract the handoff line if it exists
+handoff_line=$(echo "$pane_output" | grep -E '🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO' | tail -1)
 
-# Pattern 0: Standard format without arguments - 🎯 HANDOFF TO agent: *command (no args)
-# This pattern is checked AFTER Pattern 1 to avoid matching commands with arguments
-# Using stricter end-of-line match to avoid false positives
-elif [[ "$pane_output" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]*$ ]]; then
-    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-    raw_command="${BASH_REMATCH[2]}"
-    log "Matched Pattern 0: Standard HANDOFF format (no arguments)"
+if [[ -n "$handoff_line" ]]; then
+    log "Found HANDOFF line: $handoff_line"
 
-# Pattern 2: Next command format - Next command: *review 5.2 (for QA agent)
-# More flexible command pattern: \*[a-z0-9-]+ followed by arguments
-elif [[ "$pane_output" =~ Next[[:space:]]+command:[[:space:]]*(\*[a-z0-9-]+[[:space:]]+[0-9.]+)[[:space:]]*\(for[[:space:]]+([a-zA-Z0-9_-]+)[[:space:]]+agent\) ]]; then
-    raw_command="${BASH_REMATCH[1]}"
-    target_agent=$(echo "${BASH_REMATCH[2]}" | tr '[:upper:]' '[:lower:]')
-    log "Matched Pattern 2: Next command format"
+    # Pattern 1: HANDOFF with story ID (e.g., 🎯 HANDOFF TO dev: *review 5.3)
+    if [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+        target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+        raw_command="${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
+        log "Matched Pattern 1: HANDOFF with story ID"
 
-# Pattern 3: Simple Next format - Next: QA please execute command *review 5.2
-elif [[ "$pane_output" =~ Next:[[:space:]]*([A-Z]+)[[:space:]]+please[[:space:]]+execute[[:space:]]+command[[:space:]]+(\*[a-z0-9-]+[[:space:]]+[^[:space:]]+) ]]; then
-    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-    raw_command="${BASH_REMATCH[2]}"
-    log "Matched Pattern 3: Next please execute format"
-
-# Pattern 4: Agent instruction format - QA agent: execute *review 5.2
-elif [[ "$pane_output" =~ ([A-Z]+)[[:space:]]+agent:[[:space:]]*execute[[:space:]]+(\*[a-z0-9-]+[[:space:]]+[^[:space:]]+) ]]; then
-    target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-    raw_command="${BASH_REMATCH[2]}"
-    log "Matched Pattern 4: Agent execute format"
-
-# Pattern 5: Fallback - any line with "for <AGENT> agent" near a command
-# Matches: *review 5.2 anywhere before (for QA agent)
-elif [[ "$pane_output" =~ (\*[a-z0-9-]+[[:space:]]+[0-9]+\.[0-9]+).*\(for[[:space:]]+([a-zA-Z0-9_-]+)[[:space:]]+agent\) ]]; then
-    raw_command="${BASH_REMATCH[1]}"
-    target_agent=$(echo "${BASH_REMATCH[2]}" | tr '[:upper:]' '[:lower:]')
-    log "Matched Pattern 5: Fallback command + agent format"
+    # Pattern 0: HANDOFF without story ID (e.g., 🎯 HANDOFF TO sm: *draft)
+    elif [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+) ]]; then
+        target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+        raw_command="${BASH_REMATCH[2]}"
+        log "Matched Pattern 0: HANDOFF without story ID"
+    fi
 fi
 
-# Pattern 6: Implicit command detection - check last 3 lines for command patterns
+# ========== LAYER 2: Implicit Command Detection ==========
+# Pattern 6: Implicit command detection - check last 5 lines for command patterns
 # This catches cases where agent outputs command without explicit "HANDOFF TO" marker
 if [[ -z "$target_agent" || -z "$raw_command" ]]; then
-    log "No explicit HANDOFF found, checking last 3 lines for implicit commands..."
+    log "No explicit HANDOFF found, checking last 5 lines for implicit commands..."
 
-    # Extract last 3 lines from pane output
-    last_3_lines=$(echo "$pane_output" | tail -3)
-    log "Last 3 lines: $last_3_lines"
+    # Extract last 5 lines from pane output
+    last_5_lines=$(echo "$pane_output" | tail -5)
+    log "Last 5 lines: $last_5_lines"
 
     # Function to map command + current_agent → target_agent
     get_target_from_command() {
@@ -203,6 +182,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
                     review-story) echo "architect" ;;
                     review-escalation) echo "architect" ;;
                     test-design) echo "qa" ;;
+                    draft) echo "sm" ;;
                     *) echo "" ;;
                 esac
                 ;;
@@ -212,28 +192,42 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
         esac
     }
 
-    # Match command pattern: *command story_id (e.g., *review 10.2)
-    if [[ "$last_3_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+    # Pattern A: Command WITH story ID (*review 5.3)
+    if [[ "$last_5_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
         detected_command="${BASH_REMATCH[1]}"
         detected_story_id="${BASH_REMATCH[2]}"
 
-        log "Detected implicit command: *$detected_command $detected_story_id"
+        log "Detected implicit command with story ID: *$detected_command $detected_story_id"
 
         # Get target agent based on command + current agent
         implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
 
         if [[ -n "$implicit_target" ]]; then
             target_agent="$implicit_target"
-            raw_command="*${detected_command} ${detected_story_id}"
-            log "✓ Matched Pattern 6: Implicit command detection"
-            log "  Command: $detected_command"
-            log "  Story ID: $detected_story_id"
-            log "  Inferred target: $implicit_target"
+            raw_command="${detected_command} ${detected_story_id}"
+            log "✓ Matched Pattern A: Implicit command with story ID → $implicit_target"
+        else
+            log "Command '$detected_command' from agent '$current_agent' has no known target"
+        fi
+
+    # Pattern B: Command WITHOUT story ID (*draft, *status, etc.)
+    elif [[ "$last_5_lines" =~ \*([a-z0-9-]+)[[:space:]]*$ ]]; then
+        detected_command="${BASH_REMATCH[1]}"
+
+        log "Detected implicit command without story ID: *$detected_command"
+
+        # Get target agent based on command + current agent
+        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+        if [[ -n "$implicit_target" ]]; then
+            target_agent="$implicit_target"
+            raw_command="$detected_command"
+            log "✓ Matched Pattern B: Implicit command without story ID → $implicit_target"
         else
             log "Command '$detected_command' from agent '$current_agent' has no known target"
         fi
     else
-        log "No implicit command pattern found in last 3 lines"
+        log "No implicit command pattern found in last 5 lines"
     fi
 fi
 
