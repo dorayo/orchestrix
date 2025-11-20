@@ -1918,8 +1918,11 @@ class Installer {
       const devDocDir = path.join(installDir, devDocLocation);
       await fs.ensureDir(devDocDir);
 
-      // Create placeholder database registry
-      const databaseRegistryContent = `# Database Cumulative Registry
+      // Create placeholder registries only if they don't already exist
+      const registryFiles = [
+        {
+          name: 'database-registry.md',
+          content: `# Database Cumulative Registry
 
 > Auto-generated during Orchestrix installation
 > Run \`*init-registries\` via SM Agent for complete initialization
@@ -1949,16 +1952,11 @@ This will scan all completed stories and populate this registry with:
 ---
 
 _For more information, see: .orchestrix-core/tasks/init-cumulative-registries.md_
-`;
-
-      await fs.writeFile(
-        path.join(devDocDir, 'database-registry.md'),
-        databaseRegistryContent,
-        'utf8'
-      );
-
-      // Create placeholder API registry
-      const apiRegistryContent = `# API Cumulative Registry
+`
+        },
+        {
+          name: 'api-registry.md',
+          content: `# API Cumulative Registry
 
 > Auto-generated during Orchestrix installation
 > Run \`*init-registries\` via SM Agent for complete initialization
@@ -1988,16 +1986,11 @@ This will scan all completed stories and populate this registry with:
 ---
 
 _For more information, see: .orchestrix-core/tasks/init-cumulative-registries.md_
-`;
-
-      await fs.writeFile(
-        path.join(devDocDir, 'api-registry.md'),
-        apiRegistryContent,
-        'utf8'
-      );
-
-      // Create placeholder models registry
-      const modelsRegistryContent = `# Models & Types Cumulative Registry
+`
+        },
+        {
+          name: 'models-registry.md',
+          content: `# Models & Types Cumulative Registry
 
 > Auto-generated during Orchestrix installation
 > Run \`*init-registries\` via SM Agent for complete initialization
@@ -2028,18 +2021,40 @@ This will scan all completed stories and populate this registry with:
 ---
 
 _For more information, see: .orchestrix-core/tasks/init-cumulative-registries.md_
-`;
+`
+        }
+      ];
 
-      await fs.writeFile(
-        path.join(devDocDir, 'models-registry.md'),
-        modelsRegistryContent,
-        'utf8'
-      );
+      const createdFiles = [];
+      const skippedFiles = [];
 
-      console.log(chalk.green(`\n✅ 已创建占位符注册表文件:`));
-      console.log(chalk.dim(`   ${path.join(devDocLocation, 'database-registry.md')}`));
-      console.log(chalk.dim(`   ${path.join(devDocLocation, 'api-registry.md')}`));
-      console.log(chalk.dim(`   ${path.join(devDocLocation, 'models-registry.md')}`));
+      for (const registryFile of registryFiles) {
+        const registryPath = path.join(devDocDir, registryFile.name);
+
+        // Check if file already exists
+        if (await fs.pathExists(registryPath)) {
+          skippedFiles.push(registryFile.name);
+          continue;
+        }
+
+        // Create the placeholder file
+        await fs.writeFile(registryPath, registryFile.content, 'utf8');
+        createdFiles.push(registryFile.name);
+      }
+
+      if (createdFiles.length > 0) {
+        console.log(chalk.green(`\n✅ 已创建占位符注册表文件:`));
+        createdFiles.forEach(name => {
+          console.log(chalk.dim(`   ${path.join(devDocLocation, name)}`));
+        });
+      }
+
+      if (skippedFiles.length > 0) {
+        console.log(chalk.cyan(`\n📝 保留现有注册表文件 (未覆盖):`));
+        skippedFiles.forEach(name => {
+          console.log(chalk.dim(`   ${path.join(devDocLocation, name)}`));
+        });
+      }
 
     } catch (error) {
       // Don't fail installation if registry initialization fails
