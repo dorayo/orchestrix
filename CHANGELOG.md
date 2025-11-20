@@ -1,3 +1,10 @@
+## [11.5.2](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.1...v11.5.2) (2025-11-20)
+
+
+### Bug Fixes
+
+* **hook:** improve handoff pattern detection for QA→SM workflow ([9c32f75](https://github.com/dorayo/ORCHESTRIX/commit/9c32f75bb188eaa8578b415db0a2c64305ddce22))
+
 ## [11.5.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.0...v11.5.1) (2025-11-20)
 
 
