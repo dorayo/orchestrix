@@ -1,3 +1,11 @@
+## [11.4.1](https://github.com/dorayo/ORCHESTRIX/compare/v11.4.0...v11.4.1) (2025-11-20)
+
+
+### Bug Fixes
+
+* **qa:** refactor git commit automation to use decision system ([65bf28c](https://github.com/dorayo/ORCHESTRIX/commit/65bf28c2964dcf8ec85deed9c2c5dd8efb04d064))
+* **tmux:** improve handoff detection with debug logging and stricter pattern matching ([d94b066](https://github.com/dorayo/ORCHESTRIX/commit/d94b066b69511431c286bd2313542df9dbb1c69b))
+
 # [11.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.3.0...v11.4.0) (2025-11-20)
 
 
