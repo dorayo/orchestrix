@@ -2,7 +2,8 @@
 # Claude Code Stop Hook - HANDOFF Detector
 # Uses tmux capture-pane to read Claude's output
 
-set -eo pipefail
+# Note: No 'set -e' to avoid hook failure on non-critical errors
+# We handle errors explicitly where needed
 
 # Configuration
 SESSION_NAME="orchestrix"
