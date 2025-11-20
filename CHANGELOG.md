@@ -1,3 +1,11 @@
+## [11.5.6](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.5...v11.5.6) (2025-11-20)
+
+
+### Bug Fixes
+
+* **hook:** reorder handoff flow - send to target first, then clear source ([9d0a280](https://github.com/dorayo/ORCHESTRIX/commit/9d0a28011784e82d9a89a2ccdcdbf3814244276c))
+* **hook:** use background process for agent cleanup to avoid blocking ([740bfa1](https://github.com/dorayo/ORCHESTRIX/commit/740bfa1b78562db049e675bf874565eba9d50903))
+
 ## [11.5.5](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.4...v11.5.5) (2025-11-20)
 
 
