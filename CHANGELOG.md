@@ -1,3 +1,10 @@
+# [11.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.3.0...v11.4.0) (2025-11-20)
+
+
+### Features
+
+* add cumulative context system to prevent story isolation ([d83ad32](https://github.com/dorayo/ORCHESTRIX/commit/d83ad32e79b3202f93e9cec2c78a57f8688e7e39))
+
 # [11.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.2.6...v11.3.0) (2025-11-18)
 
 
