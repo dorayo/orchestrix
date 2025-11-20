@@ -246,10 +246,23 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         exit 0
     fi
 
-    # ========== STEP 1: Clear current agent context ==========
-    log "Step 1: Clearing current agent ($current_agent) context in window $current_window"
-    log "Waiting 10s before sending /clear..."
-    sleep 10
+    # ========== STEP 1: Send command to target window ==========
+    log "Step 1: Sending command to target agent ($target_agent) in window $target_window"
+    log "  Command: $command"
+
+    # Send command and press Enter to submit
+    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null && \
+       tmux send-keys -t "$SESSION_NAME:$target_window" "Enter" 2>/dev/null; then
+        log "✓ SUCCESS: Command sent to $target_agent"
+        echo "✅ HANDOFF: $current_agent → $target_agent" >&2
+    else
+        log "ERROR: Failed to send command via tmux"
+        echo "❌ Failed to send command" >&2
+        exit 0
+    fi
+
+    # ========== STEP 2: Clear current agent context ==========
+    log "Step 2: Clearing current agent ($current_agent) context in window $current_window"
 
     if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null && \
        tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
@@ -258,13 +271,13 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         log "ERROR: Failed to send /clear to current agent"
     fi
 
-    log "Waiting 10s for clear to complete..."
-    sleep 10
+    log "Waiting 5s for clear to complete..."
+    sleep 5
 
-    # ========== STEP 2: Reload current agent ==========
+    # ========== STEP 3: Reload current agent ==========
     current_agent_cmd=$(get_agent_command "$current_agent")
     if [ -n "$current_agent_cmd" ]; then
-        log "Step 2: Reloading current agent ($current_agent) in window $current_window"
+        log "Step 3: Reloading current agent ($current_agent) in window $current_window"
         log "  Command: $current_agent_cmd"
         if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" 2>/dev/null && \
            tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
@@ -277,23 +290,6 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         sleep 15
     else
         log "WARNING: No reload command found for agent '$current_agent'"
-    fi
-
-    # ========== STEP 3: Send command to target window ==========
-    log "Step 3: Sending command to target agent ($target_agent) in window $target_window"
-    log "  Command: $command"
-
-    # Wait a bit for window to be ready
-    sleep 0.5
-
-    # Send command and press Enter to submit
-    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null && \
-       tmux send-keys -t "$SESSION_NAME:$target_window" "Enter" 2>/dev/null; then
-        log "✓ SUCCESS: Command sent to $target_agent"
-        echo "✅ HANDOFF: $current_agent → $target_agent (context cleared & reloaded)" >&2
-    else
-        log "ERROR: Failed to send command via tmux"
-        echo "❌ Failed to send command" >&2
     fi
 else
     log "No HANDOFF pattern found in pane output"
