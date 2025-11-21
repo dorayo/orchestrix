@@ -1,3 +1,10 @@
+## [11.5.11](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.10...v11.5.11) (2025-11-21)
+
+
+### Bug Fixes
+
+* **qa:** add missing two-phase status update in test-design task ([eabcb7d](https://github.com/dorayo/ORCHESTRIX/commit/eabcb7d0a3cc7c4bc45cc21aca4c1f0f614153da))
+
 ## [11.5.10](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.9...v11.5.10) (2025-11-21)
 
 
