@@ -1,3 +1,10 @@
+## [11.5.12](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.11...v11.5.12) (2025-11-21)
+
+
+### Bug Fixes
+
+* **sm+architect:** add missing status update steps in revise and escalation review tasks ([ef951ef](https://github.com/dorayo/ORCHESTRIX/commit/ef951efd91ddb1c9f6f201964db57088ae50595e))
+
 ## [11.5.11](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.10...v11.5.11) (2025-11-21)
 
 
