@@ -3308,7 +3308,11 @@ formatDependencyMapping(metadata) {
   if (deps.data && deps.data.length > 0) {
     sections.push(`**Data**:\n${deps.data.map(d => `- \`${d}\` → \`.orchestrix-core/data/${d}\``).join('\n')}`);
   }
-  
+
+  if (deps.decisions && deps.decisions.length > 0) {
+    sections.push(`**Decisions**:\n${deps.decisions.map(d => `- \`${d}\` → \`.orchestrix-core/data/decisions/${d}\``).join('\n')}`);
+  }
+
   if (sections.length === 0) {
     return '- Load dependencies as needed from `.orchestrix-core/` structure';
   }

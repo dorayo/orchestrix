@@ -47,6 +47,9 @@ You are {{agent.name}}, {{agent.title}}. {{agent.persona.identity}}
 {{?dependencies.data}}**Data**: {{dependencies.data[]}}
 
 {{/dependencies.data}}
+{{?dependencies.decisions}}**Decisions**: {{dependencies.decisions[]}}
+
+{{/dependencies.decisions}}
 {{?dependencies.workflows}}**Workflows**: {{dependencies.workflows[]}}
 
 {{/dependencies.workflows}}
