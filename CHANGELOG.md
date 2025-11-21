@@ -1,3 +1,10 @@
+## [11.5.9](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.8...v11.5.9) (2025-11-21)
+
+
+### Bug Fixes
+
+* **installer:** add support for decisions dependency type ([bcabc19](https://github.com/dorayo/ORCHESTRIX/commit/bcabc19e0bd0e6c212093bf32e248418b66b5b9b))
+
 ## [11.5.8](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.7...v11.5.8) (2025-11-20)
 
 
