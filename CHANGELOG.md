@@ -1,3 +1,10 @@
+## [11.5.10](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.9...v11.5.10) (2025-11-21)
+
+
+### Bug Fixes
+
+* **architect:** add missing story status update steps in review task ([b7ae8c3](https://github.com/dorayo/ORCHESTRIX/commit/b7ae8c3c5cabcfa878217fef584b3c799cb43278))
+
 ## [11.5.9](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.8...v11.5.9) (2025-11-21)
 
 
