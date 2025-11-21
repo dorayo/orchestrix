@@ -138,9 +138,68 @@ This task is triggered when QA sets Story Status to `Escalated` with `architectu
 
 ### Phase 5: Update Story and Output Results
 
-10. **Update Story Status**
-    - Set Status field to `InProgress` or `Review` based on decision
-    - Validate the status transition is allowed per `story-status-transitions.yaml`
+10. **Update Story Status Field (CRITICAL - DO NOT SKIP)**
+
+**Determine target status** from Step 9 decision:
+- `next_status` = InProgress (if changes required) OR Review (if no changes needed)
+
+**Execute status transition validation**:
+
+Execute `{root}/tasks/utils/validate-status-transition.md`:
+
+```yaml
+story_path: {{story_file_path}}
+agent: architect
+current_status: Escalated
+target_status: {{next_status from Step 9}}
+context:
+  escalation_review_complete: true
+  changes_required: {{true if InProgress, false if Review}}
+  concern_valid: {{true/false}}
+```
+
+**On validation PASS**:
+
+1. **Update Story.status field directly**:
+   - Find Story metadata YAML block
+   - Update `status: {{next_status}}`
+   - Save the file
+
+2. **Verify update**:
+   ```bash
+   # Re-read Story file
+   # Extract Story.status
+   # Confirm: status == {{next_status}}
+   ```
+
+3. **If verification fails**: HALT with error - Status update failed
+
+**On validation FAIL**:
+- HALT with error message
+- Do NOT proceed to append results
+- Report validation error to user
+
+**Example Status Update Code** (pseudocode):
+```python
+# Read story file
+story_content = read_file(story_path)
+
+# Find Story YAML block
+story_yaml_block = extract_yaml_block(story_content, "Story")
+
+# Update status field
+story_yaml_block['status'] = next_status
+
+# Replace in content
+updated_content = replace_yaml_block(story_content, "Story", story_yaml_block)
+
+# Write back
+write_file(story_path, updated_content)
+
+# Verify
+verify_status = extract_yaml_block(read_file(story_path), "Story")['status']
+assert verify_status == next_status, "Status update failed"
+```
 
 11. **Append Architect Review Results**
     Append to the Story file's "Architect Review Results" section:
@@ -231,21 +290,42 @@ This task is triggered when QA sets Story Status to `Escalated` with `architectu
     {Previous Change Log entries}
     ```
 
-13. **Output Handoff Message**
-    Based on the decision:
-    
-    **If Status = InProgress:**
-    ```
-    Next: Dev please execute command `implement-story {story_id}` to address the following architecture concerns:
-    {Brief summary of required changes}
-    ```
-    
-    **If Status = Review:**
-    ```
-    Next: QA please execute command `review {story_id}` to continue review.
-    
-    Architect clarification: {Brief summary of why concern is not valid or acceptable}
-    ```
+13. **Output Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)**
+
+**CRITICAL**: The handoff message MUST be the absolute last line of your output. Do NOT add any summaries, recommendations, or explanations after the handoff.
+
+Based on `next_status` from Step 10:
+
+**If Status = InProgress:**
+```
+✅ ARCHITECT ESCALATION REVIEW COMPLETE
+Story: {story_id} → Status: InProgress
+
+Concern: {concern_summary}
+Valid: Yes - Changes Required
+Severity: {Critical/High/Medium/Low}
+
+Architecture Changes Required:
+{brief summary of required changes}
+
+🎯 HANDOFF TO dev: *develop-story {story_id}
+```
+
+**If Status = Review:**
+```
+✅ ARCHITECT ESCALATION REVIEW COMPLETE
+Story: {story_id} → Status: Review
+
+Concern: {concern_summary}
+Valid: No - Current Approach Acceptable
+Reasoning: {brief explanation}
+
+QA may continue review with architectural clarification provided.
+
+🎯 HANDOFF TO qa: *review {story_id}
+```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
 
 ## Quality Gates
 - **Valid Escalation**: Story must be in Escalated status with architecture_concern flag

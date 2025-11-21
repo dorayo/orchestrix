@@ -337,44 +337,123 @@ Add entry:
 **Next Action:** {handoff}
 ```
 
-**7.5 Update Status Field**
+**7.5 Update Story Status Field (CRITICAL - DO NOT SKIP)**
+
+**Determine target status** from Step 5 decision result:
+- `next_status` = Approved | AwaitingArchReview | Blocked | AwaitingTestDesign | TestDesignComplete
+
+**Execute status transition validation**:
+
+Execute `{root}/tasks/utils/validate-status-transition.md`:
 
 ```yaml
-Status: {Approved/AwaitingArchReview/Blocked/AwaitingTestDesign/TestDesignComplete}
+story_path: {{story_file_path}}
+agent: sm
+current_status: RequiresRevision
+target_status: {{next_status from Step 5}}
+context:
+  quality_score: {{new_quality_score}}
+  issues_resolved: {{total_resolved}}
+  revision_round: 1
 ```
 
-### 8. Output Handoff
+**On validation PASS**:
 
+1. **Update Story.status field directly**:
+   - Find Story metadata YAML block
+   - Update `status: {{next_status}}`
+   - Save the file
+
+2. **Verify update**:
+   ```bash
+   # Re-read Story file
+   # Extract Story.status
+   # Confirm: status == {{next_status}}
+   ```
+
+3. **If verification fails**: HALT with error - Status update failed
+
+**On validation FAIL**:
+- HALT with error message
+- Do NOT proceed to handoff
+- Report validation error to user
+
+**Example Status Update Code** (pseudocode):
+```python
+# Read story file
+story_content = read_file(story_path)
+
+# Find Story YAML block
+story_yaml_block = extract_yaml_block(story_content, "Story")
+
+# Update status field
+story_yaml_block['status'] = next_status
+
+# Replace in content
+updated_content = replace_yaml_block(story_content, "Story", story_yaml_block)
+
+# Write back
+write_file(story_path, updated_content)
+
+# Verify
+verify_status = extract_yaml_block(read_file(story_path), "Story")['status']
+assert verify_status == next_status, "Status update failed"
 ```
-IF TestDesignComplete OR Approved:
-  "Next: Dev execute `implement-story {story_id}`"
 
-IF AwaitingTestDesign AND requires_review=true:
-  "Next: QA review test design for {story_id} - story revised"
+### 8. Output Handoff (REQUIRED - MUST BE FINAL OUTPUT)
 
-IF AwaitingTestDesign:
-  "Next: QA execute `test-design {story_id}`"
+**CRITICAL**: The handoff message MUST be the absolute last line of your output. Do NOT add any summaries, recommendations, or explanations after the handoff.
 
-IF AwaitingArchReview:
-  "Next: Architect execute `review-story {story_id}` (Round 2)"
+Based on `next_status` from Step 7.5, output the appropriate handoff:
 
-IF Blocked:
-  "Story blocked - SM must continue revision"
-```
-
-**Final Output:**
+#### If status = Approved or TestDesignComplete:
 ```
 ✅ STORY REVISION COMPLETE
+Story: {epic}.{story} → Status: {status}
 
-Story: [{epicNum}.{storyNum}] {title}
-Issues Addressed: {total}
-Quality: {prev}/10 → {new}/10 (+{improvement})
-Test Design: {level} ({status})
-Decision: {type}
-Status: {status}
+Quality: {prev_score}/10 → {new_score}/10 (+{improvement})
+Issues Resolved: Critical {c}, High {h}, Medium {m}, Low {l}
+Test Design: {level}
 
-{handoff_message}
+🎯 HANDOFF TO dev: *develop-story {epic}.{story}
 ```
+
+#### If status = AwaitingTestDesign:
+```
+✅ STORY REVISION COMPLETE
+Story: {epic}.{story} → Status: AwaitingTestDesign
+
+Quality: {prev_score}/10 → {new_score}/10 (+{improvement})
+Issues Resolved: Critical {c}, High {h}, Medium {m}, Low {l}
+Test Design Level: {level}
+
+🎯 HANDOFF TO qa: *test-design {epic}.{story}
+```
+
+#### If status = AwaitingArchReview (Round 2):
+```
+✅ STORY REVISION COMPLETE - ROUND 2 REVIEW REQUIRED
+Story: {epic}.{story} → Status: AwaitingArchReview
+
+Quality: {prev_score}/10 → {new_score}/10 (+{improvement})
+Issues Resolved: Critical {c}, High {h}, Medium {m}, Low {l}
+Remaining Issues: Require Architect review
+
+🎯 HANDOFF TO architect: *review-story {epic}.{story}
+```
+
+#### If status = Blocked:
+```
+⚠️ STORY REVISION INCOMPLETE - BLOCKED
+Story: {epic}.{story} → Status: Blocked
+
+Quality: {prev_score}/10 → {new_score}/10 (+{improvement})
+Blocked Reason: {reason}
+
+SM must continue revision via *revise {epic}.{story}
+```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
 
 ## Quality Gates
 
