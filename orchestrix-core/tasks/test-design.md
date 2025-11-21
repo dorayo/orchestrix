@@ -24,7 +24,63 @@ data:
   - test-priorities-matrix.md
 ```
 
+## Prerequisites
+
+- Story.status = AwaitingTestDesign
+- Story has test_design_level metadata (Standard or Comprehensive)
+- Required data files accessible (test-levels-framework.md, test-priorities-matrix.md)
+
 ## Process
+
+### Step 0: Idempotency Check (MANDATORY - Fast Exit)
+
+**Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md`
+
+**Extract**: Story.status, QA Test Design Metadata.test_design_status
+
+**Check if Already Completed**:
+
+- **If status = "Approved" AND test_design_status = "Complete"**:
+  ```
+  ℹ️ TEST DESIGN ALREADY COMPLETE
+  Story: {story_id}
+  Status: Approved
+  Test Design: Complete
+
+  Test design already completed. Story ready for Dev implementation.
+
+  🎯 HANDOFF TO dev: *develop-story {story_id}
+  ```
+  **HALT: Test design already done, Dev handoff sent ✋**
+
+- **If status = "TestDesignComplete"**:
+  ```
+  ℹ️ TEST DESIGN COMPLETE - AUTO-TRANSITIONING
+  Story: {story_id}
+  Current Status: TestDesignComplete
+
+  Test design complete, auto-transitioning to Approved for Dev.
+
+  (Proceeding to auto-transition)
+  ```
+  **Skip to Step 6** (Status Update)
+
+- **If status NOT "AwaitingTestDesign"**:
+  ```
+  ⚠️ STORY NOT READY FOR TEST DESIGN
+  Story: {story_id}
+  Current Status: {current_status}
+
+  Required status: AwaitingTestDesign
+
+  HALT: Prerequisites not met ⛔
+  ```
+
+**If status = "AwaitingTestDesign"**:
+- ✅ Log: "Idempotency check passed - proceeding with test design"
+- Continue to Step 1
+
+---
 
 ### 1. Analyze Story Requirements
 
@@ -67,7 +123,129 @@ test_scenario:
 - Critical paths multi-level
 - Risks addressed
 
+---
+
+## Story Status Update (CRITICAL - DO NOT SKIP)
+
+**Execute AFTER test design validation, BEFORE saving outputs**
+
+### Step 6: Two-Phase Status Transition
+
+QA test-design requires **TWO sequential status updates**:
+
+**Phase 1: AwaitingTestDesign → TestDesignComplete**
+
+Execute `{root}/tasks/utils/validate-status-transition.md`:
+
+```yaml
+story_path: {{story_file_path}}
+agent: qa
+current_status: AwaitingTestDesign
+target_status: TestDesignComplete
+context:
+  test_design_complete: true
+  test_doc_created: true
+  scenarios_count: {{total_scenarios}}
+```
+
+**On validation PASS**:
+
+1. **Update Story.status field**:
+   - Find Story metadata YAML block
+   - Update `status: TestDesignComplete`
+   - Save the file
+
+2. **Verify update**:
+   ```bash
+   # Re-read Story file
+   # Extract Story.status
+   # Confirm: status == "TestDesignComplete"
+   ```
+
+3. **If verification fails**: HALT with error
+
+**On validation FAIL**: HALT with error message
+
+---
+
+**Phase 2: TestDesignComplete → Approved (Auto-transition)**
+
+Execute `{root}/tasks/utils/validate-status-transition.md`:
+
+```yaml
+story_path: {{story_file_path}}
+agent: qa
+current_status: TestDesignComplete
+target_status: Approved
+context:
+  test_design_complete: true
+  test_doc_created: true
+  auto_transition: true
+```
+
+**On validation PASS**:
+
+1. **Update Story.status field**:
+   - Find Story metadata YAML block
+   - Update `status: Approved`
+   - Save the file
+
+2. **Verify update**:
+   ```bash
+   # Re-read Story file
+   # Extract Story.status
+   # Confirm: status == "Approved"
+   ```
+
+3. **If verification fails**: HALT with error
+
+**On validation FAIL**: HALT with error message
+
+---
+
+**Why Two Phases?**
+
+Per `story-status-transitions.yaml`:
+- `AwaitingTestDesign.to = [TestDesignComplete]` (only allowed transition)
+- `TestDesignComplete.to = [Approved]` (auto-transition by QA)
+- Cannot directly jump AwaitingTestDesign → Approved (invalid transition)
+
+**Example Status Update Code** (pseudocode):
+```python
+# Phase 1: AwaitingTestDesign → TestDesignComplete
+story_content = read_file(story_path)
+story_yaml = extract_yaml_block(story_content, "Story")
+story_yaml['status'] = "TestDesignComplete"
+write_file(story_path, replace_yaml_block(story_content, "Story", story_yaml))
+
+# Verify Phase 1
+assert extract_yaml_block(read_file(story_path), "Story")['status'] == "TestDesignComplete"
+
+# Phase 2: TestDesignComplete → Approved
+story_content = read_file(story_path)
+story_yaml = extract_yaml_block(story_content, "Story")
+story_yaml['status'] = "Approved"
+write_file(story_path, replace_yaml_block(story_content, "Story", story_yaml))
+
+# Verify Phase 2
+assert extract_yaml_block(read_file(story_path), "Story")['status'] == "Approved"
+```
+
+---
+
 ## Outputs
+
+### Output 0: Story Status Update (MUST be done first)
+
+**CRITICAL**: Execute TWO-PHASE status update BEFORE generating other outputs.
+
+**Phase 1**: Update `Story.status = "TestDesignComplete"`
+**Phase 2**: Update `Story.status = "Approved"` (auto-transition)
+
+**Verify**:
+- Re-read Story file after each phase
+- Confirm status field updated correctly
+- If either phase verification fails: HALT
 
 ### Output 1: Test Design Document
 
@@ -118,7 +296,7 @@ test_design:
   coverage_gaps: []
 ```
 
-### Output 3: Update Story File
+### Output 3: Update Story File Metadata
 
 Update `{devStoryLocation}/{epic}.{story}.*.md`:
 
@@ -133,16 +311,16 @@ Update `{devStoryLocation}/{epic}.{story}.*.md`:
 - **Risk Profile:** {path if exists}
 ```
 
-**Status:** `Approved`
-
-**Change Log:**
+**Change Log** (add entry):
 ```markdown
 ### {YYYY-MM-DD HH:MM} - Test Design Complete, Story Approved
 - Test Design Doc: qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 - Scenarios: {total} (P0: {p0}, P1: {p1}, P2: {p2})
-- Status: TestDesignComplete → Approved (auto-transition by QA)
+- Status: AwaitingTestDesign → TestDesignComplete → Approved (QA two-phase transition)
 - Ready for Dev implementation
 ```
+
+**Note**: Story.status field is updated in Output 0, not here. This section only updates metadata.
 
 ### Output 4: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
 
