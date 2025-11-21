@@ -81,8 +81,9 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 3. Validate all technical components against architecture
 4. Calculate technical accuracy score (0-10 scale)
 5. Generate detailed review report
-6. Update story status based on review results
-7. Save results to story file and external report
+6. Determine next status using decision system
+7. Update story Status field with new status
+8. Save results to story file and external report
 
 ### Requirements:
 - ✅ Load all relevant architecture documents for story type
@@ -91,7 +92,10 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 - ✅ Identify critical/major/minor issues with specific locations
 - ✅ Provide actionable recommendations
 - ✅ Check test design level from Story metadata
-- ✅ Update story status appropriately (AwaitingTestDesign/Approved/RequiresRevision/Escalated)
+- ✅ Determine next status via make-decision.md (Step 6)
+- ✅ Validate status transition via validate-status-transition.md (Step 7)
+- ✅ Update Story.status field directly (Step 7)
+- ✅ Verify status update successful (Step 7)
 
 ### Halt Conditions (ONLY when review cannot proceed):
 - ❌ Story file not found or cannot be read
@@ -286,17 +290,100 @@ report_generation:
     - Pass/Fail Recommendation
     - Test Design Level: Simple/Standard/Comprehensive
     - Status Decision: AwaitingTestDesign/Approved/Requires_Revision/Blocked
-    
+
   detailed_analysis:
     - Technical Compliance breakdown (5 sub-scores)
     - Architecture Alignment assessment (3 sub-scores)
     - Implementation Feasibility evaluation (2 sub-scores)
-    
+
   actionable_feedback:
     - Critical issues with exact locations
     - Major issues with recommended solutions
     - Minor issues with optional improvements
     - Next steps for appropriate agent (QA/Dev/SM)
+```
+
+---
+
+## Story Status Update (CRITICAL - DO NOT SKIP)
+
+**Execute AFTER report generation, BEFORE saving outputs**
+
+### Step 6: Determine Next Status
+
+Execute `{root}/tasks/make-decision.md`:
+
+```yaml
+decision_type: architect-review-result
+context:
+  review_score: {{technical_accuracy_score}}
+  critical_issues_count: {{critical_count}}
+  test_design_level: {{test_design_level from Story metadata}}
+  review_round: {{current_round}}
+result:
+  next_status: (AwaitingTestDesign | Approved | RequiresRevision | Escalated)
+  next_agent: (qa | dev | sm | architect)
+  handoff_action: (test-design | develop-story | revise-story | escalate)
+```
+
+### Step 7: Update Story Status Field
+
+**CRITICAL**: This step updates the actual Story.status field, not just metadata.
+
+Execute `{root}/tasks/utils/validate-status-transition.md`:
+
+```yaml
+story_path: {{story_file_path}}
+agent: architect
+current_status: AwaitingArchReview | RequiresRevision
+target_status: {{next_status from Step 6}}
+context:
+  review_score: {{review_score}}
+  critical_issues: {{critical_count}}
+  test_design_level: {{test_design_level}}
+```
+
+**On validation PASS**:
+
+1. **Update Story.status field directly**:
+   - Find the Story metadata YAML block
+   - Update `status: {{next_status}}`
+   - Save the file
+
+2. **Verify update**:
+   ```bash
+   # Re-read Story file
+   # Extract Story.status
+   # Confirm: status == {{next_status}}
+   ```
+
+3. **If verification fails**: HALT with error - Status update failed
+
+**On validation FAIL**:
+- HALT with error message
+- Do NOT proceed to save outputs
+- Report validation error to user
+
+**Example Status Update Code** (pseudocode):
+```python
+# Read story file
+story_content = read_file(story_path)
+
+# Find Story YAML block
+story_yaml_block = extract_yaml_block(story_content, "Story")
+
+# Update status field
+story_yaml_block['status'] = next_status
+
+# Replace in content
+updated_content = replace_yaml_block(story_content, "Story", story_yaml_block)
+
+# Write back
+write_file(story_path, updated_content)
+
+# Verify
+verify_status = extract_yaml_block(read_file(story_path), "Story")['status']
+assert verify_status == next_status, "Status update failed"
 ```
 
 ---
@@ -325,15 +412,28 @@ report_generation:
 ✓ Technical accuracy score calculated correctly
 ✓ All issues classified and documented with locations
 ✓ Recommendations are specific and actionable
-✓ Story status updated based on review results
-✓ Report saved to story file or separate review document
+✓ Next status determined via decision system (Step 6)
+✓ Status transition validated via validate-status-transition.md (Step 7)
+✓ Story.status field updated and verified (Step 7)
+✓ Report saved to story file or separate review document (Step 8)
 ```
 
 ---
 
 ## 📊 OUTPUT FILES
 
-### Output 1: Detailed Review Report
+### Output 1: Story Status Update (MUST be done first)
+
+**CRITICAL**: Update Story.status BEFORE generating other outputs.
+
+**Update Story field**: `Story.status = {{next_status}}`
+
+**Verify**:
+- Re-read Story file
+- Confirm status field shows {{next_status}}
+- If verification fails: HALT
+
+### Output 2: Detailed Review Report
 
 **Save to**: `{architect.storyReviewsLocation}/{story_id}-arch-review-r{review_round}.md`
 
@@ -345,7 +445,7 @@ Use template: `{root}/templates/architect-review-tmpl.yaml`
 - Architecture guidance and recommendations
 - Metadata (review duration, docs reviewed, etc.)
 
-### Output 2: Update Story File
+### Output 3: Update Story File Metadata
 
 **Update Story section**: `Architect Review Metadata`
 
@@ -382,9 +482,7 @@ Add entry:
 | {{date}} {{time}} | Architect | AwaitingArchReview → {{next_status}} | Score: {{score}}/10, {{critical_count}} critical issues [Review R{{round}}](docs/architecture/story-reviews/{{story_id}}-arch-review-r{{round}}.md) |
 ```
 
-**Update Story**: `Status` field to {{next_status}}
-
-### Output 3: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
+### Output 4: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
 
 **CRITICAL**: The handoff message below MUST be the absolute last line of your output. Do NOT add any summaries, recommendations, tips, or explanations after the handoff.
 
@@ -531,8 +629,12 @@ Return error to user
 - ✅ Technical accuracy score generated with justification
 - ✅ All architecture compliance checks completed
 - ✅ Issues classified with specific locations and recommendations
-- ✅ Story status updated appropriately (AwaitingTestDesign/Approved/Requires_Revision/Blocked)
+- ✅ Next status determined via make-decision.md (Step 6)
+- ✅ Status transition validated (Step 7)
+- ✅ **Story.status field updated and verified** (Step 7 - CRITICAL)
+- ✅ Metadata sections updated (Output 3)
 - ✅ Actionable feedback provided for next agent
+- ✅ Handoff message with correct next action (Output 4)
 
 ### Quality Gates:
 - **Score ≥7/10 + Test Design Level = Simple**: Approve for development (Status = Approved)
