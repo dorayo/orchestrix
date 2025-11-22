@@ -180,7 +180,7 @@ debug_information:
 **Debug Mode**: Use `*debug` command to see detailed template processing steps
 
 **Technical References**:
-- Template: `.orchestrix-core/templates/story-tmpl.yaml`
+- Template: `{root}/templates/story-tmpl.yaml`
 - Config: `core-config.yaml` in project root
 - Epic source: `docs/prd/epic-*.md` files
 - Architecture: `docs/architecture/*.md` files

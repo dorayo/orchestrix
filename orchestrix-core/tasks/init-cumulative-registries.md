@@ -266,7 +266,7 @@ metadata.total_models = interfaces.length + zod_schemas.length + enums.length + 
 
 **6.1 Generate Database Registry Markdown**:
 
-Use template structure from `templates/database-registry-tmpl.yaml`
+Use template structure from `{root}/templates/database-registry-tmpl.yaml`
 
 Output file: `{devDocLocation}/database-registry.md`
 
@@ -306,13 +306,13 @@ Content structure:
 
 **6.2 Generate API Registry Markdown**:
 
-Use template structure from `templates/api-registry-tmpl.yaml`
+Use template structure from `{root}/templates/api-registry-tmpl.yaml`
 
 Output file: `{devDocLocation}/api-registry.md`
 
 **6.3 Generate Models Registry Markdown**:
 
-Use template structure from `templates/models-registry-tmpl.yaml`
+Use template structure from `{root}/templates/models-registry-tmpl.yaml`
 
 Output file: `{devDocLocation}/models-registry.md`
 

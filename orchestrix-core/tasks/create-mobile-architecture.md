@@ -390,7 +390,7 @@ Does this app architecture make sense for your mobile platform?
 ### Step 5: Generate Mobile Architecture Document
 
 **Output Document**:
-Use template: `orchestrix-core/templates/mobile-architecture-tmpl.yaml`
+Use template: `{root}/templates/mobile-architecture-tmpl.yaml`
 
 **Prepare Output**:
 ```bash

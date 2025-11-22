@@ -39,7 +39,7 @@ Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
 Execute:
 ```
-tasks/utils/validate-agent-permission.md
+{root}/tasks/utils/validate-agent-permission.md
 ```
 
 Input:
@@ -235,7 +235,7 @@ Use template: `{root}/templates/qa-review-lite-tmpl.yaml`
 
 ## Output 3: Create Gate File
 
-**Template:** `../templates/qa-gate-tmpl.yaml`
+**Template:** `{root}/templates/qa-gate-tmpl.yaml`
 **Path:** `qa.qaLocation/gates/{epic}.{story}-{slug}.yml` (from `core-config.yaml`)
 
 **Required Fields:**

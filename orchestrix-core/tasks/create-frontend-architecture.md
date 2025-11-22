@@ -359,7 +359,7 @@ Does this architecture structure make sense for your frontend?
 ### Step 5: Generate Frontend Architecture Document
 
 **Output Document**:
-Use template: `orchestrix-core/templates/front-end-architecture-tmpl.yaml`
+Use template: `{root}/templates/front-end-architecture-tmpl.yaml`
 
 **Prepare Output**:
 ```bash

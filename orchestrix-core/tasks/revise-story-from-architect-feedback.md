@@ -10,7 +10,7 @@
 
 Execute:
 ```
-tasks/utils/validate-agent-permission.md
+{root}/tasks/utils/validate-agent-permission.md
 ```
 
 **Input**:
@@ -421,7 +421,7 @@ blocked_reason: "{reason}"
 
 Execute status transition validation:
 ```
-tasks/utils/validate-status-transition.md
+{root}/tasks/utils/validate-status-transition.md
 ```
 
 **Input**:

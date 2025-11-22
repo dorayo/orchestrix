@@ -36,7 +36,7 @@ data:
 
 Execute:
 ```
-tasks/utils/validate-agent-permission.md
+{root}/tasks/utils/validate-agent-permission.md
 ```
 
 Input:

@@ -229,7 +229,7 @@ Action: Complete blocking stories first
 
 Execute:
 ```
-tasks/utils/load-architecture-context.md
+{root}/tasks/utils/load-architecture-context.md
 ```
 
 **Input**:
@@ -253,7 +253,7 @@ architecture_location: {from Step 1}
 
 Execute:
 ```
-tasks/utils/load-cumulative-context.md
+{root}/tasks/utils/load-cumulative-context.md
 ```
 
 **Input**: `{devStoryLocation}`
@@ -278,7 +278,7 @@ models_registry:
 
 Execute:
 ```
-tasks/utils/validate-against-cumulative-context.md
+{root}/tasks/utils/validate-against-cumulative-context.md
 ```
 
 **Input**:

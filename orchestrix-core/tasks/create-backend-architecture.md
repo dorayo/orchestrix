@@ -486,7 +486,7 @@ Does this API implementation detail level match your expectations?
 ### Step 7: Generate Backend Architecture Document
 
 **Output Document**:
-Use template: `orchestrix-core/templates/architecture-tmpl.yaml`
+Use template: `{root}/templates/architecture-tmpl.yaml`
 
 **Prepare Output**:
 ```bash

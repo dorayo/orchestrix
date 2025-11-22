@@ -4,6 +4,36 @@
 
 To provide a structured decision-making framework for agents to evaluate situations, apply decision rules, and determine appropriate actions based on context and predefined criteria. This task enables consistent, auditable decision-making across the Orchestrix system.
 
+## Quick Reference
+
+**Calling Pattern**:
+```yaml
+decision_input:
+  decision_type: "sm-story-status"
+  context:
+    architect_review_result: "APPROVED"
+    test_design_level: "Standard"
+```
+
+**Standardized Output Format** (all decision files use this structure):
+```yaml
+result: <decision outcome>          # Main decision result (REQUIRED)
+reasoning: <explanation>            # Why this decision was made (REQUIRED)
+next_status: <story status or null> # Next status to set (OPTIONAL, nullable)
+next_action: <recommended action>   # Recommended next step (REQUIRED)
+metadata: <additional context>      # Extra information (OPTIONAL)
+```
+
+**Available Decision Types** (in `{root}/data/decisions/`):
+- `sm-story-status` - Determine final story status after Architect review
+- `sm-architect-review-needed` - Check if Architect review is required
+- `sm-test-design-level` - Determine test design level (Simple/Standard/Comprehensive)
+- `dev-self-review-decision` - Validate Dev implementation quality gates
+- `architect-review-result` - Architect review outcome
+- `qa-gate-decision` - QA gate pass/fail decision
+- `qa-post-review-workflow` - Post-QA review workflow action
+- Other decision types available in `{root}/data/decisions/`
+
 ## Agent Permission Check
 
 **CRITICAL**: Before proceeding with decision-making, verify agent has the required permissions:
