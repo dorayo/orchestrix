@@ -1,0 +1,148 @@
+template:
+  id: qa-review-lite-template
+  name: QA Review Report (Lite)
+  version: 2.0
+  output:
+    format: markdown
+    filename: docs/qa/reviews/{{story_id}}-qa-r{{review_round}}.md
+    title: "QA Review: Story {{story_id}} - Round {{review_round}}"
+
+sections:
+  - id: header
+    title: Review Header
+    template: |
+      # QA Review Report (Differential)
+
+      **Story**: {{story_id}} - {{story_title}}
+      **Review Round**: {{review_round}} of 3 ({{review_standard}} standards)
+      **Review Date**: {{review_date}}
+      **Reviewer**: {{reviewer_name}} ({{reviewer_role}})
+      **Dev Gate Score**: {{dev_implementation_gate_score}}%
+
+  - id: review-summary
+    title: Review Summary
+    template: |
+      ## Review Summary
+
+      - **Gate Result**: {{gate_result}}
+      - **Issues Found**: {{total_issues}}
+      - **Quality Score**: {{quality_score}}/100
+      - **Next Status**: {{next_status}}
+
+  - id: architecture-concerns
+    title: Architecture Concerns
+    template: |
+      ## Architecture Concerns
+
+      {{#if has_architecture_concerns}}
+      {{#each architecture_concerns}}
+      #### {{title}}
+
+      - **Severity**: {{severity}}
+      - **Description**: {{description}}
+      - **Impact**: {{impact}}
+      - **Recommendation**: {{recommendation}}
+
+      {{/each}}
+      {{else}}
+      ✅ No architecture concerns identified.
+      {{/if}}
+
+  - id: security-performance
+    title: Security & Performance (NFR Deep Dive)
+    template: |
+      ## Security & Performance
+
+      ### Security Findings
+
+      {{#if security_findings}}
+      {{#each security_findings}}
+      - **{{severity}}** - {{finding}}
+        - Impact: {{impact}}
+        - Recommendation: {{recommendation}}
+      {{/each}}
+      {{else}}
+      ✅ No security issues identified.
+      {{/if}}
+
+      ### Performance Findings
+
+      {{#if performance_findings}}
+      {{#each performance_findings}}
+      - **{{severity}}** - {{finding}}
+        - Impact: {{impact}}
+        - Recommendation: {{recommendation}}
+      {{/each}}
+      {{else}}
+      ✅ No performance issues identified.
+      {{/if}}
+
+  - id: issues-breakdown
+    title: Issues Breakdown
+    template: |
+      ## Issues Breakdown by Severity
+
+      ### Critical Issues ({{critical_count}})
+
+      {{#each critical_issues}}
+      #### {{@index}}. {{title}}
+
+      - **Location**: {{location}}
+      - **Description**: {{description}}
+      - **Impact**: {{impact}}
+      - **Required Action**: {{required_action}}
+
+      {{/each}}
+
+      ### High Severity Issues ({{high_count}})
+
+      {{#each high_issues}}
+      #### {{@index}}. {{title}}
+
+      - **Location**: {{location}}
+      - **Description**: {{description}}
+      - **Required Action**: {{required_action}}
+
+      {{/each}}
+
+      ### Medium/Low Issues ({{medium_count}} + {{low_count}})
+
+      {{#each medium_low_issues}}
+      - **{{severity}}** - {{title}} ({{location}}): {{description}}
+      {{/each}}
+
+  - id: gate-decision
+    title: Gate Decision
+    template: |
+      ## Gate Decision
+
+      **Gate**: {{gate_result}}
+
+      ### Decision Reasoning
+
+      {{decision_reasoning}}
+
+      ### Gate File Reference
+
+      [{{gate_file_name}}](../../qa/gates/{{gate_file_name}})
+
+  - id: next-steps
+    title: Next Steps
+    template: |
+      ## Next Steps
+
+      {{#if gate_pass}}
+      ✅ **Story Complete** - All quality criteria met, ready for deployment
+      {{/if}}
+
+      {{#if gate_concerns_or_fail}}
+      ⚠️ **Issues Found** - Dev needs to address {{total_issues}} issues
+
+      **Handoff**: `*review-qa {{story_id}}`
+      {{/if}}
+
+      {{#if escalation}}
+      🚨 **Escalated to Architect** - {{escalation_reason}}
+
+      **Handoff**: `*review-escalation {{story_id}}`
+      {{/if}}

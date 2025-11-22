@@ -143,54 +143,124 @@ Auto-escalate to deep review if:
 - No tests added, diff > 500 lines, AC count > 5
 - Previous gate: FAIL/CONCERNS
 
-### 2. Comprehensive Analysis
+### 2. Differential Analysis (Trust Dev Gate ≥95%)
 
-Apply review criteria based on current round (see Initialize Review Round for standards).
+**Prerequisites**:
+1. Read Dev Agent Record → `self_review` section
+2. Extract `implementation_gate_score`
+3. If `implementation_gate_score` < 95%: Execute full 6-dimension review (rare case)
+4. If `implementation_gate_score` ≥ 95%: Execute differential review below (common case)
 
-**Review Areas:**
-- **Requirements Traceability**: AC-to-test mapping, coverage gaps
-- **Code Quality**: Architecture, patterns, refactoring, security, performance
-- **Test Architecture**: Coverage, levels, design, edge cases, reliability
-- **NFRs**: Security, performance, reliability, maintainability
-- **Testability**: Controllability, observability, debuggability
-- **Technical Debt**: Shortcuts, missing tests, violations
+---
 
-**Architecture Concern Detection:**
+**Differential Review (4 Dimensions) - Trust Dev Validation**:
+
+#### 2.1 Architecture Concerns (Architect-Level Perspective)
+**Focus**: Cross-component impact, design patterns, scalability
+- Evaluate architectural patterns and SOLID principles
+- Check for circular dependencies or tight coupling
+- Assess data flow design and component boundaries
+- Identify violations of separation of concerns
+
+**Skip** (Dev Gate already verified):
+- ❌ File structure compliance (Gate Section 2.2)
+- ❌ Naming conventions (Gate Section 2.1)
+- ❌ Tech stack compliance (Gate Section 2.3)
+
+**Architecture Concern Detection**:
 If detected, execute `make-decision` (type: `qa-escalate-architect`):
 - ESCALATE → Document, Status = Escalated, handoff Architect, exit
 - DOCUMENT → Document, continue
+
+---
+
+#### 2.2 NFR Deep Dive (Security & Performance Critical Paths)
+**Focus**: OWASP Top 10, performance bottlenecks, production risks
+
+**Security Checklist**:
+- SQL injection prevention (parameterized queries)
+- XSS vulnerability scan (output encoding)
+- CSRF protection (tokens, SameSite cookies)
+- Authentication/authorization correctness
+- Sensitive data encryption (at rest, in transit)
+- Secrets management (no hardcoded credentials)
+- Error messages (no info leakage)
+
+**Performance Checklist**:
+- N+1 query detection
+- Memory leak risks (closures, event listeners)
+- Batch operation optimization
+- Caching strategy appropriateness
+- Index usage for database queries
+
+**Skip** (Dev Gate already verified):
+- ❌ Tests passing (Gate Critical Item 1)
+- ❌ Lint errors (Gate Critical Item 2)
+- ❌ Build success (Gate Section 8)
+- ❌ Basic security (Gate Section 10)
+
+---
+
+#### 2.3 Technical Debt & Long-Term Impact
+**Focus**: Shortcuts, maintainability, future burden
+- Identify quick-fix solutions vs proper implementation
+- Assess code maintainability and readability
+- Evaluate extensibility for future requirements
+- Document acceptable technical debt with rationale
+- Flag code that will become maintenance burden
+
+---
+
+#### 2.4 Requirements Trace (Sampling, Not Exhaustive)
+**Focus**: Spot-check complex ACs, not full coverage
+- Select 3 most complex ACs for validation (not all)
+- Verify edge case handling for selected ACs
+- Check business logic correctness
+- Validate error scenario implementation
+
+**Skip** (Dev Gate already verified):
+- ❌ All ACs implemented (Gate Critical Item 4)
+- ❌ Tasks checked off (Gate Section 1.3)
+- ❌ Test coverage (Gate Section 3)
+
+---
 
 ### 3. Code Review Only (No Modifications)
 
 - **IMPORTANT**: QA Agent must NOT modify any code files
 - Role: Review, analyze, and report - NOT refactor or fix
 - Document all findings in QA Results with specific locations
-- If refactoring needed: add to "Improvements Checklist" for Dev to address
+- If refactoring needed: add to "Issues Breakdown" for Dev to address
 - Do NOT alter story beyond QA Results section
 
-### 4. Standards & AC Validation
+### 4. Skip Standards Validation (Dev Gate Already Enforced)
 
-- Verify compliance: coding-standards.md, unified-project-structure.md, testing-strategy.md
-- Validate each AC implemented with edge cases
-- Verify documentation and comments for complex logic
+**Rationale**: Dev Gate Section 2 (Code Quality) already verified compliance with:
+- coding-standards.md (Gate 2.1)
+- unified-project-structure.md (Gate 2.2)
+- testing-strategy.md (Gate 3.6)
+
+**QA Action**: Trust Dev validation, skip redundant checks
 
 ## Output 1: Create Detailed Review Report
 
 **Save to**: `{qa.qaReviewsLocation}/{story_id}-qa-r{review_round}.md`
 
-Use template: `{root}/templates/qa-review-tmpl.yaml`
+Use template: `{root}/templates/qa-review-lite-tmpl.yaml`
 
-**Include**:
-- Review summary with metrics
-- Complete code quality assessment
-- Architecture concerns
-- Compliance check results
-- Improvements checklist (completed + pending)
-- Security & performance findings
+**Include** (Lite Version):
+- Review summary (gate, issues count, quality score)
+- Architecture concerns (if any)
+- Security & performance findings (NFR deep dive)
 - Issues breakdown by severity
-- Technical debt (if Round 3)
 - Gate decision reasoning
-- Review metadata
+- Next steps
+
+**Exclude** (Dev Gate Already Verified):
+- ❌ Code quality assessment (Gate Section 2)
+- ❌ Compliance check (Gate Sections 2,3,6)
+- ❌ Test architecture details (Gate Section 3,4)
+- ❌ Detailed metrics (simplified in lite version)
 
 ### Output 2: Update Story - QA Review Metadata ONLY
 

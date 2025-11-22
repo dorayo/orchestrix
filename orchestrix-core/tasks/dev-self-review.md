@@ -112,25 +112,6 @@ git diff --name-only | grep -E "test|spec"
 - Fix implementation instead
 - Document rationale if legitimate requirement change
 
-### 6. DoD Final Check
-
-Re-execute DoD checklist: `{root}/checklists/completion/story-dod-checklist.md`
-
-**Critical Items** (must all be [x]):
-- All functional requirements implemented
-- All acceptance criteria met
-- All tests pass
-- No new linter errors
-- Test integrity maintained
-- Dev Log complete
-- Dev Agent Record complete
-
-**On Any Critical Item Failed**:
-- HALT
-- Document gaps
-- Fix issues
-- Re-run self-review
-
 ### 7. Implementation Rounds Tracking
 
 **Read from Dev Agent Record**: `implementation_rounds` (default: 1)
@@ -153,7 +134,6 @@ self_review:
   architecture_compliance: {PASS/FAIL}
   api_contract_compliance: {PASS/FAIL/N_A}
   test_integrity: {PASS/FAIL}
-  dod_score: {percentage}
   critical_issues_found: {count}
   ready_for_qa: {true/false}
   round: {implementation_round}
@@ -173,7 +153,6 @@ context:
   architecture_compliance: {PASS/FAIL}
   api_contract_compliance: {PASS/FAIL/N_A}
   test_integrity: {PASS/FAIL}
-  dod_score: {percentage}
   critical_issues: {count}
   implementation_round: {number}
   previous_round_issues: [{array of issue types if round > 1}]
@@ -207,7 +186,7 @@ context:
 ```
 ✅ SELF-REVIEW PASSED
 Story: {story_id} ready for QA review
-Implementation Gate: {score}% | DoD: {score}% | Test Integrity: PASS
+Implementation Gate: {score}% | Test Integrity: PASS
 Round: {N}
 
 ⚠️⚠️⚠️ CRITICAL - READ THIS ⚠️⚠️⚠️
@@ -245,7 +224,6 @@ Issues Found:
 - Architecture Compliance: {issues_list}
 - API Contract: {violations_list}
 - Test Integrity: {concerns_list}
-- DoD: {missing_items}
 
 Action Items:
 1. {action_item_1}
@@ -291,7 +269,6 @@ Recommendation: Architectural review needed
 - Architecture compliance: PASS
 - API contract compliance: PASS (or N/A)
 - Test integrity: PASS
-- DoD checklist: 100% of critical items
 - Self-review report generated
 - Dev Agent Record updated
 - Decision made: PASS/FAIL/ESCALATE
@@ -312,6 +289,5 @@ Recommendation: Architectural review needed
 - `tasks/make-decision.md`
 - `tasks/utils/validate-api-contract.md`
 - `checklists/validation/dev-implementation-gate.md`
-- `checklists/completion/story-dod-checklist.md`
 - `data/story-status-transitions.yaml`
 - `data/decisions/dev-self-review-decision.yaml`

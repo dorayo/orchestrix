@@ -131,7 +131,6 @@ action: implement
 - Architecture compliance validated
 - API contract compliance validated (if multi-repo)
 - Test integrity validated
-- DoD critical items 100%
 - Dev Agent Record updated with self-review results
 - File List complete
 - Status transition validated
@@ -295,7 +294,7 @@ This completion phase has **TWO MANDATORY GATES** that must be executed in order
 
 **Execute**: `{root}/tasks/dev-self-review.md` (see file for detailed criteria)
 
-**Validates**: Implementation gate ≥95%, architecture compliance, API contracts, test integrity, DoD critical items
+**Validates**: Implementation gate ≥95%, architecture compliance, API contracts, test integrity
 
 **Outcomes**: PASS → Continue to GATE 2 | FAIL → HALT, fix issues | ESCALATE → Exit to Architect
 
@@ -517,5 +516,4 @@ Complete both gates in sequence:
 - utils/validate-agent-permission.md, utils/validate-api-contract.md
 - data/decisions/dev-block-story.yaml, dev-escalate-architect.yaml
 - data/story-status-transitions.yaml
-- dev-log-tmpl.md, checklists/completion/story-dod-checklist.md
-- checklists/validation/dev-implementation-gate.md
+- dev-log-tmpl.md, checklists/validation/dev-implementation-gate.md

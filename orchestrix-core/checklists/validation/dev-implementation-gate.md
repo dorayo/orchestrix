@@ -203,7 +203,7 @@ These items are MANDATORY and must ALL pass:
 
 ---
 
-## 9. DOCUMENTATION (Required: ≥80%)
+## 9. DOCUMENTATION (Required: ≥75%)
 
 | # | Item | Status | Evidence |
 |---|------|--------|----------|
@@ -211,14 +211,8 @@ These items are MANDATORY and must ALL pass:
 | 9.2 | Dev Agent Record updated | [ ] | |
 | 9.3 | File List complete (added/modified/deleted) | [ ] | |
 | 9.4 | Change Log updated | [ ] | |
-| 9.5 | Technical decisions documented | [ ] | |
-| 9.6 | Deviations from SM design documented | [ ] | |
-| 9.7 | Complex logic explained in Dev Log | [ ] | |
-| 9.8 | Open issues documented | [ ] | |
-| 9.9 | Final Summary written | [ ] | |
-| 9.10 | Inline comments for complex code | [ ] | |
 
-**Section Score**: ___/10 (___%)
+**Section Score**: ___/4 (___%)
 
 ---
 
@@ -256,7 +250,7 @@ These items are MANDATORY and must ALL pass:
 | 6. Architecture Compliance | ___% | 15% | ___% | [ ] ≥90% required |
 | 7. API Contract Compliance | ___% or N/A | 10% | ___% | [ ] 100% if applicable |
 | 8. Build & Dependencies | ___% | 10% | ___% | [ ] 100% required |
-| 9. Documentation | ___% | 5% | ___% | [ ] ≥80% required |
+| 9. Documentation | ___% | 5% | ___% | [ ] ≥75% required |
 | 10. Security & Robustness | ___% | 5% | ___% | [ ] 100% required |
 
 **Total Weighted Score**: ___% (Must be ≥95%)
