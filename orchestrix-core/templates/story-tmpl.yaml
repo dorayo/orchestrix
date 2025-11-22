@@ -1,7 +1,7 @@
 template:
-  id: story-template-v2
+  id: story-template-v3
   name: Story Document
-  version: 2.0
+  version: 3.0
   output:
     format: markdown
     filename: docs/stories/{{epic_num}}.{{story_num}}.{{story_title_short}}.md
@@ -22,7 +22,9 @@ sections:
   - id: status
     title: Status
     type: choice
-    choices: [Blocked, AwaitingArchReview, AwaitingTestDesign, TestDesignComplete, RequiresRevision, Approved, InProgress, Review, Done, Escalated]
+    choices:
+      [Blocked, AwaitingArchReview, AwaitingTestDesign, TestDesignComplete,
+       RequiresRevision, Approved, InProgress, Review, Done, Escalated]
     instruction: |
       Select the current status of the story:
       - Blocked: Story quality not meeting standards, requires SM revision
@@ -37,7 +39,7 @@ sections:
       - Escalated: Requires human intervention for decision
     owner: scrum-master
     editors: [scrum-master, architect-agent, qa-agent, dev-agent]
-    
+
   - id: story
     title: Story
     type: template-text
@@ -48,7 +50,7 @@ sections:
     instruction: Define the user story using the standard format with role, action, and benefit
     elicit: true
     owner: scrum-master
-    editors: [scrum-master, ux-expert]
+    editors: [scrum-master]
 
   - id: multi-repo-context
     title: Multi-Repository Context
@@ -59,7 +61,10 @@ sections:
       **Platform**: {{target_platform}}
       **Epic**: Epic {{epic_id}} - {{epic_title}}
 
+      API Contract Reference: See `{{api_contracts_path}}` for detailed specifications.
+
       {{#if provides_apis}}
+
       ### 🔌 APIs Provided by This Story
 
       This story implements the following APIs that other repositories will consume:
@@ -67,16 +72,11 @@ sections:
       {{#each provides_apis}}
       - `{{this}}`
       {{/each}}
-
-      **API Contract Reference**: See `{{api_contracts_path}}` for detailed specifications.
-
-      **⚠️ CRITICAL**: These APIs MUST match the contract exactly. Any changes require:
-      1. Update API contract document
-      2. Notify consuming teams (Frontend/Mobile)
-      3. Version API if breaking change
       {{/if}}
 
-      {{#if consumes_apis}}
+
+      {{ #if consumes_apis }}
+
       ### 📡 APIs Consumed by This Story
 
       This story consumes the following APIs from other repositories:
@@ -85,11 +85,6 @@ sections:
       - `{{this}}`
       {{/each}}
 
-      **API Contract Reference**: See `{{api_contracts_path}}` for detailed specifications.
-
-      **⚠️ DEPENDENCIES**: Verify these APIs are implemented and deployed before starting development.
-      Check Backend Story status to ensure APIs are Done.
-      {{/if}}
 
       {{#if cross_repo_dependencies}}
       ### 🔗 Cross-Repository Dependencies
@@ -99,9 +94,6 @@ sections:
       {{#each cross_repo_dependencies}}
       - **{{this}}** (Must be Status = Done)
       {{/each}}
-
-      **⚠️ BLOCKING**: Do not start this story until all dependencies are Status = Done.
-      SM will verify dependencies before allowing story creation.
       {{/if}}
 
       {{#if repository_name}}
@@ -127,14 +119,6 @@ sections:
     owner: scrum-master
     editors: [scrum-master]
 
-  - id: acceptance-criteria
-    title: Acceptance Criteria
-    type: numbered-list
-    instruction: Copy the acceptance criteria numbered list from the epic file
-    elicit: true
-    owner: scrum-master
-    editors: [scrum-master, ux-expert]
-    
   - id: tasks-subtasks
     title: Tasks / Subtasks
     type: bullet-list
@@ -216,89 +200,28 @@ sections:
         - [ ] Update Dev Agent Record with structured metadata
         - [ ] Update story status to Review
         - (AC: [reference acceptance criteria numbers])
-    
+
   - id: dev-notes
     title: Dev Notes
     instruction: |
-      **OPTIMIZATION PRINCIPLE**: Dev Notes record STORY-SPECIFIC information only.
-      Do NOT copy-paste architecture documents. Use references instead.
-
-      **Core Guidelines**:
-      - Reference architecture docs via: [→ docs/architecture/{file}.md#{section}]
-      - For accumulated context: Use compact table format (Name | Story | Action | Key Info)
-      - For database/API designs: Record DECISIONS, not full schemas (schemas live in migration files/code)
-      - Keep Dev Notes under 200 lines total
-
-      **MANDATORY Sections**:
-      1. **Technical Constraints Summary** (Simplified - ~20 lines)
-         - Key tech stack choices with references to arch docs
-         - Story-specific constraints and decisions ONLY
-         - NO copy-paste of entire arch doc sections
-
-      2. **Accumulated Context** (Table Format - ~30 lines)
-         - Format: | Resource | Source Story | Action | Key Fields/Info |
-         - Example: | users table | 1.1 | REUSE | id, email (full schema in Story 1.1) |
-         - NO full schema copies, just references
-
-      3. **Database/API Design** (Decision-Focused - ~40 lines)
-         - Design decisions and rationale (WHY this approach)
-         - Key constraints (unique indexes, FK decisions, enum choices)
-         - Reference to full schemas: "See migration file: V10_001_02__*.sql"
-         - NO embedding 200+ line CREATE TABLE statements
-
-      4. **Data Models** (Contract-Focused - ~40 lines)
-         - Interface/DTO names and key field contracts
-         - Critical business rules and validations
-         - Reference: "Full implementation in {ClassName}.java/ts"
-         - NO embedding complete 150+ line class definitions
-
-      5. **File Locations** (~20 lines)
-         - Exact paths for new files per project structure
-         - Migration file names
-         - Entity/Service/Controller locations
-
-      6. **Testing Requirements** (~30 lines)
-         - Test frameworks and patterns [→ testing-strategy.md]
-         - Story-specific test priorities (P0/P1/P2)
-         - Coverage requirements
-         - Test Integrity Rules (reference standard rules)
-
-      7. **Technical Constraints** (~20 lines)
-         - Version requirements [→ tech-stack.md]
-         - Performance/security rules for THIS story
-         - Integration constraints specific to this story
-
-      **TOTAL TARGET**: ~200 lines (vs previous 600+ lines)
+      Populate relevant information, only what was pulled from actual artifacts from docs folder, relevant to this story:
+      - Do not invent information
+      - If known add Relevant Source Tree info that relates to this story
+      - If there were important notes from previous story that are relevant to this one, include them here
+      - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents, these notes along with the tasks and subtasks must give the Dev Agent the complete context it needs to comprehend with the least amount of overhead the information to complete the story, meeting all AC and completing all tasks+subtasks
     elicit: true
     owner: scrum-master
     editors: [scrum-master]
+
     sections:
-      - id: technical-constraints-summary
-        title: Technical Constraints Summary
-        instruction: |
-          **Story-Specific Technical Constraints** (Keep under 20 lines):
-          - List only constraints UNIQUE to this story
-          - Reference common tech stack: [→ tech-stack.md#{section}]
-          - Reference coding standards: [→ coding-standards.md#{section}]
-          - NO copying entire architecture document sections
-
-          Example Format:
-          **Tech Stack** (full details in architecture docs):
-          - {Primary Technology}: {version/details} [→ tech-stack.md#{Section}]
-          - {Naming Convention}: {format description} [→ coding-standards.md#{Section}]
-
-          **Story-Specific Constraints**:
-          - {Business Rule 1}: {constraint description with specifics}
-          - {Business Rule 2}: {constraint description with specifics}
-          - {Deferred Dependency}: {reason for deferral to future epic/story}
-        elicit: true
-        owner: scrum-master
-        editors: [scrum-master]
+    
+      - id: technical-constraints
+        title: Technical Constraints
+        instruction: Record only constraints unique to this story (performance/security/version limits)
 
       - id: accumulated-context
         title: Accumulated Context (From Previous Stories)
         instruction: |
-          **Compact Table Format** (Keep under 30 lines):
           List ONLY resources relevant to THIS story. Use table format.
 
           | Resource Type | Name | Source Story | Action | Key Info |
@@ -307,152 +230,26 @@ sections:
           | Endpoint | {METHOD /path} | {X.Y} | CALL/EXTEND | {brief_signature} |
           | Model | {IModelName} | {X.Y} | REUSE/EXTEND | {action_description} |
 
-          **DO NOT**:
-          - Copy full table schemas (just list key fields)
-          - Copy full API request/response definitions (just summary)
-          - Copy full interface definitions (just name + extension info)
-
-          **Reference**: Full schemas available in original Story Dev Agent Records or cumulative registry
         elicit: true
         owner: scrum-master
         editors: [scrum-master]
 
       - id: database-design
         title: Database Design
-        instruction: |
-          **Design Decisions** (Keep under 40 lines):
-          Record WHY decisions were made, not full SQL.
-
-          **Tables Created/Modified**:
-          - Table: {table_name}
-            - Purpose: {business purpose description}
-            - Key decisions:
-              * {field_name} {TYPE} {CONSTRAINT} - {rationale for this design choice}
-              * {enum_field} ENUM - {why enum instead of varchar/int}
-              * {fk_field} FK DEFERRED - {reason for deferral, if applicable}
-            - Indexes: {list critical indexes and their purpose}
-            - FKs: {list foreign keys and referential actions}
-
-          **Full Schema Reference**:
-          - Migration: {path/to/migration/file.sql}
-          - See migration file for complete CREATE TABLE statement ({N} fields, {M} indexes, {K} FKs)
-
-          **DO NOT**: Embed full CREATE TABLE SQL here
-        elicit: true
-        owner: scrum-master
-        editors: [scrum-master]
+        instruction: Describe design decisions for tables/indexes/FKs; full schema must be referenced via migration files
 
       - id: data-models
         title: Data Models
-        instruction: |
-          **Model Contracts** (Keep under 40 lines):
-          Define interfaces and key business rules, NOT full implementations.
-
-          **Entities/DTOs**:
-          - {EntityName} Entity
-            - Package: {package.path}
-            - Key fields: {field1} ({type}), {field2} ({type}), {critical_field} ({type} {constraint})
-            - Enums: {EnumName1} ({values_summary}), {EnumName2} ({values_summary})
-            - Annotations: {framework-specific annotations summary}
-
-          - Validation Rules:
-            * {field_name}: {validation rule description}
-            * {field_name}: {constraint description}
-            * {field_name}: {business rule description}
-
-          **Full Implementation Reference**:
-          - Entity code created by Dev Agent in: {path/to/entity/file}
-          - Complete field list ({N} fields) in implementation
-
-          **DO NOT**: Embed full class/interface definition here
-        elicit: true
-        owner: scrum-master
-        editors: [scrum-master]
+        instruction: Describe model contracts, key fields, validation rules; full types referenced via code paths
 
       - id: file-locations
         title: File Locations
-        instruction: |
-          **Exact File Paths** (Keep under 20 lines):
-          List paths for new files per project structure [→ source-tree.md].
-
-          **Database Migrations** (if applicable):
-          - {module}/src/main/resources/db/migration/{version}__{description}.sql
-          - {module}/src/main/resources/db/migration/{version}__{description}.sql
-
-          **Entity & Data Access** (if applicable):
-          - {module}/src/main/java/{package}/entity/{EntityName}.java
-          - {module}/src/main/java/{package}/mapper/{EntityName}Mapper.java
-          - {module}/src/main/resources/mapper/{EntityName}Mapper.xml
-
-          **Business Logic** (if applicable):
-          - {module}/src/main/java/{package}/service/I{Service}Service.java
-          - {module}/src/main/java/{package}/service/impl/{Service}ServiceImpl.java
-          - {module}/src/main/java/{package}/validator/{ValidatorName}.java
-
-          **Tests** (if applicable):
-          - {module}/src/test/java/{package}/mapper/{Entity}MapperTest.java
-          - {module}/src/test/java/{package}/service/{Service}ServiceTest.java
-        elicit: true
-        owner: scrum-master
-        editors: [scrum-master]
+        instruction: List important new/modified files according to project structure
 
       - id: testing-requirements
         title: Testing Requirements
-        instruction: |
-          **Test Strategy** (Keep under 30 lines):
-          Reference testing standards, list story-specific priorities.
+        instruction: Record test focus areas specific to this story (edge cases, performance, complex validation)
 
-          **Frameworks** [→ testing-strategy.md#Framework]:
-          - {Test Framework 1} ({version/purpose})
-          - {Test Framework 2} ({annotations/utilities summary})
-          - {Test Database/Mocking Framework}
-
-          **Coverage Requirements** [→ testing-strategy.md#Coverage]:
-          - Unit test coverage > {threshold}% (line coverage via {tool})
-          - Critical paths 100% coverage: {critical_feature_1}, {critical_feature_2}, {critical_feature_3}
-
-          **Story-Specific Test Priorities**:
-          - P0: {highest_priority_test_areas}
-          - P1: {medium_priority_test_areas}
-          - P2: {lowest_priority_test_areas}
-
-          **Test Integrity Rules** [→ testing-strategy.md#Test Integrity]:
-          - Tests define "correct" behavior - NEVER modify assertions to make tests pass
-          - Fix IMPLEMENTATION, not tests
-          - Requirement tests (business logic) are immutable
-          - Implementation tests (technical details) are adjustable
-        elicit: true
-        owner: scrum-master
-        editors: [scrum-master]
-
-      - id: technical-constraints
-        title: Technical Constraints
-        instruction: |
-          **Story-Specific Constraints** (Keep under 20 lines):
-          List constraints unique to THIS story, reference common constraints.
-
-          **Version Requirements** [→ tech-stack.md]:
-          - {Technology 1}: {min_version}+ ({reason for minimum version})
-          - {Technology 2}: {version} ({required feature/capability})
-          - {Language/Runtime}: {version}+ ({language features used})
-
-          **Performance** (Story-Specific):
-          - {Operation}: < {threshold}ms ({context/justification})
-          - {Operation}: < {threshold}ms ({optimization strategy if applicable})
-
-          **Security** [→ coding-standards.md#Security]:
-          - {Security Rule 1}: {requirement description}
-          - {Data Protection}: {masking/encryption requirement}
-          - {Uniqueness Constraint}: {enforcement mechanism}
-
-          **Integration Constraints**:
-          - {System/Tool Constraint}: {immutability/compatibility rule}
-          - {Referential Integrity}: {FK behavior specification}
-          - {Legacy System}: {access restrictions if applicable}
-        elicit: true
-        owner: scrum-master
-        editors: [scrum-master]
-        
   - id: change-log
     title: Change Log
     type: table
@@ -472,7 +269,7 @@ sections:
       {{#each change_log_entries}}
       | {{date}} | {{agent}} | {{from_status}} → {{to_status}} | {{details}} {{#if link}}[{{link_text}}]({{link}}){{/if}} |
       {{/each}}
-    
+
   - id: dev-agent-record
     title: Dev Agent Record
     instruction: This section is populated by the development agent during implementation
@@ -668,152 +465,10 @@ sections:
             Target Agent: {{target_agent}}
             Date Raised: {{date_raised}}
             Status: {{status}}
-        
-  - id: story-decisions
-    title: Story Decisions (Read-Only After Creation)
-    instruction: |
-      **OPTIMIZED**: Compact record of SM's initial quality assessment and decisions.
-      Populated once during story creation. Subsequent agents read-only.
-      Replaces verbose Quality Assessment Metadata with essential decisions only.
-    owner: scrum-master
-    editors: [scrum-master]
-    template: |
-      ```yaml
-      quality_score: {{quality_score}}/10
-      complexity: {{complexity_count}} indicators ({{complexity_summary}})
-      test_design_level: {{test_design_level}}
-      architect_review: {{architect_review_decision}} ({{reasoning}})
-      initial_status: {{initial_status}}
-      decided_at: {{timestamp}}
-      ```
 
-      **Complexity Indicators**: {{detected_indicators_list}}
-
-      **Decision Reasoning**: {{decision_reasoning}}
-  
-  - id: qa-test-design-metadata
-    title: QA Test Design Metadata
-    instruction: |
-      This section is populated by the QA Agent during test design phase.
-      Test design occurs before development begins, providing Dev Agent with clear testing strategy.
-      Test design level is determined by SM Agent based on complexity, quality score, and security sensitivity.
+  - id: qa-results
+    title: QA Results
+    instruction: Results from QA Agent QA review of the completed story implementation
     owner: qa-agent
-    editors: [qa-agent, scrum-master]
-    fields:
-      - id: test_design_level
-        title: Test Design Level
-        type: choice
-        choices: [Simple, Standard, Comprehensive]
-        instruction: |
-          Test design level determined by SM Agent based on story characteristics:
-          - Simple: Complexity=0, Quality≥8.5, No security sensitivity (test design skipped)
-          - Standard: Complexity=1-2 OR Quality=7.0-8.5 (test-design task required)
-          - Comprehensive: Complexity≥3 OR Security sensitive (test-design + risk-profile tasks required)
-          
-      - id: test_design_status
-        title: Test Design Status
-        type: choice
-        choices: [NotRequired, Pending, InProgress, Complete]
-        instruction: |
-          Current status of test design:
-          - NotRequired: Simple level, test design skipped
-          - Pending: Test design required but not yet started
-          - InProgress: QA Agent currently working on test design
-          - Complete: Test design completed, ready for development
-          
-      - id: test_design_document
-        title: Test Design Document
-        type: reference
-        path: qa/assessments/{story-id}-test-design-{date}.md
-        instruction: |
-          Reference to the test design document created by QA Agent.
-          Document contains:
-          - Test scenarios by acceptance criteria
-          - Test levels (Unit/Integration/E2E)
-          - Test priorities (P0/P1/P2/P3)
-          - Recommended execution order
-          Format: qa/assessments/{epic}.{story}-test-design-YYYY-MM-DD.md
-          
-      - id: risk_profile_document
-        title: Risk Profile Document
-        type: reference
-        path: qa/assessments/{story-id}-risk-{date}.md
-        conditional: test_design_level == "Comprehensive"
-        instruction: |
-          Reference to the risk profile document (only for Comprehensive level).
-          Document contains:
-          - Security risk assessment
-          - Technical risk analysis
-          - Business risk evaluation
-          - Operational risk considerations
-          - Risk mitigation strategies
-          Format: qa/assessments/{epic}.{story}-risk-YYYY-MM-DD.md
-          
-      - id: test_design_completion_date
-        title: Test Design Completion Date
-        type: timestamp
-        instruction: Timestamp when test design was completed by QA Agent
-        
-      - id: test_design_summary
-        title: Test Design Summary
-        type: text
-        instruction: |
-          Brief summary of test design approach and key testing priorities.
-          Includes:
-          - Total test scenarios count
-          - P0/P1/P2 test distribution
-          - Key risk areas to focus on
-          - Special testing considerations
-          
-      - id: dev_feedback
-        title: Dev Feedback
-        type: text
-        instruction: |
-          Feedback from Dev Agent regarding test design issues or concerns.
-          Populated by Dev Agent when test design is found to be unreasonable or missing important scenarios.
-          Includes:
-          - Description of test design issues
-          - Missing test scenarios
-          - Unreasonable test expectations
-          - Suggested improvements
-        owner: dev-agent
-        editors: [dev-agent]
-        required: false
-  
-  - id: review-status
-    title: Review Status (Live Updates)
-    instruction: |
-      **OPTIMIZED**: Compact tracking of review status across workflow.
-      Replaces verbose Architect/QA Review Metadata with essential status only.
-      Detailed review reports stored in external files (docs/architecture/story-reviews/, docs/qa/reviews/).
-    owner: scrum-master
-    editors: [scrum-master, architect-agent, qa-agent]
-    sections:
-      - id: architect-review
-        title: Architect Review
-        template: |
-          {{#if no_review}}
-          Status: Not Required
-          {{else}}
-          **Latest Review**: Round {{latest_round}} ({{latest_date}})
-          **Score**: {{score}}/10 | **Decision**: {{decision}}
-          **Critical Issues**: {{critical_count}}
-          **Report**: [Review R{{latest_round}}]({{report_path}})
-          {{/if}}
-        owner: architect-agent
-        editors: [architect-agent]
+    editors: [qa-agent]
 
-      - id: qa-review
-        title: QA Review
-        template: |
-          {{#if no_review}}
-          Status: Not Started
-          {{else}}
-          **Latest Review**: Round {{latest_round}} ({{latest_date}})
-          **Gate**: {{gate}} | **Quality**: {{quality}}/100
-          **Issues**: {{resolved}}/{{total}} resolved
-          **Report**: [QA R{{latest_round}}]({{report_path}})
-          {{/if}}
-        owner: qa-agent
-        editors: [qa-agent]
-    
