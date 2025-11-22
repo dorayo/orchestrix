@@ -125,31 +125,7 @@ previous_rounds_summary:
 
 ---
 
-### 4. Calculate DoD Completion Score
-
-**Execute**: `{root}/tasks/execute-checklist.md`
-
-**Input**:
-```yaml
-checklist_path: '{root}/checklists/completion/story-dod-checklist.md'
-story_id: {story_id}
-execution_mode: COMPLETION
-allow_na: true
-```
-
-**Output**: `dod_result`
-```yaml
-dod_result:
-  completion_percentage: {percentage}
-  critical_items_complete: {true|false}
-  incomplete_items: [{item_id, description, reason}]
-```
-
-**Required**: `dod_result.completion_percentage ≥ 95` AND `dod_result.critical_items_complete = true`
-
----
-
-### 5. Make Self-Review Decision
+### 4. Make Self-Review Decision
 
 **Execute**: `{root}/tasks/make-decision.md`
 
@@ -161,7 +137,6 @@ context:
   architecture_compliance: {PASS if gate_result.sections["Architecture Compliance"].passed else FAIL}
   api_contract_compliance: {PASS if gate_result.sections["API Contract Compliance"].passed else FAIL or N_A}
   test_integrity: {PASS if gate_result.sections["Test Integrity"].passed else FAIL}
-  dod_score: {from Step 4: dod_result.completion_percentage}
   critical_issues: {from Step 2: gate_result.total_critical_issues}
   implementation_round: {from Step 3}
   previous_round_issues: {from Step 3, if round > 1}
@@ -202,7 +177,7 @@ decision_result:
 
 ---
 
-### 6. Update Dev Agent Record
+### 5. Update Dev Agent Record
 
 **Only execute if decision_result.result = PASS**
 
@@ -217,15 +192,14 @@ self_review:
   architecture_compliance: {derived from Step 2}
   api_contract_compliance: {derived from Step 2}
   test_integrity: {derived from Step 2}
-  dod_completion: {from Step 4}
   critical_issues_found: {from Step 2: gate_result.total_critical_issues}
   ready_for_qa: true
   round: {from Step 3}
 
 decision:
   result: PASS
-  reasoning: {from Step 5}
-  quality_level: {from Step 5}
+  reasoning: {from Step 4}
+  quality_level: {from Step 4}
   timestamp: {timestamp}
 ```
 
@@ -265,7 +239,7 @@ DO NOT:
 NEXT STEP: Return control to implement-story.md
 ```
 
-**Return Value**: `{result: "PASS", self_review_result: {full YAML from Step 6}}`
+**Return Value**: `{result: "PASS", self_review_result: {full YAML from Step 5}}`
 
 ---
 
@@ -342,7 +316,6 @@ HALT immediately if:
 - API contract mismatches (multi-repo)
 - Test integrity violations
 - Implementation gate < 95%
-- DoD completion < 95%
 - Any critical issues found
 
 ## Completion Criteria
@@ -352,9 +325,8 @@ HALT immediately if:
 - All critical items passed (7/7)
 - All required sections passed thresholds
 - Zero critical issues
-- DoD completion: ≥95% (Step 4)
-- Decision made: PASS (Step 5)
-- Dev Agent Record updated with self-review results (Step 6)
+- Decision made: PASS (Step 4)
+- Dev Agent Record updated with self-review results (Step 5)
 
 ## Key Principles
 
@@ -370,9 +342,13 @@ HALT immediately if:
 
 ## References
 
-- `tasks/utils/validate-quality-gates.md` - Unified quality gate validation engine
-- `tasks/execute-checklist.md` - Generic checklist execution (for DoD only)
+- `tasks/utils/validate-quality-gates.md` - Unified quality gate validation engine (Implementation Gate)
 - `tasks/make-decision.md` - Decision execution framework
-- `checklists/completion/story-dod-checklist.md` - Definition of Done checklist
 - `data/decisions/dev-self-review-decision.yaml` - Self-review decision rules
 - `data/story-status-transitions.yaml` - Status transition permissions
+
+## Notes
+
+- **DoD Checklist Removed**: Completion steps (Dev Log, Agent Record, Change Log, Status, Handoff) are verified in implement-story.md GATE 2 (dev-completion-steps.md)
+- **Single Quality Gate**: validate-quality-gates.md is the only quality checklist, covering all 10 sections including Documentation
+- **Terminology**: "Implementation Gate" refers to validate-quality-gates.md unified validation engine

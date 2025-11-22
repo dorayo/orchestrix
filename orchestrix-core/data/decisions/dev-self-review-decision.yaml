@@ -9,27 +9,26 @@ inputs:
   - name: implementation_gate_score
     type: number
     required: true
-    description: "Score from dev-implementation-gate.md checklist (0-100)"
+    description: "Overall score from validate-quality-gates.md (0-100)"
   - name: architecture_compliance
     type: string
     required: true
     enum: [PASS, FAIL]
+    description: "Result from gate_result.sections['Architecture Compliance']"
   - name: api_contract_compliance
     type: string
     required: true
     enum: [PASS, FAIL, N_A]
+    description: "Result from gate_result.sections['API Contract Compliance']"
   - name: test_integrity
     type: string
     required: true
     enum: [PASS, FAIL]
-  - name: dod_score
-    type: number
-    required: true
-    description: "DoD completion percentage (0-100)"
+    description: "Result from gate_result.sections['Test Integrity']"
   - name: critical_issues
     type: number
     required: true
-    description: "Number of critical issues found"
+    description: "Total critical issues from gate_result.total_critical_issues"
   - name: implementation_round
     type: number
     required: true
@@ -41,7 +40,7 @@ inputs:
 
 rules:
   # PASS: All gates passed, ready for QA
-  - condition: "implementation_gate_score >= 95 AND architecture_compliance == 'PASS' AND (api_contract_compliance == 'PASS' OR api_contract_compliance == 'N_A') AND test_integrity == 'PASS' AND dod_score >= 95 AND critical_issues == 0"
+  - condition: "implementation_gate_score >= 95 AND architecture_compliance == 'PASS' AND (api_contract_compliance == 'PASS' OR api_contract_compliance == 'N_A') AND test_integrity == 'PASS' AND critical_issues == 0"
     result: PASS
     reasoning: "All quality gates passed - implementation ready for QA review"
     next_status: InProgress
@@ -62,7 +61,7 @@ rules:
       round: "{{implementation_round}}"
 
   # FAIL: Any gate below threshold (consolidated conditions)
-  - condition: "implementation_gate_score < 95 OR architecture_compliance == 'FAIL' OR api_contract_compliance == 'FAIL' OR test_integrity == 'FAIL' OR dod_score < 95 OR critical_issues > 0"
+  - condition: "implementation_gate_score < 95 OR architecture_compliance == 'FAIL' OR api_contract_compliance == 'FAIL' OR test_integrity == 'FAIL' OR critical_issues > 0"
     result: FAIL
     reasoning: "One or more quality gates did not meet requirements"
     next_status: InProgress
@@ -84,10 +83,6 @@ rules:
           condition: "test_integrity == 'FAIL'"
           severity: "critical"
           violation_type: "test_weakening"
-        - gate: "dod_completion"
-          condition: "dod_score < 95"
-          required: 95
-          actual: "{{dod_score}}"
         - gate: "critical_issues"
           condition: "critical_issues > 0"
           issue_count: "{{critical_issues}}"
@@ -111,12 +106,20 @@ output:
       escalation_reason: {type: string}
 
 metadata:
-  version: "2.0.0"
-  last_updated: "2025-01-22"
+  version: "2.1.0"
+  last_updated: "2025-11-22"
   owner: "Dev Agent"
   related_requirements: ["Priority-1-Improvements", "Dev-Quality-Gates"]
+  changelog:
+    - version: "2.1.0"
+      date: "2025-11-22"
+      changes: "Removed dod_score input - DoD covered by gate_result Section 9 (Documentation)"
+    - version: "2.0.0"
+      date: "2025-01-22"
+      changes: "Consolidated 6 FAIL conditions into 1 unified condition"
   usage_context: >
-    Called by dev-self-review.md after executing all validation gates.
+    Called by dev-self-review.md after executing validate-quality-gates.md.
+    All quality checks (including documentation) are in gate_result.
     PASS: Proceed to mark story as Review. FAIL: HALT with specific issues to fix.
     ESCALATE: HALT and handoff to Architect due to recurring issues.
 
@@ -126,37 +129,43 @@ examples:
       architecture_compliance: PASS
       api_contract_compliance: PASS
       test_integrity: PASS
-      dod_score: 100
       critical_issues: 0
       implementation_round: 1
     output:
       result: PASS
       next_status: InProgress
       next_action: proceed_to_review_transition
+      metadata:
+        quality_level: "high"
+        ready_for_qa: true
 
   - input:
       implementation_gate_score: 92
       architecture_compliance: PASS
       api_contract_compliance: PASS
       test_integrity: PASS
-      dod_score: 95
       critical_issues: 0
       implementation_round: 1
     output:
       result: FAIL
       reasoning: "One or more quality gates did not meet requirements"
       next_action: fix_blocking_issues
+      metadata:
+        quality_level: "insufficient"
 
   - input:
       implementation_gate_score: 96
       architecture_compliance: PASS
       api_contract_compliance: PASS
       test_integrity: PASS
-      dod_score: 96
       critical_issues: 0
       implementation_round: 3
       previous_round_issues: ["api_mismatch", "test_coverage", "api_mismatch"]
     output:
       result: ESCALATE
       reasoning: "Multiple implementation rounds with recurring issues"
-      escalation_reason: recurring_issues
+      next_status: Escalated
+      next_action: escalate_to_architect
+      metadata:
+        quality_level: "stalled"
+        escalation_reason: recurring_issues

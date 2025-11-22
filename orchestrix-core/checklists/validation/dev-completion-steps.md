@@ -5,20 +5,25 @@ metadata:
   type: validation
   threshold: 100%
   on_fail: halt
-  purpose: "MANDATORY verification that all completion steps executed after implementation - prevents premature termination"
+  purpose: "MANDATORY verification that all administrative and handoff steps executed after implementation - prevents premature termination"
+  scope: "Process completion only - NOT quality validation"
 ---
 
 ## LLM EXECUTION INSTRUCTIONS
 
-**CRITICAL**: This checklist MUST be executed at the END of implement-story.md completion flow.
+**CRITICAL**: This checklist MUST be executed at the END of implement-story.md completion flow, AFTER self-review PASS.
 
-**Purpose**: Verify ALL administrative and handoff steps were completed. This is NOT optional.
+**Purpose**: Verify ALL administrative and handoff steps were completed. This is NOT a quality check.
+
+**Scope**:
+- ✅ Process completion (Dev Log, Agent Record, Change Log, Status, Handoff)
+- ❌ NOT code quality (covered by validate-quality-gates.md in self-review)
 
 **Execution**:
 - This is a GATE, not a suggestion
 - ALL items must be [x] to proceed
 - ANY item [ ] = HALT immediately
-- Check AFTER all implementation and self-review done
+- Check AFTER self-review PASS
 
 **On Failure**:
 - HALT immediately
@@ -43,19 +48,7 @@ metadata:
 
 **Result**: ___/3 (Must be 3/3)
 
-### 2. Self-Review Execution
-
-| Step | Completed | Evidence |
-|------|-----------|----------|
-| Self-review task executed | [ ] | dev-self-review.md completed |
-| Self-review result: PASS | [ ] | Score: ___% (must be ≥95%) |
-| Self-review report generated | [ ] | Logged in Dev Agent Record |
-
-**Result**: ___/3 (Must be 3/3)
-
-**If self-review result was FAIL or ESCALATE**: HALT - This checklist should NOT be reached.
-
-### 3. Dev Agent Record Update
+### 2. Dev Agent Record Update
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
@@ -69,7 +62,7 @@ metadata:
 
 **Result**: ___/7 (Must be 7/7)
 
-### 4. Change Log Entry
+### 3. Change Log Entry
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
@@ -85,7 +78,7 @@ metadata:
 | 2025-01-14 16:30:00 | Dev | InProgress → Review | Round 1, Self-Review: PASS (96%), Tests: 15, Files: 8 |
 ```
 
-### 5. Status Field Update
+### 4. Status Field Update
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
@@ -97,7 +90,7 @@ metadata:
 
 **CRITICAL**: You MUST actually update the story file's Status field. Not just say you will - DO IT.
 
-### 6. Handoff Message Output
+### 5. Handoff Message Output
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
@@ -142,7 +135,7 @@ Self-Review Results:
 - [ ] Status field reads "Review" (not "InProgress")
 - [ ] This is my FINAL action in this task
 
-**Total Completion**: ___/25 items (Must be 25/25 = 100%)
+**Total Completion**: ___/22 items (Must be 22/22 = 100%)
 
 ---
 
@@ -195,9 +188,31 @@ HALTING - Complete missing steps first
 - **Handoff is Sacred**: Must be final output, clearly visible
 - **No Shortcuts**: Every step serves a purpose
 - **Audit Trail**: Change Log and Dev Agent Record are permanent records
+- **Process, Not Quality**: This checklist verifies administrative steps, not code quality
+
+## Scope Clarification
+
+**This checklist covers** (Process Completion):
+- ✅ Dev Log Final Summary written
+- ✅ Dev Agent Record updated (7 fields)
+- ✅ Change Log entry added
+- ✅ Story Status updated to "Review"
+- ✅ Handoff message prepared
+
+**This checklist does NOT cover** (Quality Validation):
+- ❌ Code quality (covered by validate-quality-gates.md)
+- ❌ Test passing (covered by gate Critical Item 1)
+- ❌ Architecture compliance (covered by gate Section 6)
+- ❌ Self-review execution (already completed before this checklist)
+
+**Why the separation?**
+- Quality checks belong in dev-self-review.md (GATE 1)
+- Process checks belong here (GATE 2)
+- This prevents duplication and maintains clear responsibilities
 
 ## References
 
-- Called by: `implement-story.md` (Step 5, after self-review)
+- Called by: `implement-story.md` (GATE 2, after self-review PASS and registry update)
+- Quality validation: `tasks/dev-self-review.md` → `tasks/utils/validate-quality-gates.md`
 - Status transitions: `data/story-status-transitions.yaml`
 - Permission validation: `tasks/utils/validate-agent-permission.md`
