@@ -395,28 +395,46 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    - `reasoning` (explanation of the decision)
    - `next_command` (command to execute)
 
-   **7.2. Execute Git Commit (Conditional)**:
+   **7.2. Execute Git Commit (MANDATORY - Always Execute)**:
 
-   **IF** decision result `requires_git_commit == true`:
+   **ALWAYS execute finalize-story-commit.md regardless of decision**:
 
    Execute `finalize-story-commit.md` task with `story_id` parameter.
+
+   The task will internally verify prerequisites (Step 1):
+   - If Status = Done AND Gate = PASS → Execute commit
+   - Otherwise → Skip with informative message
+
    This task will:
+   - Verify prerequisites (Status=Done, Gate=PASS)
    - Collect commit metadata from Story, Gate, and Dev Agent Record
-   - Stage all changes with `git add -A`
+   - Stage all changes with `git add -A` (if prerequisites met)
    - Create conventional commit with proper formatting
    - Verify commit succeeded and capture commit hash
    - Update Story Change Log with commit entry
-   - Return commit result (success with hash OR error message)
+   - Return commit result (success with hash OR skip reason OR error message)
 
    **Store commit result** for Step 8 handoff:
    - If succeeded: `commit_hash` and `commit_message`
+   - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
    - If failed: `commit_error`
 
-   **ELSE** (`requires_git_commit == false`):
-
-   Skip commit execution, proceed to Step 8 with decision result only
-
 8. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
+
+**CRITICAL VERIFICATION Before Handoff**:
+
+Before outputting handoff message, verify Step 7.2 was executed:
+
+- **Check commit_result exists** (not empty)
+  - If `commit_result` is empty/missing:
+    - ❌ **ERROR**: Step 7.2 was not executed
+    - Go back to Step 7.2 and execute finalize-story-commit.md
+    - Do NOT proceed until commit_result is populated
+
+- **If decision.requires_git_commit = true AND commit_result.skip_reason exists**:
+  - ⚠️ **WARNING**: Commit was expected but skipped
+  - Log skip reason in handoff message
+  - Suggest manual retry: `*finalize-commit {story_id}`
 
 ### Handoff Messages
 

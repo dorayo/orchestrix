@@ -220,31 +220,27 @@ Story: {story_id} ready for QA review
 Implementation Gate: {score}% ({critical_items_passed}/7 critical, {sections_passed}/10 sections)
 Quality Level: {quality_level}
 Round: {N}
-
-⚠️⚠️⚠️ CRITICAL - READ THIS ⚠️⚠️⚠️
-
-Self-review validation PASSED, but task is NOT complete yet.
-
-YOU MUST NOW:
-1. Return to develop-story.md
-2. Execute Step 7.5: Update Cumulative Registries
-3. Execute GATE 2: Completion Steps Checklist
-4. Update Dev Agent Record (7 additional fields)
-5. Update Change Log
-6. Update Story Status to "Review"
-7. Output handoff message as FINAL action
-
-DO NOT:
-❌ Stop here and consider task done
-❌ Output handoff message now (too early)
-❌ Skip cumulative registry update
-❌ Skip completion checklist
-❌ Forget to update story status
-
-NEXT STEP: Return control to develop-story.md
 ```
 
-**Return Value**: `{result: "PASS", self_review_result: {full YAML from Step 5}}`
+**Return to develop-story.md with result**:
+
+```yaml
+result: PASS
+self_review_result:
+  date: {timestamp}
+  implementation_gate_score: {score}
+  critical_items_passed: {count}/7
+  sections_passed: {count}/10
+  architecture_compliance: {PASS|FAIL}
+  api_contract_compliance: {PASS|FAIL|N_A}
+  test_integrity: {PASS|FAIL}
+  critical_issues_found: 0
+  ready_for_qa: true
+  round: {N}
+  quality_level: {high|insufficient|unacceptable|stalled}
+```
+
+**Next Step**: develop-story.md will continue to Step 8 (Registry Update)
 
 ---
 
@@ -281,7 +277,25 @@ Estimated Effort to Fix:
 Fix issues and re-run *self-review before marking Review.
 ```
 
-**Return Value**: `{result: "FAIL", gate_result: {full structure}, required_actions: [{list}]}`
+**Return to develop-story.md with result**:
+
+```yaml
+result: FAIL
+gate_result:
+  status: FAIL
+  overall_score: {percentage}
+  critical_items_passed: {count}/7
+  sections_passed: {count}/10
+  failed_sections: [{section_name, score, threshold}]
+  critical_issues: [{issue, location, fix}]
+  major_issues: [{issue, location, recommendation}]
+required_actions:
+  - action: {description}
+    priority: {critical|high|medium}
+    estimated_effort: {<1h|1-4h|>4h}
+```
+
+**Next Step**: develop-story.md will HALT with detailed failure report
 
 ---
 
@@ -306,7 +320,20 @@ Recommendation: Architectural review needed to break the cycle
 🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
 
-**Return Value**: `{result: "ESCALATE", escalation_report: {full details}, handoff_command: "*review-escalation {story_id}"}`
+**Return to develop-story.md with result**:
+
+```yaml
+result: ESCALATE
+escalation_report:
+  story_id: {story_id}
+  round: {N}
+  recurring_issue_patterns: {analysis}
+  previous_rounds_summary: [{round, issues}]
+  recommendation: "Architectural review needed to break the cycle"
+handoff_command: "*review-escalation {story_id}"
+```
+
+**Next Step**: develop-story.md will update Status=Escalated, add Change Log entry, and HALT with handoff to architect
 
 ---
 

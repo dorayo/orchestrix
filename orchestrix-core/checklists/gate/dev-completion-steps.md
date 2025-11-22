@@ -38,31 +38,18 @@ metadata:
 
 **Instructions**: Mark [x] for completed, [ ] for not done. ALL must be [x].
 
-### 1. Dev Log Completion
+**Note**: This checklist verifies **final administrative steps only**. Code quality was already validated by GATE 1 (dev-implementation-gate.md in self-review).
+
+### 1. Registry Update (if applicable)
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
-| Dev Log Final Summary written | [ ] | Path: {dev_log_path} |
-| Final Summary includes: story outcome, challenges, decisions | [ ] | Verified in Dev Log |
-| Resumption Guide removed or marked N/A | [ ] | No longer needed |
+| Database registry updated OR marked N/A | [ ] | Registry file or N/A note |
+| API registry updated OR marked N/A | [ ] | Registry file or N/A note |
 
-**Result**: ___/3 (Must be 3/3)
+**Result**: ___/2 (Must be 2/2)
 
-### 2. Dev Agent Record Update
-
-| Step | Completed | Evidence |
-|------|-----------|----------|
-| Agent Model Used filled | [ ] | Model name present |
-| Implementation Summary written (3-5 sentences) | [ ] | Summary present |
-| File List complete (added/modified/deleted) | [ ] | All files listed |
-| Dev Log Reference added | [ ] | Path to dev log |
-| Implementation rounds field updated | [ ] | Current round number |
-| Self-review results logged | [ ] | Date and score present |
-| Open issues documented (if any) | [ ] | Listed or marked "none" |
-
-**Result**: ___/7 (Must be 7/7)
-
-### 3. Change Log Entry
+### 2. Change Log Entry
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
@@ -78,7 +65,7 @@ metadata:
 | 2025-01-14 16:30:00 | Dev | InProgress → Review | Round 1, Self-Review: PASS (96%), Tests: 15, Files: 8 |
 ```
 
-### 4. Status Field Update
+### 3. Status Field Update
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
@@ -89,6 +76,15 @@ metadata:
 **Result**: ___/3 (Must be 3/3)
 
 **CRITICAL**: You MUST actually update the story file's Status field. Not just say you will - DO IT.
+
+### 4. Dev Agent Record Final Fields
+
+| Step | Completed | Evidence |
+|------|-----------|----------|
+| Implementation Summary written (3-5 sentences) | [ ] | Summary present |
+| Implementation rounds field updated | [ ] | Current round number |
+
+**Result**: ___/2 (Must be 2/2)
 
 ### 5. Handoff Message Output
 
@@ -130,12 +126,11 @@ Self-Review Results:
 
 - [ ] ALL sections above show X/X (100% completion)
 - [ ] Story file actually updated (not just planned)
-- [ ] Dev Log file exists at specified path
 - [ ] Change Log entry visible in story file
 - [ ] Status field reads "Review" (not "InProgress")
 - [ ] This is my FINAL action in this task
 
-**Total Completion**: ___/22 items (Must be 22/22 = 100%)
+**Total Completion**: ___/11 items (Must be 11/11 = 100%)
 
 ---
 
@@ -192,23 +187,26 @@ HALTING - Complete missing steps first
 
 ## Scope Clarification
 
-**This checklist covers** (Process Completion):
-- ✅ Dev Log Final Summary written
-- ✅ Dev Agent Record updated (7 fields)
+**This checklist covers** (Process Completion - Final Administrative Steps):
+- ✅ Registry update (database/API registries if applicable)
 - ✅ Change Log entry added
 - ✅ Story Status updated to "Review"
+- ✅ Dev Agent Record final fields (Implementation Summary, rounds)
 - ✅ Handoff message prepared
 
-**This checklist does NOT cover** (Quality Validation):
-- ❌ Code quality (covered by dev-implementation-gate.md)
+**This checklist does NOT cover** (Already Validated):
+- ❌ Code quality (covered by dev-implementation-gate.md Section 2)
 - ❌ Test passing (covered by gate Critical Item 1)
 - ❌ Architecture compliance (covered by gate Section 6)
+- ❌ Dev Log Final Summary (covered by gate Critical Item 7)
 - ❌ Self-review execution (already completed before this checklist)
+- ❌ Most Dev Agent Record fields (populated during implementation)
 
 **Why the separation?**
 - Quality checks belong in dev-self-review.md (GATE 1)
 - Process checks belong here (GATE 2)
 - This prevents duplication and maintains clear responsibilities
+- Reduced from 22 to 11 items by removing redundant checks
 
 ## References
 

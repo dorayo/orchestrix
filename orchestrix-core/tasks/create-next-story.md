@@ -325,6 +325,116 @@ API Registry: 24 endpoints, 15 schemas (from 7 stories)
 Models Registry: 32 models/types (from 7 stories)
 ```
 
+---
+
+### 4.6. Validate Against Cumulative Context (MANDATORY - Shift Left)
+
+**Purpose**: Proactively detect resource conflicts BEFORE Dev starts implementation. This prevents costly rework by catching design-level conflicts during story creation.
+
+Execute `{root}/tasks/utils/validate-against-cumulative-context.md`:
+
+**Input**:
+- **Planned database changes** (from epic requirements analysis in Step 3):
+  - New tables to create
+  - Existing tables to alter
+  - New fields to add
+  - Foreign key references
+
+- **Planned API endpoints** (from epic requirements):
+  - New endpoints: method + path
+  - Request/response schemas
+
+- **Planned models** (from epic requirements):
+  - New interfaces/types/schemas
+  - Enum definitions
+
+- **cumulative_context** (from Step 4.5)
+
+**Validation Rules** (Automatic):
+- ❌ **HALT**: Duplicate table names
+- ❌ **HALT**: Duplicate API endpoints (same method + path)
+- ❌ **HALT**: Foreign key references non-existent tables
+- ⚠️ **WARN**: Duplicate model names (allowed with different namespaces)
+- ⚠️ **WARN**: Similar table names (e.g., "user" vs "users")
+
+**On Conflict Detected**:
+
+SM must resolve conflict BEFORE proceeding to Step 6. Resolution options:
+
+1. **Rename Resource**:
+   - Example: `users` already exists → rename to `user_profiles`
+   - Example: Endpoint `POST /api/auth` exists → use `POST /api/auth/sessions`
+
+2. **Change Operation Type**:
+   - Example: Story says "Create table users" → change to "ALTER table users (add columns)"
+   - Update Dev Notes to reflect ALTER instead of CREATE
+
+3. **Remove Duplicate**:
+   - If resource already exists and story doesn't need to modify it → remove from story scope
+   - Document in Dev Notes: "Using existing {resource} from Story X.Y"
+
+4. **Escalate to Architect**:
+   - If conflict indicates fundamental design issue
+   - Example: Two stories trying to create same core table (design flaw)
+
+**Success Output**:
+```
+✅ VALIDATION PASSED - No Conflicts Detected
+
+Validated Resources:
+✓ Tables:
+  - user_sessions (NEW - no conflict)
+  - users (ALTER - add password_hash field)
+✓ API Endpoints:
+  - POST /api/auth/login (NEW - no conflict)
+  - POST /api/auth/logout (NEW - no conflict)
+✓ Models:
+  - SessionData (NEW - no conflict)
+  - LoginRequest (NEW - no conflict)
+
+All planned resources are conflict-free. Safe to proceed to Step 6.
+```
+
+**Conflict Output Example**:
+```
+❌ CONFLICT DETECTED - Cannot Proceed
+
+Conflict #1: Duplicate Table Name
+- Resource: Table 'users'
+- Already exists in: Story 1.1 (created 2025-01-15)
+- Current story plan: Create table 'users'
+
+Resolution Options:
+1. Rename to 'user_profiles' (recommended)
+2. Change to ALTER table 'users' (if modifying existing)
+3. Remove from story scope (if not needed)
+4. Escalate to Architect (if design issue)
+
+Conflict #2: Duplicate API Endpoint
+- Resource: POST /api/users
+- Already exists in: Story 1.2 (created 2025-01-16)
+- Current story plan: Create POST /api/users
+
+Resolution Options:
+1. Use different path: POST /api/user-profiles
+2. Remove from story scope (use existing endpoint)
+3. Escalate to Architect (if design issue)
+
+🛑 ACTION REQUIRED: Resolve ALL conflicts before proceeding to Step 6
+- Update epic analysis in Step 3 with resolution
+- Adjust planned resources accordingly
+- Re-run this validation to confirm
+```
+
+**Critical Notes**:
+- This is **NOT optional** - conflicts MUST be resolved
+- Do NOT proceed to Step 6 with unresolved conflicts
+- Do NOT defer conflict resolution to Dev agent
+- SM owns story design - conflicts are design issues
+- Dev agent will re-validate (Step 5 in develop-story.md) as safety net
+
+---
+
 ### 5. Verify Structure Alignment
 
 Cross-reference requirements with `context.file_structure`. Document conflicts in "Project Structure Notes".

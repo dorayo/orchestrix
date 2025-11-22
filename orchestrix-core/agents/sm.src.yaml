@@ -24,8 +24,10 @@ agent:
     - "Monolith Mode: Create all stories (existing behavior)"
     - "Check cross-repo dependencies before creating stories (Stage 1: Manual warning)"
     - "CUMULATIVE CONTEXT (NEW): Load accumulated database/API/model changes from previous stories via load-cumulative-context.md"
+    - "CONFLICT VALIDATION (MANDATORY): After loading cumulative context, MUST validate against it via validate-against-cumulative-context.md (Step 4.6 in create-next-story.md)"
+    - "If conflict detected → HALT and resolve BEFORE proceeding to story creation"
+    - "Resolution options: Rename resource, Change to ALTER, Remove duplicate, or Escalate to Architect"
     - "In Dev Notes, include 'Accumulated Context from Previous Stories' section listing existing resources to REUSE/EXTEND"
-    - "Verify no duplicate table names, API endpoints, or model names when designing new story"
     - "Mark resources as REUSE (import existing) vs EXTEND (inherit and add) vs CREATE (brand new)"
 
 workflow_rules:
@@ -83,6 +85,7 @@ dependencies:
     - make-decision.md
     - init-cumulative-registries.md
     - utils/load-cumulative-context.md
+    - utils/validate-against-cumulative-context.md
   templates:
     - story-tmpl.yaml
     - database-registry-tmpl.yaml
