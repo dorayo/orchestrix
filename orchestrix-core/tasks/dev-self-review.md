@@ -30,154 +30,206 @@ action: self_review
 
 ### 1. Load Context
 
+Load required documents:
 - Story file from `{devStoryLocation}/{epic}.{story}.*.md`
 - Dev Log from `{devLogLocation}/{story-id}-dev-log.md`
-- Architecture documents (as needed)
-- API contracts (if multi-repo)
+- Architecture documents (via load-architecture-context.md)
+- API contracts (if multi-repo, from product repo)
 - QA test design (if exists)
 
-### 2. Execute Implementation Gate Checklist
+### 2. Execute Quality Gate Validation
 
-**MANDATORY GATE**: Must pass ≥95% threshold to proceed
+**Execute**: `{root}/tasks/utils/validate-quality-gates.md`
 
-Execute: `{root}/tasks/execute-checklist.md`
-Checklist: `{root}/checklists/validation/dev-implementation-gate.md`
-
-**On Failure (<95%)**:
-- Log failed items in Dev Log
-- Status remains InProgress
-- Document gaps and action items
-- HALT - DO NOT proceed to Review
-
-**On Success (≥95%)**:
-- Log result in Dev Agent Record
-- Proceed to next validation steps
-
-### 3. Validate Architecture Compliance
-
-Execute: `{root}/tasks/validate-implementation.md`
-
-**Validation Areas**:
-- Tech stack compliance
-- Naming conventions
-- File structure alignment
-- API pattern consistency (if applicable)
-- Data model alignment (if applicable)
-
-**On Issues Found**:
-- If Critical: HALT, fix before proceeding
-- If Major: Document in Dev Log, consider fixing
-- If Minor: Document, can proceed
-
-### 4. Validate API Contracts (Multi-Repo Only)
-
-**Only if** `project.mode = 'multi-repo'` AND `project.multi_repo.role ∈ {backend, frontend, ios, android}`:
-
-Execute: `{root}/tasks/utils/validate-api-contract.md`
-
-**Backend Stories** (provides_apis):
-- Verify request/response schemas match api-contracts.md
-- Check all required fields present with correct types
-- Validate error handling for all error codes
-- Verify authentication/authorization implementation
-
-**Frontend/Mobile Stories** (consumes_apis):
-- Verify request payloads match contract schemas
-- Check response handling for all status codes
-- Validate error message display
-- Verify loading states and error states
-
-**On Mismatch**:
-- CRITICAL: HALT, fix contract violations
-- Document in Dev Log with specific mismatches
-- Update implementation to match contracts
-
-### 5. Test Integrity Validation
-
-**Check Git Diff** for test file modifications:
-
-```bash
-git diff --name-only | grep -E "test|spec"
+**Input**:
+```yaml
+story_id: {story_id}
+story_path: {story_path}
+dev_log_path: {dev_log_path}
+project_mode: {from core-config.yaml}
+repository_role: {from core-config.yaml}
 ```
 
-**For each modified test file**:
-1. Review assertions/expectations changes
-2. Check if expectations were weakened (RED FLAG)
-3. Verify business justification exists in Dev Log
-4. Confirm changes are requirement-driven, not implementation-driven
-
-**On Test Weakening**:
-- CRITICAL: HALT
-- Restore original test expectations
-- Fix implementation instead
-- Document rationale if legitimate requirement change
-
-### 7. Implementation Rounds Tracking
-
-**Read from Dev Agent Record**: `implementation_rounds` (default: 1)
-
-**If ≥3 rounds**:
-- Review previous QA feedback
-- Identify recurring issue patterns
-- Consider if architectural issue exists
-- If same issue type for 3 rounds: RECOMMEND escalation to Architect
-- Document in Dev Log: "Round {N} implementation - recurring issues: {list}"
-
-### 8. Generate Self-Review Report
-
-**Update Dev Agent Record** with self-review results:
+**Output**: `gate_result` (complete implementation gate validation)
 
 ```yaml
-self_review:
-  date: {timestamp}
-  implementation_gate_score: {percentage}
-  architecture_compliance: {PASS/FAIL}
-  api_contract_compliance: {PASS/FAIL/N_A}
-  test_integrity: {PASS/FAIL}
-  critical_issues_found: {count}
-  ready_for_qa: {true/false}
-  round: {implementation_round}
+gate_result:
+  status: {PASS|FAIL}
+  overall_score: {percentage}
+
+  critical_items:
+    total: 7
+    passed: {count}
+    status: {PASS|FAIL}
+    items: [{id, check, status, evidence}]
+
+  sections:
+    - name: {section_name}
+      score: {percentage}
+      threshold: {required percentage}
+      passed: {true|false}
+      items_total: {count}
+      items_passed: {count}
+
+  issues:
+    critical: [{category, section, item_id, issue, location, fix}]
+    major: [{category, section, item_id, issue, location, recommendation}]
+    minor: [{category, section, item_id, issue, location, suggestion}]
+
+  total_critical_issues: {count}
+  total_major_issues: {count}
+  total_minor_issues: {count}
+  sections_passed: {count}/10
+  sections_failed: {count}/10
+
+  blocking: {true|false}
+  blocking_reason: {summary if blocking}
+  ready_for_qa: {true|false}
 ```
 
-### 9. Decision Point
+**On Failure** (`gate_result.status = FAIL` OR `gate_result.overall_score < 95%`):
+- Log failed items in Dev Log
+- Document all critical/major issues with locations
+- Status remains InProgress
+- HALT - DO NOT proceed
+
+**On Success** (`gate_result.status = PASS` AND `gate_result.overall_score ≥ 95%`):
+- Log gate result in Dev Agent Record
+- Proceed to Step 3
+
+---
+
+### 3. Track Implementation Rounds
+
+**Read Dev Agent Record**: `implementation_rounds` field (default: 0)
+
+**Extract Round Number**:
+- If field missing or 0: Current round = 1
+- If field exists: Current round = {value}
+
+**If Round ≥ 3**:
+- Review previous QA feedback from QA Review Metadata
+- Identify recurring issue patterns
+- Consider if architectural issue exists
+- Prepare pattern analysis for escalation decision
+
+**Log Round Context**:
+```yaml
+implementation_round: {N}
+previous_rounds_summary:
+  - round: {N-1}
+    issues: {issue types}
+  - round: {N-2}
+    issues: {issue types}
+```
+
+---
+
+### 4. Calculate DoD Completion Score
+
+**Execute**: `{root}/tasks/execute-checklist.md`
+
+**Input**:
+```yaml
+checklist_path: '{root}/checklists/completion/story-dod-checklist.md'
+story_id: {story_id}
+execution_mode: COMPLETION
+allow_na: true
+```
+
+**Output**: `dod_result`
+```yaml
+dod_result:
+  completion_percentage: {percentage}
+  critical_items_complete: {true|false}
+  incomplete_items: [{item_id, description, reason}]
+```
+
+**Required**: `dod_result.completion_percentage ≥ 95` AND `dod_result.critical_items_complete = true`
+
+---
+
+### 5. Make Self-Review Decision
 
 **Execute**: `{root}/tasks/make-decision.md`
 
-**Decision type**: `dev-self-review-decision`
-
-**Context**:
+**Input**:
 ```yaml
 decision_type: dev-self-review-decision
 context:
-  implementation_gate_score: {percentage}
-  architecture_compliance: {PASS/FAIL}
-  api_contract_compliance: {PASS/FAIL/N_A}
-  test_integrity: {PASS/FAIL}
-  critical_issues: {count}
-  implementation_round: {number}
-  previous_round_issues: [{array of issue types if round > 1}]
+  implementation_gate_score: {from Step 2: gate_result.overall_score}
+  architecture_compliance: {PASS if gate_result.sections["Architecture Compliance"].passed else FAIL}
+  api_contract_compliance: {PASS if gate_result.sections["API Contract Compliance"].passed else FAIL or N_A}
+  test_integrity: {PASS if gate_result.sections["Test Integrity"].passed else FAIL}
+  dod_score: {from Step 4: dod_result.completion_percentage}
+  critical_issues: {from Step 2: gate_result.total_critical_issues}
+  implementation_round: {from Step 3}
+  previous_round_issues: {from Step 3, if round > 1}
+```
+
+**Output**: `decision_result`
+```yaml
+decision_result:
+  result: {PASS|FAIL|ESCALATE}
+  reasoning: {explanation}
+  next_status: {InProgress|Escalated}
+  next_action: {action_to_take}
+  metadata:
+    quality_level: {high|insufficient|unacceptable|stalled}
+    blocking_gates: [{gate_name}] if FAIL
+    ready_for_qa: {true|false}
 ```
 
 **Outcomes**:
 
 **PASS** (All gates passed, no critical issues):
+- `decision_result.result = PASS`
+- `decision_result.ready_for_qa = true`
 - Status remains InProgress (will be set to Review by implement-story)
-- Return to implement-story completion flow
-- Proceed with status update to Review
+- Proceed to Step 6
 
-**FAIL** (Any gate <95% OR critical issues OR test integrity fail):
-- HALT
+**FAIL** (Any gate <95% OR critical issues):
+- `decision_result.result = FAIL`
 - Status remains InProgress
-- Output detailed gap report
-- List action items to fix
-- DO NOT mark as Review
+- HALT - Output detailed gap report
+- DO NOT proceed to Step 6
 
 **ESCALATE** (≥3 rounds with recurring issues):
-- HALT
+- `decision_result.result = ESCALATE`
 - Status = Escalated
-- Output escalation report
-- Handoff to Architect
-- Document recurring issue patterns
+- HALT - Output escalation report
+- DO NOT proceed to Step 6
+
+---
+
+### 6. Update Dev Agent Record
+
+**Only execute if decision_result.result = PASS**
+
+Update the following fields in Story's Dev Agent Record:
+
+```yaml
+self_review:
+  date: {timestamp}
+  implementation_gate_score: {from Step 2: gate_result.overall_score}
+  critical_items_passed: {from Step 2: gate_result.critical_items.passed}
+  sections_passed: {from Step 2: gate_result.sections_passed}
+  architecture_compliance: {derived from Step 2}
+  api_contract_compliance: {derived from Step 2}
+  test_integrity: {derived from Step 2}
+  dod_completion: {from Step 4}
+  critical_issues_found: {from Step 2: gate_result.total_critical_issues}
+  ready_for_qa: true
+  round: {from Step 3}
+
+decision:
+  result: PASS
+  reasoning: {from Step 5}
+  quality_level: {from Step 5}
+  timestamp: {timestamp}
+```
+
+---
 
 ## Output
 
@@ -186,7 +238,8 @@ context:
 ```
 ✅ SELF-REVIEW PASSED
 Story: {story_id} ready for QA review
-Implementation Gate: {score}% | Test Integrity: PASS
+Implementation Gate: {score}% ({critical_items_passed}/7 critical, {sections_passed}/10 sections)
+Quality Level: {quality_level}
 Round: {N}
 
 ⚠️⚠️⚠️ CRITICAL - READ THIS ⚠️⚠️⚠️
@@ -195,22 +248,26 @@ Self-review validation PASSED, but task is NOT complete yet.
 
 YOU MUST NOW:
 1. Return to implement-story.md
-2. Execute GATE 2: Completion Steps Checklist
-3. Update Dev Agent Record (7 fields)
-4. Update Change Log
-5. Update Story Status to "Review"
-6. Output handoff message as FINAL action
+2. Execute Step 7.5: Update Cumulative Registries
+3. Execute GATE 2: Completion Steps Checklist
+4. Update Dev Agent Record (7 additional fields)
+5. Update Change Log
+6. Update Story Status to "Review"
+7. Output handoff message as FINAL action
 
 DO NOT:
 ❌ Stop here and consider task done
 ❌ Output handoff message now (too early)
+❌ Skip cumulative registry update
 ❌ Skip completion checklist
 ❌ Forget to update story status
 
-NEXT STEP: Continue to implement-story.md GATE 2
+NEXT STEP: Return control to implement-story.md
 ```
 
-**Return control to implement-story.md** - Caller MUST execute completion checklist next.
+**Return Value**: `{result: "PASS", self_review_result: {full YAML from Step 6}}`
+
+---
 
 ### On FAIL
 
@@ -219,19 +276,35 @@ NEXT STEP: Continue to implement-story.md GATE 2
 Story: {story_id} not ready for QA review
 Status: InProgress (remains)
 
-Issues Found:
-- Implementation Gate: {score}% (Required: ≥95%)
-- Architecture Compliance: {issues_list}
-- API Contract: {violations_list}
-- Test Integrity: {concerns_list}
+Gate Status: {gate_result.status}
+Overall Score: {gate_result.overall_score}% (Required: ≥95%)
+Critical Items: {critical_items_passed}/7
+Sections Passed: {sections_passed}/10
 
-Action Items:
-1. {action_item_1}
-2. {action_item_2}
-...
+Failed Critical Items ({count}):
+{list from gate_result.critical_items where status = FAIL}
+
+Failed Sections ({count}):
+{list from gate_result.sections where passed = false}
+
+Critical Issues ({count}):
+{list from gate_result.issues.critical with item_id, issue, location, fix}
+
+Major Issues ({count}):
+{list from gate_result.issues.major with item_id, issue, location, recommendation}
+
+Required Actions (Priority Order):
+{prioritized list derived from critical and major issues}
+
+Estimated Effort to Fix:
+{based on issue count: <1h, 1-4h, >4h}
 
 Fix issues and re-run *self-review before marking Review.
 ```
+
+**Return Value**: `{result: "FAIL", gate_result: {full structure}, required_actions: [{list}]}`
+
+---
 
 ### On ESCALATE
 
@@ -241,20 +314,26 @@ Story: {story_id} → Status: Escalated
 Round: {N} (≥3 rounds with similar issues)
 
 Recurring Issue Patterns:
-- {pattern_1}: Occurred in rounds {x, y, z}
-- {pattern_2}: Occurred in rounds {x, y}
+{analysis from previous_rounds_summary}
 
-Previous QA Feedback:
-- Round {N-1}: {summary}
-- Round {N-2}: {summary}
+Previous QA Feedback Summary:
+{summary from QA Review Metadata for last 3 rounds}
 
-Recommendation: Architectural review needed
+Pattern Analysis:
+{why same issues keep recurring - possible architectural problem}
+
+Recommendation: Architectural review needed to break the cycle
 
 🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
 
+**Return Value**: `{result: "ESCALATE", escalation_report: {full details}, handoff_command: "*review-escalation {story_id}"}`
+
+---
+
 ## Blocking Conditions
 
+HALT immediately if:
 - Missing Dev Log or incomplete
 - No tests written
 - Tests not passing
@@ -262,16 +341,20 @@ Recommendation: Architectural review needed
 - Critical architecture violations
 - API contract mismatches (multi-repo)
 - Test integrity violations
+- Implementation gate < 95%
+- DoD completion < 95%
+- Any critical issues found
 
 ## Completion Criteria
 
-- Implementation gate checklist: ≥95%
-- Architecture compliance: PASS
-- API contract compliance: PASS (or N/A)
-- Test integrity: PASS
-- Self-review report generated
-- Dev Agent Record updated
-- Decision made: PASS/FAIL/ESCALATE
+- Agent permission validated
+- Quality gate validation: PASS with ≥95% score (Step 2)
+- All critical items passed (7/7)
+- All required sections passed thresholds
+- Zero critical issues
+- DoD completion: ≥95% (Step 4)
+- Decision made: PASS (Step 5)
+- Dev Agent Record updated with self-review results (Step 6)
 
 ## Key Principles
 
@@ -281,13 +364,15 @@ Recommendation: Architectural review needed
 - **API contracts are binding**: Exact match required (multi-repo)
 - **Honest self-assessment**: Report issues, don't hide them
 - **Continuous improvement**: Learn from previous rounds
+- **Unified validation**: Single call validates all quality gates
+- **Structured decisions**: All decisions driven by YAML rules
+- **Zero manual filling**: All gate results auto-generated by validation engine
 
 ## References
 
-- `tasks/execute-checklist.md`
-- `tasks/validate-implementation.md`
-- `tasks/make-decision.md`
-- `tasks/utils/validate-api-contract.md`
-- `checklists/validation/dev-implementation-gate.md`
-- `data/story-status-transitions.yaml`
-- `data/decisions/dev-self-review-decision.yaml`
+- `tasks/utils/validate-quality-gates.md` - Unified quality gate validation engine
+- `tasks/execute-checklist.md` - Generic checklist execution (for DoD only)
+- `tasks/make-decision.md` - Decision execution framework
+- `checklists/completion/story-dod-checklist.md` - Definition of Done checklist
+- `data/decisions/dev-self-review-decision.yaml` - Self-review decision rules
+- `data/story-status-transitions.yaml` - Status transition permissions
