@@ -1,0 +1,150 @@
+name: "QA Idempotency Messages Template"
+description: "Standard handoff messages for QA agent idempotency checks"
+version: "1.0.0"
+
+# This template contains all standard messages output by QA agents during
+# idempotency checks when a story is not in the expected state.
+
+messages:
+  # Story already completed - no action needed
+  already_done:
+    emoji: "✅"
+    title: "STORY ALREADY PASSED QA"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "Done"
+    body: |
+      QA review already completed and passed.
+      Story is ready for deployment.
+    tip: |
+      💡 TIP: Story is complete. Commit or start new work.
+      - To commit: *finalize-commit {{story_id}}
+      - For new work: Switch to SM and run *draft
+    handoff: null
+
+  # Story not yet started - handoff to Dev
+  not_started:
+    emoji: "ℹ️"
+    title: "STORY NOT STARTED YET"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Current Status"
+        value: "Approved"
+    body: |
+      Story has been approved but not yet implemented.
+      Dev needs to start implementation.
+    handoff: "🎯 HANDOFF TO dev: *develop-story {{story_id}}"
+
+  # Story needs test design - handoff to QA test-design
+  needs_test_design:
+    emoji: "ℹ️"
+    title: "STORY NEEDS TEST DESIGN"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Current Status"
+        value: "AwaitingTestDesign"
+    body: |
+      Story needs QA test design before Dev can implement.
+    handoff: "🎯 HANDOFF TO qa: *test-design {{story_id}}"
+
+  # Story in development - handoff to Dev
+  in_progress:
+    emoji: "ℹ️"
+    title: "STORY IN DEVELOPMENT"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Current Status"
+        value: "InProgress"
+    body: |
+      Story is currently being worked on by Dev.
+      Waiting for Dev to complete and set Status = "Review".
+    handoff: "🎯 HANDOFF TO dev: *develop-story {{story_id}}"
+
+  # Story needs architect review - handoff to Architect
+  needs_arch_review:
+    emoji: "ℹ️"
+    title: "STORY NEEDS ARCHITECT REVIEW"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Current Status"
+        value: "AwaitingArchReview"
+    body: |
+      Story needs Architect review before implementation.
+    handoff: "🎯 HANDOFF TO architect: *review-story {{story_id}}"
+
+  # Story blocked or needs revision - human intervention required
+  blocked_or_revision:
+    emoji: "⚠️"
+    title: "STORY BLOCKED OR NEEDS REVISION"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Current Status"
+        value: "{{current_status}}"
+    body: |
+      Story requires human intervention or SM revision.
+
+      Next actions:
+      - If "Blocked": SM must resolve blockers (*correct-course {{story_id}})
+      - If "RequiresRevision": SM must revise story (*revise-story {{story_id}})
+      - If "Escalated": Wait for Architect decision
+    handoff: null
+
+  # Test design already complete - handoff to Dev
+  test_design_complete:
+    emoji: "ℹ️"
+    title: "TEST DESIGN ALREADY COMPLETE"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "Approved"
+      - key: "Test Design"
+        value: "Complete"
+    body: |
+      Test design already completed. Story ready for Dev implementation.
+    handoff: "🎯 HANDOFF TO dev: *develop-story {{story_id}}"
+
+  # Test design complete, auto-transitioning to Approved
+  test_design_auto_transition:
+    emoji: "ℹ️"
+    title: "TEST DESIGN COMPLETE - AUTO-TRANSITIONING"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Current Status"
+        value: "TestDesignComplete"
+    body: |
+      Test design complete, auto-transitioning to Approved for Dev.
+
+      (Proceeding to auto-transition)
+    handoff: null
+
+  # Story not ready for test design
+  not_ready_test_design:
+    emoji: "⚠️"
+    title: "STORY NOT READY FOR TEST DESIGN"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Current Status"
+        value: "{{current_status}}"
+      - key: "Required Status"
+        value: "AwaitingTestDesign"
+    body: |
+      HALT: Prerequisites not met ⛔
+    handoff: null
+
+# Usage instructions for LLM agents:
+# 1. Extract story_id and current_status from story file
+# 2. Select appropriate message template based on status
+# 3. Replace {{story_id}} and {{current_status}} placeholders
+# 4. Output the formatted message
+# 5. If handoff is not null, output handoff command as final line
+# 6. HALT execution after outputting message

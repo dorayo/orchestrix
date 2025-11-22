@@ -1,0 +1,177 @@
+name: "QA Handoff Message Template"
+description: "Standard handoff messages for QA workflow transitions"
+version: "1.0.0"
+
+# This template contains all standard handoff messages used by QA agents
+# to communicate review results and next actions to other agents.
+
+handoff_messages:
+  # Architecture escalation - critical issues found
+  architecture_escalation:
+    emoji: "🚨"
+    title: "ARCHITECTURE ESCALATION REQUIRED"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "Escalated"
+      - key: "Review Round"
+        value: "{{review_round}}"
+    body: |
+      Critical architecture concerns detected during QA review.
+
+      Issues Found:
+      {{architecture_issues}}
+
+      Escalation Reason:
+      {{escalation_reason}}
+    handoff: "🎯 HANDOFF TO architect: *review-escalation {{story_id}}"
+
+  # Gate PASS + Commit Success - story complete
+  gate_pass_committed:
+    emoji: "🎉"
+    title: "STORY {{story_id}} DONE - COMMITTED AND READY FOR DEPLOYMENT ✅"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "Done"
+      - key: "Review Round"
+        value: "{{review_round}}"
+      - key: "Gate Result"
+        value: "PASS"
+      - key: "Quality Score"
+        value: "{{quality_score}}/100"
+    body: |
+      All quality checks passed. Code committed successfully.
+
+      📦 Git Commit: {{commit_hash}}
+      📊 Review Report: {{review_report_path}}
+      ✅ Gate File: {{gate_file_path}}
+
+      Total Issues Found: {{total_issues}}
+      - Critical: {{critical_count}}
+      - High: {{high_count}}
+      - Medium: {{medium_count}}
+      - Low: {{low_count}}
+
+      {{#if resolved_issues}}
+      Issues Resolved This Round: {{resolved_count}}/{{previous_issues}}
+      Improvement: {{improvement_percentage}}%
+      {{/if}}
+    handoff: "🎯 NEXT STEP: Deploy or start next story via SM *draft"
+
+  # Gate PASS + Commit Failed - retry needed
+  gate_pass_commit_failed:
+    emoji: "⚠️"
+    title: "STORY {{story_id}} PASSED QA - COMMIT FAILED"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "Done"
+      - key: "Gate Result"
+        value: "PASS"
+      - key: "Commit Status"
+        value: "FAILED"
+    body: |
+      Quality gate passed, but git commit failed.
+
+      Error: {{commit_error}}
+
+      Quality Summary:
+      - Gate: PASS
+      - Quality Score: {{quality_score}}/100
+      - Review Report: {{review_report_path}}
+
+      Manual commit retry needed.
+    handoff: "🎯 RETRY COMMIT: *finalize-commit {{story_id}}"
+
+  # Gate CONCERNS or FAIL - handoff back to Dev
+  gate_issues_found:
+    emoji: "⚠️"
+    title: "QA REVIEW COMPLETE - ISSUES FOUND"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "InProgress"
+      - key: "Review Round"
+        value: "{{review_round}}"
+      - key: "Gate Result"
+        value: "{{gate_result}}"
+      - key: "Quality Score"
+        value: "{{quality_score}}/100"
+    body: |
+      Issues detected during QA review. Dev action required.
+
+      📊 Review Report: {{review_report_path}}
+      ⚠️ Gate File: {{gate_file_path}}
+
+      Issues Breakdown:
+      - Critical: {{critical_count}}
+      - High: {{high_count}}
+      - Medium: {{medium_count}}
+      - Low: {{low_count}}
+
+      {{#if review_round > 1}}
+      Previous Round Issues: {{previous_issues}}
+      Resolved This Round: {{resolved_count}}
+      Improvement: {{improvement_percentage}}%
+      {{/if}}
+
+      Top Priority Fixes:
+      {{top_issues_summary}}
+    handoff: "🎯 HANDOFF TO dev: *apply-qa-fixes {{story_id}}"
+
+  # Test design complete - handoff to Dev
+  test_design_complete:
+    emoji: "✅"
+    title: "TEST DESIGN COMPLETE"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "Approved"
+    body: |
+      📋 Test Design: {{test_design_path}}
+      📊 {{total_scenarios}} scenarios ({{unit_count}}U, {{integration_count}}I, {{e2e_count}}E) | P0:{{p0_count}} P1:{{p1_count}} P2:{{p2_count}}
+    handoff: "🎯 HANDOFF TO dev: *develop-story {{story_id}}"
+
+  # QA fixes complete - ready for re-review
+  qa_fixes_complete:
+    emoji: "✅"
+    title: "QA FIXES COMPLETE"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "Review"
+    body: |
+      All QA-identified issues have been addressed:
+      - {{issues_fixed_count}} issues fixed
+      - All tests passing
+      - Ready for QA re-review
+    handoff: "🎯 HANDOFF TO qa: *review {{story_id}}"
+
+  # QA fixes in progress - still working
+  qa_fixes_in_progress:
+    emoji: "🔧"
+    title: "QA FIXES IN PROGRESS"
+    fields:
+      - key: "Story"
+        value: "{{story_id}}"
+      - key: "Status"
+        value: "InProgress"
+    body: |
+      Dev is still working on addressing QA feedback.
+      Will complete fixes and set Status = Review when ready.
+    handoff: null
+
+# Usage instructions for LLM agents:
+# 1. Determine appropriate handoff scenario based on workflow state
+# 2. Select corresponding template from handoff_messages
+# 3. Replace all {{variable}} placeholders with actual values
+# 4. Output the formatted message
+# 5. If handoff is not null, ensure handoff command is the FINAL line
+# 6. Do NOT add any content after handoff command

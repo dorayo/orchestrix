@@ -14,99 +14,20 @@ required:
 
 **Purpose**: Prevent re-reviewing already passed stories
 
-**Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md` to find the story file (handles both `5.2.md` and `5.2.20241117.md` formats)
+**Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md`
 
 **Extract Status**: !include tasks/utils/extract-story-status.md
 
-- Uses robust multi-strategy extraction (handles standard format, bold format, Change Log fallback, keyword search)
-- Returns: `{status}` = valid enum value, `{strategy_used}` = which strategy succeeded
+**Check Status and Output Appropriate Message**:
 
-**Check if Already Reviewed**:
+Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
-- **If status = "Done"**:
-  ```
-  ✅ STORY ALREADY PASSED QA
-  Story: {story_id}
-  Status: Done
-
-  QA review already completed and passed.
-  Story is ready for deployment.
-
-  💡 TIP: Story is complete. Commit or start new work.
-  - To commit: *finalize-commit {story_id}
-  - For new work: Switch to SM and run *draft
-
-  (No HANDOFF - workflow complete)
-  ```
-  **HALT: QA already passed ✅**
-
-- **If status NOT in ["Review"]**:
-
-  **Determine appropriate handoff based on current status**:
-
-  - **If status = "Approved"**:
-    ```
-    ℹ️ STORY NOT STARTED YET
-    Story: {story_id}
-    Current Status: Approved
-
-    Story has been approved but not yet implemented.
-    Dev needs to start implementation.
-
-    🎯 HANDOFF TO dev: *develop-story {story_id}
-    ```
-
-  - **If status = "AwaitingTestDesign"**:
-    ```
-    ℹ️ STORY NEEDS TEST DESIGN
-    Story: {story_id}
-    Current Status: AwaitingTestDesign
-
-    Story needs QA test design before Dev can implement.
-
-    🎯 HANDOFF TO qa: *test-design {story_id}
-    ```
-
-  - **If status = "InProgress"**:
-    ```
-    ℹ️ STORY IN DEVELOPMENT
-    Story: {story_id}
-    Current Status: InProgress
-
-    Story is currently being worked on by Dev.
-    Waiting for Dev to complete and set Status = "Review".
-
-    🎯 HANDOFF TO dev: *develop-story {story_id}
-    ```
-
-  - **If status = "AwaitingArchReview"**:
-    ```
-    ℹ️ STORY NEEDS ARCHITECT REVIEW
-    Story: {story_id}
-    Current Status: AwaitingArchReview
-
-    Story needs Architect review before implementation.
-
-    🎯 HANDOFF TO architect: *review-story {story_id}
-    ```
-
-  - **If status in ["Blocked", "RequiresRevision", "Escalated"]**:
-    ```
-    ⚠️ STORY BLOCKED OR NEEDS REVISION
-    Story: {story_id}
-    Current Status: {current_status}
-
-    Story requires human intervention or SM revision.
-
-    Next actions:
-    - If "Blocked": SM must resolve blockers (*correct-course {story_id})
-    - If "RequiresRevision": SM must revise story (*revise-story {story_id})
-    - If "Escalated": Wait for Architect decision
-
-    (No HANDOFF - human intervention required)
-    ```
-
-  **HALT: Prerequisites not met ⛔**
+- **If status = "Done"**: Output `already_done` message → **HALT**
+- **If status = "Approved"**: Output `not_started` message → **HALT**
+- **If status = "AwaitingTestDesign"**: Output `needs_test_design` message → **HALT**
+- **If status = "InProgress"**: Output `in_progress` message → **HALT**
+- **If status = "AwaitingArchReview"**: Output `needs_arch_review` message → **HALT**
+- **If status in ["Blocked", "RequiresRevision", "Escalated"]**: Output `blocked_or_revision` message → **HALT**
 
 **If status = "Review"**:
 - ✅ Log: "Idempotency check passed - proceeding with QA review"
@@ -116,10 +37,20 @@ required:
 
 ## Validation
 
-1. Verify QA agent identity
-2. Confirm Story Status = Review
-3. Validate transition permissions via `{root}/data/story-status-transitions.yaml`
-4. If validation fails: HALT
+Execute:
+```
+tasks/utils/validate-agent-permission.md
+```
+
+Input:
+```yaml
+agent_id: qa
+story_path: {story_path}
+action: review
+```
+
+* On failure → output error → **HALT**
+* On success → continue
 
 ## Review Process
 
@@ -168,9 +99,7 @@ Auto-escalate to deep review if:
 - ❌ Tech stack compliance (Gate Section 2.3)
 
 **Architecture Concern Detection**:
-If detected, execute `make-decision` (type: `qa-escalate-architect`):
-- ESCALATE → Document, Status = Escalated, handoff Architect, exit
-- DOCUMENT → Document, continue
+If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and follow result actions
 
 ---
 
@@ -438,12 +367,12 @@ Before outputting handoff message, verify Step 7.2 was executed:
 
 ### Handoff Messages
 
-Output appropriate handoff based on review outcome. Use template: `{root}/templates/qa-handoff-message-tmpl.md`
+Use template: `{root}/templates/qa-handoff-message-tmpl.yaml`
 
-**Handoff Formats**:
-- **Architecture Escalation**: `🎯 HANDOFF TO architect: *review-escalation {story_id}`
-- **Gate PASS + Commit Success**: `🎉 STORY {story_id} DONE - COMMITTED` + `🎯 HANDOFF TO {target}: {command}`
-- **Gate PASS + Commit Failed**: `⚠️ COMMIT FAILED` + `🎯 RETRY COMMIT: *finalize-commit {story_id}`
-- **Gate CONCERNS/FAIL**: `⚠️ ISSUES FOUND` + `🎯 HANDOFF TO dev: *review-qa {story_id}`
+Select appropriate message based on workflow outcome:
+- **Architecture Escalation**: Use `architecture_escalation`
+- **Gate PASS + Commit Success**: Use `gate_pass_committed`
+- **Gate PASS + Commit Failed**: Use `gate_pass_commit_failed`
+- **Gate CONCERNS/FAIL**: Use `gate_issues_found`
 
 **CRITICAL**: Handoff command MUST be the final line of output. No summaries/tips after handoff.

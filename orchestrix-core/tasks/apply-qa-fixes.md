@@ -149,154 +149,23 @@ Status Rule (Intelligent Status Setting with Validation):
    - Note: The status should reflect Dev's assessment of fix completeness, not the previous gate result
    - Log the transition for audit purposes
 
-**Change Log Entry Details:**
+**Change Log Entry**:
 
-Add a detailed Change Log entry to document the QA fixes applied:
+Use template: `{root}/templates/dev-change-log-qa-fixes-tmpl.yaml`
 
-```markdown
-## Change Log
-
-### {YYYY-MM-DD HH:MM:SS} - Dev QA Fixes (QA Review Round {review_round})
-
-**Action:** Applied fixes based on QA review findings
-
-**QA Review Context:**
-- QA Review Round: {review_round}
-- Previous Gate Result: {PASS/CONCERNS/FAIL}
-- Issues Addressed: {count} total issues
-
-**Fixes Applied:**
-**High Priority Issues:**
-- {Issue 1}: {Description of fix}
-  - Files Modified: {list of files}
-  - Fix Details: {what was changed and why}
-  
-- {Issue 2}: {Description of fix}
-  - Files Modified: {list of files}
-  - Fix Details: {what was changed and why}
-
-**NFR Issues:**
-- {NFR Category}: {Status change from FAIL/CONCERNS to PASS}
-  - Fix Applied: {description}
-  - Files Modified: {list of files}
-
-**Test Coverage Gaps:**
-- {Gap 1}: {Description of missing test}
-  - Test Added: {test file and description}
-  - Coverage: {what AC/requirement is now covered}
-  
-- {Gap 2}: {Description of missing test}
-  - Test Added: {test file and description}
-  - Coverage: {what AC/requirement is now covered}
-
-**Code Quality Issues:**
-- {Issue}: {Description}
-  - Fix: {what was changed}
-  - Files: {affected files}
-
-**Files Modified:**
-- Added: {list of new files}
-- Modified: {list of changed files}
-- Deleted: {list of removed files}
-
-**Validation Results:**
-- Lint Status: {PASS/issues resolved}
-- Test Status: {all tests passing}
-- Build Status: {successful}
-
-**Next Status:** `{Review/InProgress}`
-**Reasoning:** {Dev's assessment of fix completeness}
-
-**Next Action:** {Based on status - what happens next}
-
----
-
-{Previous Change Log entries}
-```
-
-**Example Change Log Entry:**
-
-```markdown
-## Change Log
-
-### 2024-01-15 18:20:45 - Dev QA Fixes (QA Review Round 1)
-
-**Action:** Applied fixes based on QA review findings
-
-**QA Review Context:**
-- QA Review Round: 1
-- Previous Gate Result: CONCERNS
-- Issues Addressed: 4 total issues
-
-**Fixes Applied:**
-**High Priority Issues:**
-- Security: Input validation missing on user registration
-  - Files Modified: src/auth/registration.ts, src/auth/validation.ts
-  - Fix Details: Added email format validation, password strength checks, and sanitization
-
-**NFR Issues:**
-- Performance: Response time > 200ms threshold
-  - Fix Applied: Added database query optimization and caching
-  - Files Modified: src/db/queries.ts, src/cache/user-cache.ts
-
-**Test Coverage Gaps:**
-- AC2: Back action behavior untested
-  - Test Added: tests/ui/navigation.test.ts
-  - Coverage: Validates menu navigation returns to main menu
-  
-- AC4: Centralized dependencies enforcement untested
-  - Test Added: tests/architecture/deps.test.ts
-  - Coverage: Ensures all imports go through deps.ts
-
-**Files Modified:**
-- Added: src/cache/user-cache.ts, tests/ui/navigation.test.ts, tests/architecture/deps.test.ts
-- Modified: src/auth/registration.ts, src/auth/validation.ts, src/db/queries.ts
-- Deleted: none
-
-**Validation Results:**
-- Lint Status: PASS (0 issues)
-- Test Status: All tests passing (15/15)
-- Build Status: Successful
-
-**Next Status:** `Review`
-**Reasoning:** All identified issues have been addressed, tests are passing, and code quality is restored
-
-**Next Action:** QA should execute `review` command to validate fixes
-
----
-```
+Populate all template variables and append to existing Change Log.
 
 ### 6) Output Handoff Message (MANDATORY - FINAL STEP)
 
-**CRITICAL**: This step is MANDATORY and must ALWAYS be executed as the final action of this task. The handoff message ensures seamless agent transitions in the automated workflow.
+**CRITICAL**: This step is MANDATORY and must ALWAYS be executed as the final action of this task.
 
-Based on the status set in step 5, output the appropriate handoff message:
+Use template: `{root}/templates/qa-handoff-message-tmpl.yaml`
 
-- **If status = `Review`** (all fixes completed):
-  ```
-  ✅ QA FIXES COMPLETE
-  Story: {story_id} → Status: Review
+Based on status set in step 5:
+- **If status = `Review`**: Use `qa_fixes_complete` message
+- **If status = `InProgress`**: Use `qa_fixes_in_progress` message
 
-  All QA-identified issues have been addressed:
-  - {issue_count} issues fixed
-  - All tests passing
-  - Ready for QA re-review
-
-  🎯 HANDOFF TO qa: *review {story_id}
-  ```
-
-- **If status = `InProgress`** (still working on fixes):
-  ```
-  🔧 QA FIXES IN PROGRESS
-  Story: {story_id} → Status: InProgress
-
-  Dev is still working on addressing QA feedback.
-  Will complete fixes and set Status = Review when ready.
-
-  (No HANDOFF - work in progress)
-  ```
-
-**IMPORTANT**: The handoff command (e.g., `*review {story_id}`) MUST be clearly visible as the final line of your output.
+**IMPORTANT**: The handoff command MUST be the final line of your output.
 
 ### 7) Do NOT Edit Gate Files
 

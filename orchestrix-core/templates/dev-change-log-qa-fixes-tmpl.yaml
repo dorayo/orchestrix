@@ -1,0 +1,222 @@
+name: "Dev Change Log - QA Fixes Template"
+description: "Standard Change Log entry format when Dev applies QA fixes"
+version: "1.0.0"
+
+# This template defines the structured format for Change Log entries
+# when Dev agent applies fixes based on QA review feedback.
+
+template:
+  format: |
+    ## Change Log
+
+    ### {{timestamp}} - Dev QA Fixes (QA Review Round {{review_round}})
+
+    **Action:** Applied fixes based on QA review findings
+
+    **QA Review Context:**
+    - QA Review Round: {{review_round}}
+    - Previous Gate Result: {{gate_result}}
+    - Issues Addressed: {{total_issues_count}} total issues
+
+    **Fixes Applied:**
+    {{#if high_priority_issues}}
+    **High Priority Issues:**
+    {{#each high_priority_issues}}
+    - {{this.id}}: {{this.description}}
+      - Files Modified: {{this.files}}
+      - Fix Details: {{this.fix_details}}
+    {{/each}}
+    {{/if}}
+
+    {{#if nfr_issues}}
+    **NFR Issues:**
+    {{#each nfr_issues}}
+    - {{this.category}}: {{this.status_change}}
+      - Fix Applied: {{this.fix_description}}
+      - Files Modified: {{this.files}}
+    {{/each}}
+    {{/if}}
+
+    {{#if test_coverage_gaps}}
+    **Test Coverage Gaps:**
+    {{#each test_coverage_gaps}}
+    - {{this.gap_description}}
+      - Test Added: {{this.test_file}} - {{this.test_description}}
+      - Coverage: {{this.coverage_details}}
+    {{/each}}
+    {{/if}}
+
+    {{#if code_quality_issues}}
+    **Code Quality Issues:**
+    {{#each code_quality_issues}}
+    - {{this.issue_description}}
+      - Fix: {{this.fix_applied}}
+      - Files: {{this.affected_files}}
+    {{/each}}
+    {{/if}}
+
+    **Files Modified:**
+    {{#if files_added}}
+    - Added: {{files_added}}
+    {{/if}}
+    {{#if files_modified}}
+    - Modified: {{files_modified}}
+    {{/if}}
+    {{#if files_deleted}}
+    - Deleted: {{files_deleted}}
+    {{/if}}
+
+    **Validation Results:**
+    - Lint Status: {{lint_status}}
+    - Test Status: {{test_status}}
+    - Build Status: {{build_status}}
+
+    **Next Status:** `{{next_status}}`
+    **Reasoning:** {{status_reasoning}}
+
+    **Next Action:** {{next_action_description}}
+
+    ---
+
+    {{previous_changelog_entries}}
+
+examples:
+  - scenario: "Security and test coverage issues (Review Round 1)"
+    timestamp: "2024-01-15 18:20:45"
+    review_round: 1
+    gate_result: "CONCERNS"
+    total_issues_count: 4
+    high_priority_issues:
+      - id: "SEC-001"
+        description: "Input validation missing on user registration"
+        files: "src/auth/registration.ts, src/auth/validation.ts"
+        fix_details: "Added email format validation, password strength checks, and sanitization"
+    nfr_issues:
+      - category: "Performance"
+        status_change: "Response time > 200ms threshold → PASS"
+        fix_description: "Added database query optimization and caching"
+        files: "src/db/queries.ts, src/cache/user-cache.ts"
+    test_coverage_gaps:
+      - gap_description: "AC2: Back action behavior untested"
+        test_file: "tests/ui/navigation.test.ts"
+        test_description: "Validates menu navigation returns to main menu"
+        coverage_details: "AC2 navigation requirement now covered"
+      - gap_description: "AC4: Centralized dependencies enforcement untested"
+        test_file: "tests/architecture/deps.test.ts"
+        test_description: "Ensures all imports go through deps.ts"
+        coverage_details: "AC4 architecture compliance now verified"
+    files_added: "src/cache/user-cache.ts, tests/ui/navigation.test.ts, tests/architecture/deps.test.ts"
+    files_modified: "src/auth/registration.ts, src/auth/validation.ts, src/db/queries.ts"
+    files_deleted: "none"
+    lint_status: "PASS (0 issues)"
+    test_status: "All tests passing (15/15)"
+    build_status: "Successful"
+    next_status: "Review"
+    status_reasoning: "All identified issues have been addressed, tests are passing, and code quality is restored"
+    next_action_description: "QA should execute `review` command to validate fixes"
+    output: |
+      ## Change Log
+
+      ### 2024-01-15 18:20:45 - Dev QA Fixes (QA Review Round 1)
+
+      **Action:** Applied fixes based on QA review findings
+
+      **QA Review Context:**
+      - QA Review Round: 1
+      - Previous Gate Result: CONCERNS
+      - Issues Addressed: 4 total issues
+
+      **Fixes Applied:**
+      **High Priority Issues:**
+      - SEC-001: Input validation missing on user registration
+        - Files Modified: src/auth/registration.ts, src/auth/validation.ts
+        - Fix Details: Added email format validation, password strength checks, and sanitization
+
+      **NFR Issues:**
+      - Performance: Response time > 200ms threshold → PASS
+        - Fix Applied: Added database query optimization and caching
+        - Files Modified: src/db/queries.ts, src/cache/user-cache.ts
+
+      **Test Coverage Gaps:**
+      - AC2: Back action behavior untested
+        - Test Added: tests/ui/navigation.test.ts - Validates menu navigation returns to main menu
+        - Coverage: AC2 navigation requirement now covered
+
+      - AC4: Centralized dependencies enforcement untested
+        - Test Added: tests/architecture/deps.test.ts - Ensures all imports go through deps.ts
+        - Coverage: AC4 architecture compliance now verified
+
+      **Files Modified:**
+      - Added: src/cache/user-cache.ts, tests/ui/navigation.test.ts, tests/architecture/deps.test.ts
+      - Modified: src/auth/registration.ts, src/auth/validation.ts, src/db/queries.ts
+      - Deleted: none
+
+      **Validation Results:**
+      - Lint Status: PASS (0 issues)
+      - Test Status: All tests passing (15/15)
+      - Build Status: Successful
+
+      **Next Status:** `Review`
+      **Reasoning:** All identified issues have been addressed, tests are passing, and code quality is restored
+
+      **Next Action:** QA should execute `review` command to validate fixes
+
+      ---
+
+  - scenario: "Minor issues, work still in progress (Review Round 2)"
+    timestamp: "2024-01-16 10:45:12"
+    review_round: 2
+    gate_result: "FAIL"
+    total_issues_count: 3
+    code_quality_issues:
+      - issue_description: "Inconsistent error handling pattern"
+        fix_applied: "Standardized error handling to use custom error classes"
+        affected_files: "src/services/user-service.ts, src/services/auth-service.ts"
+    files_modified: "src/services/user-service.ts, src/services/auth-service.ts, src/errors/custom-errors.ts"
+    lint_status: "PASS"
+    test_status: "14/16 passing (2 failures being investigated)"
+    build_status: "Successful"
+    next_status: "InProgress"
+    status_reasoning: "Partial fixes applied, but test failures require further investigation"
+    next_action_description: "Dev will continue debugging test failures and update status when ready"
+    output: |
+      ## Change Log
+
+      ### 2024-01-16 10:45:12 - Dev QA Fixes (QA Review Round 2)
+
+      **Action:** Applied fixes based on QA review findings
+
+      **QA Review Context:**
+      - QA Review Round: 2
+      - Previous Gate Result: FAIL
+      - Issues Addressed: 3 total issues
+
+      **Fixes Applied:**
+      **Code Quality Issues:**
+      - Inconsistent error handling pattern
+        - Fix: Standardized error handling to use custom error classes
+        - Files: src/services/user-service.ts, src/services/auth-service.ts
+
+      **Files Modified:**
+      - Modified: src/services/user-service.ts, src/services/auth-service.ts, src/errors/custom-errors.ts
+
+      **Validation Results:**
+      - Lint Status: PASS
+      - Test Status: 14/16 passing (2 failures being investigated)
+      - Build Status: Successful
+
+      **Next Status:** `InProgress`
+      **Reasoning:** Partial fixes applied, but test failures require further investigation
+
+      **Next Action:** Dev will continue debugging test failures and update status when ready
+
+      ---
+
+# Usage instructions for LLM agents:
+# 1. Collect all QA issues from gate file and review reports
+# 2. Categorize issues into: high_priority, nfr, test_coverage_gaps, code_quality
+# 3. Document each fix applied with files modified and fix details
+# 4. Populate all template variables with actual values
+# 5. Generate the formatted Change Log entry
+# 6. Append to existing Change Log (prepend to bottom of list)
+# 7. Include reference to QA review round number for traceability
