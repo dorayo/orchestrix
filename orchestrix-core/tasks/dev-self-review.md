@@ -39,7 +39,12 @@ Load required documents:
 
 ### 2. Execute Implementation Gate
 
-**Execute**: `{root}/tasks/dev-implementation-gate.md`
+**Execute**: `{root}/checklists/gate/dev-implementation-gate.md`
+
+This is a complex validation engine with a complete ## Process section. Follow its execution flow:
+- Read the ## Inputs section to understand required parameters
+- Execute the ## Process section step-by-step
+- Generate gate_result as defined
 
 **Input**:
 ```yaml
@@ -342,7 +347,7 @@ HALT immediately if:
 
 ## References
 
-- `tasks/dev-implementation-gate.md` - Implementation Gate (unified quality validation engine)
+- `checklists/gate/dev-implementation-gate.md` - Implementation Gate (unified quality validation engine)
 - `tasks/make-decision.md` - Decision execution framework
 - `data/decisions/dev-self-review-decision.yaml` - Self-review decision rules
 - `data/story-status-transitions.yaml` - Status transition permissions

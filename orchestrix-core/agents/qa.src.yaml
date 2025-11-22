@@ -93,4 +93,4 @@ dependencies:
     - qa-gate-tmpl.yaml
     - story-tmpl.yaml
   checklists:
-    - validation/dev-implementation-gate.md
+    - gate/dev-implementation-gate.md

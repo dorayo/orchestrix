@@ -62,8 +62,10 @@ commands:
 
   - story-checklist:
       description: "Run comprehensive story quality validation"
-      task: execute-checklist.md
-      checklist: assessment/sm-story-quality.md
+      behavior:
+        - "Load and execute: {root}/checklists/scoring/sm-story-quality.md"
+        - "This is a scored quality assessment with embedded execution instructions"
+        - "Follow the checklist's scoring logic and return quality_score as defined"
 
   - init-registries:
       description: "Initialize or refresh cumulative registries from existing completed stories"
@@ -78,7 +80,6 @@ dependencies:
     - revise-story-from-architect-feedback.md
     - correct-course.md
     - frontend-user-confirmation.md
-    - execute-checklist.md
     - make-decision.md
     - init-cumulative-registries.md
     - utils/load-cumulative-context.md
@@ -88,6 +89,6 @@ dependencies:
     - api-registry-tmpl.yaml
     - models-registry-tmpl.yaml
   checklists:
-    - assessment/sm-story-quality.md
+    - scoring/sm-story-quality.md
   data:
     - epic-story-mapping-schema.yaml

@@ -95,8 +95,9 @@ Low Fixed: ...
 ### 3. Re-execute Quality Check
 
 ```
-Execute: {root}/tasks/execute-checklist.md
-Checklist: {root}/checklists/assessment/sm-story-quality.md
+Execute: {root}/checklists/scoring/sm-story-quality.md
+- This is a scored quality assessment
+- Follow embedded scoring logic and return quality_score
 Story: docs/stories/{epic-num}/{story-num}-{story-title}.md
 ```
 

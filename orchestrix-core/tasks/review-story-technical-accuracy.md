@@ -16,8 +16,9 @@ Execute: `utils/load-architecture-context.md` → store as `architecture_context
 - If error: HALT; if partial: continue
 
 ### 3. Review
-Execute: `{root}/tasks/execute-checklist.md`
-- checklist: `{root}/checklists/assessment/architect-technical-review-checklist.md`
+Execute: `{root}/checklists/scoring/architect-technical-review.md`
+- This is a scored technical review assessment (0-10 scale)
+- Follow embedded scoring instructions and return review score
 - context: {story, architecture_context, review_round}
 - Store as `review_result`
 
@@ -78,4 +79,4 @@ Architect Review Metadata:
 Score ≥8, zero critical, max 2 rounds
 
 ## Refs
-`checklists/assessment/architect-technical-review-checklist.md` | `architect-review-result.yaml` | `load-architecture-context.md` | `validate-status-transition.md`
+`checklists/scoring/architect-technical-review.md` | `architect-review-result.yaml` | `load-architecture-context.md` | `validate-status-transition.md`

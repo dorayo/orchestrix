@@ -363,8 +363,9 @@ Create story file using `{root}/templates/story-tmpl.yaml`:
 
 ### 7. Quality Assessment
 
-Execute `{root}/tasks/execute-checklist.md`:
-- Checklist: `{root}/checklists/assessment/sm-story-quality.md`
+Execute `{root}/checklists/scoring/sm-story-quality.md`:
+- This is a scored quality assessment with embedded instructions
+- Follow the checklist's scoring logic (Structure Validation + Technical Quality + Complexity Detection)
 - Context: Story file from Step 6
 
 Extract:

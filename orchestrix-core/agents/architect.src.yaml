@@ -156,8 +156,10 @@ commands:
   
   - execute-checklist:
       description: "Run architectural validation checklist"
-      task: execute-checklist.md
-      default_checklist: architect-checklist.md
+      behavior:
+        - "Load and execute: {root}/checklists/workflow/architect-validation.md"
+        - "This is a self-contained validation workflow with embedded [[LLM: ]] instructions"
+        - "Follow all validation steps and generate the comprehensive report as specified"
   
   - doc-out:
       description: "Output current document to destination file"
@@ -184,7 +186,6 @@ dependencies:
     - extract-api-contracts.md
     - create-deep-research-prompt.md
     - document-project.md
-    - execute-checklist.md
     - make-decision.md
     - architect-review-story.md
     - review-story-technical-accuracy.md
@@ -196,7 +197,7 @@ dependencies:
     - brownfield-architecture-tmpl.yaml
     - system-architecture-tmpl.yaml
   checklists:
-    - architect-checklist.md
-    - assessment/architect-technical-review-checklist.md
+    - workflow/architect-validation.md
+    - scoring/architect-technical-review.md
   data:
     - technical-preferences.md

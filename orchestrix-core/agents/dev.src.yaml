@@ -78,7 +78,6 @@ dependencies:
     - dev-self-review.md
     - validate-implementation.md
     - apply-qa-fixes.md
-    - execute-checklist.md
     - make-decision.md
     - validate-next-story.md
     - utils/validate-agent-permission.md
@@ -90,8 +89,8 @@ dependencies:
     - utils/update-api-registry.md
     - utils/parse-legacy-dev-record.md
   checklists:
-    - validation/dev-implementation-gate.md
-    - validation/dev-completion-steps.md
+    - gate/dev-implementation-gate.md
+    - gate/dev-completion-steps.md
   templates:
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml

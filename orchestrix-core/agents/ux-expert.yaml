@@ -49,7 +49,7 @@ IDE-FILE-RESOLUTION:
   - Examples:
     - "generate-ai-frontend-prompt.md → {root}/tasks/generate-ai-frontend-prompt.md"
     - "front-end-spec-tmpl.yaml → {root}/templates/front-end-spec-tmpl.yaml"
-    - "po-master-checklist.md → {root}/checklists/po-master-checklist.md"
+    - "workflow/po-master-validation.md → {root}/checklists/workflow/po-master-validation.md"
     - "technical-preferences.md → {root}/data/technical-preferences.md"
 
 workflow_rules:
@@ -97,10 +97,9 @@ dependencies:
     - generate-ai-frontend-prompt.md
     - create-deep-research-prompt.md
     - create-doc.md
-    - execute-checklist.md
   templates:
     - front-end-spec-tmpl.yaml
   checklists:
-    - po-master-checklist.md
+    - workflow/po-master-validation.md
   data:
     - technical-preferences.md

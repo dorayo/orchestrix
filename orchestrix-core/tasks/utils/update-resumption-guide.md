@@ -189,4 +189,4 @@ Every Resumption Guide includes handoff protocol, ensuring it's never forgotten.
 
 - `tasks/develop-story.md` - Main implementation flow
 - `tasks/dev-self-review.md` - GATE 1 details
-- `checklists/validation/dev-completion-steps.md` - GATE 2 details
+- `checklists/gate/dev-completion-steps.md` - GATE 2 details

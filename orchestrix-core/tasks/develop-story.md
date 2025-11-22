@@ -475,7 +475,13 @@ This step closes the loop:
 
 **⚠️ CRITICAL**: Only execute if GATE 1 = PASS AND Step 7.5 (Registry Update) = COMPLETE
 
-**Execute**: `{root}/tasks/execute-checklist.md` with `{root}/checklists/validation/dev-completion-steps.md`
+**Execute**: `{root}/checklists/gate/dev-completion-steps.md`
+
+This is a simple item checklist gate. Execution:
+- Read metadata: type=validation, threshold=100%, on_fail=halt
+- Verify all 22 items are marked [x]
+- If < 100%: HALT immediately, output missing items
+- If 100%: Proceed to handoff
 
 **Verifies** (25 items, 100% required): Dev Log Final Summary, Dev Agent Record (7 fields), Change Log entry, Status = "Review", handoff message ready
 
@@ -512,8 +518,8 @@ Complete both gates in sequence:
 ## Refs
 - contract-driven-phases.md, coding-standards.md, tech-stack.md, source-tree.md, testing-strategy.md
 - dev-self-review.md, validate-implementation.md
-- utils/load-architecture-context.md, make-decision.md, execute-checklist.md
+- utils/load-architecture-context.md, make-decision.md
 - utils/validate-agent-permission.md, utils/validate-api-contract.md
 - data/decisions/dev-block-story.yaml, dev-escalate-architect.yaml
 - data/story-status-transitions.yaml
-- dev-log-tmpl.md, checklists/validation/dev-implementation-gate.md
+- dev-log-tmpl.md, checklists/gate/dev-implementation-gate.md

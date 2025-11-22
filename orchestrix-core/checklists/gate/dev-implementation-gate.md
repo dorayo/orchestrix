@@ -1,4 +1,13 @@
-# Validate Quality Gates
+# Dev Implementation Gate
+
+---
+metadata:
+  type: gate
+  threshold: 95%
+  on_fail: halt
+  purpose: "Unified quality gate validating architecture compliance, API contracts, test integrity, and implementation standards"
+  scope: "Code quality validation - all technical quality checks consolidated here"
+---
 
 ## Purpose
 

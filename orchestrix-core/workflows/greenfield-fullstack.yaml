@@ -113,7 +113,7 @@ workflow:
       action: review_story
       updates: story.md
       requires: story.md
-      uses: architect-technical-review-checklist
+      uses: architect-technical-review
       notes: |
         Architect (New Chat): @architect → *review-story <story_id>
         - Reviews draft story for technical accuracy and alignment with architecture

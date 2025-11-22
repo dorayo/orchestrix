@@ -47,7 +47,7 @@ IDE-FILE-RESOLUTION:
   - Examples:
     - "create-doc.md → {root}/tasks/create-doc.md"
     - "prd-tmpl.yaml → {root}/templates/prd-tmpl.yaml"
-    - "architect-checklist.md → {root}/checklists/architect-checklist.md"
+    - "workflow/architect-validation.md → {root}/checklists/workflow/architect-validation.md"
     - "orchestrix-kb.md → {root}/data/orchestrix-kb.md"
     - "brownfield-fullstack.md → {root}/workflows/brownfield-fullstack.md"
 
@@ -107,7 +107,6 @@ dependencies:
     - create-doc.md
     - document-project.md
     - create-next-story.md
-    - execute-checklist.md
     - generate-ai-frontend-prompt.md
     - index-docs.md
     - shard-doc.md
@@ -136,9 +135,9 @@ dependencies:
     - greenfield-service.md
     - greenfield-ui.md
   checklists:
-    - architect-checklist.md
-    - change-checklist.md
-    - pm-checklist.md
-    - po-master-checklist.md
+    - workflow/architect-validation.md
+    - workflow/change-navigation.md
+    - workflow/pm-validation.md
+    - workflow/po-master-validation.md
     - completion/story-dod-checklist.md
-    - assessment/sm-story-quality.md
+    - scoring/sm-story-quality.md

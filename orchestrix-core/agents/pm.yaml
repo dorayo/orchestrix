@@ -49,7 +49,7 @@ IDE-FILE-RESOLUTION:
   - Examples:
       - "create-doc.md → {root}/tasks/create-doc.md"
       - "prd-tmpl.yaml → {root}/templates/prd-tmpl.yaml"
-      - "pm-checklist.md → {root}/checklists/pm-checklist.md"
+      - "workflow/pm-validation.md → {root}/checklists/workflow/pm-validation.md"
       - "technical-preferences.md → {root}/data/technical-preferences.md"
 
 workflow_rules:
@@ -88,13 +88,12 @@ dependencies:
     - create-deep-research-prompt.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
-    - execute-checklist.md
     - shard-doc.md
   templates:
     - prd-tmpl.yaml
     - brownfield-prd-tmpl.yaml
   checklists:
-    - pm-checklist.md
-    - change-checklist.md
+    - workflow/pm-validation.md
+    - workflow/change-navigation.md
   data:
     - technical-preferences.md
