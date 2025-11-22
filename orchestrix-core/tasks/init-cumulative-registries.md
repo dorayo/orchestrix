@@ -426,7 +426,7 @@ Possible causes:
 ## Related Tasks
 
 - `create-next-story.md` - Uses registries in Step 4.5
-- `implement-story.md` - Uses registries in Step 1, updates in Step 7.5
+- `develop-story.md` - Uses registries in Step 1, updates in Step 7.5
 - `utils/load-cumulative-context.md` - Reads registries
 - `utils/update-database-registry.md` - Incremental update
 - `utils/update-api-registry.md` - Incremental update

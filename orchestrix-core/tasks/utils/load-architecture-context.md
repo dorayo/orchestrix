@@ -250,7 +250,7 @@ Result: Context with all Backend + Frontend documents loaded
 
 This utility is designed to be called from:
 - `create-next-story.md` - Load architecture for Dev Notes population
-- `implement-story.md` - Load architecture for implementation guidance
+- `develop-story.md` - Load architecture for implementation guidance
 - `review-story-technical-accuracy.md` - Load architecture for technical review
 
 ### Integration Pattern:

@@ -383,7 +383,7 @@ This aligns with the project's semantic-release workflow and ensures:
 ## Related Tasks
 
 - `qa-review-story.md` - QA review that produces the Gate file
-- `implement-story.md` - Dev implementation that this commit finalizes
+- `develop-story.md` - Dev implementation that this commit finalizes
 - `apply-qa-fixes.md` - Dev fixes that may precede final approval
 
 ---

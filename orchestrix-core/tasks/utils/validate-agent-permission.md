@@ -225,7 +225,7 @@ guidance: "Dev can only transition to Review or Blocked from InProgress"
 
 ## Usage Examples
 
-### In implement-story.md
+### In develop-story.md
 
 ```markdown
 ## Prerequisites
@@ -309,7 +309,7 @@ log_entry:
 ## References
 
 - `data/story-status-transitions.yaml` - Permission configuration
-- `tasks/implement-story.md` - Dev usage
+- `tasks/develop-story.md` - Dev usage
 - `tasks/apply-qa-fixes.md` - Dev fix usage
 - `tasks/qa-review-story.md` - QA usage
 - `tasks/architect-review-story.md` - Architect usage

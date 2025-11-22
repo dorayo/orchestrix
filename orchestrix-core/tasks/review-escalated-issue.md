@@ -128,7 +128,7 @@ This task is triggered when QA sets Story Status to `Escalated` with `architectu
    - Condition: Architecture concern is valid and requires code changes
    - Action: Set Story Status to `InProgress`
    - Reasoning: Dev must implement architectural fixes
-   - Handoff: "Next: Dev execute command `implement-story {story-id}` to address architecture concerns"
+   - Handoff: "Next: Dev execute command `develop-story {story-id}` to address architecture concerns"
    
    **If No Changes Needed (Status = Review):**
    - Condition: Concern is not valid or current approach is acceptable

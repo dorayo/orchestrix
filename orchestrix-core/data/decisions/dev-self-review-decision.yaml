@@ -9,7 +9,7 @@ inputs:
   - name: implementation_gate_score
     type: number
     required: true
-    description: "Overall score from validate-quality-gates.md (0-100)"
+    description: "Overall score from dev-implementation-gate.md (0-100)"
   - name: architecture_compliance
     type: string
     required: true
@@ -118,7 +118,7 @@ metadata:
       date: "2025-01-22"
       changes: "Consolidated 6 FAIL conditions into 1 unified condition"
   usage_context: >
-    Called by dev-self-review.md after executing validate-quality-gates.md.
+    Called by dev-self-review.md after executing dev-implementation-gate.md.
     All quality checks (including documentation) are in gate_result.
     PASS: Proceed to mark story as Review. FAIL: HALT with specific issues to fix.
     ESCALATE: HALT and handoff to Architect due to recurring issues.

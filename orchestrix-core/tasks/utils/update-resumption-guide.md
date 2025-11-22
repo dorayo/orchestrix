@@ -164,7 +164,7 @@ Every Resumption Guide includes handoff protocol, ensuring it's never forgotten.
 ## Integration Points
 
 **Called by**:
-- `implement-story.md` - Before each pause
+- `develop-story.md` - Before each pause
 - `apply-qa-fixes.md` - Before each pause
 - Any task that may span multiple interactions
 
@@ -187,6 +187,6 @@ Every Resumption Guide includes handoff protocol, ensuring it's never forgotten.
 
 ## References
 
-- `tasks/implement-story.md` - Main implementation flow
+- `tasks/develop-story.md` - Main implementation flow
 - `tasks/dev-self-review.md` - GATE 1 details
 - `checklists/validation/dev-completion-steps.md` - GATE 2 details

@@ -70,7 +70,7 @@ Architect Review Metadata:
 
 ### 8. Handoff
 - `AwaitingTestDesign` → QA: `test-design {story_id}`
-- `Approved` → Dev: `implement-story {story_id}`
+- `Approved` → Dev: `develop-story {story_id}`
 - `RequiresRevision` → SM: `revise {story_id}`
 - `Escalated` → Human required
 

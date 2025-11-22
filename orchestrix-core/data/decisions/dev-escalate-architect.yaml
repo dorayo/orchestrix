@@ -90,7 +90,7 @@ metadata:
   owner: "Dev Agent"
   related_requirements: ["6.2", "6.4", "6.7", "3.3", "3.4"]
   usage_context: >
-    Called by Dev during implement-story when needing to deviate from planned approach.
+    Called by Dev during develop-story when needing to deviate from planned approach.
     ESCALATE: Record in Dev Log, add escalation marker, handoff to Architect, wait for
     guidance. DOCUMENT: Record rationale in Dev Log, proceed with implementation.
 

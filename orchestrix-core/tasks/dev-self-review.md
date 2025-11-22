@@ -37,9 +37,9 @@ Load required documents:
 - API contracts (if multi-repo, from product repo)
 - QA test design (if exists)
 
-### 2. Execute Quality Gate Validation
+### 2. Execute Implementation Gate
 
-**Execute**: `{root}/tasks/utils/validate-quality-gates.md`
+**Execute**: `{root}/tasks/dev-implementation-gate.md`
 
 **Input**:
 ```yaml
@@ -160,7 +160,7 @@ decision_result:
 **PASS** (All gates passed, no critical issues):
 - `decision_result.result = PASS`
 - `decision_result.ready_for_qa = true`
-- Status remains InProgress (will be set to Review by implement-story)
+- Status remains InProgress (will be set to Review by develop-story)
 - Proceed to Step 6
 
 **FAIL** (Any gate <95% OR critical issues):
@@ -221,7 +221,7 @@ Round: {N}
 Self-review validation PASSED, but task is NOT complete yet.
 
 YOU MUST NOW:
-1. Return to implement-story.md
+1. Return to develop-story.md
 2. Execute Step 7.5: Update Cumulative Registries
 3. Execute GATE 2: Completion Steps Checklist
 4. Update Dev Agent Record (7 additional fields)
@@ -236,7 +236,7 @@ DO NOT:
 ❌ Skip completion checklist
 ❌ Forget to update story status
 
-NEXT STEP: Return control to implement-story.md
+NEXT STEP: Return control to develop-story.md
 ```
 
 **Return Value**: `{result: "PASS", self_review_result: {full YAML from Step 5}}`
@@ -342,13 +342,12 @@ HALT immediately if:
 
 ## References
 
-- `tasks/utils/validate-quality-gates.md` - Unified quality gate validation engine (Implementation Gate)
+- `tasks/dev-implementation-gate.md` - Implementation Gate (unified quality validation engine)
 - `tasks/make-decision.md` - Decision execution framework
 - `data/decisions/dev-self-review-decision.yaml` - Self-review decision rules
 - `data/story-status-transitions.yaml` - Status transition permissions
 
 ## Notes
 
-- **DoD Checklist Removed**: Completion steps (Dev Log, Agent Record, Change Log, Status, Handoff) are verified in implement-story.md GATE 2 (dev-completion-steps.md)
-- **Single Quality Gate**: validate-quality-gates.md is the only quality checklist, covering all 10 sections including Documentation
-- **Terminology**: "Implementation Gate" refers to validate-quality-gates.md unified validation engine
+- **DoD Checklist Removed**: Completion steps (Dev Log, Agent Record, Change Log, Status, Handoff) are verified in develop-story.md GATE 2 (dev-completion-steps.md)
+- **Single Quality Gate**: dev-implementation-gate.md is the only quality checklist, covering all 10 sections including Documentation

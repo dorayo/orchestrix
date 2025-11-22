@@ -49,7 +49,7 @@ commands:
 
   - develop-story:
       description: "Implement approved story following TDD"
-      task: implement-story.md
+      task: develop-story.md
 
   - self-review:
       description: "Comprehensive self-review before marking Review (MANDATORY)"
@@ -74,7 +74,7 @@ commands:
 
 dependencies:
   tasks:
-    - implement-story.md
+    - develop-story.md
     - dev-self-review.md
     - validate-implementation.md
     - apply-qa-fixes.md

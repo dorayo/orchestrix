@@ -11,13 +11,13 @@ metadata:
 
 ## LLM EXECUTION INSTRUCTIONS
 
-**CRITICAL**: This checklist MUST be executed at the END of implement-story.md completion flow, AFTER self-review PASS.
+**CRITICAL**: This checklist MUST be executed at the END of develop-story.md completion flow, AFTER self-review PASS.
 
 **Purpose**: Verify ALL administrative and handoff steps were completed. This is NOT a quality check.
 
 **Scope**:
 - ✅ Process completion (Dev Log, Agent Record, Change Log, Status, Handoff)
-- ❌ NOT code quality (covered by validate-quality-gates.md in self-review)
+- ❌ NOT code quality (covered by dev-implementation-gate.md in self-review)
 
 **Execution**:
 - This is a GATE, not a suggestion
@@ -200,7 +200,7 @@ HALTING - Complete missing steps first
 - ✅ Handoff message prepared
 
 **This checklist does NOT cover** (Quality Validation):
-- ❌ Code quality (covered by validate-quality-gates.md)
+- ❌ Code quality (covered by dev-implementation-gate.md)
 - ❌ Test passing (covered by gate Critical Item 1)
 - ❌ Architecture compliance (covered by gate Section 6)
 - ❌ Self-review execution (already completed before this checklist)
@@ -212,7 +212,7 @@ HALTING - Complete missing steps first
 
 ## References
 
-- Called by: `implement-story.md` (GATE 2, after self-review PASS and registry update)
-- Quality validation: `tasks/dev-self-review.md` → `tasks/utils/validate-quality-gates.md`
+- Called by: `develop-story.md` (GATE 2, after self-review PASS and registry update)
+- Quality validation: `tasks/dev-self-review.md` → `tasks/dev-implementation-gate.md`
 - Status transitions: `data/story-status-transitions.yaml`
 - Permission validation: `tasks/utils/validate-agent-permission.md`

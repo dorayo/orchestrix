@@ -260,7 +260,7 @@ Proceeding with story creation...
 Continue to next step.
 ```
 
-### Dev Agent: implement-story.md
+### Dev Agent: develop-story.md
 
 Add dependency check before implementation:
 

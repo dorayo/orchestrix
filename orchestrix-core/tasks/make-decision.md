@@ -341,7 +341,7 @@ criteria:
 {
   "result": "Approved",
   "reasoning": "Quality score of 8.5 exceeds threshold (8.0) and complexity is low (1 indicator), meeting approval criteria",
-  "next_action": "Dev can begin implementation with 'implement-story {story-id}'",
+  "next_action": "Dev can begin implementation with 'develop-story {story-id}'",
   "confidence": 0.98,
   "metadata": {
     "decision_type": "story_status_transition",
@@ -473,5 +473,5 @@ Before completing this task, verify:
 
 - Requirements: 6.1 (Decision-making framework), 6.3 (Error handling)
 - Design: Decision-making system architecture
-- Related Tasks: `execute-checklist.md`, `qa-review-story.md`, `architect-review-story.md`, `implement-story.md`
+- Related Tasks: `execute-checklist.md`, `qa-review-story.md`, `architect-review-story.md`, `develop-story.md`
 - Decision Rules: `{root}/data/decisions/README.md`

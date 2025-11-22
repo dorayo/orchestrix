@@ -75,7 +75,7 @@ commands:
         - '[7] *exit — exit'
   - develop-story:
       description: Implement approved story following TDD
-      task: implement-story.md
+      task: develop-story.md
   - self-review:
       description: Comprehensive self-review before marking Review (MANDATORY)
       task: dev-self-review.md
@@ -93,7 +93,7 @@ commands:
       description: Exit Dev persona
 dependencies:
   tasks:
-    - implement-story.md
+    - develop-story.md
     - dev-self-review.md
     - validate-implementation.md
     - apply-qa-fixes.md
