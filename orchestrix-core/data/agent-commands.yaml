@@ -202,25 +202,20 @@ validation_rules:
   - "Handoff command MUST be the final line of output"
   - "If unsure, consult this file before outputting handoff"
 
-# Error Prevention
+# Best Practices
 
-common_mistakes_to_avoid:
-  - mistake: "Using *develop-story instead of *develop-story"
-    correct: "*develop-story {story_id}"
-    note: "Dev's primary command is develop-story, not implement-story"
+handoff_format_guidelines:
+  structured_format:
+    pattern: "🎯 HANDOFF TO {agent}:\n*{command} {story_id}"
+    example: "🎯 HANDOFF TO qa:\n*review 1.3"
+    note: "Use emoji prefix and clear target agent identification"
 
-  - mistake: "Using full sentence format: 'Next: QA please execute *review'"
-    correct: "🎯 HANDOFF TO qa:\n*review {story_id}"
-    note: "Use structured format with emoji prefix"
+  command_requirements:
+    - "Commands always start with asterisk (*)"
+    - "Use exact syntax from this file - never invent commands"
+    - "QA uses *review, Architect uses *review-story"
+    - "Replace {story_id} with actual ID (e.g., 1.3)"
 
-  - mistake: "Forgetting the asterisk: 'review 1.3'"
-    correct: "*review 1.3"
-    note: "Commands always start with *"
-
-  - mistake: "Using wrong agent command: '*review-story' for QA"
-    correct: "*review {story_id}"
-    note: "QA uses *review, Architect uses *review-story"
-
-  - mistake: "Fabricating commands not in this file"
-    correct: "Consult this file for all valid commands"
-    note: "NEVER invent commands - always reference this file"
+  handoff_placement:
+    requirement: "Handoff command MUST be the final line of output"
+    rationale: "Ensures command is clearly visible and parseable"

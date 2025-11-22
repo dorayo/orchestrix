@@ -372,4 +372,4 @@ config_templates:
 - ✅ Related documentation synchronized
 - ✅ Team members aware of changes
 
-**Automated Execution**: This task integrates with dev-implement-story-auto.md to ensure complete migration process protection for every database-related development.
+**Automated Execution**: This task integrates with develop-story.md to ensure complete migration process protection for every database-related development.

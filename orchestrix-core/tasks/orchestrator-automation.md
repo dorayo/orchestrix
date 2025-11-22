@@ -81,7 +81,7 @@ intent_mapping:
 **Cycle Execution**:
 1. **SM Phase**: execute create-story-auto.md → Draft story
 2. **Architect Phase**: execute architect-review-story.md → Approved/Revision
-3. **Dev Phase**: execute implement-story-auto.md → Ready for Review
+3. **Dev Phase**: execute develop-story.md → Ready for Review
 4. **QA Phase**: execute review-code-auto.md → Done/Review
 5. **Cycle Management**: Continue with next story or Epic completion
 
