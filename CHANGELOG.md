@@ -1,3 +1,10 @@
+## [12.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v12.0.0...v12.0.1) (2025-11-23)
+
+
+### Performance Improvements
+
+* **validation:** optimize agent validation and decision loading to reduce token consumption by 65% ([120a5fb](https://github.com/dorayo/ORCHESTRIX/commit/120a5fb5cd2dfd4830bbc38ad07a3f01e83c9fe4))
+
 # [12.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v11.5.12...v12.0.0) (2025-11-22)
 
 
