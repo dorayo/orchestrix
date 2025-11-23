@@ -170,11 +170,6 @@ commands:
   - review-story:
       description: Review story for technical accuracy and completeness
       task: architect-review-story.md
-      preconditions:
-        status_in:
-          - AwaitingArchReview
-          - Escalated
-        agent_can_modify: true
   - document-project:
       description: Analyze and document existing project architecture
       task: document-project.md

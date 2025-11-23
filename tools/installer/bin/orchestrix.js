@@ -51,7 +51,7 @@ program
   .option('-f, --full', '安装完整的 Orchestrix')
   .option('-x, --expansion-only', '仅安装扩展包 (不含 orchestrix-core)')
   .option('-d, --directory <path>', '安装目录')
-  .option('--ide <ide...>', '为指定的 IDE 配置 (可指定多个：cursor, claude-code, windsurf, trae, roo, cline, gemini, github-copilot, other)')
+  .option('--ide <ide...>', '为指定的 IDE 配置 (可指定多个:cursor, claude-code, windsurf, trae, roo, cline, gemini, github-copilot, other)')
   .option('-e, --expansion-packs <packs...>', '安装指定的扩展包 (可指定多个)')
   .action(async (options) => {
     try {
@@ -76,11 +76,16 @@ program
         };
         await installer.install(config);
       } else {
-        // Default: Speed mode (Cursor + Claude Code + Web Bundle)
-        console.log(chalk.bold.cyan('🚀 极速安装模式'));
-        console.log(chalk.cyan('自动安装: Orchestrix Core + Cursor + Claude Code + Web Bundle'));
-        console.log(chalk.dim('提示: 使用 -i 选项进行交互式安装\n'));
-        
+        // Default: Speed mode (Cursor + Claude Code + Web Bundle) - silent by default
+        // Display ASCII logo
+        console.log(chalk.bold.cyan(`
+  ██████╗ ██████╗  ██████╗██╗  ██╗███████╗███████╗████████╗██████╗ ██╗██╗  ██╗
+  ██╔═══██╗██╔══██╗██╔════╝██║  ██║██╔════╝██╔════╝╚══██╔══╝██╔══██╗██║╚██╗██╔╝
+  ██║   ██║██████╔╝██║     ███████║█████╗  ███████╗   ██║   ██████╔╝██║ ╚███╔╝
+  ██║   ██║██╔══██╗██║     ██╔══██║██╔══╝  ╚════██║   ██║   ██╔══██╗██║ ██╔██╗
+  ╚██████╔╝██║  ██║╚██████╗██║  ██║███████╗███████║   ██║   ██║  ██║██║██╔╝ ██╗
+   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝`));
+
         const config = {
           installType: 'full',
           directory: options.directory || '.',
@@ -90,16 +95,14 @@ program
           webBundleType: 'all',
           webBundlesDirectory: `${options.directory || '.'}/web-bundles`,
           prdSharded: true,
-          architectureSharded: true
+          architectureSharded: true,
+          quiet: true // 默认静默模式
         };
         await installer.install(config);
-        
-        console.log(chalk.green.bold('\n✅ 极速安装完成！'));
-        console.log(chalk.yellow('💡 安装内容:'));
-        console.log(chalk.white('  • Orchestrix 核心系统 (.orchestrix-core/)'));
-        console.log(chalk.white('  • Cursor IDE 集成 (.cursor/)'));
-        console.log(chalk.white('  • Claude Code 集成 (.claude/)'));
-        console.log(chalk.white('  • Web Bundle 文件 (web-bundles/)'));
+
+        // Get installed version
+        const installedVersion = await installer.getCoreVersion();
+        console.log(chalk.green.bold(`\n  ✅ Orchestrix v${installedVersion} 已安装`));
       }
     } catch (error) {
       if (!chalk) await initializeModules();

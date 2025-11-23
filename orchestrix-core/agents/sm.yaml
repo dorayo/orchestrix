@@ -81,23 +81,12 @@ commands:
           description: >-
             Optional story ID (e.g., 5.3). If provided and exists, checks status and outputs handoff. If provided but
             doesn't exist, creates that specific story. If omitted, creates next uncreated story.
-      preconditions:
-        agent_can_create: true
   - revise:
       description: Revise story based on architect feedback
       task: revise-story-from-architect-feedback.md
-      preconditions:
-        status_in:
-          - Blocked
-          - RequiresRevision
-        agent_can_modify: true
   - correct-course:
       description: Fix issues or adjust story direction
       task: correct-course.md
-      preconditions:
-        status_in:
-          - Blocked
-        agent_can_modify: true
   - story-checklist:
       description: Run comprehensive story quality validation
       behavior:

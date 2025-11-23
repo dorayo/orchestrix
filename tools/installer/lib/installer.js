@@ -18,6 +18,21 @@ async function initializeModules() {
 }
 
 class Installer {
+  constructor() {
+    this.quiet = false; // 默认非静默模式,仅在调用 install() 时通过 config.quiet 设置
+  }
+
+  /**
+   * 条件日志输出 - 只有在非静默模式下才输出
+   * @param {Function} logFn - console.log, console.warn, console.error 等
+   * @param {...any} args - 日志参数
+   */
+  _log(logFn, ...args) {
+    if (!this.quiet) {
+      logFn(...args);
+    }
+  }
+
   async getCoreVersion() {
     const yaml = require("js-yaml");
     const fs = require("fs-extra");
@@ -47,11 +62,11 @@ class Installer {
       if (await fs.pathExists(existingConfigPath)) {
         // Backup to project root
         await fs.copy(existingConfigPath, backupPath);
-        console.log(chalk.cyan(`📦 已备份配置文件: core-config.yaml.backup`));
+        this._log(console.log, chalk.cyan(`📦 已备份配置文件: core-config.yaml.backup`));
         return backupPath;
       }
     } catch (error) {
-      console.warn(chalk.yellow(`警告: 备份配置文件失败: ${error.message}`));
+      this._log(console.warn, chalk.yellow(`警告: 备份配置文件失败: ${error.message}`));
     }
     return null;
   }
@@ -74,17 +89,17 @@ class Installer {
         // Clean up backup file
         await fs.remove(backupPath);
 
-        console.log(chalk.green(`✅ 已恢复用户配置: core-config.yaml`));
-        console.log(chalk.cyan(`💡 提示: 如有配置变化，请对照 core-config.template.yaml 手动调整`));
+        this._log(console.log, chalk.green(`✅ 已恢复用户配置: core-config.yaml`));
+        this._log(console.log, chalk.cyan(`💡 提示: 如有配置变化,请对照 core-config.template.yaml 手动调整`));
 
         // Check if template exists to notify user
         if (await fs.pathExists(templatePath)) {
-          console.log(chalk.dim(`   模板位置: .orchestrix-core/core-config.template.yaml`));
+          this._log(console.log, chalk.dim(`   模板位置: .orchestrix-core/core-config.template.yaml`));
         }
       }
     } catch (error) {
-      console.warn(chalk.yellow(`警告: 恢复配置文件失败: ${error.message}`));
-      console.warn(chalk.yellow(`备份文件保留在: ${backupPath}`));
+      this._log(console.warn, chalk.yellow(`警告: 恢复配置文件失败: ${error.message}`));
+      this._log(console.warn, chalk.yellow(`备份文件保留在: ${backupPath}`));
     }
   }
 
@@ -110,8 +125,8 @@ class Installer {
         spinner.text = `✓ 编译了 ${compiled} 个代理配置文件`;
       }
     } catch (error) {
-      console.warn(chalk.yellow(`警告: 编译代理配置时出现问题: ${error.message}`));
-      console.warn(chalk.yellow('将继续使用现有的 .yaml 文件'));
+      this._log(console.warn, chalk.yellow(`警告: 编译代理配置时出现问题: ${error.message}`));
+      this._log(console.warn, chalk.yellow('将继续使用现有的 .yaml 文件'));
       // Don't fail installation if compilation fails - existing .yaml files might be sufficient
     }
   }
@@ -119,16 +134,28 @@ class Installer {
   async install(config) {
     // Initialize ES modules
     await initializeModules();
-    
-    // const spinner = ora("Analyzing installation directory...").start();
-    const spinner = { 
-      text: '', 
-      start: () => spinner,
-      stop: () => {}, 
-      succeed: (msg) => msg && console.log(chalk.green(`✓ ${msg}`)), 
-      fail: (msg) => msg && console.log(chalk.red(`✗ ${msg}`)),
-      warn: (msg) => msg && console.log(chalk.yellow(`⚠ ${msg}`))
-    };
+
+    // 设置静默模式
+    this.quiet = config.quiet || false;
+
+    // 静默模式下,spinner 不输出任何内容;非静默模式下,输出简化消息
+    const spinner = this.quiet ?
+      {
+        text: '',
+        start: () => spinner,
+        stop: () => {},
+        succeed: () => {},
+        fail: () => {},
+        warn: () => {}
+      } :
+      {
+        text: '',
+        start: () => spinner,
+        stop: () => {},
+        succeed: (msg) => msg && console.log(chalk.green(`✓ ${msg}`)),
+        fail: (msg) => msg && console.log(chalk.red(`✗ ${msg}`)),
+        warn: (msg) => msg && console.log(chalk.yellow(`⚠ ${msg}`))
+      };
 
     try {
       // Store the original CWD where npx was executed
@@ -151,63 +178,76 @@ class Installer {
 
       // Check if directory exists and handle non-existent directories
       if (!(await fileManager.pathExists(installDir))) {
-        spinner.stop();
-        console.log(chalk.yellow(`\n目录 ${chalk.bold(installDir)} 不存在。`));
-        
-        const { action } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'action',
-            message: '您希望做什么？',
-            choices: [
-              {
-                name: '创建目录并继续',
-                value: 'create'
-              },
-              {
-                name: '选择一个不同的目录',
-                value: 'change'
-              },
-              {
-                name: '取消安装',
-                value: 'cancel'
-              }
-            ]
-          }
-        ]);
-
-        if (action === 'cancel') {
-          console.log(chalk.red('安装已取消。'));
-          process.exit(0);
-        } else if (action === 'change') {
-          const { newDirectory } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'newDirectory',
-              message: '请输入新的目录路径:',
-              validate: (input) => {
-                if (!input.trim()) {
-                  return '请输入有效的目录路径';
-                }
-                return true;
-              }
-            }
-          ]);
-          // Preserve the original CWD for the recursive call
-          config.directory = newDirectory;
-          return await this.install(config); // Recursive call with new directory
-        } else if (action === 'create') {
+        // 静默模式下自动创建目录
+        if (this.quiet) {
           try {
             await fileManager.ensureDirectory(installDir);
-            console.log(chalk.green(`✓ 已创建目录: ${installDir}`));
           } catch (error) {
+            // 错误始终输出,不受 quiet 影响
             console.error(chalk.red(`创建目录失败: ${error.message}`));
             console.error(chalk.yellow('您可能需要检查权限或使用不同的路径。'));
             process.exit(1);
           }
+        } else {
+          spinner.stop();
+          this._log(console.log, chalk.yellow(`\n目录 ${chalk.bold(installDir)} 不存在。`));
+
+          const { action } = await inquirer.prompt([
+            {
+              type: 'list',
+              name: 'action',
+              message: '您希望做什么?',
+              choices: [
+                {
+                  name: '创建目录并继续',
+                  value: 'create'
+                },
+                {
+                  name: '选择一个不同的目录',
+                  value: 'change'
+                },
+                {
+                  name: '取消安装',
+                  value: 'cancel'
+                }
+              ]
+            }
+          ]);
+
+          if (action === 'cancel') {
+            this._log(console.log, chalk.red('安装已取消。'));
+            process.exit(0);
+          } else if (action === 'change') {
+            const { newDirectory } = await inquirer.prompt([
+              {
+                type: 'input',
+                name: 'newDirectory',
+                message: '请输入新的目录路径:',
+                validate: (input) => {
+                  if (!input.trim()) {
+                    return '请输入有效的目录路径';
+                  }
+                  return true;
+                }
+              }
+            ]);
+            // Preserve the original CWD for the recursive call
+            config.directory = newDirectory;
+            return await this.install(config); // Recursive call with new directory
+          } else if (action === 'create') {
+            try {
+              await fileManager.ensureDirectory(installDir);
+              this._log(console.log, chalk.green(`✓ 已创建目录: ${installDir}`));
+            } catch (error) {
+              // 错误始终输出,不受 quiet 影响
+              console.error(chalk.red(`创建目录失败: ${error.message}`));
+              console.error(chalk.yellow('您可能需要检查权限或使用不同的路径。'));
+              process.exit(1);
+            }
+          }
+
+          spinner.start("正在分析安装目录...");
         }
-        
-        spinner.start("正在分析安装目录...");
       }
 
       // If this is an update request from early detection, handle it directly
@@ -230,6 +270,10 @@ class Installer {
           return await this.performFreshInstall(config, installDir, spinner);
 
         case "existing":
+          // 静默模式下直接升级/更新,不询问
+          if (this.quiet) {
+            return await this.performUpdate(config, installDir, state.manifest, spinner);
+          }
           return await this.handleExistingInstallation(
             config,
             installDir,
@@ -238,6 +282,10 @@ class Installer {
           );
 
         case "unknown_existing":
+          // 静默模式下直接强制安装,不询问
+          if (this.quiet) {
+            return await this.performFreshInstall(config, installDir, spinner);
+          }
           return await this.handleUnknownInstallation(
             config,
             installDir,
@@ -509,7 +557,7 @@ class Installer {
       for (const ide of ides) {
         spinner.text = `Setting up ${ide} integration...`;
         const preConfiguredSettings = ide === 'github-copilot' ? config.githubCopilotConfig : null;
-        await ideSetup.setup(ide, installDir, config.agent, spinner, preConfiguredSettings);
+        await ideSetup.setup(ide, installDir, config.agent, spinner, preConfiguredSettings, this.quiet);
       }
     }
 
@@ -733,7 +781,7 @@ class Installer {
       const currentVersion = manifest.version;
       const newVersion = await this.getCoreVersion();
       const versionCompare = this.compareVersions(currentVersion, newVersion);
-      
+
       // Only check for modified files if it's an actual version upgrade
       let modifiedFiles = [];
       if (versionCompare !== 0) {
@@ -745,38 +793,46 @@ class Installer {
       }
 
       if (modifiedFiles.length > 0) {
-        spinner.warn("Found modified files");
-        console.log(chalk.yellow("\n以下文件已被修改:"));
-        for (const file of modifiedFiles) {
-          console.log(`  - ${file}`);
-        }
-
-        const { action } = await inquirer.prompt([
-          {
-            type: "list",
-            name: "action",
-            message: "您希望如何继续？",
-            choices: [
-              { name: "备份并覆盖修改过的文件", value: "backup" },
-              { name: "跳过修改过的文件", value: "skip" },
-              { name: "取消更新", value: "cancel" },
-            ],
-          },
-        ]);
-
-        if (action === "cancel") {
-          console.log("更新已取消。");
-          return;
-        }
-
-        if (action === "backup") {
-          spinner.start("Backing up modified files...");
+        // 静默模式下自动备份并覆盖,不询问
+        if (this.quiet) {
           for (const file of modifiedFiles) {
             const filePath = path.join(installDir, file);
-            const backupPath = await fileManager.backupFile(filePath);
-            console.log(
-              chalk.dim(`  Backed up: ${file} → ${path.basename(backupPath)}`)
-            );
+            await fileManager.backupFile(filePath);
+          }
+        } else {
+          spinner.warn("Found modified files");
+          console.log(chalk.yellow("\n以下文件已被修改:"));
+          for (const file of modifiedFiles) {
+            console.log(`  - ${file}`);
+          }
+
+          const { action } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "action",
+              message: "您希望如何继续?",
+              choices: [
+                { name: "备份并覆盖修改过的文件", value: "backup" },
+                { name: "跳过修改过的文件", value: "skip" },
+                { name: "取消更新", value: "cancel" },
+              ],
+            },
+          ]);
+
+          if (action === "cancel") {
+            console.log("更新已取消。");
+            return;
+          }
+
+          if (action === "backup") {
+            spinner.start("Backing up modified files...");
+            for (const file of modifiedFiles) {
+              const filePath = path.join(installDir, file);
+              const backupPath = await fileManager.backupFile(filePath);
+              console.log(
+                chalk.dim(`  Backed up: ${file} → ${path.basename(backupPath)}`)
+              );
+            }
           }
         }
       }
@@ -792,6 +848,7 @@ class Installer {
         agent: manifest.agent,
         directory: installDir,
         ides: newConfig?.ides || manifest.ides_setup || [],
+        quiet: this.quiet // 传递静默模式
       };
 
       await this.performFreshInstall(config, installDir, spinner, { isUpdate: true });
@@ -940,13 +997,18 @@ class Installer {
   }
 
   showSuccessMessage(config, installDir, options = {}) {
-    console.log(chalk.green("\n✓ Orchestrix 安装成功！\n"));
+    // 静默模式下不输出任何内容
+    if (this.quiet) {
+      return;
+    }
+
+    console.log(chalk.green("\n✓ Orchestrix 安装成功!\n"));
 
     const ides = config.ides || (config.ide ? [config.ide] : []);
     if (ides.length === 0) {
       console.log(chalk.yellow("未设置 IDE 配置。"));
       console.log(
-        "您可以手动配置您的 IDE，使用以下目录中的代理文件:",
+        "您可以手动配置您的 IDE,使用以下目录中的代理文件:",
         installDir
       );
     }
@@ -956,15 +1018,15 @@ class Installer {
     if (config.installType !== "expansion-only") {
       console.log(chalk.green("✓ 核心框架和代理已安装"));
     }
-    
+
     if (config.expansionPacks && config.expansionPacks.length > 0) {
       console.log(chalk.green(`✓ 扩展包: ${config.expansionPacks.join(', ')}`));
     }
-    
+
     if (config.includeWebBundles && config.webBundlesDirectory) {
       console.log(chalk.green(`✓ Web bundles 已安装`));
     }
-    
+
     if (ides.length > 0) {
       const ideNames = ides.map(ide => {
         const ideConfig = configLoader.getIdeConfiguration(ide);
@@ -1557,7 +1619,7 @@ class Installer {
       if (webBundleType === 'all') {
         // Copy the entire dist directory structure
         await fileManager.copyDirectory(distDir, webBundlesDirectory);
-        console.log(chalk.green(`✓ Installed all web bundles to: ${webBundlesDirectory}`));
+        this._log(console.log, chalk.green(`✓ Installed all web bundles to: ${webBundlesDirectory}`));
       } else {
         let copiedCount = 0;
         
@@ -1567,42 +1629,43 @@ class Installer {
           const agentsTarget = path.join(webBundlesDirectory, 'agents');
           if (await fileManager.pathExists(agentsSource)) {
             await fileManager.copyDirectory(agentsSource, agentsTarget);
-            console.log(chalk.green(`✓ Copied individual agent bundles`));
+            this._log(console.log, chalk.green(`✓ Copied individual agent bundles`));
             copiedCount += 10; // Approximate count for agents
           }
         }
-        
+
         if (webBundleType === 'teams' || webBundleType === 'custom') {
           if (config.selectedWebBundleTeams && config.selectedWebBundleTeams.length > 0) {
             const teamsSource = path.join(distDir, 'teams');
             const teamsTarget = path.join(webBundlesDirectory, 'teams');
             await fileManager.ensureDirectory(teamsTarget);
-            
+
             for (const teamId of config.selectedWebBundleTeams) {
               const teamFile = `${teamId}.txt`;
               const sourcePath = path.join(teamsSource, teamFile);
               const targetPath = path.join(teamsTarget, teamFile);
-              
+
               if (await fileManager.pathExists(sourcePath)) {
                 await fileManager.copyFile(sourcePath, targetPath);
                 copiedCount++;
-                console.log(chalk.green(`✓ Copied team bundle: ${teamId}`));
+                this._log(console.log, chalk.green(`✓ Copied team bundle: ${teamId}`));
               }
             }
           }
         }
-        
+
         // Always copy expansion packs if they exist
         const expansionSource = path.join(distDir, 'expansion-packs');
         const expansionTarget = path.join(webBundlesDirectory, 'expansion-packs');
         if (await fileManager.pathExists(expansionSource)) {
           await fileManager.copyDirectory(expansionSource, expansionTarget);
-          console.log(chalk.green(`✓ Copied expansion pack bundles`));
+          this._log(console.log, chalk.green(`✓ Copied expansion pack bundles`));
         }
-        
-        console.log(chalk.green(`✓ Installed ${copiedCount} selected web bundles to: ${webBundlesDirectory}`));
+
+        this._log(console.log, chalk.green(`✓ Installed ${copiedCount} selected web bundles to: ${webBundlesDirectory}`));
       }
     } catch (error) {
+      // 错误始终输出
       console.error(chalk.red(`Failed to install web bundles: ${error.message}`));
     }
   }
@@ -1901,17 +1964,17 @@ class Installer {
       // Found completed stories, initialize registries
       spinner.text = `Found ${doneCount} completed stories, initializing cumulative registries...`;
 
-      console.log(chalk.cyan(`\n📊 检测到 ${doneCount} 个已完成的故事`));
-      console.log(chalk.cyan('正在初始化累积注册表...'));
-      console.log(chalk.dim('这将扫描所有已完成的故事并生成数据库/API/模型注册表'));
+      this._log(console.log, chalk.cyan(`\n📊 检测到 ${doneCount} 个已完成的故事`));
+      this._log(console.log, chalk.cyan('正在初始化累积注册表...'));
+      this._log(console.log, chalk.dim('这将扫描所有已完成的故事并生成数据库/API/模型注册表'));
 
       // Create a message for the user about how to use init-registries command
-      console.log(chalk.yellow('\n⚠️  注意: 当前自动初始化使用简化逻辑'));
-      console.log(chalk.cyan('首次安装后，建议使用 SM Agent 的命令来生成完整注册表:'));
-      console.log(chalk.white('  /sm init-registries'));
-      console.log(chalk.dim('  或者'));
-      console.log(chalk.white('  *init-registries'));
-      console.log(chalk.dim('\n这将执行完整的注册表生成流程，包括结构化数据提取\n'));
+      this._log(console.log, chalk.yellow('\n⚠️  注意: 当前自动初始化使用简化逻辑'));
+      this._log(console.log, chalk.cyan('首次安装后,建议使用 SM Agent 的命令来生成完整注册表:'));
+      this._log(console.log, chalk.white('  /sm init-registries'));
+      this._log(console.log, chalk.dim('  或者'));
+      this._log(console.log, chalk.white('  *init-registries'));
+      this._log(console.log, chalk.dim('\n这将执行完整的注册表生成流程,包括结构化数据提取\n'));
 
       // Create placeholder registries
       const devDocLocation = coreConfig.locations?.devDocLocation || 'docs/dev';
@@ -2043,23 +2106,23 @@ _For more information, see: .orchestrix-core/tasks/init-cumulative-registries.md
       }
 
       if (createdFiles.length > 0) {
-        console.log(chalk.green(`\n✅ 已创建占位符注册表文件:`));
+        this._log(console.log, chalk.green(`\n✅ 已创建占位符注册表文件:`));
         createdFiles.forEach(name => {
-          console.log(chalk.dim(`   ${path.join(devDocLocation, name)}`));
+          this._log(console.log, chalk.dim(`   ${path.join(devDocLocation, name)}`));
         });
       }
 
       if (skippedFiles.length > 0) {
-        console.log(chalk.cyan(`\n📝 保留现有注册表文件 (未覆盖):`));
+        this._log(console.log, chalk.cyan(`\n📝 保留现有注册表文件 (未覆盖):`));
         skippedFiles.forEach(name => {
-          console.log(chalk.dim(`   ${path.join(devDocLocation, name)}`));
+          this._log(console.log, chalk.dim(`   ${path.join(devDocLocation, name)}`));
         });
       }
 
     } catch (error) {
       // Don't fail installation if registry initialization fails
-      console.log(chalk.yellow(`\n⚠️  累积注册表初始化时出现问题: ${error.message}`));
-      console.log(chalk.dim('安装将继续，您可以稍后使用 SM Agent 的 *init-registries 命令'));
+      this._log(console.log, chalk.yellow(`\n⚠️  累积注册表初始化时出现问题: ${error.message}`));
+      this._log(console.log, chalk.dim('安装将继续,您可以稍后使用 SM Agent 的 *init-registries 命令'));
     }
   }
 }

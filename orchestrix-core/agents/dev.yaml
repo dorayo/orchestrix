@@ -76,34 +76,17 @@ commands:
   - develop-story:
       description: Implement approved story following TDD
       task: develop-story.md
-      preconditions:
-        status_in:
-          - Approved
-          - TestDesignComplete
-        agent_can_modify: true
   - self-review:
       description: Comprehensive self-review before marking Review (MANDATORY)
       task: dev-self-review.md
-      preconditions:
-        status_in:
-          - InProgress
-        agent_can_modify: true
   - validate-impl:
       description: Validate implementation against architecture standards
       task: validate-implementation.md
-      preconditions:
-        status_in:
-          - InProgress
-        agent_can_modify: true
   - explain:
       description: Explain approach, decisions, trade-offs, next steps
   - review-qa:
       description: Apply QA feedback and fixes
       task: apply-qa-fixes.md
-      preconditions:
-        status_in:
-          - InProgress
-        agent_can_modify: true
   - run-tests:
       description: Execute lint and test suite
   - exit:

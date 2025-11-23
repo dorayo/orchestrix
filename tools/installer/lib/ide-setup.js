@@ -23,6 +23,18 @@ async function initializeModules() {
 class IdeSetup {
   constructor() {
     this.ideAgentConfig = null;
+    this.quiet = false;
+  }
+
+  /**
+   * 条件日志输出 - 只有在非静默模式下才输出
+   * @param {Function} logFn - console.log, console.warn, console.error 等
+   * @param {...any} args - 日志参数
+   */
+  _log(logFn, ...args) {
+    if (!this.quiet) {
+      logFn(...args);
+    }
   }
 
   async loadIdeAgentConfig() {
@@ -34,7 +46,7 @@ class IdeSetup {
       this.ideAgentConfig = yaml.load(configContent);
       return this.ideAgentConfig;
     } catch (error) {
-      console.warn('Failed to load IDE agent configuration, using defaults');
+      this._log(console.warn, 'Failed to load IDE agent configuration, using defaults');
       return {
         'roo-permissions': {},
         'cline-order': {}
@@ -42,12 +54,14 @@ class IdeSetup {
     }
   }
 
-  async setup(ide, installDir, selectedAgent = null, spinner = null, preConfiguredSettings = null) {
+  async setup(ide, installDir, selectedAgent = null, spinner = null, preConfiguredSettings = null, quiet = false) {
     await initializeModules();
+    this.quiet = quiet; // 设置静默模式
+
     const ideConfig = await configLoader.getIdeConfiguration(ide);
 
     if (!ideConfig) {
-      console.log(chalk.yellow(`\nNo configuration available for ${ide}`));
+      this._log(console.log, chalk.yellow(`\nNo configuration available for ${ide}`));
       return false;
     }
 
@@ -69,7 +83,7 @@ class IdeSetup {
       case "github-copilot":
         return this.setupGitHubCopilot(installDir, selectedAgent, spinner, preConfiguredSettings);
       default:
-        console.log(chalk.yellow(`\nIDE ${ide} not yet supported`));
+        this._log(console.log, chalk.yellow(`\nIDE ${ide} not yet supported`));
         return false;
     }
   }
@@ -140,18 +154,18 @@ class IdeSetup {
       }
     }
 
-    console.log(chalk.green(`\n✓ 已为 Cursor 创建 ${agents.length} 个代理规则`));
+    this._log(console.log, chalk.green(`\n✓ 已为 Cursor 创建 ${agents.length} 个代理规则`));
 
     return true;
   }
 
   // 修改 setupClaudeCode 方法，添加测试选项
  async setupClaudeCode(installDir, selectedAgent, runTests = false) {
-  console.log(chalk.blue("\n🔧 设置 Claude Code 双模式集成..."));
+  this._log(console.log, chalk.blue("\n🔧 设置 Claude Code 双模式集成..."));
   
   const subagentsCount = await this.setupClaudeCodeSubagents(installDir, selectedAgent);
   
-  console.log(chalk.green(`✔ 已创建 ${subagentsCount} 个优化的 Claude Code 子代理`));
+  this._log(console.log, chalk.green(`✔ 已创建 ${subagentsCount} 个优化的 Claude Code 子代理`));
   
   // 运行测试（如果启用）
   if (runTests) {
@@ -181,10 +195,10 @@ class IdeSetup {
   await this.setupTmuxAutomation(installDir);
 
   // Summary
-  console.log(chalk.green(`\n✅ Claude Code 双模式集成完成:`));
-  console.log(chalk.dim(`   • Sub Agents: .claude/agents/ (${subagentsCount} 个优化代理)`));
-  console.log(chalk.dim(`   • Commands: .claude/commands/ (${coreAgents.length} 个命令 + ${coreTasks.length} 个任务)`));
-  console.log(chalk.dim(`   • 使用方式: 在 Claude Code 中直接选择 Sub Agent 或使用 /命令`));
+  this._log(console.log, chalk.green(`\n✅ Claude Code 双模式集成完成:`));
+  this._log(console.log, chalk.dim(`   • Sub Agents: .claude/agents/ (${subagentsCount} 个优化代理)`));
+  this._log(console.log, chalk.dim(`   • Commands: .claude/commands/ (${coreAgents.length} 个命令 + ${coreTasks.length} 个任务)`));
+  this._log(console.log, chalk.dim(`   • 使用方式: 在 Claude Code 中直接选择 Sub Agent 或使用 /命令`));
 
   return true;
  }
@@ -344,7 +358,7 @@ class IdeSetup {
     }
 
     const displayName = packageName === "core" ? "Orchestrix 核心系统" : packageName;
-    console.log(chalk.green(`\n✓ 已为 ${displayName} 创建 Claude Code 命令 (代理: ${agentIds.length}个, 任务: ${taskIds.length}个)`));
+    this._log(console.log, chalk.green(`\n✓ 已为 ${displayName} 创建 Claude Code 命令 (代理: ${agentIds.length}个, 任务: ${taskIds.length}个)`));
   }
 
   /**
@@ -372,7 +386,7 @@ class IdeSetup {
       // Ensure script is executable
       try {
         await fs.chmod(targetHookPath, 0o755);
-        console.log(chalk.green(`   ✅ TMUX Hook: .claude/hooks/handoff-detector.sh`));
+        this._log(console.log, chalk.green(`   ✅ TMUX Hook: .claude/hooks/handoff-detector.sh`));
       } catch (error) {
         console.error(chalk.red(`   ❌ Error: Could not set executable permission on hook script: ${error.message}`));
         throw error; // Stop installation if we can't set permissions
@@ -393,7 +407,7 @@ class IdeSetup {
         try {
           existingSettings = JSON.parse(await fs.readFile(settingsPath, 'utf8'));
         } catch (error) {
-          console.warn(chalk.yellow(`Warning: Could not parse existing settings.local.json: ${error.message}`));
+          this._log(console.warn, chalk.yellow(`Warning: Could not parse existing settings.local.json: ${error.message}`));
         }
       }
 
@@ -405,9 +419,9 @@ class IdeSetup {
         existingSettings.hooks.Stop = hookConfig.hooks.Stop;
 
         await fs.writeFile(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
-        console.log(chalk.dim(`   • TMUX Config: .claude/settings.local.json`));
+        this._log(console.log, chalk.dim(`   • TMUX Config: .claude/settings.local.json`));
       } else {
-        console.log(chalk.dim(`   • TMUX Config: .claude/settings.local.json (existing Stop hook preserved)`));
+        this._log(console.log, chalk.dim(`   • TMUX Config: .claude/settings.local.json (existing Stop hook preserved)`));
       }
     } else {
       console.error(chalk.red(`   ❌ Error: Settings template not found at ${sourceSettingsPath}`));
@@ -432,7 +446,7 @@ class IdeSetup {
       // Make it executable
       try {
         await fs.chmod(targetTmuxScript, 0o755);
-        console.log(chalk.green(`   ✅ TMUX Launcher: .orchestrix-core/utils/start-tmux-session.sh`));
+        this._log(console.log, chalk.green(`   ✅ TMUX Launcher: .orchestrix-core/utils/start-tmux-session.sh`));
       } catch (error) {
         console.error(chalk.red(`   ❌ Error: Could not set executable permission on tmux launcher: ${error.message}`));
         throw error;
@@ -442,10 +456,10 @@ class IdeSetup {
       throw new Error(`Missing required file: ${sourceTmuxScript}`);
     }
 
-    console.log(chalk.cyan(`\n   💡 TMUX自动化已安装！使用方法：`));
-    console.log(chalk.dim(`      1. 启动会话: ./.orchestrix-core/utils/start-tmux-session.sh`));
-    console.log(chalk.dim(`      2. 在SM窗口输入 1 开始工作流`));
-    console.log(chalk.dim(`      3. 观察agents自动协作`));
+    this._log(console.log, chalk.cyan(`\n   💡 TMUX自动化已安装！使用方法：`));
+    this._log(console.log, chalk.dim(`      1. 启动会话: ./.orchestrix-core/utils/start-tmux-session.sh`));
+    this._log(console.log, chalk.dim(`      2. 在SM窗口输入 1 开始工作流`));
+    this._log(console.log, chalk.dim(`      3. 观察agents自动协作`));
   }
 
   async setupWindsurf(installDir, selectedAgent) {
@@ -491,11 +505,11 @@ class IdeSetup {
         )} persona and follow all instructions defined in the YAML configuration above.\n`;
 
         await fileManager.writeFile(mdPath, mdContent);
-        console.log(chalk.green(`✓ Created rule: ${agentId}.md`));
+        this._log(console.log, chalk.green(`✓ Created rule: ${agentId}.md`));
       }
     }
 
-    console.log(chalk.green(`\n✓ Created Windsurf rules in ${windsurfRulesDir}`));
+    this._log(console.log, chalk.green(`\n✓ Created Windsurf rules in ${windsurfRulesDir}`));
 
     return true;
   }
@@ -544,7 +558,7 @@ class IdeSetup {
         )} persona and follow all instructions defined in the YAML configuration above.\n`;
         
         await fileManager.writeFile(mdPath, mdContent);
-        console.log(chalk.green(`✓ Created rule: ${agentId}.md`));
+        this._log(console.log, chalk.green(`✓ Created rule: ${agentId}.md`));
       }
     }
   }
@@ -713,7 +727,7 @@ class IdeSetup {
           }
         }
       } catch (error) {
-        console.warn(`Failed to read agent title for ${agentId}: ${error.message}`);
+        this._log(console.warn, `Failed to read agent title for ${agentId}: ${error.message}`);
       }
     }
     
@@ -831,7 +845,7 @@ class IdeSetup {
       const config = yaml.load(configContent);
       return config.slashPrefix || "orchestrix";
     } catch (error) {
-      console.warn(`Failed to read core slashPrefix, using default 'orchestrix': ${error.message}`);
+      this._log(console.warn, `Failed to read core slashPrefix, using default 'orchestrix': ${error.message}`);
       return "orchestrix";
     }
   }
@@ -882,7 +896,7 @@ class IdeSetup {
         return config.slashPrefix || path.basename(packPath);
       }
     } catch (error) {
-      console.warn(`Failed to read expansion pack slashPrefix from ${packPath}: ${error.message}`);
+      this._log(console.warn, `Failed to read expansion pack slashPrefix from ${packPath}: ${error.message}`);
     }
     
     return path.basename(packPath); // fallback to directory name
@@ -906,7 +920,7 @@ class IdeSetup {
       
       return [...yamlIds, ...mdIds];
     } catch (error) {
-      console.warn(`Failed to read expansion pack agents from ${packPath}: ${error.message}`);
+      this._log(console.warn, `Failed to read expansion pack agents from ${packPath}: ${error.message}`);
       return [];
     }
   }
@@ -921,7 +935,7 @@ class IdeSetup {
       const taskFiles = glob.sync("*.md", { cwd: tasksDir });
       return taskFiles.map(file => path.basename(file, ".md"));
     } catch (error) {
-      console.warn(`Failed to read expansion pack tasks from ${packPath}: ${error.message}`);
+      this._log(console.warn, `Failed to read expansion pack tasks from ${packPath}: ${error.message}`);
       return [];
     }
   }
@@ -941,7 +955,7 @@ class IdeSetup {
       for (const match of modeMatches) {
         existingModes.push(match[1]);
       }
-      console.log(chalk.yellow(`Found existing .roomodes file with ${existingModes.length} modes`));
+      this._log(console.log, chalk.yellow(`Found existing .roomodes file with ${existingModes.length} modes`));
     }
 
     // Create new modes content
@@ -954,7 +968,7 @@ class IdeSetup {
     for (const agentId of agents) {
       // Skip if already exists
       if (existingModes.includes(`orchestrix-${agentId}`)) {
-        console.log(chalk.dim(`Skipping ${agentId} - already exists in .roomodes`));
+        this._log(console.log, chalk.dim(`Skipping ${agentId} - already exists in .roomodes`));
         continue;
       }
 
@@ -1014,7 +1028,7 @@ class IdeSetup {
             newModesContent += `    - edit\n`;
           }
 
-          console.log(chalk.green(`✓ Added mode: orchestrix-${agentId} (${icon} ${title})`));
+          this._log(console.log, chalk.green(`✓ Added mode: orchestrix-${agentId} (${icon} ${title})`));
         }
       }
     }
@@ -1031,10 +1045,10 @@ class IdeSetup {
 
     // Write .roomodes file
     await fileManager.writeFile(roomodesPath, roomodesContent);
-    console.log(chalk.green("✓ Created .roomodes file in project root"));
+    this._log(console.log, chalk.green("✓ Created .roomodes file in project root"));
 
-    console.log(chalk.green(`\n✓ Roo Code setup complete!`));
-    console.log(chalk.dim("Custom modes will be available when you open this project in Roo Code"));
+    this._log(console.log, chalk.green(`\n✓ Roo Code setup complete!`));
+    this._log(console.log, chalk.dim("Custom modes will be available when you open this project in Roo Code"));
 
     return true;
   }
@@ -1087,11 +1101,11 @@ class IdeSetup {
         mdContent += `Type \`@${agentId}\` to activate this ${await this.getAgentTitle(agentId, installDir)} persona.\n`;
 
         await fileManager.writeFile(mdPath, mdContent);
-        console.log(chalk.green(`✓ Created rule: ${prefix}-${agentId}.md`));
+        this._log(console.log, chalk.green(`✓ Created rule: ${prefix}-${agentId}.md`));
       }
     }
 
-    console.log(chalk.green(`\n✓ Created Cline rules in ${clineRulesDir}`));
+    this._log(console.log, chalk.green(`\n✓ Created Cline rules in ${clineRulesDir}`));
 
     return true;
   }
@@ -1126,10 +1140,10 @@ class IdeSetup {
             settingsPath,
             JSON.stringify(settings, null, 2)
           );
-          console.log(chalk.green("✓ Updated .gemini/settings.json - removed agent file references"));
+          this._log(console.log, chalk.green("✓ Updated .gemini/settings.json - removed agent file references"));
         }
       } catch (error) {
-        console.warn(
+        this._log(console.warn, 
           chalk.yellow("Could not update .gemini/settings.json"),
           error
         );
@@ -1140,7 +1154,7 @@ class IdeSetup {
     const agentsDir = path.join(geminiDir, "agents");
     if (await fileManager.pathExists(agentsDir)) {
       await fileManager.removeDirectory(agentsDir);
-      console.log(chalk.green("✓ Removed old .gemini/agents directory"));
+      this._log(console.log, chalk.green("✓ Removed old .gemini/agents directory"));
     }
 
     // Get all available agents
@@ -1185,14 +1199,14 @@ class IdeSetup {
         
         // Add to concatenated content with separator
         concatenatedContent += agentRuleContent + "\n\n---\n\n";
-        console.log(chalk.green(`✓ Added context for @${agentId}`));
+        this._log(console.log, chalk.green(`✓ Added context for @${agentId}`));
       }
     }
 
     // Write the concatenated content to GEMINI.md
     const geminiMdPath = path.join(orchestrixMethodDir, "GEMINI.md");
     await fileManager.writeFile(geminiMdPath, concatenatedContent);
-    console.log(chalk.green(`\n✓ Created GEMINI.md in ${orchestrixMethodDir}`));
+    this._log(console.log, chalk.green(`\n✓ Created GEMINI.md in ${orchestrixMethodDir}`));
 
     return true;
   }
@@ -1244,12 +1258,12 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
         chatmodeContent += agentContent;
 
         await fileManager.writeFile(chatmodePath, chatmodeContent);
-        console.log(chalk.green(`✓ Created chat mode: ${agentId}.chatmode.md`));
+        this._log(console.log, chalk.green(`✓ Created chat mode: ${agentId}.chatmode.md`));
       }
     }
 
-    console.log(chalk.green(`\n✓ Github Copilot setup complete!`));
-    console.log(chalk.dim(`You can now find the orchestrix agents in the Chat view's mode selector.`));
+    this._log(console.log, chalk.green(`\n✓ Github Copilot setup complete!`));
+    this._log(console.log, chalk.dim(`You can now find the orchestrix agents in the Chat view's mode selector.`));
 
     return true;
   }
@@ -2112,7 +2126,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
           successCount++;
         } catch (error) {
           // 跳过无法处理的 agent（如用户自定义的文件）
-          console.warn(chalk.yellow(`⚠️  Skipping ${agentId}: ${error.message}`));
+          this._log(console.warn, chalk.yellow(`⚠️  Skipping ${agentId}: ${error.message}`));
         }
       }
     }
@@ -2384,7 +2398,7 @@ ${cleanedYaml}
       
       return metadata;
     } catch (error) {
-      console.warn(`YAML parsing failed for ${agentId}: ${error.message}, falling back to regex extraction`);
+      this._log(console.warn, `YAML parsing failed for ${agentId}: ${error.message}, falling back to regex extraction`);
       return this.extractAgentMetadata(agentContent); // Fallback to regex method
     }
   }
@@ -2902,7 +2916,7 @@ generateWorkflowSections(metadata, agentId, agentContent) {
       }
       
     } catch (error) {
-      console.warn(`Failed to parse YAML for workflow sections: ${error.message}`);
+      this._log(console.warn, `Failed to parse YAML for workflow sections: ${error.message}`);
     }
   }
   
@@ -2998,7 +3012,7 @@ formatYamlCommands(metadata, yamlContent) {
           .trim();
       }
     } catch (error) {
-      console.warn(`Failed to parse commands YAML: ${error.message}`);
+      this._log(console.warn, `Failed to parse commands YAML: ${error.message}`);
     }
   }
   
@@ -3018,7 +3032,7 @@ formatYamlDependencies(metadata) {
         .join('\n')
         .trim();
     } catch (error) {
-      console.warn(`Failed to format dependencies YAML: ${error.message}`);
+      this._log(console.warn, `Failed to format dependencies YAML: ${error.message}`);
     }
   }
   
@@ -5233,9 +5247,9 @@ parseListSection(text) {
       try {
         const existingContent = await fileManager.readFile(settingsPath);
         existingSettings = JSON.parse(existingContent);
-        console.log(chalk.yellow("Found existing .vscode/settings.json. Merging orchestrix settings..."));
+        this._log(console.log, chalk.yellow("Found existing .vscode/settings.json. Merging orchestrix settings..."));
       } catch (error) {
-        console.warn(chalk.yellow("Could not parse existing settings.json. Creating new one."));
+        this._log(console.warn, chalk.yellow("Could not parse existing settings.json. Creating new one."));
         existingSettings = {};
       }
     }
@@ -5244,13 +5258,13 @@ parseListSection(text) {
     let configChoice;
     if (preConfiguredSettings && preConfiguredSettings.configChoice) {
       configChoice = preConfiguredSettings.configChoice;
-      console.log(chalk.dim(`Using pre-configured GitHub Copilot settings: ${configChoice}`));
+      this._log(console.log, chalk.dim(`Using pre-configured GitHub Copilot settings: ${configChoice}`));
     } else {
       // Clear any previous output and add spacing to avoid conflicts with loaders
-      console.log('\n'.repeat(2));
-      console.log(chalk.blue("🔧 Github Copilot Agent Settings Configuration"));
-      console.log(chalk.dim("orchestrix works best with specific VS Code settings for optimal agent experience."));
-      console.log(''); // Add extra spacing
+      this._log(console.log, '\n'.repeat(2));
+      this._log(console.log, chalk.blue("🔧 Github Copilot Agent Settings Configuration"));
+      this._log(console.log, chalk.dim("orchestrix works best with specific VS Code settings for optimal agent experience."));
+      this._log(console.log, ''); // Add extra spacing
       
       const response = await inquirer.prompt([
         {
@@ -5280,14 +5294,14 @@ parseListSection(text) {
     let orchestrixSettings = {};
     
     if (configChoice === 'skip') {
-      console.log(chalk.yellow("⚠️  Skipping VS Code settings configuration."));
-      console.log(chalk.dim("You can manually configure these settings in .vscode/settings.json:"));
-      console.log(chalk.dim("  • chat.agent.enabled: true"));
-      console.log(chalk.dim("  • chat.agent.maxRequests: 15"));
-      console.log(chalk.dim("  • github.copilot.chat.agent.runTasks: true"));
-      console.log(chalk.dim("  • chat.mcp.discovery.enabled: true"));
-      console.log(chalk.dim("  • github.copilot.chat.agent.autoFix: true"));
-      console.log(chalk.dim("  • chat.tools.autoApprove: false"));
+      this._log(console.log, chalk.yellow("⚠️  Skipping VS Code settings configuration."));
+      this._log(console.log, chalk.dim("You can manually configure these settings in .vscode/settings.json:"));
+      this._log(console.log, chalk.dim("  • chat.agent.enabled: true"));
+      this._log(console.log, chalk.dim("  • chat.agent.maxRequests: 15"));
+      this._log(console.log, chalk.dim("  • github.copilot.chat.agent.runTasks: true"));
+      this._log(console.log, chalk.dim("  • chat.mcp.discovery.enabled: true"));
+      this._log(console.log, chalk.dim("  • github.copilot.chat.agent.autoFix: true"));
+      this._log(console.log, chalk.dim("  • chat.tools.autoApprove: false"));
       return true;
     }
     
@@ -5301,10 +5315,10 @@ parseListSection(text) {
         "github.copilot.chat.agent.autoFix": true,
         "chat.tools.autoApprove": false
       };
-      console.log(chalk.green("✓ Using recommended orchestrix defaults for Github Copilot settings"));
+      this._log(console.log, chalk.green("✓ Using recommended orchestrix defaults for Github Copilot settings"));
     } else {
       // Manual configuration
-      console.log(chalk.blue("\n📋 Let's configure each setting for your preferences:"));
+      this._log(console.log, chalk.blue("\n📋 Let's configure each setting for your preferences:"));
       
       // Pause spinner during manual configuration prompts
       let spinnerWasActive = false;
@@ -5367,7 +5381,7 @@ parseListSection(text) {
         "chat.tools.autoApprove": manualSettings.autoApprove
       };
       
-      console.log(chalk.green("✓ Custom settings configured"));
+      this._log(console.log, chalk.green("✓ Custom settings configured"));
     }
     
     // Merge settings (existing settings take precedence to avoid overriding user preferences)
@@ -5376,20 +5390,20 @@ parseListSection(text) {
     // Write the updated settings
     await fileManager.writeFile(settingsPath, JSON.stringify(mergedSettings, null, 2));
     
-    console.log(chalk.green("✓ VS Code workspace settings configured successfully"));
-    console.log(chalk.dim("  Settings written to .vscode/settings.json:"));
+    this._log(console.log, chalk.green("✓ VS Code workspace settings configured successfully"));
+    this._log(console.log, chalk.dim("  Settings written to .vscode/settings.json:"));
     Object.entries(orchestrixSettings).forEach(([key, value]) => {
-      console.log(chalk.dim(`  • ${key}: ${value}`));
+      this._log(console.log, chalk.dim(`  • ${key}: ${value}`));
     });
-    console.log(chalk.dim(""));
-    console.log(chalk.dim("You can modify these settings anytime in .vscode/settings.json"));
+    this._log(console.log, chalk.dim(""));
+    this._log(console.log, chalk.dim("You can modify these settings anytime in .vscode/settings.json"));
   }
 
 
 
   // 在 ide-setup.js 的最后添加一个测试方法
   async testSubagentGeneration(installDir) {
-    console.log(chalk.blue('\n🧪 Testing Sub Agent Generation...'));
+    this._log(console.log, chalk.blue('\n🧪 Testing Sub Agent Generation...'));
     
     const testCases = [
       {
@@ -5440,35 +5454,35 @@ parseListSection(text) {
       try {
         const content = await fileManager.readFile(subagentPath);
         
-        console.log(chalk.yellow(`\n  Testing ${testCase.agentId} sub agent...`));
+        this._log(console.log, chalk.yellow(`\n  Testing ${testCase.agentId} sub agent...`));
         
         let testPassed = true;
         for (const element of testCase.requiredElements) {
           if (content.includes(element)) {
-            console.log(chalk.green(`    ✓ Contains: "${element}"`));
+            this._log(console.log, chalk.green(`    ✓ Contains: "${element}"`));
           } else {
-            console.log(chalk.red(`    ✗ Missing: "${element}"`));
+            this._log(console.log, chalk.red(`    ✗ Missing: "${element}"`));
             testPassed = false;
             allPassed = false;
           }
         }
         
         if (testPassed) {
-          console.log(chalk.green(`  ✅ ${testCase.agentId} sub agent: PASSED`));
+          this._log(console.log, chalk.green(`  ✅ ${testCase.agentId} sub agent: PASSED`));
         } else {
-          console.log(chalk.red(`  ❌ ${testCase.agentId} sub agent: FAILED`));
+          this._log(console.log, chalk.red(`  ❌ ${testCase.agentId} sub agent: FAILED`));
         }
         
       } catch (error) {
-        console.log(chalk.red(`  ❌ Error reading ${testCase.agentId}: ${error.message}`));
+        this._log(console.log, chalk.red(`  ❌ Error reading ${testCase.agentId}: ${error.message}`));
         allPassed = false;
       }
     }
     
     if (allPassed) {
-      console.log(chalk.green.bold('\n✅ All Sub Agent tests PASSED!'));
+      this._log(console.log, chalk.green.bold('\n✅ All Sub Agent tests PASSED!'));
     } else {
-      console.log(chalk.red.bold('\n❌ Some Sub Agent tests FAILED. Please review the output above.'));
+      this._log(console.log, chalk.red.bold('\n❌ Some Sub Agent tests FAILED. Please review the output above.'));
     }
     
     return allPassed;
@@ -5563,7 +5577,7 @@ parseListSection(text) {
       return this.getNestedValue(data, path) || '';
       
     } catch (error) {
-      console.warn(`Template path resolution failed for "${path}": ${error.message}`);
+      this._log(console.warn, `Template path resolution failed for "${path}": ${error.message}`);
       return `[${path}]`;
     }
   }

@@ -78,24 +78,12 @@ commands:
   - review:
       description: Adaptive, risk-aware comprehensive review
       task: qa-review-story.md
-      preconditions:
-        status_in:
-          - Review
-        agent_can_modify: true
   - risk-profile:
       description: Generate risk assessment matrix
       task: risk-profile.md
-      preconditions:
-        status_in:
-          - Review
-        agent_can_modify: true
   - test-design:
       description: Create comprehensive test scenarios
       task: test-design.md
-      preconditions:
-        status_in:
-          - AwaitingTestDesign
-        agent_can_modify: true
   - trace:
       description: Map requirements to Given-When-Then tests
       task: trace-requirements.md
