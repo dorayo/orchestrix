@@ -40,7 +40,7 @@ Continue execution
 Execute:
 
 ```
-{root}/tasks/utils/validate-agent-permission.md
+{root}/tasks/utils/validate-agent-action.md
 ```
 
 Input:

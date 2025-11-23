@@ -330,17 +330,13 @@ result:
 
 **CRITICAL**: This step updates the actual Story.status field, not just metadata.
 
-Execute `{root}/tasks/utils/validate-status-transition.md`:
+Execute `{root}/tasks/utils/validate-agent-action.md`:
 
 ```yaml
+agent_id: architect
 story_path: {{story_file_path}}
-agent: architect
-current_status: AwaitingArchReview | RequiresRevision
+action: update_status
 target_status: {{next_status from Step 6}}
-context:
-  review_score: {{review_score}}
-  critical_issues: {{critical_count}}
-  test_design_level: {{test_design_level}}
 ```
 
 **On validation PASS**:

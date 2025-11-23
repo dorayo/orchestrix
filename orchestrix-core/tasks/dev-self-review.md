@@ -13,7 +13,7 @@ Comprehensive self-review before marking story as Review. This is a MANDATORY ga
 
 ## Validation
 
-**Execute**: `{root}/tasks/utils/validate-agent-permission.md`
+**Execute**: `{root}/tasks/utils/validate-agent-action.md`
 
 **Input**:
 ```yaml

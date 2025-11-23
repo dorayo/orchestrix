@@ -145,17 +145,13 @@ This task is triggered when QA sets Story Status to `Escalated` with `architectu
 
 **Execute status transition validation**:
 
-Execute `{root}/tasks/utils/validate-status-transition.md`:
+Execute `{root}/tasks/utils/validate-agent-action.md`:
 
 ```yaml
+agent_id: architect
 story_path: {{story_file_path}}
-agent: architect
-current_status: Escalated
+action: resolve_escalation
 target_status: {{next_status from Step 9}}
-context:
-  escalation_review_complete: true
-  changes_required: {{true if InProgress, false if Review}}
-  concern_valid: {{true/false}}
 ```
 
 **On validation PASS**:

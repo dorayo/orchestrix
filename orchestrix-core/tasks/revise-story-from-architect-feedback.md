@@ -10,7 +10,7 @@
 
 Execute:
 ```
-{root}/tasks/utils/validate-agent-permission.md
+{root}/tasks/utils/validate-agent-action.md
 ```
 
 **Input**:
@@ -421,19 +421,15 @@ blocked_reason: "{reason}"
 
 Execute status transition validation:
 ```
-{root}/tasks/utils/validate-status-transition.md
+{root}/tasks/utils/validate-agent-action.md
 ```
 
 **Input**:
 ```yaml
+agent_id: sm
 story_path: {story_file_path}
-agent: sm
-current_status: RequiresRevision
+action: revise_story
 target_status: {next_status from Step 5}
-context:
-  quality_score: {new_quality_score}
-  issues_resolved: {total_resolved}
-  revision_round: 1
 ```
 
 **On validation PASS**:

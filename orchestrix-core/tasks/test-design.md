@@ -36,7 +36,7 @@ data:
 
 Execute:
 ```
-{root}/tasks/utils/validate-agent-permission.md
+{root}/tasks/utils/validate-agent-action.md
 ```
 
 Input:
@@ -124,16 +124,24 @@ QA test-design requires **TWO sequential status updates** per `story-status-tran
 
 **Phase 1: AwaitingTestDesign → TestDesignComplete**
 
-Execute `{root}/tasks/utils/validate-status-transition.md` with:
-- current_status: AwaitingTestDesign
-- target_status: TestDesignComplete
+Execute `{root}/tasks/utils/validate-agent-action.md` with:
+```yaml
+agent_id: qa
+story_path: {story_path}
+action: complete_test_design
+target_status: TestDesignComplete
+```
 - Verify status field updated and saved
 
 **Phase 2: TestDesignComplete → Approved (Auto-transition)**
 
-Execute `{root}/tasks/utils/validate-status-transition.md` with:
-- current_status: TestDesignComplete
-- target_status: Approved
+Execute `{root}/tasks/utils/validate-agent-action.md` with:
+```yaml
+agent_id: qa
+story_path: {story_path}
+action: approve_after_test_design
+target_status: Approved
+```
 - Verify status field updated and saved
 
 **On validation FAIL**: HALT with error
