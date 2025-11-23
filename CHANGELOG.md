@@ -1,3 +1,10 @@
+# [12.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v12.0.1...v12.1.0) (2025-11-23)
+
+
+### Features
+
+* **installer:** 实现默认静默安装模式 ([40d50a7](https://github.com/dorayo/ORCHESTRIX/commit/40d50a70b9b7265b8a0c706f95b0a2a204128bf9))
+
 ## [12.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v12.0.0...v12.0.1) (2025-11-23)
 
 
