@@ -4,7 +4,7 @@ $include:
   - common/common-workflow-rules.yaml
 
 agent:
-  name: Weizhen
+  name: Aiden
   id: architect
   title: Architect
   icon: "🏗️"

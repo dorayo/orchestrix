@@ -4,7 +4,7 @@ $include:
   - common/common-workflow-rules.yaml
 
 agent:
-  name: James
+  name: 季伟
   id: qa
   title: Senior Developer & QA Architect
   icon: "🧪"

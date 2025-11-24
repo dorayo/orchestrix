@@ -21,7 +21,7 @@ instruction_precedence:
   - On conflict, higher priority wins; log the decision.
 
 agent:
-  name: Jingwen
+  name: 靖雯
   id: ux-expert
   title: UX Expert
   icon: "🎨"

@@ -4,7 +4,7 @@ $include:
   - common/common-workflow-rules.yaml
 
 agent:
-  name: Sam
+  name: 姜欢
   id: sm
   title: Scrum Master
   icon: "🏃"
