@@ -138,7 +138,7 @@ sections:
       {{#if gate_concerns_or_fail}}
       ⚠️ **Issues Found** - Dev needs to address {{total_issues}} issues
 
-      **Handoff**: `*review-qa {{story_id}}`
+      **Handoff**: `*apply-qa-fixes {{story_id}}`
       {{/if}}
 
       {{#if escalation}}

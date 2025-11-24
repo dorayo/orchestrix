@@ -54,7 +54,7 @@ action: review
 
 ## Review Process
 
-### 0. Initialize Review Round
+### 1. Initialize Review Round
 
 1. Read/update `review_round` in Story `QA Review Metadata`:
    - If missing/0: Set to 1
@@ -67,43 +67,31 @@ action: review
    - Round 3 (Pragmatic): No critical issues, acceptable technical debt
 3. If Round ≥ 4: STOP, prompt user (Accept/Escalate/Continue), exit
 
-### 1. Risk Assessment
+### 2. Load Context
 
-Auto-escalate to deep review if:
-- Auth/payment/security files modified
-- No tests added, diff > 500 lines, AC count > 5
-- Previous gate: FAIL/CONCERNS
+Load required documents:
+- Story file from `{devStoryLocation}/{epic}.{story}.*.md`
+- Dev Agent Record → Extract `self_review.implementation_gate_score`
+- Dev Log from `{devLogLocation}/{story-id}-dev-log.md`
+- Architecture documents (via load-architecture-context.md if needed)
 
-### 2. Differential Analysis (Trust Dev Gate ≥95%)
+### 3. Differential Review (4 Dimensions Only)
 
-**Prerequisites**:
-1. Read Dev Agent Record → `self_review` section
-2. Extract `implementation_gate_score`
-3. If `implementation_gate_score` < 95%: Execute full 6-dimension review (rare case)
-4. If `implementation_gate_score` ≥ 95%: Execute differential review below (common case)
+**Principle**: Trust Dev Gate ≥95%, focus on what Dev cannot validate
 
----
-
-**Differential Review (4 Dimensions) - Trust Dev Validation**:
-
-#### 2.1 Architecture Concerns (Architect-Level Perspective)
+#### 3.1 Architecture Concerns (Architect-Level Perspective)
 **Focus**: Cross-component impact, design patterns, scalability
 - Evaluate architectural patterns and SOLID principles
 - Check for circular dependencies or tight coupling
 - Assess data flow design and component boundaries
 - Identify violations of separation of concerns
 
-**Skip** (Dev Gate already verified):
-- ❌ File structure compliance (Gate Section 2.2)
-- ❌ Naming conventions (Gate Section 2.1)
-- ❌ Tech stack compliance (Gate Section 2.3)
-
 **Architecture Concern Detection**:
 If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and follow result actions
 
 ---
 
-#### 2.2 NFR Deep Dive (Security & Performance Critical Paths)
+#### 3.2 NFR Deep Dive (Security & Performance Critical Paths)
 **Focus**: OWASP Top 10, performance bottlenecks, production risks
 
 **Security Checklist**:
@@ -122,15 +110,9 @@ If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and foll
 - Caching strategy appropriateness
 - Index usage for database queries
 
-**Skip** (Dev Gate already verified):
-- ❌ Tests passing (Gate Critical Item 1)
-- ❌ Lint errors (Gate Critical Item 2)
-- ❌ Build success (Gate Section 8)
-- ❌ Basic security (Gate Section 10)
-
 ---
 
-#### 2.3 Technical Debt & Long-Term Impact
+#### 3.3 Technical Debt & Long-Term Impact
 **Focus**: Shortcuts, maintainability, future burden
 - Identify quick-fix solutions vs proper implementation
 - Assess code maintainability and readability
@@ -140,36 +122,22 @@ If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and foll
 
 ---
 
-#### 2.4 Requirements Trace (Sampling, Not Exhaustive)
-**Focus**: Spot-check complex ACs, not full coverage
-- Select 3 most complex ACs for validation (not all)
+#### 3.4 Requirements Trace (Sampling, Not Exhaustive)
+**Focus**: Spot-check 3 most complex ACs (not full coverage)
+- Select 3 most complex ACs for validation
 - Verify edge case handling for selected ACs
 - Check business logic correctness
 - Validate error scenario implementation
 
-**Skip** (Dev Gate already verified):
-- ❌ All ACs implemented (Gate Critical Item 4)
-- ❌ Tasks checked off (Gate Section 1.3)
-- ❌ Test coverage (Gate Section 3)
-
 ---
 
-### 3. Code Review Only (No Modifications)
+### 4. Code Review Only (No Modifications)
 
 - **IMPORTANT**: QA Agent must NOT modify any code files
 - Role: Review, analyze, and report - NOT refactor or fix
 - Document all findings in QA Results with specific locations
 - If refactoring needed: add to "Issues Breakdown" for Dev to address
 - Do NOT alter story beyond QA Results section
-
-### 4. Skip Standards Validation (Dev Gate Already Enforced)
-
-**Rationale**: Dev Gate Section 2 (Code Quality) already verified compliance with:
-- coding-standards.md (Gate 2.1)
-- unified-project-structure.md (Gate 2.2)
-- testing-strategy.md (Gate 3.6)
-
-**QA Action**: Trust Dev validation, skip redundant checks
 
 ## Output 1: Create Detailed Review Report
 
@@ -293,11 +261,28 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    | {{date}} {{time}} | QA | Review → {{next_status}} | Round {{round}}, Gate: {{gate}}, {{issues_count}} issues [QA R{{round}}](docs/qa/reviews/{{story_id}}-qa-r{{round}}.md) |
    ```
 6. **Validate and Update Status** (REQUIRED):
-   - If architecture escalation: Status = Escalated
-   - Else: Use `result.next_status` from gate decision
-   - Validate transition via `{root}/data/story-status-transitions.yaml`
-   - If validation fails: HALT
-   - **MUST UPDATE Story Status field before proceeding**
+
+   **6.1 Determine Target Status**:
+   - If architecture escalation detected in Step 3.1: `target_status = Escalated`
+   - Else: Use `result.next_status` from gate decision (Step 4)
+
+   **6.2 Validate Status Transition**:
+   Execute: `{root}/tasks/utils/validate-status-transition.md`
+   Input:
+   ```yaml
+   story_path: {story_path}
+   current_status: Review
+   target_status: {target_status from 6.1}
+   agent_id: qa
+   ```
+   - If validation FAILS: HALT with error message
+   - If validation PASSES: Continue to 6.3
+
+   **6.3 Update Story Status Field**:
+   - Locate Story's `Status:` field (near top of document)
+   - Replace current status with `{target_status}`
+   - **Example**: `Status: Review` → `Status: Done`
+   - **CRITICAL**: This is a literal string replacement in the Story file, not just logging
 
 7. **DETERMINE POST-REVIEW WORKFLOW** (REQUIRED - Always Execute):
 
@@ -365,14 +350,75 @@ Before outputting handoff message, verify Step 7.2 was executed:
   - Log skip reason in handoff message
   - Suggest manual retry: `*finalize-commit {story_id}`
 
-### Handoff Messages
+### Handoff Message Generation
 
 Use template: `{root}/templates/qa-handoff-message-tmpl.yaml`
 
-Select appropriate message based on workflow outcome:
-- **Architecture Escalation**: Use `architecture_escalation`
-- **Gate PASS + Commit Success**: Use `gate_pass_committed`
-- **Gate PASS + Commit Failed**: Use `gate_pass_commit_failed`
-- **Gate CONCERNS/FAIL**: Use `gate_issues_found`
+**Step 8.1: Select Message Template**:
+Determine which template to use based on workflow state:
 
-**CRITICAL**: Handoff command MUST be the final line of output. No summaries/tips after handoff.
+1. **If architecture escalation occurred** (Step 3.1):
+   - Use template: `architecture_escalation`
+
+2. **If Gate = PASS AND Status = Done**:
+   - If `commit_result.status = success`: Use template: `gate_pass_committed`
+   - If `commit_result.status = failed`: Use template: `gate_pass_commit_failed`
+
+3. **If Gate = CONCERNS OR Gate = FAIL**:
+   - Use template: `gate_issues_found`
+
+**Step 8.2: Fill Template Variables**:
+Replace ALL `{{variable}}` placeholders with actual values from:
+- Story metadata (story_id, title, status)
+- Gate decision result (gate_result, quality_score, next_status)
+- Review round data (review_round, issues counts by severity)
+- Commit result (commit_hash OR commit_error OR skip_reason)
+- File paths (review_report_path, gate_file_path)
+
+**Step 8.3: Format Output**:
+Generate the final output following this exact structure:
+
+```
+{emoji} {TITLE}
+
+Story: {story_id}
+Status: {status}
+Review Round: {review_round}
+Gate Result: {gate_result}
+Quality Score: {quality_score}/100
+
+{body_content}
+
+{handoff_command}
+```
+
+**CRITICAL RULES**:
+- Handoff command (`🎯 HANDOFF TO...` or `🎯 NEXT STEP...`) MUST be the absolute final line
+- NO additional text, summaries, tips, or explanations after handoff command
+- If handoff is null in template, omit the handoff line entirely
+- Use exact emoji and formatting from template
+
+**Example Output (Gate PASS + Committed)**:
+```
+🎉 STORY 1.3 DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
+
+Story: 1.3
+Status: Done
+Review Round: 1
+Gate Result: PASS
+Quality Score: 98/100
+
+All quality checks passed. Code committed successfully.
+
+📦 Git Commit: abc123def
+📊 Review Report: docs/qa/reviews/1.3-qa-r1.md
+✅ Gate File: docs/qa/gates/1.3-feature-slug.yml
+
+Total Issues Found: 2
+- Critical: 0
+- High: 0
+- Medium: 1
+- Low: 1
+
+🎯 NEXT STEP: Deploy or start next story via SM *draft
+```

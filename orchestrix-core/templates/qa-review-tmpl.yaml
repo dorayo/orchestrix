@@ -240,7 +240,7 @@ sections:
       - **Expected Effort**: {{expected_effort}}
       - **Focus Areas**: {{#each focus_areas}}{{this}}, {{/each}}
 
-      **Handoff**: Dev please execute command `review-qa {{story_id}}`
+      **Handoff**: Dev please execute command `apply-qa-fixes {{story_id}}`
       {{/if}}
 
       {{#if gate_concerns}}
@@ -249,7 +249,7 @@ sections:
       - **Issues to Address**: {{issues_count}}
       - **Expected Effort**: {{expected_effort}}
 
-      **Handoff**: Dev please execute command `review-qa {{story_id}}`
+      **Handoff**: Dev please execute command `apply-qa-fixes {{story_id}}`
       {{/if}}
 
       {{#if escalation}}

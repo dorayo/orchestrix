@@ -95,7 +95,7 @@ workflow:
       requires: story.md
       uses: architect-technical-review
       notes: |
-        Architect (New Chat): @architect → *review-story <story_id>
+        Architect (New Chat): @architect → *review <story_id>
         - Reviews draft story for technical accuracy and alignment with architecture
         - Updates story status: Draft → Approved or Requires_Revision
 

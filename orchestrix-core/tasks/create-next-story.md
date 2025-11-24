@@ -33,7 +33,7 @@ Set `next_story_id = {story_id}`, continue to Step 1.
 **If story file found**: Extract `Story.status` field, output handoff based on status:
 
 - **Blocked**: `⚠️ STORY BLOCKED - Use: *revise {story_id}` → **HALT**
-- **AwaitingArchReview**: `⏳ HANDOFF TO architect: *review-story {story_id}` → **HALT**
+- **AwaitingArchReview**: `⏳ HANDOFF TO architect: *review {story_id}` → **HALT**
 - **RequiresRevision**: `✏️ Use: *revise {story_id}` → **HALT**
 - **Approved/TestDesignComplete**: `✅ HANDOFF TO dev: *develop-story {story_id}` → **HALT**
 - **AwaitingTestDesign**: `⏳ HANDOFF TO qa: *test-design {story_id}` → **HALT**
@@ -544,7 +544,7 @@ Quality Metrics:
 
 Architect Review Reason: {reasoning from Decision 8A}
 
-🎯 HANDOFF TO architect: *review-story {epic}.{story}
+🎯 HANDOFF TO architect: *review {epic}.{story}
 ```
 
 **If next_action = handoff_to_dev**:

@@ -43,33 +43,33 @@ rules:
       automation_level: "automatic"
       manual_intervention: false
 
-  # CONCERNS + Review: Issues found, needs Dev fixes
-  - condition: "gate_result == 'CONCERNS' AND final_status == 'Review'"
+  # CONCERNS + InProgress: Issues found, needs Dev fixes
+  - condition: "gate_result == 'CONCERNS' AND final_status == 'InProgress'"
     result: handoff_to_dev_fix
     reasoning: "Moderate issues found, targeted fixes needed before commit"
-    next_status: Review
+    next_status: InProgress
     next_action: "handoff_to_dev"
     metadata:
       workflow_action: handoff_to_dev_fix
       requires_git_commit: false
       handoff_target: DEV
-      next_command: "*review-qa {story_id}"
+      next_command: "*apply-qa-fixes {story_id}"
       completion_status: in_progress
       priority: "high"
       automation_level: "automatic"
       manual_intervention: false
 
-  # FAIL + Review: Major issues, needs Dev rework
-  - condition: "gate_result == 'FAIL' AND final_status == 'Review'"
+  # FAIL + InProgress: Major issues, needs Dev rework
+  - condition: "gate_result == 'FAIL' AND final_status == 'InProgress'"
     result: handoff_to_dev_rework
     reasoning: "Critical issues found, significant rework required"
-    next_status: Review
+    next_status: InProgress
     next_action: "handoff_to_dev"
     metadata:
       workflow_action: handoff_to_dev_rework
       requires_git_commit: false
       handoff_target: DEV
-      next_command: "*review-qa {story_id}"
+      next_command: "*apply-qa-fixes {story_id}"
       completion_status: in_progress
       priority: "critical"
       automation_level: "automatic"
@@ -93,11 +93,11 @@ rules:
       manual_intervention: true
       escalation_reason: "architectural_concerns"
 
-  # PASS + Review: Approved but not marked Done (edge case)
-  - condition: "gate_result == 'PASS' AND final_status == 'Review'"
+  # PASS + InProgress: Approved but not marked Done (edge case)
+  - condition: "gate_result == 'PASS' AND final_status == 'InProgress'"
     result: status_mismatch_warning
     reasoning: "Gate is PASS but status is not Done - possible workflow error"
-    next_status: Review
+    next_status: InProgress
     next_action: "verify_status_logic"
     metadata:
       workflow_action: status_mismatch_warning
@@ -114,7 +114,7 @@ rules:
   - condition: "gate_result == 'WAIVED'"
     result: manual_decision
     reasoning: "Gate was waived by user, manual commit decision required"
-    next_status: Review
+    next_status: InProgress
     next_action: "manual_decision"
     metadata:
       workflow_action: manual_decision
@@ -237,7 +237,7 @@ examples:
         workflow_action: handoff_to_dev_fix
         requires_git_commit: false
         handoff_target: DEV
-        next_command: "*review-qa {story_id}"
+        next_command: "*apply-qa-fixes {story_id}"
         completion_status: in_progress
 
   - input:
@@ -254,7 +254,7 @@ examples:
         workflow_action: handoff_to_dev_rework
         requires_git_commit: false
         handoff_target: DEV
-        next_command: "*review-qa {story_id}"
+        next_command: "*apply-qa-fixes {story_id}"
         completion_status: in_progress
         rework_required: true
 

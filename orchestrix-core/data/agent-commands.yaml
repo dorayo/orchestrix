@@ -35,12 +35,11 @@ agents:
     id: architect
     agent_name: Architect
     commands:
-      - name: review-story
-        syntax: "*review-story {story_id}"
+      - name: review
+        syntax: "*review {story_id}"
         description: "Review story technical accuracy"
         used_for: "Technical review of SM-created story"
-        example: "*review-story 1.3"
-        note: "Can also be called as *review {story_id}"
+        example: "*review 1.3"
 
       - name: review-escalation
         syntax: "*review-escalation {story_id}"
@@ -82,11 +81,11 @@ agents:
         aliases: ["*develop-story"]
         note: "Primary command is *develop-story"
 
-      - name: review-qa
-        syntax: "*review-qa {story_id}"
+      - name: apply-qa-fixes
+        syntax: "*apply-qa-fixes {story_id}"
         description: "Apply QA feedback and fixes"
         used_for: "Fixing issues found by QA"
-        example: "*review-qa 1.3"
+        example: "*apply-qa-fixes 1.3"
 
 # Handoff Workflow Mapping
 # Use this section to determine correct handoff based on workflow state
@@ -94,7 +93,7 @@ agents:
 handoff_scenarios:
   sm_to_architect:
     condition: "Story created, Status = AwaitingArchReview"
-    command: "*review-story {story_id}"
+    command: "*review {story_id}"
     target_agent: architect
 
   sm_to_qa_test_design:
@@ -134,7 +133,7 @@ handoff_scenarios:
 
   qa_to_dev:
     condition: "QA found issues, Gate = FAIL/CONCERNS"
-    command: "*review-qa {story_id}"
+    command: "*apply-qa-fixes {story_id}"
     target_agent: dev
 
   qa_to_architect:
@@ -154,7 +153,7 @@ handoff_scenarios:
 common_handoffs:
   - from: SM
     to: Architect
-    command: "*review-story {story_id}"
+    command: "*review {story_id}"
 
   - from: Architect
     to: QA
@@ -170,7 +169,7 @@ common_handoffs:
 
   - from: QA (issues found)
     to: Dev
-    command: "*review-qa {story_id}"
+    command: "*apply-qa-fixes {story_id}"
 
   - from: Architect
     to: SM
@@ -213,7 +212,7 @@ handoff_format_guidelines:
   command_requirements:
     - "Commands always start with asterisk (*)"
     - "Use exact syntax from this file - never invent commands"
-    - "QA uses *review, Architect uses *review-story"
+    - "Both QA and Architect use *review (differentiated by target agent)"
     - "Replace {story_id} with actual ID (e.g., 1.3)"
 
   handoff_placement:

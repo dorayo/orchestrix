@@ -504,7 +504,7 @@ Remaining Issues: Require Architect Round 2 review
 
 Reason for Round 2: {reason}
 
-🎯 HANDOFF TO architect: *review-story {epic}.{story}
+🎯 HANDOFF TO architect: *review {epic}.{story}
 ```
 
 **If next_status = Blocked**:

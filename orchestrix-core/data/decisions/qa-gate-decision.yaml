@@ -32,16 +32,16 @@ rules:
   - condition: "issues_by_severity.critical == 0 AND issues_by_severity.high == 0 AND (issues_by_severity.medium <= 1 OR review_round >= 2)"
     result: PASS
     reasoning: "No critical/high issues, quality meets standards"
-    next_status: Complete
+    next_status: Done
     next_action: "mark_story_complete"
     metadata:
       quality_level: "excellent"
-  
+
   # PASS: Progressive standard for re-review
   - condition: "review_round >= 2 AND issues_by_severity.critical == 0 AND issues_by_severity.high <= 1 AND issues_by_severity.medium <= 2"
     result: PASS
     reasoning: "Re-review with minimal issues, progressive standard applied"
-    next_status: Complete
+    next_status: Done
     next_action: "mark_story_complete"
     metadata:
       quality_level: "acceptable"
@@ -51,17 +51,17 @@ rules:
   - condition: "issues_by_severity.critical <= 1 AND issues_by_severity.high <= 2 AND issues_by_severity.medium <= 4"
     result: CONCERNS
     reasoning: "Moderate issues found, targeted fixes needed"
-    next_status: Review
+    next_status: InProgress
     next_action: "handoff_to_dev_fix"
     metadata:
       quality_level: "needs_improvement"
       expected_effort: "medium"
-  
+
   # FAIL: Multiple critical or excessive high issues
   - condition: "issues_by_severity.critical >= 2 OR (issues_by_severity.critical >= 1 AND issues_by_severity.high >= 3) OR issues_by_severity.high >= 4"
     result: FAIL
     reasoning: "Multiple critical/high issues indicate systemic problems"
-    next_status: Review
+    next_status: InProgress
     next_action: "handoff_to_dev_rework"
     metadata:
       quality_level: "poor"
@@ -82,17 +82,17 @@ rules:
   - condition: "(issues_by_severity.critical + issues_by_severity.high + issues_by_severity.medium) >= 10"
     result: FAIL
     reasoning: "Excessive issue count, thorough self-review needed"
-    next_status: Review
+    next_status: InProgress
     next_action: "handoff_to_dev_rework"
     metadata:
       quality_level: "poor"
       expected_effort: "high"
-  
+
   # CONCERNS: Default for borderline cases
   - condition: "issues_by_severity.critical == 0"
     result: CONCERNS
     reasoning: "Issues found but no critical blockers"
-    next_status: Review
+    next_status: InProgress
     next_action: "handoff_to_dev_fix"
     metadata:
       quality_level: "needs_improvement"

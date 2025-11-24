@@ -95,7 +95,7 @@ handoff_messages:
       - key: "Story"
         value: "{{story_id}}"
       - key: "Status"
-        value: "InProgress"
+        value: "{{status}}"
       - key: "Review Round"
         value: "{{review_round}}"
       - key: "Gate Result"

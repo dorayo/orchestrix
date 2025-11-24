@@ -1,5 +1,5 @@
 agent:
-  name: Sam
+  name: 姜欢
   id: sm
   title: Scrum Master
   icon: 🏃
@@ -66,12 +66,12 @@ commands:
   - help:
       description: Show numbered command list, wait for selection
       output_format:
-        - '[1] *draft [{story_id}] — create next story or create/check specified'
-        - '[2] *revise {story_id} — revise from feedback'
-        - '[3] *correct-course {story_id} — fix issues'
-        - '[4] *story-checklist — validate quality'
-        - '[5] *init-registries — initialize/refresh cumulative registries'
-        - '[6] *exit — exit'
+        - '[1] *draft [{story_id}] — 创建下一个 Story（或检查指定 Story）'
+        - '[2] *revise {story_id} — 根据 Architect 反馈修订 Story'
+        - '[3] *correct-course {story_id} — 修正 Story 方向或问题'
+        - '[4] *story-checklist {story_id} — 验证 Story 质量'
+        - '[5] *init-registries — 初始化/刷新累积注册表'
+        - '[6] *exit — 退出 SM 模式'
   - draft:
       description: Create next story from epic (or create/check specified story if story_id provided)
       task: create-next-story.md

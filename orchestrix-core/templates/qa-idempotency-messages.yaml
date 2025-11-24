@@ -76,7 +76,7 @@ messages:
         value: "AwaitingArchReview"
     body: |
       Story needs Architect review before implementation.
-    handoff: "🎯 HANDOFF TO architect: *review-story {{story_id}}"
+    handoff: "🎯 HANDOFF TO architect: *review {{story_id}}"
 
   # Story blocked or needs revision - human intervention required
   blocked_or_revision:

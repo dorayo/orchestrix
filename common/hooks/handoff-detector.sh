@@ -128,7 +128,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
         case "$current" in
             sm)
                 case "$cmd" in
-                    review-story) echo "architect" ;;
+                    review) echo "architect" ;;
                     develop-story) echo "dev" ;;
                     test-design) echo "qa" ;;
                     *) echo "" ;;
@@ -147,15 +147,15 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
                 case "$cmd" in
                     review) echo "qa" ;;
                     review-escalation) echo "architect" ;;
-                    review-qa) echo "qa" ;;
+                    apply-qa-fixes) echo "qa" ;;
                     *) echo "" ;;
                 esac
                 ;;
             qa)
                 case "$cmd" in
-                    review-qa) echo "dev" ;;
+                    apply-qa-fixes) echo "dev" ;;
                     develop-story) echo "dev" ;;
-                    review-story) echo "architect" ;;
+                    review) echo "architect" ;;
                     review-escalation) echo "architect" ;;
                     test-design) echo "qa" ;;
                     draft) echo "sm" ;;

@@ -1,5 +1,5 @@
 agent:
-  name: Jiangtao
+  name: 王江涛
   id: dev
   title: Full Stack Developer
   icon: 💻
@@ -66,13 +66,13 @@ commands:
   - help:
       description: Show numbered command list, wait for selection
       output_format:
-        - '[1] *develop-story — implement task'
-        - '[2] *self-review — comprehensive pre-QA review (MANDATORY before Review)'
-        - '[3] *validate-impl — validate architecture compliance'
-        - '[4] *run-tests — lint & tests'
-        - '[5] *explain — rationale'
-        - '[6] *review-qa — apply QA fixes'
-        - '[7] *exit — exit'
+        - '[1] *develop-story {story_id} — 实现 Story（TDD 模式）'
+        - '[2] *self-review {story_id} — 自我评审（标记 Review 前必须执行）'
+        - '[3] *apply-qa-fixes {story_id} — 修复 QA 发现的问题'
+        - '[4] *validate-impl {story_id} — 验证架构合规性'
+        - '[5] *run-tests — 执行 lint 和测试套件'
+        - '[6] *explain — 解释实现思路和决策'
+        - '[7] *exit — 退出 Dev 模式'
   - develop-story:
       description: Implement approved story following TDD
       task: develop-story.md
@@ -84,7 +84,7 @@ commands:
       task: validate-implementation.md
   - explain:
       description: Explain approach, decisions, trade-offs, next steps
-  - review-qa:
+  - apply-qa-fixes:
       description: Apply QA feedback and fixes
       task: apply-qa-fixes.md
   - run-tests:

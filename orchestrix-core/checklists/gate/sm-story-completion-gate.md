@@ -147,7 +147,7 @@ Quality Metrics:
 Architect Review Reason:
 {reasoning from Decision 8A}
 
-🎯 HANDOFF TO architect: *review-story {epic}.{story}
+🎯 HANDOFF TO architect: *review {epic}.{story}
 ```
 
 **If next_action = handoff_to_dev**:

@@ -34,24 +34,25 @@ commands:
   - help:
       description: "Show numbered command list, wait for selection"
       output_format:
-        - "[1] *create-doc {template} — generate doc"
-        - "--- System Architecture (Greenfield & Brownfield) ---"
-        - "[2] *create-system-architecture — generate system-level architecture (Product repo, supports both modes)"
-        - "[3] *create-backend-architecture — generate detailed backend architecture (Backend repo)"
-        - "[4] *create-frontend-architecture — generate detailed frontend architecture (Frontend/Web repo)"
-        - "[5] *create-mobile-architecture — generate detailed mobile architecture (iOS/Android/Flutter/RN repo)"
-        - "--- Brownfield Enhancement Workflow ---"
-        - "[6] *aggregate-system-analysis — Step 1: aggregate analysis from repos (Product repo)"
-        - "[7] *document-project — document existing codebase (Implementation repos)"
-        - "--- Other Commands ---"
-        - "[9] *extract-api-contracts — extract API docs from backend code (Backend repo)"
-        - "[10] *research {topic} — deep research"
-        - "[11] *review-story {story_id} — review story"
-        - "[12] *execute-checklist {checklist} — run checklist"
-        - "[13] *doc-out — output document"
-        - "[14] *yolo — toggle Yolo Mode"
-        - "[15] *explain — explain action"
-        - "[16] *exit — exit"
+        - "--- 系统架构（Greenfield & Brownfield）---"
+        - "[1] *create-system-architecture — 生成系统级架构（Product repo，支持双模式）"
+        - "[2] *create-backend-architecture — 生成后端详细架构（Backend repo）"
+        - "[3] *create-frontend-architecture — 生成前端详细架构（Frontend/Web repo）"
+        - "[4] *create-mobile-architecture — 生成移动端详细架构（iOS/Android/Flutter/RN repo）"
+        - "--- Brownfield 增强工作流 ---"
+        - "[5] *document-project — 文档化现有代码库（Implementation repos）"
+        - "[6] *aggregate-system-analysis — 聚合各仓库分析（Product repo）"
+        - "[7] *extract-api-contracts — 从后端代码提取 API 文档（Backend repo）"
+        - "--- Story 评审与文档 ---"
+        - "[8] *review {story_id} — 评审 Story 技术方案"
+        - "[9] *create-doc {template} — 根据模板生成文档"
+        - "[10] *doc-out — 输出文档内容"
+        - "--- 其他工具 ---"
+        - "[11] *research {topic} — 深度技术研究"
+        - "[12] *execute-checklist {checklist} — 执行质量检查清单"
+        - "[13] *yolo — 切换 Yolo 模式（快速模式）"
+        - "[14] *explain — 解释架构决策"
+        - "[15] *exit — 退出 Architect 模式"
 
   - create-doc:
       description: "Generate architecture document from template"
@@ -146,7 +147,7 @@ commands:
       description: "Conduct deep research for architectural decisions"
       task: create-deep-research-prompt.md
 
-  - review-story:
+  - review:
       description: "Review story for technical accuracy and completeness"
       task: architect-review-story.md
 
