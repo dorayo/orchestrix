@@ -92,26 +92,23 @@ stories:
   - id: "{epic_id}.1"
     title: "{Story 1 title}"
     repository_type: {monolith | backend | frontend | ios | android}
-    acceptance_criteria_summary: |
-      {Brief AC summary from Step 2}
+    acceptance_criteria:
+      - "AC1: {Clear, testable criterion from Step 2}"
+      - "AC2: {Another criterion}"
+      - "AC3: {Existing system verification criterion}"
     estimated_complexity: {low | medium | high}
     priority: P1
     dependencies: []
-    deliverables:
-      - "{deliverable 1}"
-      - "{deliverable 2}"
 
   - id: "{epic_id}.2"
     title: "{Story 2 title}"
     repository_type: {same as story 1}
-    acceptance_criteria_summary: |
-      {Brief AC summary}
+    acceptance_criteria:
+      - "AC1: {Story 2 criterion}"
+      - "AC2: {Another criterion}"
     estimated_complexity: {low | medium | high}
     priority: P1
     dependencies: ["{epic_id}.1"]
-    deliverables:
-      - "{deliverable 1}"
-      - "{deliverable 2}"
 
   # Add Story 3 if applicable
 ```

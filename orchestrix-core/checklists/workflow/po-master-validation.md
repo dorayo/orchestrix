@@ -63,23 +63,24 @@ Ask the user if they want to work through the checklist:
 
 ### 0.1 Core Document Structure
 
-- [ ] PRD contains all required template sections: Goals and Background Context, Requirements, Technical Assumptions, Epic List, Epic Details, Epic Planning
+- [ ] PRD contains all required template sections: Goals and Background Context, Requirements, Technical Assumptions, Epic List, Epics
 - [ ] Each section follows the template structure (subsections, format types)
 - [ ] Goals and Background Context includes Change Log table
 - [ ] Requirements section has both Functional (FR prefix) and Non-Functional (NFR prefix) subsections
 - [ ] Next Steps section includes UX Expert Prompt and Architect Prompt
 
-### 0.2 Epic Planning YAML Format [[CRITICAL]]
+### 0.2 Epics YAML Format [[CRITICAL]]
 
-[[LLM: Epic Planning section contains structured YAML that will be parsed by SM agents. Invalid or incomplete YAML will block story creation.]]
+[[LLM: Epics section contains structured YAML that will be parsed by SM agents. Invalid or incomplete YAML will block story creation.]]
 
-- [ ] Epic Planning section exists and contains YAML blocks
-- [ ] One YAML block per epic (matching Epic Details section)
+- [ ] Epics section exists and contains YAML blocks
+- [ ] One YAML block per epic
 - [ ] Each YAML block is properly formatted and parseable
-- [ ] Epic IDs in YAML match Epic IDs in Epic Details section (Epic 1 → epic_id: 1)
-- [ ] Story IDs in YAML match Story IDs in Epic Details section (Story 1.3 → id: "1.3")
+- [ ] Epic IDs are sequential (Epic 1 → epic_id: 1, Epic 2 → epic_id: 2)
+- [ ] Story IDs follow format: "{epic_id}.{story_number}" (e.g., "1.1", "1.2", "2.1")
 - [ ] All YAML blocks include required fields: `epic_id`, `title`, `description`, `stories`
-- [ ] Each story includes required fields: `id`, `title`, `repository_type`, `acceptance_criteria_summary`, `estimated_complexity`, `priority`, `provides_apis`, `consumes_apis`, `cross_repo_dependencies`
+- [ ] Each story includes required fields: `id`, `title`, `repository_type`, `acceptance_criteria`, `estimated_complexity`, `priority`
+- [ ] `acceptance_criteria` is an array with items starting with "ACn:" prefix (e.g., "AC1: User can...")
 
 ### 0.3 Multi-Repo Configuration Completeness
 
@@ -120,7 +121,7 @@ Ask the user if they want to work through the checklist:
 
 - [ ] All stories include `cross_repo_dependencies` field (even if empty array)
 - [ ] Dependencies use correct format: "Story ID - Brief Description" (e.g., "1.2 - Backend auth API must be complete")
-- [ ] Dependency Story IDs reference valid stories from Epic Planning
+- [ ] Dependency Story IDs reference valid stories from Epics section
 - [ ] Dependencies are properly sequenced (dependent story comes after prerequisite story)
 - [ ] Frontend/mobile stories depending on backend APIs have explicit dependencies listed
 - [ ] No circular dependencies exist
@@ -131,9 +132,8 @@ Ask the user if they want to work through the checklist:
 
 - [ ] All stories have `estimated_complexity` field with valid values: low, medium, high
 - [ ] All stories have `priority` field with valid values: P0, P1, P2
-- [ ] `acceptance_criteria_summary` consolidates all ACs from Epic Details in paragraph form (not numbered list)
-- [ ] Story titles in Epic Planning match Epic Details section
-- [ ] Epic descriptions in Epic Planning match Epic Details section
+- [ ] `acceptance_criteria` array contains clear, testable criteria with "ACn:" prefix
+- [ ] Story titles are descriptive and include repository context for multi-repo (e.g., "Backend - User Registration API")
 
 ### 0.8 Architecture Document Template Compliance [[MULTI-REPO ONLY]]
 

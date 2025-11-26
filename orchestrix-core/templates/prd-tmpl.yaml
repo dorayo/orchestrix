@@ -168,218 +168,75 @@ sections:
       - "Epic 3: User Workflows & Interactions: Enable key user journeys and business processes"
       - "Epic 4: Reporting & Analytics: Provide insights and data visualization for users"
 
-  - id: epic-details
-    title: Epic {{epic_number}} {{epic_title}}
-    repeatable: true
+  - id: epics
+    title: Epics
     instruction: |
-      After the epic list is approved, present each epic with all its stories and acceptance criteria as a complete review unit.
-      
-      For each epic provide expanded goal (2-3 sentences describing the objective and value all the stories will achieve).
-      
+      ⚠️  CRITICAL SECTION - This section defines all Epics and Stories for the project.
+
+      After the Epic List is approved, define each Epic with its Stories using structured YAML format.
+      During PO *shard, this PRD will be split into docs/prd/*.md and the YAML blocks
+      will be extracted to docs/prd/epic-{n}-{title}.yaml for SM agents to read.
+
       CRITICAL STORY SEQUENCING REQUIREMENTS:
-      
+
       - Stories within each epic MUST be logically sequential
-      - Each story should be a "vertical slice" delivering complete functionality aside from early enabler stories for project foundation
+      - Each story should be a "vertical slice" delivering complete functionality
       - No story should depend on work from a later story or epic
-      - Identify and note any direct prerequisite stories
-      - Focus on "what" and "why" not "how" (leave technical implementation to Architect) yet be precise enough to support a logical sequential order of operations from story to story.
-      - Ensure each story delivers clear user or business value, try to avoid enablers and build them into stories that deliver value.
-      - Size stories for AI agent execution: Each story must be completable by a single AI agent in one focused session without context overflow
-      - Think "junior developer working for 2-4 hours" - stories must be small, focused, and self-contained
-      - If a story seems complex, break it down further as long as it can deliver a vertical slice
-    elicit: true
-    template: "{{epic_goal}}"
-    sections:
-      - id: story
-        title: Story {{epic_number}}.{{story_number}} {{story_title}}
-        repeatable: true
-        template: |
-          As a {{user_type}},
-          I want {{action}},
-          so that {{benefit}}.
-        sections:
-          - id: target-platform
-            title: Target Platform
-            type: choice
-            choices: [backend, frontend, ios, android, mobile, fullstack, monolith]
-            default: fullstack
-            condition: project is multi-repo
-            instruction: |
-              **MULTI-REPO ONLY**: Specify which repository/platform this story targets.
+      - Focus on "what" and "why" not "how" (leave technical implementation to Architect)
+      - Size stories for AI agent execution: completable in one focused session
+      - Think "junior developer working for 2-4 hours" - small, focused, self-contained
 
-              Options:
-              - **backend**: Backend API implementation (database, business logic, API endpoints)
-              - **frontend**: Web frontend (React, Vue, Angular, etc.)
-              - **ios**: iOS mobile app (Swift/SwiftUI)
-              - **android**: Android mobile app (Kotlin/Jetpack Compose)
-              - **mobile**: Cross-platform mobile (Flutter/React Native)
-              - **fullstack**: Story spans multiple repositories (avoid if possible, prefer splitting)
-              - **monolith**: For monolith projects (single repository)
+      For EACH epic, create a YAML block using this format:
 
-              **Recommendation**: Prefer single-repo stories (backend, frontend, ios, android) over fullstack.
-              If a story needs both frontend and backend, consider splitting into two stories with dependencies.
-            elicit: true
-          - id: repository-name
-            title: Repository Name
-            type: string
-            condition: target-platform is not monolith
-            instruction: |
-              **MULTI-REPO ONLY**: Specify the repository name for this story.
+      ## Epic {{N}}: {{Epic Title}}
 
-              Examples:
-              - `my-ecommerce-backend` (for backend stories)
-              - `my-ecommerce-web` (for frontend stories)
-              - `my-ecommerce-ios` (for iOS stories)
+      **Epic Summary:** {{2-3 sentence summary}}
 
-              Leave empty for monolith projects.
-              For fullstack stories, specify the primary repository.
-
-              **Note**: This will be used by PO during epic sharding to generate Epic YAML files.
-            elicit: false
-          - id: provides-apis
-            title: APIs Provided
-            type: list
-            condition: target-platform is backend
-            instruction: |
-              **BACKEND STORIES ONLY**: List APIs this story will implement.
-
-              Format: "METHOD /path"
-
-              Examples:
-              - "POST /api/users"
-              - "GET /api/users/:id"
-              - "PUT /api/users/:id"
-              - "DELETE /api/users/:id"
-
-              **Purpose**: This information is used to:
-              - Generate API contract documents
-              - Track cross-repo dependencies (frontend/mobile stories that consume these APIs)
-              - Validate API completeness during QA review
-            elicit: true
-          - id: consumes-apis
-            title: APIs Consumed
-            type: list
-            condition: target-platform in [frontend, ios, android, mobile]
-            instruction: |
-              **FRONTEND/MOBILE STORIES ONLY**: List APIs this story will consume.
-
-              Format: "METHOD /path"
-
-              Examples:
-              - "POST /api/auth/login"
-              - "GET /api/products"
-              - "GET /api/products/:id"
-
-              **Purpose**: This information is used to:
-              - Validate that required backend APIs are implemented
-              - Track cross-repo dependencies (this story depends on backend stories)
-              - Generate API contract validation tests
-            elicit: true
-          - id: cross-repo-dependencies
-            title: Cross-Repository Dependencies
-            type: list
-            condition: project is multi-repo
-            instruction: |
-              **MULTI-REPO ONLY**: List other stories this depends on (may be in different repos).
-
-              Format: "Story ID - Brief Description"
-
-              Examples:
-              - "1.1 - Backend User API must be complete"
-              - "2.3 - Authentication service must be deployed"
-
-              **Purpose**: This information is used to:
-              - SM agent will check dependencies before allowing story creation
-              - PO will validate dependency graph during epic sharding
-              - QA will verify dependencies are satisfied
-
-              **Note**: Dependencies create blocking relationships. Story X cannot start until all its dependencies are Status = Done.
-            elicit: false
-          - id: acceptance-criteria
-            title: Acceptance Criteria
-            type: numbered-list
-            item_template: "{{criterion_number}}: {{criteria}}"
-            repeatable: true
-            instruction: |
-              Define clear, comprehensive, and testable acceptance criteria that:
-
-              - Precisely define what "done" means from a functional perspective
-              - Are unambiguous and serve as basis for verification
-              - Include any critical non-functional requirements from the PRD
-              - Consider local testability for backend/data components
-              - Specify UI/UX requirements and framework adherence where applicable
-              - Avoid cross-cutting concerns that should be in other stories or PRD sections
-
-  - id: epic-planning
-    title: Epic Planning
-    instruction: |
-      ⚠️  CRITICAL SECTION - This section will be used for story creation across all repositories.
-
-      This section consolidates all epic and story definitions into structured YAML format.
-      During PO *shard, this PRD will be split into docs/prd/*.md using md-tree,
-      and the YAML blocks below will be preserved in the sharded files for SM agents to read.
-
-      For EACH epic defined in the "Epic Details" section above, create a corresponding
-      YAML block below using this exact format:
-
-      ## Epic {{N}}: {{Epic Title from Epic Details}}
-
-      **Epic Summary:** {{2-3 sentence summary from epic details}}
-
-      **Target Repositories:** {{List applicable repository types: backend, frontend, ios, android, mobile}}
+      **Target Repositories:** {{backend, frontend, ios, android, mobile - as applicable}}
 
       ```yaml
       epic_id: {{N}}
       title: "{{Epic Title}}"
       description: |
-        {{Epic goal and description from epic details section}}
+        {{Epic goal - 2-3 sentences describing objective and value}}
 
       stories:
         - id: "{{N}}.1"
-          title: "{{Story title from Epic Details}}"
-          repository_type: {{backend|frontend|ios|android|flutter|react-native|monolith}}
-          acceptance_criteria_summary: |
-            {{Consolidate all ACs from Epic Details into paragraph form}}
-          estimated_complexity: {{low|medium|high}}
-          priority: {{P0|P1|P2}}
-          provides_apis: []  # For backend stories: list of "METHOD /path"
-          consumes_apis: []  # For frontend/mobile stories: list of "METHOD /path"
-          cross_repo_dependencies: []  # List of "Story ID - Description" if any
-
-        - id: "{{N}}.2"
-          title: "{{Next story title}}"
-          repository_type: {{backend|frontend|ios|android|flutter|react-native|monolith}}
-          acceptance_criteria_summary: |
-            {{Consolidate ACs}}
-          estimated_complexity: {{low|medium|high}}
-          priority: {{P0|P1|P2}}
-          provides_apis: []
-          consumes_apis: []
-          cross_repo_dependencies: []
+          title: "{{Story title}}"
+          repository_type: backend | frontend | ios | android | monolith
+          acceptance_criteria:
+            - "AC1: {{Clear, testable criterion}}"
+            - "AC2: {{Another criterion}}"
+            - "AC3: {{And so on}}"
+          estimated_complexity: low | medium | high
+          priority: P0 | P1 | P2
+          provides_apis: []    # Backend: ["POST /api/users", "GET /api/users/:id"]
+          consumes_apis: []    # Frontend/Mobile: ["POST /api/auth/login"]
+          dependencies: []     # Story IDs: ["1.1", "1.2"]
       ```
 
-      IMPORTANT INSTRUCTIONS:
+      FIELD REQUIREMENTS:
 
-      1. **One YAML block per epic** - Do not combine multiple epics in one YAML block
-      2. **repository_type is MANDATORY** - This field determines which implementation repo gets each story
-      3. **Maintain epic/story IDs** - Must match the IDs from Epic Details section (Epic 1 → epic_id: 1, Story 1.3 → id: "1.3")
-      4. **APIs tracking**:
-         - Backend stories MUST list APIs they provide in provides_apis
-         - Frontend/mobile stories MUST list APIs they consume in consumes_apis
-         - Use format: "METHOD /path" (e.g., "POST /api/users", "GET /api/users/:id")
-      5. **Cross-repo dependencies**:
-         - If a story depends on another story (possibly in different repo), list in cross_repo_dependencies
-         - Format: "Story ID - Brief description" (e.g., "1.2 - Backend auth API must be complete")
-      6. **Acceptance criteria consolidation**:
-         - Convert numbered AC list from Epic Details into flowing paragraph form
-         - Keep all critical acceptance points but make it readable as a summary
-      7. **For monolith projects**: Use repository_type: monolith for all stories
+      1. **repository_type** (MANDATORY): Determines which repo gets each story
+         - backend, frontend, ios, android, flutter, react-native, monolith
+
+      2. **acceptance_criteria** (MANDATORY): Numbered list of testable criteria
+         - Each starts with "ACn:" prefix
+         - Clear, unambiguous, verifiable
+         - Defines what "done" means from functional perspective
+
+      3. **APIs tracking** (for multi-repo):
+         - Backend: list APIs in `provides_apis`
+         - Frontend/Mobile: list APIs in `consumes_apis`
+         - Format: "METHOD /path" (e.g., "POST /api/users")
+
+      4. **dependencies**: Story IDs this depends on (blocking until Done)
 
       EXAMPLE (Multi-repo project):
 
       ## Epic 1: User Authentication System
 
-      **Epic Summary:** Implement complete user authentication across backend API and frontend UI, including registration, login, and session management.
+      **Epic Summary:** Implement complete user authentication across backend API and frontend UI.
 
       **Target Repositories:** backend, frontend
 
@@ -388,17 +245,18 @@ sections:
       title: "User Authentication System"
       description: |
         Establish foundation and core infrastructure for user authentication.
-        Backend will provide secure API endpoints for user registration and login.
-        Frontend will provide intuitive UI for authentication flows.
+        Backend provides secure API endpoints. Frontend provides intuitive UI.
 
       stories:
         - id: "1.1"
           title: "Backend - User Registration and Login API"
           repository_type: backend
-          acceptance_criteria_summary: |
-            User can register with email and password. Password must be hashed using bcrypt.
-            User can login with correct credentials and receive JWT token. Invalid credentials
-            return appropriate error. All endpoints return proper HTTP status codes and error messages.
+          acceptance_criteria:
+            - "AC1: User can register with email and password"
+            - "AC2: Password is hashed using bcrypt before storage"
+            - "AC3: Login returns JWT token on valid credentials"
+            - "AC4: Invalid credentials return 401 with error message"
+            - "AC5: All endpoints return proper HTTP status codes"
           estimated_complexity: medium
           priority: P0
           provides_apis:
@@ -407,16 +265,17 @@ sections:
             - "POST /api/auth/logout"
             - "GET /api/auth/me"
           consumes_apis: []
-          cross_repo_dependencies: []
+          dependencies: []
 
         - id: "1.2"
           title: "Frontend - User Registration and Login UI"
           repository_type: frontend
-          acceptance_criteria_summary: |
-            Registration form with email and password fields, with client-side validation.
-            Login form with email and password fields. Form submission calls backend API.
-            Successful login stores token and redirects to dashboard. Errors are displayed
-            clearly to the user. Forms are responsive and accessible (WCAG AA).
+          acceptance_criteria:
+            - "AC1: Registration form with email/password fields and validation"
+            - "AC2: Login form calls backend API on submit"
+            - "AC3: Successful login stores token and redirects to dashboard"
+            - "AC4: Errors are displayed clearly to user"
+            - "AC5: Forms are responsive and accessible (WCAG AA)"
           estimated_complexity: medium
           priority: P0
           provides_apis: []
@@ -424,11 +283,12 @@ sections:
             - "POST /api/users"
             - "POST /api/auth/login"
             - "GET /api/auth/me"
-          cross_repo_dependencies:
-            - "1.1 - Backend auth API must be complete"
+          dependencies:
+            - "1.1"
       ```
 
-      Now create YAML blocks for ALL epics defined in your Epic Details section above.
+      Now define YAML blocks for ALL epics from your Epic List above.
+    elicit: true
 
   - id: checklist-results
     title: Checklist Results Report

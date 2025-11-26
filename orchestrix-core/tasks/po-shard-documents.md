@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. PRD: `docs/prd.md` with "Epic Planning" section containing YAML blocks
+1. PRD: `docs/prd.md` with "Epics" section containing YAML blocks
 2. Architecture: `docs/architecture.md` or `docs/system-architecture.md`
 3. `md-tree` CLI: `npm install -g @kayvan/markdown-tree-parser`
 
@@ -82,7 +82,7 @@ ls -1 docs/prd/*.md | xargs -n1 basename
 
 **Step 2.4: Extract Epic YAML to standalone files**
 
-Find YAML blocks containing `epic_id:` in sharded PRD files, extract each to `docs/prd/epic-{n}-{title-slug}.yaml`:
+Find YAML blocks containing `epic_id:` in sharded PRD files (from "Epics" section), extract each to `docs/prd/epic-{n}-{title-slug}.yaml`:
 
 ```python
 for md_file in glob("docs/prd/*.md"):
@@ -107,13 +107,15 @@ EPIC_COUNT=$(ls docs/prd/epic-*.yaml 2>/dev/null | wc -l | tr -d ' ')
 if [ "$EPIC_COUNT" -eq 0 ]; then
   echo "⚠️ WARNING: No Epic YAML files extracted"
   echo ""
-  echo "Expected format in Epic Planning section:"
+  echo "Expected format in Epics section:"
   echo '```yaml'
   echo 'epic_id: 1'
   echo 'title: "Epic Title"'
   echo 'stories:'
   echo '  - id: "1.1"'
   echo '    repository_type: backend'
+  echo '    acceptance_criteria:'
+  echo '      - "AC1: User can..."'
   echo '```'
   # Prompt: Continue anyway? [y/N]
 else
@@ -227,7 +229,7 @@ docs/prd/
 ├── 01-goals.md              # PRD section (md-tree output)
 ├── 02-requirements.md       # PRD section
 ├── ...
-├── XX-epic-planning.md      # Original PRD section (reference)
+├── XX-epics.md              # Original PRD section with YAML blocks (reference)
 ├── epic-1-user-authentication.yaml    # Extracted Epic 1 (SM reads this)
 ├── epic-2-product-catalog.yaml        # Extracted Epic 2 (SM reads this)
 └── epic-3-checkout.yaml               # Extracted Epic 3 (SM reads this)
@@ -245,8 +247,10 @@ stories:
   - id: "1.1"
     title: "Backend Auth API"
     repository_type: backend
-    acceptance_criteria_summary: |
-      User can register and login
+    acceptance_criteria:
+      - "AC1: User can register with email and password"
+      - "AC2: Password is hashed using bcrypt"
+      - "AC3: Login returns JWT token on valid credentials"
     estimated_complexity: medium
     priority: P0
     provides_apis:
@@ -257,6 +261,9 @@ stories:
   - id: "1.2"
     title: "Frontend Login UI"
     repository_type: frontend
+    acceptance_criteria:
+      - "AC1: Login form with validation"
+      - "AC2: Successful login redirects to dashboard"
     dependencies: ["1.1"]
     consumes_apis:
       - "POST /api/auth/login"

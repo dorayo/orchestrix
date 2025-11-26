@@ -154,8 +154,10 @@ stories:
   - id: "{epic}.{story}"
     title: "{Story title}"
     repository_type: {backend | frontend | ios | android | monolith}
-    deliverables: ["{item}"]
-    acceptance_criteria_summary: "{summary}"
+    acceptance_criteria:           # PREFERRED: Array format
+      - "AC1: {criterion}"
+      - "AC2: {criterion}"
+    acceptance_criteria_summary: "{summary}"  # DEPRECATED: Fallback for old format
     dependencies: ["{story_id}"]
     provides_apis: ["{endpoint}"]  # Optional
     consumes_apis: ["{endpoint}"]  # Optional
@@ -397,7 +399,9 @@ Story:
 **Story Deliverables**: {format deliverables as list}
 ```
 
-**Acceptance Criteria**: Parse from `story_definition.acceptance_criteria` or `acceptance_criteria_summary`
+**Acceptance Criteria**:
+- **PREFERRED**: Use `story_definition.acceptance_criteria` (array format, each item starts with "ACn:")
+- **FALLBACK**: If `acceptance_criteria` not present, parse from `story_definition.acceptance_criteria_summary` (deprecated paragraph format)
 
 **Tasks/Subtasks**: Generate following template's TDD-First Vertical Slice structure (lines 142-202)
 - Map each task to acceptance criteria
