@@ -1,41 +1,25 @@
 # Create Brownfield Epic Task
 
-## Purpose
+## When to Use
 
-Create a single epic for smaller brownfield enhancements that don't require the full PRD and Architecture documentation process. This task is for isolated features or modifications that can be completed within a focused scope.
+- Enhancement can be completed in 1-3 stories
+- No significant architectural changes required
+- Follows existing project patterns
+- Low risk to existing system
 
-## When to Use This Task
+If scope exceeds 3 stories or requires architectural planning, use full brownfield PRD process instead.
 
-**Use this task when:**
+## Execution
 
-- The enhancement can be completed in 1-3 stories
-- No significant architectural changes are required
-- The enhancement follows existing project patterns
-- Integration complexity is minimal
-- Risk to existing system is low
-
-**Use the full brownfield PRD/Architecture process when:**
-
-- The enhancement requires multiple coordinated stories
-- Architectural planning is needed
-- Significant integration work is required
-- Risk assessment and mitigation planning is necessary
-
-## Instructions
-
-### 1. Project Analysis (Required)
-
-Before creating the epic, gather essential information about the existing project:
+### 1. Project Analysis
 
 **Existing Project Context:**
-
 - [ ] Project purpose and current functionality understood
 - [ ] Existing technology stack identified
 - [ ] Current architecture patterns noted
 - [ ] Integration points with existing system identified
 
 **Enhancement Scope:**
-
 - [ ] Enhancement clearly defined and scoped
 - [ ] Impact on existing functionality assessed
 - [ ] Required integration points identified
@@ -43,118 +27,154 @@ Before creating the epic, gather essential information about the existing projec
 
 ### 2. Epic Creation
 
-Create a focused epic following this structure:
+**Epic Title:** {{Enhancement Name}} - Brownfield Enhancement
 
-#### Epic Title
-
-{{Enhancement Name}} - Brownfield Enhancement
-
-#### Epic Goal
-
-{{1-2 sentences describing what the epic will accomplish and why it adds value}}
-
-#### Epic Description
+**Epic Goal:** {{1-2 sentences describing what the epic will accomplish}}
 
 **Existing System Context:**
-
 - Current relevant functionality: {{brief description}}
 - Technology stack: {{relevant existing technologies}}
 - Integration points: {{where new work connects to existing system}}
 
 **Enhancement Details:**
-
 - What's being added/changed: {{clear description}}
 - How it integrates: {{integration approach}}
 - Success criteria: {{measurable outcomes}}
 
-#### Stories
+**Stories (1-3):**
+1. {{Story title and brief description}}
+2. {{Story title and brief description}}
+3. {{Story title and brief description}} (if needed)
 
-List 1-3 focused stories that complete the epic:
-
-1. **Story 1:** {{Story title and brief description}}
-2. **Story 2:** {{Story title and brief description}}
-3. **Story 3:** {{Story title and brief description}}
-
-#### Compatibility Requirements
-
+**Compatibility Requirements:**
 - [ ] Existing APIs remain unchanged
 - [ ] Database schema changes are backward compatible
 - [ ] UI changes follow existing patterns
 - [ ] Performance impact is minimal
 
-#### Risk Mitigation
+**Risk Mitigation:**
+- Primary Risk: {{main risk to existing system}}
+- Mitigation: {{how risk will be addressed}}
+- Rollback Plan: {{how to undo changes if needed}}
 
-- **Primary Risk:** {{main risk to existing system}}
-- **Mitigation:** {{how risk will be addressed}}
-- **Rollback Plan:** {{how to undo changes if needed}}
-
-#### Definition of Done
-
+**Definition of Done:**
 - [ ] All stories completed with acceptance criteria met
 - [ ] Existing functionality verified through testing
 - [ ] Integration points working correctly
-- [ ] Documentation updated appropriately
 - [ ] No regression in existing features
+- [ ] Documentation updated appropriately
 
-### 3. Validation Checklist
+### 3. Generate Epic YAML File
 
-Before finalizing the epic, ensure:
+**Step 3.1: Determine Epic ID**
+
+Read `{root}/core-config.yaml` to get `prdShardedLocation` (default: `docs/prd`).
+
+List existing Epic files: `{prdShardedLocation}/epic-*.yaml`
+
+```python
+existing_ids = [extract number from epic-{n}-*.yaml filenames]
+if existing_ids:
+    next_epic_id = max(existing_ids) + 1
+else:
+    next_epic_id = 1
+```
+
+**Step 3.2: Generate Epic YAML Content**
+
+```yaml
+epic_id: {next_epic_id}
+title: "{Epic Title from Step 2}"
+description: |
+  {Epic Description from Step 2}
+
+stories:
+  - id: "{epic_id}.1"
+    title: "{Story 1 title}"
+    repository_type: {monolith | backend | frontend | ios | android}
+    acceptance_criteria_summary: |
+      {Brief AC summary from Step 2}
+    estimated_complexity: {low | medium | high}
+    priority: P1
+    dependencies: []
+    deliverables:
+      - "{deliverable 1}"
+      - "{deliverable 2}"
+
+  - id: "{epic_id}.2"
+    title: "{Story 2 title}"
+    repository_type: {same as story 1}
+    acceptance_criteria_summary: |
+      {Brief AC summary}
+    estimated_complexity: {low | medium | high}
+    priority: P1
+    dependencies: ["{epic_id}.1"]
+    deliverables:
+      - "{deliverable 1}"
+      - "{deliverable 2}"
+
+  # Add Story 3 if applicable
+```
+
+**Step 3.3: Write Epic File**
+
+Generate title slug from Epic title:
+```python
+title_slug = slugify(epic_title)  # e.g., "Payment Integration" → "payment-integration"
+```
+
+Ensure `{prdShardedLocation}` directory exists, create if not:
+```bash
+mkdir -p {prdShardedLocation}
+```
+
+Write to: `{prdShardedLocation}/epic-{next_epic_id}-{title_slug}.yaml`
+
+**Step 3.4: Verify Output**
+
+```bash
+if [ -f "{prdShardedLocation}/epic-{next_epic_id}-{title_slug}.yaml" ]; then
+  echo "✅ Epic YAML file created: {prdShardedLocation}/epic-{next_epic_id}-{title_slug}.yaml"
+else
+  echo "❌ Failed to create Epic YAML file"
+  exit 1
+fi
+```
+
+### 4. Validation
 
 **Scope Validation:**
-
 - [ ] Epic can be completed in 1-3 stories maximum
-- [ ] No architectural documentation is required
+- [ ] No architectural documentation required
 - [ ] Enhancement follows existing patterns
 - [ ] Integration complexity is manageable
 
 **Risk Assessment:**
-
 - [ ] Risk to existing system is low
 - [ ] Rollback plan is feasible
 - [ ] Testing approach covers existing functionality
-- [ ] Team has sufficient knowledge of integration points
 
-**Completeness Check:**
-
+**Completeness:**
 - [ ] Epic goal is clear and achievable
 - [ ] Stories are properly scoped
 - [ ] Success criteria are measurable
 - [ ] Dependencies are identified
+- [ ] Epic YAML file created at `{prdShardedLocation}/epic-{n}-{title-slug}.yaml`
 
-### 4. Handoff to Story Manager
+### 5. Handoff
 
-Once the epic is validated, provide this handoff to the Story Manager:
+```
+✅ BROWNFIELD EPIC CREATED
 
----
+Epic: {epic_id} - {Epic Title}
+File: {prdShardedLocation}/epic-{epic_id}-{title_slug}.yaml
+Stories:
+  - {story_id_1}: {story_title_1}
+  - {story_id_2}: {story_title_2}
+  - {story_id_3}: {story_title_3} (if applicable)
 
-**Story Manager Handoff:**
+Technology Stack: {technology stack}
+Integration Points: {key integration points}
 
-"Please develop detailed user stories for this brownfield epic. Key considerations:
-
-- This is an enhancement to an existing system running {{technology stack}}
-- Integration points: {{list key integration points}}
-- Existing patterns to follow: {{relevant existing patterns}}
-- Critical compatibility requirements: {{key requirements}}
-- Each story must include verification that existing functionality remains intact
-
-The epic should maintain system integrity while delivering {{epic goal}}."
-
----
-
-## Success Criteria
-
-The epic creation is successful when:
-
-1. Enhancement scope is clearly defined and appropriately sized
-2. Integration approach respects existing system architecture
-3. Risk to existing functionality is minimized
-4. Stories are logically sequenced for safe implementation
-5. Compatibility requirements are clearly specified
-6. Rollback plan is feasible and documented
-
-## Important Notes
-
-- This task is specifically for SMALL brownfield enhancements
-- If the scope grows beyond 3 stories, consider the full brownfield PRD process
-- Always prioritize existing system integrity over new functionality
-- When in doubt about scope or complexity, escalate to full brownfield planning
+🎯 HANDOFF TO sm: *draft
+```

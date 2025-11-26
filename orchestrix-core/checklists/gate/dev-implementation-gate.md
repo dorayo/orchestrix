@@ -132,7 +132,7 @@ project.mode = 'multi-repo' AND project.multi_repo.role ∈ {backend, frontend, 
 
 Read epic YAML from product repo:
 ```
-{product_repo_path}/docs/epics/{epic_id}.yaml
+{product_repo_path}/docs/prd/epic-{epic_id}-*.yaml
 ```
 
 Extract:
@@ -477,6 +477,6 @@ gate_result:
 - `tasks/utils/load-architecture-context.md`
 - Architecture documents in `docs/architecture/`
 - API contracts in product repo: `docs/api-contracts.md`
-- Epic YAML in product repo: `docs/epics/{epic_id}.yaml`
+- Epic YAML in product repo: `docs/prd/epic-{epic_id}-{title-slug}.yaml`
 - `core-config.yaml` - project configuration
 - `data/technical-preferences.md`

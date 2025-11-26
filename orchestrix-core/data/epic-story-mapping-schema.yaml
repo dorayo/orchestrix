@@ -1,12 +1,7 @@
-# Epic Cross-Repo Story Mapping Schema
-# Defines the format for epic YAML files in product repository
+# Epic Story Mapping Schema
+# Location: docs/prd/epic-{n}-{title-slug}.yaml (e.g., docs/prd/epic-1-user-authentication.yaml)
 
-schema_version: "1.0.0"
-
-description: |
-  This schema defines the structure for Epic YAML files in multi-repository projects.
-  Epic YAML files map stories across different repositories (backend, frontend, ios, android, etc.)
-  and define cross-repository dependencies.
+schema_version: "1.1.0"
 
 epic:
   type: object
@@ -279,10 +274,3 @@ best_practices:
   - "Prioritize critical path stories (P0) that must be completed first"
   - "Break down complex stories into smaller, manageable pieces"
   - "Ensure deliverables are specific and measurable"
-
-# Change Log
-changelog:
-  - version: "1.0.0"
-    date: "2025-01-14"
-    changes: "Initial schema definition for multi-repo epic mapping"
-    author: "Orchestrix Team"

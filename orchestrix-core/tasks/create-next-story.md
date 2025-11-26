@@ -76,18 +76,76 @@ Else:
 
 ### 2. Load Epic Definitions & Identify Next Story
 
-**Step 2.1: Load Epic YAML from PRD Shards**
+**Step 2.1: Locate Epic YAML Files**
 
-List all files: `{prd_sharded_location}/*.md`
+Determine `epic_location` based on project mode:
+```
+If project.mode = multi-repo:
+  epic_location = {product_repo_path}/{prdShardedLocation}
+Else:
+  epic_location = {prdShardedLocation}
+```
 
-**If no files found**: **HALT** with "No PRD shard files found. Run @po *shard"
+List Epic YAML files: `{epic_location}/epic-*.yaml`
 
-For each PRD shard file:
-1. Read file content
-2. Extract YAML blocks between triple backticks (```yaml ... ```)
-3. Parse each YAML block
+**If no Epic YAML files found**: **HALT** with:
+```
+❌ No Epic YAML files found in {epic_location}/
+Expected: epic-1-*.yaml, epic-2-*.yaml, ...
 
-Expected structure:
+Action: Run @po *shard to generate Epic YAML files from PRD
+```
+
+---
+
+**Step 2.2: Load Required Epic Files**
+
+**If `next_story_id` set from Step 0** (explicit story requested, e.g., "2.3"):
+
+Parse `epic_id` from story_id: `epic_id = int(story_id.split('.')[0])`
+
+Find and read file matching: `{epic_location}/epic-{epic_id}-*.yaml`
+
+**If file NOT found**: **HALT** with:
+```
+❌ Epic file not found: epic-{epic_id}-*.yaml
+Story {next_story_id} belongs to Epic {epic_id}, but the Epic file does not exist.
+
+Action: Verify Epic {epic_id} exists in PRD, then run @po *shard
+```
+
+Parse YAML and store as `target_epic`.
+
+---
+
+**If `next_story_id` NOT set** (auto-discovery):
+
+1. List existing story files: `{devStoryLocation}/*.md`
+2. Extract created story IDs from filenames (pattern: `{epic}.{story}-*.md`)
+3. Sort Epic files by number: `[epic-1-*.yaml, epic-2-*.yaml, ...]`
+
+4. **Sequential Epic scan** (read minimum files):
+   ```
+   For each epic_file in sorted order:
+     Read and parse epic_file
+     Filter stories by repository_type (see Step 2.3)
+     Find uncreated stories in this Epic
+     If uncreated stories exist:
+       Set target_epic = this epic
+       Break (stop scanning)
+   ```
+
+5. **If all Epics exhausted** (no uncreated stories): **HALT** with:
+   ```
+   ✅ ALL STORIES CREATED!
+   Repository: {repository_role}
+
+   💡 Next: Check if new Epics added, or run @po *shard
+   ```
+
+---
+
+**Epic YAML Structure** (expected format in `epic-{n}-{title-slug}.yaml`):
 ```yaml
 epic_id: {number}
 title: "{Epic Title}"
@@ -105,77 +163,67 @@ stories:
     priority: {P0 | P1 | P2 | P3}
 ```
 
-Accumulate into:
-- `all_epics`: Array of Epic objects (with full story arrays)
-- `all_stories`: Flat array of all stories from all Epics (each story includes `epic_id`, `epic_title`, `epic_description`)
-
-**If epic_count = 0**: **HALT** with "No epic YAML blocks found in PRD shards"
-
 ---
 
-**Step 2.2: Filter Stories by Repository Type**
+**Step 2.3: Filter Stories by Repository Type**
 
-Determine filter:
+From `target_epic.stories`, filter by current repository role:
+
 ```python
+repository_role = project.multi_repo.role  # from Step 1
+
 if repository_role == "monolith":
     repo_filter = ["monolith", None, ""]
 else:
     repo_filter = [repository_role]  # backend, frontend, ios, android
-```
 
-Filter stories:
-```python
 my_stories = []
-for story in all_stories:
+for story in target_epic['stories']:
     story_repo_type = story.get('repository_type') or 'monolith'
     if story_repo_type in repo_filter:
         my_stories.append(story)
 ```
 
-**If my_stories is empty**: **HALT** with "No stories assigned to this repository ({repository_role})"
+**If my_stories is empty**: **HALT** with:
+```
+❌ No stories for this repository in Epic {target_epic.epic_id}
+
+Repository Role: {repository_role}
+Epic contains stories for: {list unique repository_types in target_epic}
+
+Action: Check if correct repository, or verify Epic YAML repository_type assignments
+```
 
 ---
 
-**Step 2.3: Identify Next Story**
+**Step 2.4: Identify Next Story**
 
 **If `next_story_id` set from Step 0** (explicit selection):
 
-Search for story in my_stories by ID.
+Search for story in `my_stories` by ID.
 
 **If NOT found**: **HALT** with:
 ```
-❌ Story {next_story_id} not found in Epic definitions
+❌ Story {next_story_id} not found in Epic {target_epic.epic_id}
 
-Available Stories for {repository_role}:
-{list story IDs and titles}
+Available Stories for {repository_role} in this Epic:
+{list story IDs and titles from my_stories}
 ```
 
-**If found**: Set `next_story`, continue to Step 3.
+**If found**: Set `next_story = matched story`, continue to Step 3.
 
 ---
 
-**If `next_story_id` NOT set** (auto-discovery):
+**If `next_story_id` NOT set** (auto-discovery, already filtered in Step 2.2):
 
-List existing story files: `{devStoryLocation}/*.md`
+The `target_epic` was selected because it has uncreated stories. Now identify the specific story:
 
-Extract story IDs from filenames (pattern: `{epic}.{story}-{title}.md`)
-
-Find uncreated stories:
 ```python
-existing_ids = [extracted IDs from filenames]
+existing_ids = [IDs extracted from {devStoryLocation}/*.md filenames]
 uncreated_stories = [s for s in my_stories if s['id'] not in existing_ids]
 ```
 
-**If uncreated_stories is empty**: **HALT** with:
-```
-✅ ALL STORIES CREATED!
-Repository: {repository_role}
-Total Stories: {len(my_stories)}
-
-💡 Next: Check if new Epics added, or run @po *shard
-```
-
-Sort uncreated stories by ID (numeric order: 1.1 < 1.2 < 2.1)
+Sort by ID (numeric order: 1.1 < 1.2 < 1.3)
 
 Select first: `next_story = uncreated_stories[0]`
 
@@ -184,16 +232,16 @@ Select first: `next_story = uncreated_stories[0]`
 **Output confirmation**:
 ```
 📝 NEXT STORY IDENTIFIED
-Story ID: {next_story.id}
-Title: {next_story.title}
-Epic: {epic_id} - {epic_title}
-Repository: {repository_type}
+Story ID: {next_story['id']}
+Title: {next_story['title']}
+Epic: {target_epic['epic_id']} - {target_epic['title']}
+Repository: {next_story['repository_type']}
 ```
 
 Store:
 - `next_story_id` = next_story['id']
-- `story_definition` = next_story (full YAML)
-- `epic_definition` = matching epic from all_epics
+- `story_definition` = next_story (full story object from YAML)
+- `epic_definition` = target_epic (full epic object from YAML)
 
 ---
 

@@ -36,8 +36,8 @@ Check for available documentation in this order:
 3. **Brownfield PRD** (docs/prd.md)
    - May contain embedded technical details
 
-4. **Epic Files** (docs/epics/ or similar)
-   - Created by brownfield-create-epic task
+4. **Epic Files** (docs/prd/epic-*.yaml)
+   - Created by brownfield-create-epic task or PO *shard
 
 5. **User-Provided Documentation**
    - Ask user to specify location and format

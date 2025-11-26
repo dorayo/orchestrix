@@ -61,7 +61,7 @@ project:
 
 **Load epic YAML** from product repo:
 ```
-{product_repo_path}/docs/epics/{epic_id}.yaml
+{product_repo_path}/docs/prd/epic-{epic_id}-*.yaml
 ```
 
 **Extract from epic**:
@@ -477,7 +477,7 @@ result: SKIPPED
 ## References
 
 - `docs/api-contracts.md` (in product repo)
-- `docs/epics/{epic_id}.yaml` (in product repo)
+- `docs/prd/epic-{epic_id}-{title-slug}.yaml` (in product repo)
 - `core-config.yaml` - project configuration
 - `data/epic-story-mapping-schema.yaml` - epic schema
 - `data/api-contract-locking.yaml` - contract versioning rules

@@ -26,16 +26,23 @@ async function generateDashboard(params) {
   const { product_repo_path } = params;
 
   try {
-    // Step 1: Load all epic YAML files
-    const epicsPath = path.join(product_repo_path, 'docs/epics');
+    // Step 1: Load all epic YAML files from docs/prd/
+    const epicsPath = path.join(product_repo_path, 'docs/prd');
     if (!fs.existsSync(epicsPath)) {
       return {
         success: false,
-        error: 'Epics directory not found'
+        error: 'PRD directory not found (docs/prd/). Run @po *shard first.'
       };
     }
 
     const epicFiles = fs.readdirSync(epicsPath).filter(f => f.startsWith('epic-') && f.endsWith('.yaml'));
+    if (epicFiles.length === 0) {
+      return {
+        success: false,
+        error: 'No Epic YAML files found in docs/prd/. Run @po *shard to extract Epic files from PRD.'
+      };
+    }
+
     const epics = epicFiles.map(f => {
       const content = fs.readFileSync(path.join(epicsPath, f), 'utf8');
       return yaml.load(content);

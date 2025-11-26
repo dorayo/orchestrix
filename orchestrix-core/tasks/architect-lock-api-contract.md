@@ -31,7 +31,7 @@ Lock API contract to prevent breaking changes during active development.
 ### Step 3: Identify Referencing Stories
 
 **Query epic YAML files** to find stories that reference API endpoints:
-- Load all epic YAML files from `{product_repo_path}/docs/epics`
+- Load all epic YAML files from `{product_repo_path}/docs/prd/epic-*-*.yaml`
 - Extract stories with `provides_apis` or `consumes_apis`
 - Filter by epic (if specified) or all stories
 
