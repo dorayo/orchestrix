@@ -1,0 +1,112 @@
+# Tech Proposal Routing Decision
+# Determines handoff target after Architect generates a technical proposal.
+
+decision_type: tech-proposal-routing
+
+description: |
+  Routes technical proposals to PO (large scope) or SM (small scope) based on
+  impact assessment from Architect's analysis.
+
+version: "1.0.0"
+
+constants:
+  proposal_location: "docs/architecture/proposals"
+  proposal_filename_pattern: "{proposal-id}-{title-slug}.md"
+
+inputs:
+  - name: analysis_result
+    type: object
+    required: true
+    properties:
+      components_affected_count:
+        type: number
+        description: Number of architecture components impacted
+      estimated_effort:
+        type: string
+        enum: [low, medium, high]
+        description: Estimated implementation effort
+      api_contracts_affected:
+        type: boolean
+      database_schema_affected:
+        type: boolean
+      cross_epic_impact:
+        type: boolean
+        description: True if change affects multiple epics
+
+rules:
+  # Rule 1: Large scope - route to PO
+  - name: route_to_po_large_scope
+    priority: 1
+    condition: >
+      analysis_result.components_affected_count >= 3
+      OR analysis_result.estimated_effort == "high"
+      OR analysis_result.cross_epic_impact == true
+    result:
+      route_to: PO
+      command: "*review-tech-proposal"
+    reasoning: "Large scope requires PO evaluation for Epic assignment"
+
+  # Rule 2: Schema or API changes - route to PO
+  - name: route_to_po_contract_changes
+    priority: 2
+    condition: >
+      analysis_result.api_contracts_affected == true
+      OR analysis_result.database_schema_affected == true
+    result:
+      route_to: PO
+      command: "*review-tech-proposal"
+    reasoning: "Contract changes may affect multiple stories"
+
+  # Rule 3: Small scope - route directly to SM
+  - name: route_to_sm_small_scope
+    priority: 3
+    condition: >
+      analysis_result.components_affected_count < 3
+      AND analysis_result.estimated_effort != "high"
+      AND analysis_result.cross_epic_impact == false
+      AND analysis_result.api_contracts_affected == false
+      AND analysis_result.database_schema_affected == false
+    result:
+      route_to: SM
+      command: "*create-tech-story"
+      default_epic: "0"
+    reasoning: "Small scope can be handled directly as tech story"
+
+  # Rule 4: Default - route to PO
+  - name: default_route
+    priority: 4
+    condition: "true"
+    result:
+      route_to: PO
+      command: "*review-tech-proposal"
+    reasoning: "Default to PO for scope evaluation"
+
+output:
+  route_to:
+    type: string
+    enum: [PO, SM]
+  command:
+    type: string
+  default_epic:
+    type: string
+    description: Default epic ID for SM direct creation
+
+handoff_templates:
+  PO: |
+    🎯 HANDOFF TO PO: *review-tech-proposal {proposal_path}
+    Context: Tech proposal requires scope evaluation
+    Components affected: {components_affected_count}
+    Estimated effort: {estimated_effort}
+    Action: Determine Epic assignment and create Story definition
+
+  SM: |
+    🎯 HANDOFF TO SM: *create-tech-story {proposal_path}
+    Context: Small-scope technical improvement
+    Default Epic: 0 (Technical Debt)
+    Action: Create Story directly from proposal
+
+metadata:
+  owner: Architect Agent
+  usage_context: >
+    Called in architect-resolve-change.md Step 7 after HANDLE_IN_TECH decision
+    to determine downstream handoff target.

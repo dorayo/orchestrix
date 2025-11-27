@@ -39,12 +39,13 @@ commands:
   - help:
       description: "Show numbered command list, wait for selection"
       output_format:
-        - "[1] *draft [{story_id}] — 创建下一个 Story（或检查指定 Story）"
-        - "[2] *revise {story_id} — 根据 Architect 反馈修订 Story"
-        - "[3] *correct-course {story_id} — 修正 Story 方向或问题"
-        - "[4] *story-checklist {story_id} — 验证 Story 质量"
-        - "[5] *init-registries — 初始化/刷新累积注册表"
-        - "[6] *exit — 退出 SM 模式"
+        - "[1] *draft [{story_id}] — Create next Story (or check specified Story)"
+        - "[2] *revise {story_id} — Revise Story based on Architect feedback"
+        - "[3] *correct-course {story_id} — Correct Story direction or issues"
+        - "[4] *create-tech-story {proposal_path} — Create Story from tech proposal"
+        - "[5] *story-checklist {story_id} — Validate Story quality"
+        - "[6] *init-registries — Initialize/refresh cumulative registries"
+        - "[7] *exit — Exit SM mode"
 
   - draft:
       description: "Create next story from epic (or create/check specified story if story_id provided)"
@@ -66,6 +67,17 @@ commands:
           required: false
           description: "Target story ID if modifying existing (e.g., 5.3)"
 
+  - create-tech-story:
+      description: "Create Story directly from Architect tech proposal for small-scope improvements."
+      task: sm-create-tech-story.md
+      params:
+        - name: proposal_path
+          required: true
+          description: "Path to tech proposal file (e.g., docs/architecture/proposals/xxx.md)"
+        - name: epic_id
+          required: false
+          description: "Target Epic ID. Default: 0 (Technical Debt)"
+
   - story-checklist:
       description: "Run comprehensive story quality validation"
       behavior:
@@ -85,6 +97,7 @@ dependencies:
     - create-next-story.md
     - revise-story-from-architect-feedback.md
     - sm-correct-course.md
+    - sm-create-tech-story.md
     - utils/classify-change-level.md
     - frontend-user-confirmation.md
     - make-decision.md
@@ -98,8 +111,10 @@ dependencies:
     - models-registry-tmpl.yaml
   checklists:
     - scoring/sm-story-quality.md
+    - gate/sm-story-creation-gate.md
   decisions:
     - change-level-classification.yaml
     - sm-change-escalation.yaml
+    - tech-proposal-routing.yaml
   data:
     - epic-story-mapping-schema.yaml

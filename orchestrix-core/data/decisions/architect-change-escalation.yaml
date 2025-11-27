@@ -8,7 +8,12 @@ description: >
   whether the change can be resolved with a technical solution or needs escalation
   to Product (PM) layer for PRD/feature changes.
 
-version: "1.0.0"
+version: "1.1.0"
+
+constants:
+  proposal_location: "docs/architecture/proposals"
+  large_scope_threshold: 3
+  effort_levels: [low, medium, high]
 
 inputs:
   - name: analysis_result
@@ -38,6 +43,16 @@ inputs:
       database_schema_affected:
         type: boolean
         description: True if database schema needs modification
+      estimated_effort:
+        type: string
+        enum: [low, medium, high]
+        description: Estimated implementation effort
+      cross_epic_impact:
+        type: boolean
+        description: True if change affects multiple epics
+      proposal_path:
+        type: string
+        description: Path to generated proposal document
 
 rules:
   # Rule 1: Feature change required - escalate to PM
@@ -73,34 +88,65 @@ rules:
       handoff_command: "*revise-prd"
     reasoning: "MVP viability at risk, PM decision required"
 
-  # Rule 4: Technical solution exists - handle in tech layer
-  - name: handle_in_tech
+  # Rule 4: Technical solution - large scope - route to PO
+  - name: handle_in_tech_large_scope
     priority: 4
     condition: >
       analysis_result.resolvable_with_tech_solution == true
       AND analysis_result.requires_feature_change == false
       AND analysis_result.requires_scope_reduction == false
       AND analysis_result.mvp_viability_affected == false
+      AND (
+        analysis_result.architecture_components_affected.length >= 3
+        OR analysis_result.estimated_effort == "high"
+        OR analysis_result.cross_epic_impact == true
+        OR analysis_result.api_contracts_affected == true
+        OR analysis_result.database_schema_affected == true
+      )
     result:
       decision: HANDLE_IN_TECH
-      next_action: update_architecture_and_handoff
+      next_action: route_to_po
       downstream_handoffs:
         - to: PO
-          command: "*correct-course"
-          context: "Architecture updated, epic/story adjustment may be needed"
-        - to: SM
-          command: "*correct-course"
-          context: "Architecture updated, story revision may be needed"
-    reasoning: "Technical solution available, updating architecture"
+          command: "*review-tech-proposal"
+          context: "Tech proposal requires scope evaluation"
+    reasoning: "Large scope tech change, PO to evaluate Epic assignment"
 
-  # Rule 5: Default - handle in tech with downstream updates
-  - name: default_handle
+  # Rule 5: Technical solution - small scope - route to SM
+  - name: handle_in_tech_small_scope
     priority: 5
+    condition: >
+      analysis_result.resolvable_with_tech_solution == true
+      AND analysis_result.requires_feature_change == false
+      AND analysis_result.requires_scope_reduction == false
+      AND analysis_result.mvp_viability_affected == false
+      AND analysis_result.architecture_components_affected.length < 3
+      AND analysis_result.estimated_effort != "high"
+      AND analysis_result.cross_epic_impact == false
+      AND analysis_result.api_contracts_affected == false
+      AND analysis_result.database_schema_affected == false
+    result:
+      decision: HANDLE_IN_TECH
+      next_action: route_to_sm
+      downstream_handoffs:
+        - to: SM
+          command: "*create-tech-story"
+          context: "Small scope tech improvement"
+          default_epic: "0"
+    reasoning: "Small scope tech change, SM to create Story directly"
+
+  # Rule 6: Default - route to PO for evaluation
+  - name: default_handle
+    priority: 6
     condition: "true"
     result:
       decision: HANDLE_IN_TECH
-      next_action: update_architecture_and_handoff
-    reasoning: "Defaulting to technical resolution"
+      next_action: route_to_po
+      downstream_handoffs:
+        - to: PO
+          command: "*review-tech-proposal"
+          context: "Tech proposal requires evaluation"
+    reasoning: "Default to PO for scope evaluation"
 
 output:
   decision:
@@ -140,7 +186,7 @@ output:
     description: Downstream agents to notify after resolution
 
 handoff_templates:
-  ESCALATE_TO_PRODUCT: >
+  ESCALATE_TO_PRODUCT: |
     🎯 HANDOFF TO PM: *revise-prd
     Context: {handoff_context}
     Technical Analysis: {technical_analysis_summary}
@@ -148,17 +194,18 @@ handoff_templates:
     MVP risk: {mvp_viability_affected}
     Reason: {reasoning}
 
-  DOWNSTREAM_TO_PO: >
-    🎯 HANDOFF TO PO: *correct-course
-    Context: Architecture updated - {architecture_change_summary}
+  ROUTE_TO_PO: |
+    🎯 HANDOFF TO PO: *review-tech-proposal {proposal_path}
+    Context: Tech proposal requires scope evaluation
     Components affected: {architecture_components_affected}
-    Action needed: Review epic/story alignment with updated architecture
+    Estimated effort: {estimated_effort}
+    Action: Determine Epic assignment and create Story definition
 
-  DOWNSTREAM_TO_SM: >
-    🎯 HANDOFF TO SM: *correct-course {story_id}
-    Context: Architecture updated - {architecture_change_summary}
-    Story impact: {story_impact_description}
-    Action needed: Update story to align with architecture changes
+  ROUTE_TO_SM: |
+    🎯 HANDOFF TO SM: *create-tech-story {proposal_path}
+    Context: Small-scope technical improvement
+    Default Epic: 0 (Technical Debt)
+    Action: Create Story directly from proposal
 
 metadata:
   owner: Architect Agent

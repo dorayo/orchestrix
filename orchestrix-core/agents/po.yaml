@@ -71,13 +71,14 @@ commands:
         - "[2] *execute-checklist {checklist} — run a checklist (default: workflow/po-master-validation.md)"
         - "[3] *shard — shard PRD and Architecture documents (unified)"
         - "[4] *correct-course — handle Epic-level course correction"
-        - "[5] *create-epic — create brownfield epic"
-        - "[6] *create-story — create user story"
-        - "[7] *validate-story-draft {story} — validate a story file"
-        - "[8] *doc-out — output current document"
-        - "[9] *yolo — toggle Yolo Mode"
-        - "[10] *explain — explain last action"
-        - "[11] *exit — exit persona"
+        - "[5] *review-tech-proposal {path} — evaluate Architect tech proposal for Epic assignment"
+        - "[6] *create-epic — create brownfield epic"
+        - "[7] *create-story — create user story"
+        - "[8] *validate-story-draft {story} — validate a story file"
+        - "[9] *doc-out — output current document"
+        - "[10] *yolo — toggle Yolo Mode"
+        - "[11] *explain — explain last action"
+        - "[12] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -108,6 +109,18 @@ commands:
         epic_id:
           required: false
           description: "Epic ID if known (e.g., 5). Analyzes current context if omitted."
+  - review-tech-proposal:
+      description: "Evaluate Architect's tech proposal and determine Epic assignment for implementation Story."
+      behavior:
+        - "Run dependency task 'po-review-tech-proposal.md'."
+        - "Analyze proposal scope and impact."
+        - "Decide Epic assignment: existing Epic, Epic 0 (tech debt), or create new Epic."
+        - "Update Epic YAML with Story definition."
+        - "HANDOFF to SM for Story creation."
+      params:
+        proposal_path:
+          required: true
+          description: "Path to tech proposal file (e.g., docs/architecture/proposals/xxx.md)"
   - create-epic:
       description: "Create epic for brownfield projects."
       behavior:
@@ -133,6 +146,7 @@ dependencies:
   tasks:
     - po-shard-documents.md
     - po-correct-course.md
+    - po-review-tech-proposal.md
     - utils/classify-change-level.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
@@ -145,5 +159,6 @@ dependencies:
   decisions:
     - change-level-classification.yaml
     - po-change-escalation.yaml
+    - tech-proposal-routing.yaml
   data:
     - epic-story-mapping-schema.yaml

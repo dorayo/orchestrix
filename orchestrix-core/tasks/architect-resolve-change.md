@@ -122,10 +122,26 @@ Based on analysis, produce:
 
 ### Step 5: Generate Technical Change Proposal
 
+**Proposal location**: `docs/architecture/proposals/`
+
+**Filename pattern**: `{proposal-id}-{title-slug}.md`
+- Example: `tcp-2025-001-workflow-data-access-refactor.md`
+
+**Generate proposal_id**: `TCP-{YYYY}-{NNN}` (auto-increment)
+
 Create proposal document:
 
 ```markdown
 # Technical Change Proposal
+
+## Metadata
+
+| Property | Value |
+|----------|-------|
+| Proposal ID | {proposal_id} |
+| Created | {YYYY-MM-DD} |
+| Author | Architect Agent |
+| Status | DRAFT |
 
 ## Problem Statement
 {change_description}
@@ -150,8 +166,12 @@ Create proposal document:
 {schema changes and migration plan if any}
 
 ### Implementation Plan
-1. {step 1}
-2. {step 2}
+Phase 1: {title}
+- {deliverable 1}
+- {deliverable 2}
+
+Phase 2: {title}
+- {deliverable 1}
 ...
 
 ## Risk Matrix
@@ -161,13 +181,17 @@ Create proposal document:
 | {risk} | HIGH/MED/LOW | {mitigation} |
 
 ## Downstream Impact
-- Stories requiring update: [{story_ids}]
-- Epics requiring review: [{epic_ids}]
-- Dev guidance: {summary}
+- Components affected: [{components}]
+- Epics affected: [{epic_ids}]
+- Estimated effort: {low|medium|high}
 
 ## Testing Requirements
 {testing approach for this change}
 ```
+
+**Write file**: `docs/architecture/proposals/{filename}`
+
+**Store**: `proposal_path = docs/architecture/proposals/{filename}`
 
 ### Step 6: Escalation Decision
 
@@ -181,58 +205,79 @@ analysis_result:
   architecture_components_affected: [{components}]
   api_contracts_affected: {boolean}
   database_schema_affected: {boolean}
+  estimated_effort: {low|medium|high}
+  cross_epic_impact: {boolean}
+  proposal_path: "{proposal_path from Step 5}"
 ```
 
 Execute: `data/decisions/architect-change-escalation.yaml`
 
-- **HANDLE_IN_TECH**: Proceed to Step 7
+**Decision outcomes**:
 - **ESCALATE_TO_PRODUCT**: Output HANDOFF to PM and **HALT**
+- **HANDLE_IN_TECH + route_to_po**: Large scope, route to PO
+- **HANDLE_IN_TECH + route_to_sm**: Small scope, route to SM
+
+---
 
 ### Step 7: Finalize (if HANDLE_IN_TECH)
 
-1. Present Technical Change Proposal to user
+1. Present Technical Change Proposal summary to user
 2. Request explicit approval for architecture changes
 3. IF approved:
-   - Update architecture documents
+   - Update architecture documents (if needed)
    - Update API contracts (if changed)
-   - Add architecture decision record if significant
-4. Output downstream HANDOFF chain
+4. Execute routing decision from Step 6
+
+---
 
 ## Output
 
-**Success (handled locally):**
+**Success - Large Scope (route to PO):**
 ```yaml
 resolution: RESOLVED
+proposal_path: "{proposal_path}"
 architecture_updated: {boolean}
 api_contracts_updated: {boolean}
 files_modified:
   - path: "{file_path}"
     change: "{description}"
 change_summary: "{Brief description}"
-downstream_handoffs:
-  - to: PO
-    command: "*correct-course"
-    context: "Architecture updated, epic/story adjustment may be needed"
-  - to: SM
-    command: "*correct-course {story_id}"
-    context: "Architecture updated, story revision may be needed"
+routing: PO
 ```
 
-**Downstream HANDOFF to PO:**
+**HANDOFF (Large Scope)**:
 ```
-🎯 HANDOFF TO PO: *correct-course
-Context: Architecture updated - {architecture_change_summary}
+🎯 HANDOFF TO PO: *review-tech-proposal {proposal_path}
+Context: Tech proposal requires scope evaluation
 Components affected: [{components}]
-Action needed: Review epic/story alignment with updated architecture
+Estimated effort: {estimated_effort}
+Action: Determine Epic assignment and create Story definition
 ```
 
-**Downstream HANDOFF to SM:**
+---
+
+**Success - Small Scope (route to SM):**
+```yaml
+resolution: RESOLVED
+proposal_path: "{proposal_path}"
+architecture_updated: {boolean}
+files_modified:
+  - path: "{file_path}"
+    change: "{description}"
+change_summary: "{Brief description}"
+routing: SM
+default_epic: "0"
 ```
-🎯 HANDOFF TO SM: *correct-course {story_id}
-Context: Architecture updated - {architecture_change_summary}
-Story impact: {story_impact_description}
-Action needed: Update story to align with architecture changes
+
+**HANDOFF (Small Scope)**:
 ```
+🎯 HANDOFF TO SM: *create-tech-story {proposal_path}
+Context: Small-scope technical improvement
+Default Epic: 0 (Technical Debt)
+Action: Create Story directly from proposal
+```
+
+---
 
 **Escalate to PM:**
 ```
