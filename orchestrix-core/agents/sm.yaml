@@ -85,8 +85,12 @@ commands:
       description: Revise story based on architect feedback
       task: revise-story-from-architect-feedback.md
   - correct-course:
-      description: Fix issues or adjust story direction
-      task: correct-course.md
+      description: 'Handle Story-level course correction. Supports: modify, create, split, or deprecate stories.'
+      task: sm-correct-course.md
+      params:
+        - name: story_id
+          required: false
+          description: Target story ID if modifying existing (e.g., 5.3)
   - story-checklist:
       description: Run comprehensive story quality validation
       behavior:
@@ -102,7 +106,8 @@ dependencies:
   tasks:
     - create-next-story.md
     - revise-story-from-architect-feedback.md
-    - correct-course.md
+    - sm-correct-course.md
+    - utils/classify-change-level.md
     - frontend-user-confirmation.md
     - make-decision.md
     - init-cumulative-registries.md
@@ -115,6 +120,9 @@ dependencies:
     - models-registry-tmpl.yaml
   checklists:
     - scoring/sm-story-quality.md
+  decisions:
+    - change-level-classification.yaml
+    - sm-change-escalation.yaml
   data:
     - epic-story-mapping-schema.yaml
 request_resolution:

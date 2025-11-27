@@ -1,0 +1,152 @@
+# PO Change Escalation Decision
+# Determines if PO should escalate an Epic-level change to higher layers.
+
+decision_type: po-change-escalation
+
+description: >
+  After PO analyzes an Epic-level change request, this decision determines whether
+  the change can be handled within epic scope or needs escalation to Tech (Architect)
+  or Product (PM) layer.
+
+version: "1.0.0"
+
+inputs:
+  - name: analysis_result
+    type: object
+    required: true
+    properties:
+      epics_impacted:
+        type: number
+        description: Number of epics affected by this change
+      requires_architecture_change:
+        type: boolean
+        description: True if change requires architecture modification
+      requires_prd_change:
+        type: boolean
+        description: True if change requires PRD modification
+      mvp_scope_affected:
+        type: boolean
+        description: True if MVP scope is affected
+      resolvable_within_epic:
+        type: boolean
+        description: True if change can be resolved within epic(s) scope
+      action_type:
+        type: string
+        enum: [MODIFY_EPIC, CREATE_EPIC, SPLIT_EPIC, MERGE_EPICS, DEPRECATE_EPIC, REORDER_EPICS]
+        description: Type of action being performed
+
+rules:
+  # Rule 1: PRD change or MVP scope affected - escalate to PM
+  - name: escalate_to_product_prd
+    priority: 1
+    condition: >
+      analysis_result.requires_prd_change == true
+      OR analysis_result.mvp_scope_affected == true
+    result:
+      decision: ESCALATE_TO_PRODUCT
+      handoff_to: PM
+      handoff_command: "*revise-prd"
+    reasoning: "PRD modification or MVP scope change required, escalating to PM"
+
+  # Rule 2: Multiple epics affected - escalate to PM
+  - name: escalate_to_product_multi_epic
+    priority: 2
+    condition: >
+      analysis_result.epics_impacted > 1
+    result:
+      decision: ESCALATE_TO_PRODUCT
+      handoff_to: PM
+      handoff_command: "*revise-prd"
+    reasoning: "Multiple epics affected, PM coordination required"
+
+  # Rule 3: Architecture change required - escalate to Architect
+  - name: escalate_to_tech
+    priority: 3
+    condition: >
+      analysis_result.requires_architecture_change == true
+      AND analysis_result.requires_prd_change == false
+    result:
+      decision: ESCALATE_TO_TECH
+      handoff_to: ARCHITECT
+      handoff_command: "*resolve-tech-change"
+    reasoning: "Architecture change required, escalating to Architect"
+
+  # Rule 4: Create/Split epic may need PRD update
+  - name: epic_structure_change_check
+    priority: 4
+    condition: >
+      (analysis_result.action_type == "CREATE_EPIC" OR analysis_result.action_type == "SPLIT_EPIC")
+      AND analysis_result.epics_impacted > 1
+    result:
+      decision: ESCALATE_TO_PRODUCT
+      handoff_to: PM
+      handoff_command: "*revise-prd"
+    reasoning: "Epic structure change affects multiple epics, PM should update PRD"
+
+  # Rule 5: Resolvable within epic scope
+  - name: handle_in_epic
+    priority: 5
+    condition: >
+      analysis_result.resolvable_within_epic == true
+      AND analysis_result.epics_impacted <= 1
+      AND analysis_result.requires_architecture_change == false
+      AND analysis_result.requires_prd_change == false
+      AND analysis_result.mvp_scope_affected == false
+    result:
+      decision: HANDLE_IN_EPIC
+      next_action: present_proposal_to_user
+    reasoning: "Change is within epic scope, handling locally"
+
+  # Rule 6: Default - handle in epic
+  - name: default_handle
+    priority: 6
+    condition: "true"
+    result:
+      decision: HANDLE_IN_EPIC
+      next_action: present_proposal_to_user
+    reasoning: "Defaulting to epic-level handling"
+
+output:
+  decision:
+    type: enum
+    values: [HANDLE_IN_EPIC, ESCALATE_TO_TECH, ESCALATE_TO_PRODUCT]
+    description: Escalation decision
+
+  handoff_to:
+    type: string
+    enum: [ARCHITECT, PM]
+    description: Target agent for escalation (if escalating)
+
+  handoff_command:
+    type: string
+    description: Command to include in HANDOFF message
+
+  handoff_context:
+    type: string
+    description: Context to pass to target agent
+
+  next_action:
+    type: string
+    description: Next action if handling locally
+
+handoff_templates:
+  ESCALATE_TO_TECH: >
+    🎯 HANDOFF TO ARCHITECT: *resolve-tech-change
+    Context: {handoff_context}
+    Architecture impact: {architecture_change_description}
+    Epics affected: {epics_impacted}
+    Reason: {reasoning}
+
+  ESCALATE_TO_PRODUCT: >
+    🎯 HANDOFF TO PM: *revise-prd
+    Context: {handoff_context}
+    PRD sections affected: {prd_sections}
+    MVP impact: {mvp_scope_affected}
+    Epics affected: {epics_impacted}
+    Reason: {reasoning}
+
+metadata:
+  owner: PO Agent
+  usage_context: >
+    Called at the end of po-correct-course.md Step 6 to determine
+    if change should be escalated or handled locally.

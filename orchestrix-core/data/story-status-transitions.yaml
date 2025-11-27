@@ -319,10 +319,78 @@ transitions:
       guidance: true
     desc: "Architect reviewed, no changes, return to QA"
 
+  # ============================================================================
+  # Layered Change Management Transitions
+  # ============================================================================
+  # These transitions support the four-layer change management system:
+  # Story (SM) → Epic (PO) → Tech (Architect) → Product (PM)
+
+  # SM Course Correction outcomes
+  Any_to_Blocked_via_sm_correction:
+    from: [InProgress, Review, Approved]
+    to: Blocked
+    agent: SM
+    prereq:
+      sm_correction_done: true
+      action: [MODIFY_STORY, CREATE_STORY, SPLIT_STORY]
+      quality_recheck_needed: true
+    desc: "SM modified/created story, needs quality recheck"
+
+  Blocked_to_AwaitingArchReview_via_sm_correction:
+    from: Blocked
+    to: AwaitingArchReview
+    agent: SM
+    prereq:
+      sm_correction_done: true
+      needs_arch_validation: true
+      struct_valid: true
+    desc: "SM correction complete, needs Architect validation"
+
+  # Escalation to higher layers
+  Any_to_Escalated_via_change_management:
+    from: [Blocked, RequiresRevision, InProgress, Review]
+    to: Escalated
+    agent: [SM, PO, Architect]
+    prereq:
+      escalation_needed: true
+      escalation_target: [PO, Architect, PM]
+      change_description: true
+    desc: "Change requires higher layer handling"
+
+  # Return from escalation
+  Escalated_to_Blocked_from_epic_layer:
+    from: Escalated
+    to: Blocked
+    agent: PO
+    prereq:
+      po_correction_done: true
+      cascade_to_sm: true
+      epic_updated: true
+    desc: "PO resolved epic change, SM to update stories"
+
+  Escalated_to_AwaitingArchReview_from_tech_layer:
+    from: Escalated
+    to: AwaitingArchReview
+    agent: Architect
+    prereq:
+      arch_resolution_done: true
+      cascade_to_po_sm: true
+      tech_change_applied: true
+    desc: "Architect resolved tech change, needs revalidation"
+
+  Escalated_to_Blocked_from_product_layer:
+    from: Escalated
+    to: Blocked
+    agent: PM
+    prereq:
+      prd_updated: true
+      cascade_to_architect_po: true
+    desc: "PM updated PRD, cascade to Architect and PO"
+
 # Agent Permissions
 permissions:
   SM:
-    modify: [Blocked, RequiresRevision]
+    modify: [Blocked, RequiresRevision, InProgress, Review, Approved]
     create: true
     init_status: true
     changes:
@@ -334,6 +402,11 @@ permissions:
       - RequiresRevision -> AwaitingTestDesign
       - RequiresRevision -> Approved
       - RequiresRevision -> Blocked
+      # Layered change management
+      - InProgress -> Blocked (via sm_correction)
+      - Review -> Blocked (via sm_correction)
+      - Approved -> Blocked (via sm_correction)
+      - Any -> Escalated (via change_escalation)
   
   Architect:
     modify: [AwaitingArchReview, Escalated]

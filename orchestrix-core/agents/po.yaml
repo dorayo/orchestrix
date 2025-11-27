@@ -70,7 +70,7 @@ commands:
         - "[1] *create-doc {template} — create from template (or list templates)"
         - "[2] *execute-checklist {checklist} — run a checklist (default: workflow/po-master-validation.md)"
         - "[3] *shard — shard PRD and Architecture documents (unified)"
-        - "[4] *correct-course — correct course task"
+        - "[4] *correct-course — handle Epic-level course correction"
         - "[5] *create-epic — create brownfield epic"
         - "[6] *create-story — create user story"
         - "[7] *validate-story-draft {story} — validate a story file"
@@ -101,9 +101,13 @@ commands:
         - "Supports both monolith and multi-repository projects"
         - "Reference: data/epic-story-mapping-schema.yaml for multi-repo epic format"
   - correct-course:
-      description: "Execute the 'correct-course.md' task."
+      description: "Handle Epic-level course correction. Supports: modify, create, split, merge, or deprecate epics."
       behavior:
-        - "Run dependency task 'correct-course.md'."
+        - "Run dependency task 'po-correct-course.md'."
+      params:
+        epic_id:
+          required: false
+          description: "Epic ID if known (e.g., 5). Analyzes current context if omitted."
   - create-epic:
       description: "Create epic for brownfield projects."
       behavior:
@@ -128,7 +132,8 @@ commands:
 dependencies:
   tasks:
     - po-shard-documents.md
-    - correct-course.md
+    - po-correct-course.md
+    - utils/classify-change-level.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
     - validate-next-story.md
@@ -137,5 +142,8 @@ dependencies:
   checklists:
     - workflow/po-master-validation.md
     - workflow/change-navigation.md
+  decisions:
+    - change-level-classification.yaml
+    - po-change-escalation.yaml
   data:
     - epic-story-mapping-schema.yaml

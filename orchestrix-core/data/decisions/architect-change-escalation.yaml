@@ -1,0 +1,167 @@
+# Architect Change Escalation Decision
+# Determines if Architect should escalate a Tech-level change to Product layer.
+
+decision_type: architect-change-escalation
+
+description: >
+  After Architect analyzes a technical change request, this decision determines
+  whether the change can be resolved with a technical solution or needs escalation
+  to Product (PM) layer for PRD/feature changes.
+
+version: "1.0.0"
+
+inputs:
+  - name: analysis_result
+    type: object
+    required: true
+    properties:
+      requires_feature_change:
+        type: boolean
+        description: True if change requires feature definition modification
+      requires_scope_reduction:
+        type: boolean
+        description: True if change requires reducing project scope
+      mvp_viability_affected:
+        type: boolean
+        description: True if MVP viability is at risk
+      resolvable_with_tech_solution:
+        type: boolean
+        description: True if a pure technical solution exists
+      architecture_components_affected:
+        type: array
+        items:
+          type: string
+        description: List of architecture components impacted
+      api_contracts_affected:
+        type: boolean
+        description: True if API contracts need modification
+      database_schema_affected:
+        type: boolean
+        description: True if database schema needs modification
+
+rules:
+  # Rule 1: Feature change required - escalate to PM
+  - name: escalate_feature_change
+    priority: 1
+    condition: >
+      analysis_result.requires_feature_change == true
+    result:
+      decision: ESCALATE_TO_PRODUCT
+      handoff_to: PM
+      handoff_command: "*revise-prd"
+    reasoning: "Feature definition change required, escalating to PM"
+
+  # Rule 2: Scope reduction required - escalate to PM
+  - name: escalate_scope_reduction
+    priority: 2
+    condition: >
+      analysis_result.requires_scope_reduction == true
+    result:
+      decision: ESCALATE_TO_PRODUCT
+      handoff_to: PM
+      handoff_command: "*revise-prd"
+    reasoning: "Scope reduction required, PM must approve"
+
+  # Rule 3: MVP viability at risk - escalate to PM
+  - name: escalate_mvp_risk
+    priority: 3
+    condition: >
+      analysis_result.mvp_viability_affected == true
+    result:
+      decision: ESCALATE_TO_PRODUCT
+      handoff_to: PM
+      handoff_command: "*revise-prd"
+    reasoning: "MVP viability at risk, PM decision required"
+
+  # Rule 4: Technical solution exists - handle in tech layer
+  - name: handle_in_tech
+    priority: 4
+    condition: >
+      analysis_result.resolvable_with_tech_solution == true
+      AND analysis_result.requires_feature_change == false
+      AND analysis_result.requires_scope_reduction == false
+      AND analysis_result.mvp_viability_affected == false
+    result:
+      decision: HANDLE_IN_TECH
+      next_action: update_architecture_and_handoff
+      downstream_handoffs:
+        - to: PO
+          command: "*correct-course"
+          context: "Architecture updated, epic/story adjustment may be needed"
+        - to: SM
+          command: "*correct-course"
+          context: "Architecture updated, story revision may be needed"
+    reasoning: "Technical solution available, updating architecture"
+
+  # Rule 5: Default - handle in tech with downstream updates
+  - name: default_handle
+    priority: 5
+    condition: "true"
+    result:
+      decision: HANDLE_IN_TECH
+      next_action: update_architecture_and_handoff
+    reasoning: "Defaulting to technical resolution"
+
+output:
+  decision:
+    type: enum
+    values: [HANDLE_IN_TECH, ESCALATE_TO_PRODUCT]
+    description: Escalation decision
+
+  handoff_to:
+    type: string
+    enum: [PM]
+    description: Target agent for escalation (if escalating)
+
+  handoff_command:
+    type: string
+    description: Command to include in HANDOFF message
+
+  handoff_context:
+    type: string
+    description: Context to pass to target agent
+
+  next_action:
+    type: string
+    description: Next action if handling locally
+
+  downstream_handoffs:
+    type: array
+    items:
+      type: object
+      properties:
+        to:
+          type: string
+          enum: [PO, SM, DEV]
+        command:
+          type: string
+        context:
+          type: string
+    description: Downstream agents to notify after resolution
+
+handoff_templates:
+  ESCALATE_TO_PRODUCT: >
+    🎯 HANDOFF TO PM: *revise-prd
+    Context: {handoff_context}
+    Technical Analysis: {technical_analysis_summary}
+    Feature impact: {feature_impact}
+    MVP risk: {mvp_viability_affected}
+    Reason: {reasoning}
+
+  DOWNSTREAM_TO_PO: >
+    🎯 HANDOFF TO PO: *correct-course
+    Context: Architecture updated - {architecture_change_summary}
+    Components affected: {architecture_components_affected}
+    Action needed: Review epic/story alignment with updated architecture
+
+  DOWNSTREAM_TO_SM: >
+    🎯 HANDOFF TO SM: *correct-course {story_id}
+    Context: Architecture updated - {architecture_change_summary}
+    Story impact: {story_impact_description}
+    Action needed: Update story to align with architecture changes
+
+metadata:
+  owner: Architect Agent
+  usage_context: >
+    Called at the end of architect-resolve-change.md Step 6 to determine
+    if change should be escalated or handled with downstream notifications.

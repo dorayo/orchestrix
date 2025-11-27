@@ -64,14 +64,19 @@ commands:
       description: "Display a numbered list of commands and wait for a selection."
       output_format:
         - "[1] *create-doc {template} — generate doc via template"
-        - "[2] *doc-out — output current document"
-        - "[3] *yolo — toggle Yolo Mode"
-        - "[4] *explain — explain last action"
-        - "[5] *exit — exit persona"
+        - "[2] *revise-prd — handle PRD-level changes from description"
+        - "[3] *doc-out — output current document"
+        - "[4] *yolo — toggle Yolo Mode"
+        - "[5] *explain — explain last action"
+        - "[6] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
         - "Run dependency task 'create-doc.md' with the given template file."
+  - revise-prd:
+      description: "Handle Product-level changes requiring PRD revision, MVP scope adjustment, or feature redefinition."
+      behavior:
+        - "Run dependency task 'pm-revise-prd.md'."
   - doc-out:
       description: "Output the full document to the current destination file."
   - yolo:
@@ -84,7 +89,7 @@ commands:
 dependencies:
   tasks:
     - create-doc.md
-    - correct-course.md
+    - pm-revise-prd.md
     - create-deep-research-prompt.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
@@ -95,5 +100,7 @@ dependencies:
   checklists:
     - workflow/pm-validation.md
     - workflow/change-navigation.md
+  decisions:
+    - change-level-classification.yaml
   data:
     - technical-preferences.md
