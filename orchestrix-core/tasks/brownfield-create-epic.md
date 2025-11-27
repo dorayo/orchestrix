@@ -66,11 +66,25 @@ If scope exceeds 3 stories or requires architectural planning, use full brownfie
 
 ### 3. Generate Epic YAML File
 
-**Step 3.1: Determine Epic ID**
+**Step 3.1: Load Configuration & Determine Epic Location**
 
-Read `{root}/core-config.yaml` to get `prdShardedLocation` (default: `docs/prd`).
+Read `{root}/core-config.yaml`.
 
-List existing Epic files: `{prdShardedLocation}/epic-*.yaml`
+**Extract**:
+- `prdShardedLocation`: Epic YAML location (relative path, default: `docs/prd`)
+- `project.mode`: monolith | multi-repo
+- `project.multi_repo.role`: product | backend | frontend | ios | android
+- `project.multi_repo.product_repo_path`: Path to product repo (if multi-repo)
+
+**Resolve Epic Location**:
+```
+If project.mode = multi-repo AND role != product:
+  epic_location = {product_repo_path}/{prdShardedLocation}
+Else:
+  epic_location = {prdShardedLocation}
+```
+
+List existing Epic files: `{epic_location}/epic-*.yaml`
 
 ```python
 existing_ids = [extract number from epic-{n}-*.yaml filenames]
@@ -120,18 +134,18 @@ Generate title slug from Epic title:
 title_slug = slugify(epic_title)  # e.g., "Payment Integration" → "payment-integration"
 ```
 
-Ensure `{prdShardedLocation}` directory exists, create if not:
+Ensure `{epic_location}` directory exists, create if not:
 ```bash
-mkdir -p {prdShardedLocation}
+mkdir -p {epic_location}
 ```
 
-Write to: `{prdShardedLocation}/epic-{next_epic_id}-{title_slug}.yaml`
+Write to: `{epic_location}/epic-{next_epic_id}-{title_slug}.yaml`
 
 **Step 3.4: Verify Output**
 
 ```bash
-if [ -f "{prdShardedLocation}/epic-{next_epic_id}-{title_slug}.yaml" ]; then
-  echo "✅ Epic YAML file created: {prdShardedLocation}/epic-{next_epic_id}-{title_slug}.yaml"
+if [ -f "{epic_location}/epic-{next_epic_id}-{title_slug}.yaml" ]; then
+  echo "✅ Epic YAML file created: {epic_location}/epic-{next_epic_id}-{title_slug}.yaml"
 else
   echo "❌ Failed to create Epic YAML file"
   exit 1
@@ -156,7 +170,7 @@ fi
 - [ ] Stories are properly scoped
 - [ ] Success criteria are measurable
 - [ ] Dependencies are identified
-- [ ] Epic YAML file created at `{prdShardedLocation}/epic-{n}-{title-slug}.yaml`
+- [ ] Epic YAML file created at `{epic_location}/epic-{n}-{title-slug}.yaml`
 
 ### 5. Handoff
 
@@ -164,7 +178,7 @@ fi
 ✅ BROWNFIELD EPIC CREATED
 
 Epic: {epic_id} - {Epic Title}
-File: {prdShardedLocation}/epic-{epic_id}-{title_slug}.yaml
+File: {epic_location}/epic-{epic_id}-{title_slug}.yaml
 Stories:
   - {story_id_1}: {story_title_1}
   - {story_id_2}: {story_title_2}

@@ -33,10 +33,20 @@ Read: `{proposal_path}`
 Read: `{root}/core-config.yaml`
 
 **Extract**:
-- `prdShardedLocation`: Epic YAML location
+- `prdShardedLocation`: Epic YAML location (relative path)
 - `project.mode`: monolith | multi-repo
+- `project.multi_repo.role`: product | backend | frontend | ios | android
+- `project.multi_repo.product_repo_path`: Path to product repo (if multi-repo)
 
-Read all Epic files: `{prdShardedLocation}/epic-*.yaml`
+**Resolve Epic Location**:
+```
+If project.mode = multi-repo AND role != product:
+  epic_location = {product_repo_path}/{prdShardedLocation}
+Else:
+  epic_location = {prdShardedLocation}
+```
+
+Read all Epic files: `{epic_location}/epic-*.yaml`
 
 **Build**:
 - `epic_list`: All existing epics with titles and story counts
@@ -79,10 +89,10 @@ Read all Epic files: `{prdShardedLocation}/epic-*.yaml`
    - ADD_TO_EPIC: Epic ID aligned with proposal scope
    - ADD_TO_EPIC_0: `0`
 
-2. Read target Epic file: `{prdShardedLocation}/epic-{target_epic_id}-*.yaml`
+2. Read target Epic file: `{epic_location}/epic-{target_epic_id}-*.yaml`
 
 3. **IF Epic 0 not exists AND target = 0**:
-   Create Epic 0 file: `{prdShardedLocation}/epic-0-technical-debt.yaml`
+   Create Epic 0 file: `{epic_location}/epic-0-technical-debt.yaml`
    ```yaml
    epic_id: 0
    title: "Technical Foundation & Debt"
@@ -115,7 +125,7 @@ Read all Epic files: `{prdShardedLocation}/epic-*.yaml`
 
 1. Calculate `new_epic_id`: `max_epic_id + 1`
 
-2. Generate Epic file: `{prdShardedLocation}/epic-{new_epic_id}-{slug}.yaml`
+2. Generate Epic file: `{epic_location}/epic-{new_epic_id}-{slug}.yaml`
    ```yaml
    epic_id: {new_epic_id}
    title: "{proposal.title}"

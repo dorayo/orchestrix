@@ -35,8 +35,19 @@ Read: `{proposal_path}`
 Read: `{root}/core-config.yaml`
 
 **Extract**:
-- `devStoryLocation`: Story file destination
-- `prdShardedLocation`: Epic YAML location
+- `devStoryLocation`: Story file destination (local)
+- `prdShardedLocation`: Epic YAML location (relative path)
+- `project.mode`: monolith | multi-repo
+- `project.multi_repo.role`: product | backend | frontend | ios | android
+- `project.multi_repo.product_repo_path`: Path to product repo (if multi-repo)
+
+**Resolve Epic Location**:
+```
+If project.mode = multi-repo AND role != product:
+  epic_location = {product_repo_path}/{prdShardedLocation}
+Else:
+  epic_location = {prdShardedLocation}
+```
 
 ---
 
@@ -46,11 +57,11 @@ Read: `{root}/core-config.yaml`
 
 **ELSE**: Set `epic_id = "0"` (Technical Debt Epic)
 
-Read Epic file: `{prdShardedLocation}/epic-{epic_id}-*.yaml`
+Read Epic file: `{epic_location}/epic-{epic_id}-*.yaml`
 
 **IF Epic 0 not exists**:
 
-Create file: `{prdShardedLocation}/epic-0-technical-debt.yaml`
+Create file: `{epic_location}/epic-0-technical-debt.yaml`
 ```yaml
 epic_id: 0
 title: "Technical Foundation & Debt"
