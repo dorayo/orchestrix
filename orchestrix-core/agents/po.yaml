@@ -147,7 +147,7 @@ dependencies:
     - po-shard-documents.md
     - po-correct-course.md
     - po-review-tech-proposal.md
-    - utils/classify-change-level.md
+    - tasks/utils/classify-change-level.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
     - validate-next-story.md

@@ -98,7 +98,7 @@ dependencies:
     - revise-story-from-architect-feedback.md
     - sm-correct-course.md
     - sm-create-tech-story.md
-    - utils/classify-change-level.md
+    - tasks/utils/classify-change-level.md
     - frontend-user-confirmation.md
     - make-decision.md
     - init-cumulative-registries.md

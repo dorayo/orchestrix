@@ -26,7 +26,7 @@ This task was a unified change management workflow that guided structured respon
 
 ## Migration Guide
 
-1. When receiving a change description, use `utils/classify-change-level.md` to determine the appropriate layer
+1. When receiving a change description, use `tasks/utils/classify-change-level.md` to determine the appropriate layer
 2. Route to the layer-specific task based on classification result
 3. Each layer can escalate to higher layers if needed
 4. Higher layers cascade changes down after resolution

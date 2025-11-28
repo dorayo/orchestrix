@@ -213,7 +213,7 @@ dependencies:
     - architect-review-story.md
     - review-story-technical-accuracy.md
     - architect-resolve-change.md
-    - utils/classify-change-level.md
+    - tasks/utils/classify-change-level.md
   templates:
     - architecture-tmpl.yaml
     - front-end-architecture-tmpl.yaml

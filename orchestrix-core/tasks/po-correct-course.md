@@ -18,7 +18,7 @@ Escalate to higher layers if architecture or PRD changes detected.
 
 ### Step 1: Classify Change Level
 
-Execute: `utils/classify-change-level.md`
+Execute: `tasks/utils/classify-change-level.md`
 
 ```yaml
 Input:
