@@ -23,9 +23,9 @@ architecture:
   storyReviewsLocation: docs/architecture/story-reviews
 customTechnicalDocuments: null
 devLoadAlwaysFiles:
-  - docs/architecture/coding-standards.md
-  - docs/architecture/tech-stack.md
-  - docs/architecture/source-tree.md
+  - docs/architecture/*coding-standards.md
+  - docs/architecture/*tech-stack.md
+  - docs/architecture/*source-tree.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
 verticalSliceStrategy: true
