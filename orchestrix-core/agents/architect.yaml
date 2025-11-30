@@ -205,7 +205,6 @@ dependencies:
     - create-frontend-architecture.md
     - create-mobile-architecture.md
     - aggregate-system-analysis.md
-    - aggregate-system-architecture.md
     - extract-api-contracts.md
     - create-deep-research-prompt.md
     - document-project.md
@@ -213,7 +212,7 @@ dependencies:
     - architect-review-story.md
     - review-story-technical-accuracy.md
     - architect-resolve-change.md
-    - tasks/utils/classify-change-level.md
+    - utils/classify-change-level.md
   templates:
     - architecture-tmpl.yaml
     - front-end-architecture-tmpl.yaml

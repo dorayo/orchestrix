@@ -1,8 +1,0 @@
-name: orchestrix-2d-phaser-game-dev
-version: 1.1.0
-short-title: 2D game development with Phaser 3 & TypeScript
-description: >-
-  2D Game Development expansion pack for Orchestrix - Phaser 3 & TypeScript
-  focused
-author: Orchestrix
-slashPrefix: orchestrix2dp

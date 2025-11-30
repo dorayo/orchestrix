@@ -1,9 +1,0 @@
-name: orchestrix-infrastructure-devops
-version: 1.1.0
-short-title: Infrastructure and DevOps capabilities
-description: >-
-  This expansion pack extends Orchestrix with comprehensive infrastructure and
-  DevOps capabilities. It's designed for teams that need to define, implement,
-  and manage cloud infrastructure alongside their application development.
-author: Orchestrix
-slashPrefix: orchestrixInfraDevOps

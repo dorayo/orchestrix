@@ -55,10 +55,6 @@ commands:
       description: "Comprehensive self-review before marking Review (MANDATORY)"
       task: dev-self-review.md
 
-  - validate-impl:
-      description: "Validate implementation against architecture standards"
-      task: validate-implementation.md
-
   - explain:
       description: "Explain approach, decisions, trade-offs, next steps"
 
@@ -76,7 +72,6 @@ dependencies:
   tasks:
     - develop-story.md
     - dev-self-review.md
-    - validate-implementation.md
     - apply-qa-fixes.md
     - make-decision.md
     - validate-next-story.md

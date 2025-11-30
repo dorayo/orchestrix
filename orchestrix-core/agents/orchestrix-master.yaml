@@ -139,5 +139,4 @@ dependencies:
     - workflow/change-navigation.md
     - workflow/pm-validation.md
     - workflow/po-master-validation.md
-    - completion/story-dod-checklist.md
     - scoring/sm-story-quality.md

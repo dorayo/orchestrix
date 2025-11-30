@@ -73,7 +73,7 @@ commands:
       task: qa-gate.md
   - nfr-assess:
       description: Validate non-functional requirements
-      task: nfr-assess.md
+      task: nfr_assess.md
   - review:
       description: Adaptive, risk-aware comprehensive review
       task: qa-review-story.md
@@ -96,7 +96,7 @@ dependencies:
   tasks:
     - finalize-story-commit.md
     - qa-gate.md
-    - nfr-assess.md
+    - nfr_assess.md
     - qa-review-story.md
     - risk-profile.md
     - test-design.md
