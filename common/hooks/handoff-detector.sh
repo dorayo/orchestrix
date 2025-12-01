@@ -202,6 +202,61 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
         else
             log "Command '$detected_command' from agent '$current_agent' has no known target"
         fi
+
+    # Pattern C: NEXT STEP format (🎯 NEXT STEP: ... *command)
+    # Used to match QA completion prompt format
+    elif [[ "$last_20_lines" =~ 🎯[[:space:]]*NEXT[[:space:]]+STEP:.*\*([a-z0-9-]+) ]]; then
+        detected_command="${BASH_REMATCH[1]}"
+
+        log "Detected NEXT STEP format: *$detected_command"
+
+        # Get target agent based on command + current agent
+        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+        if [[ -n "$implicit_target" ]]; then
+            target_agent="$implicit_target"
+            raw_command="$detected_command"
+            log "✓ Matched Pattern C: NEXT STEP format → $implicit_target"
+        else
+            log "Command '$detected_command' from agent '$current_agent' has no known target"
+        fi
+
+    # Pattern D: Plain command with story ID at end of line (review 2.2)
+    # Used to match commands without * prefix
+    elif [[ "$last_20_lines" =~ ([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+)[[:space:]]*$ ]]; then
+        detected_command="${BASH_REMATCH[1]}"
+        detected_story_id="${BASH_REMATCH[2]}"
+
+        log "Detected plain command with story ID: $detected_command $detected_story_id"
+
+        # Get target agent based on command + current agent
+        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+        if [[ -n "$implicit_target" ]]; then
+            target_agent="$implicit_target"
+            raw_command="${detected_command} ${detected_story_id}"
+            log "✓ Matched Pattern D: Plain command with story ID → $implicit_target"
+        else
+            log "Command '$detected_command' from agent '$current_agent' has no known target"
+        fi
+
+    # Pattern E: Plain command without story ID at end of line (draft)
+    # Used to match commands without * prefix and no story ID
+    elif [[ "$last_20_lines" =~ (draft|review|develop-story|revise-story|revise|test-design|apply-qa-fixes)[[:space:]]*$ ]]; then
+        detected_command="${BASH_REMATCH[1]}"
+
+        log "Detected plain command without story ID: $detected_command"
+
+        # Get target agent based on command + current agent
+        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+        if [[ -n "$implicit_target" ]]; then
+            target_agent="$implicit_target"
+            raw_command="$detected_command"
+            log "✓ Matched Pattern E: Plain command without story ID → $implicit_target"
+        else
+            log "Command '$detected_command' from agent '$current_agent' has no known target"
+        fi
     else
         log "No implicit command pattern found in last 20 lines"
     fi
@@ -251,13 +306,22 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     log "Step 1: Sending command to target agent ($target_agent) in window $target_window"
     log "  Command: $command"
 
-    # Send command and press Enter to submit
-    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null && \
-       tmux send-keys -t "$SESSION_NAME:$target_window" "Enter" 2>/dev/null; then
-        log "✓ SUCCESS: Command sent to $target_agent"
-        echo "✅ HANDOFF: $current_agent → $target_agent" >&2
+    # Send command text first
+    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null; then
+        # Wait for Claude Code input box to stabilize (prevent race condition)
+        sleep 1
+
+        # Send Enter key to execute command
+        if tmux send-keys -t "$SESSION_NAME:$target_window" "Enter" 2>/dev/null; then
+            log "✓ SUCCESS: Command sent to $target_agent"
+            echo "✅ HANDOFF: $current_agent → $target_agent" >&2
+        else
+            log "ERROR: Failed to send Enter key"
+            echo "❌ Failed to send Enter" >&2
+            exit 0
+        fi
     else
-        log "ERROR: Failed to send command via tmux"
+        log "ERROR: Failed to send command text"
         echo "❌ Failed to send command" >&2
         exit 0
     fi
