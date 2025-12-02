@@ -8,10 +8,14 @@
 
 ## Inputs
 
-**From Environment**:
-- `CONFIG_PATH.devDocLocation` - Location of dev documentation
-- `CONFIG_PATH.project.mode` - Project mode (monolith | multi-repo)
-- `CONFIG_PATH.project.multi_repo.repository_id` - Current repository ID (for multi-repo)
+**From core-config.yaml**:
+- `dev.devLogLocation` - Location of dev logs (default: `docs/dev/logs`)
+- `project.mode` - Project mode (monolith | multi-repo)
+- `project.multi_repo.repository_id` - Current repository ID (for multi-repo)
+
+**Derived Path**:
+- `devDocLocation` = parent directory of `dev.devLogLocation` (default: `docs/dev`)
+  - Example: If `devLogLocation: docs/dev/logs`, then `devDocLocation: docs/dev`
 
 **Registry File Locations**:
 ```
@@ -36,10 +40,99 @@ ls {devDocLocation}/models-registry.md
 ```
 
 **If registries do NOT exist**:
-- This is the first story in the project OR registries need initialization
-- Create placeholder registries with empty content
-- Log warning: "⚠️ Cumulative registries not found. This may be the first story. Empty registries created."
-- Continue execution (do not halt)
+
+This is the first story in the project. Initialize empty registries using templates:
+
+1. **Ensure directory exists**: Create `{devDocLocation}` if it doesn't exist
+
+2. **Create empty database-registry.md**:
+   ```markdown
+   # Database Cumulative Registry
+
+   > Auto-generated on first story creation
+   > Updated by Dev Agent after each story completion
+
+   ## Registry Metadata
+
+   **Last Updated**: {current_timestamp}
+   **Total Stories Tracked**: 0
+   **Repository**: {repository_id from core-config.yaml}
+   **Mode**: {project.mode from core-config.yaml}
+
+   ## Database Tables Registry
+
+   _No tables tracked yet. This registry will be populated as stories are completed._
+
+   ## Schema Evolution Timeline
+
+   _No timeline entries yet._
+   ```
+
+3. **Create empty api-registry.md**:
+   ```markdown
+   # API Cumulative Registry
+
+   > Auto-generated on first story creation
+   > Updated by Dev Agent after each story completion
+
+   ## Registry Metadata
+
+   **Last Updated**: {current_timestamp}
+   **Total Stories Tracked**: 0
+   **Total Endpoints**: 0
+   **Repository**: {repository_id from core-config.yaml}
+   **Mode**: {project.mode from core-config.yaml}
+
+   ## API Endpoints Registry
+
+   _No endpoints tracked yet. This registry will be populated as stories are completed._
+
+   ## Endpoints by Story
+
+   _No timeline entries yet._
+   ```
+
+4. **Create empty models-registry.md**:
+   ```markdown
+   # Models & Types Cumulative Registry
+
+   > Auto-generated on first story creation
+   > Updated by Dev Agent after each story completion
+
+   ## Registry Metadata
+
+   **Last Updated**: {current_timestamp}
+   **Total Stories Tracked**: 0
+   **Total Models**: 0
+   **Repository**: {repository_id from core-config.yaml}
+   **Mode**: {project.mode from core-config.yaml}
+
+   ## TypeScript Interfaces
+
+   _No interfaces tracked yet._
+
+   ## Zod Validation Schemas
+
+   _No Zod schemas tracked yet._
+
+   ## Enums & Constants
+
+   _No enums tracked yet._
+
+   ## Models by Story
+
+   _No timeline entries yet._
+   ```
+
+5. **Log creation**: Output:
+   ```
+   📁 Cumulative registries initialized (first story in project)
+   ✅ Created: {devDocLocation}/database-registry.md
+   ✅ Created: {devDocLocation}/api-registry.md
+   ✅ Created: {devDocLocation}/models-registry.md
+   ```
+
+6. **Continue execution** with empty context (do not halt)
 
 **If registries exist**:
 - Proceed to Step 2
