@@ -113,6 +113,7 @@ fi
 # Pattern 6: Implicit command detection - check last 20 lines for command patterns
 # This catches cases where agent outputs command without explicit "HANDOFF TO" marker
 # Note: We check last 20 lines because Claude Code UI may add separator lines after the command
+# IMPORTANT: Use line-by-line matching because $ in bash regex matches end of STRING, not end of LINE
 if [[ -z "$target_agent" || -z "$raw_command" ]]; then
     log "No explicit HANDOFF found, checking last 20 lines for implicit commands..."
 
@@ -168,7 +169,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
         esac
     }
 
-    # Pattern A: Command WITH story ID (*review 5.3)
+    # Pattern A: Command WITH story ID (*review 5.3) - non-anchored, works on multi-line
     if [[ "$last_20_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
         detected_command="${BASH_REMATCH[1]}"
         detected_story_id="${BASH_REMATCH[2]}"
@@ -182,23 +183,6 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
             target_agent="$implicit_target"
             raw_command="${detected_command} ${detected_story_id}"
             log "✓ Matched Pattern A: Implicit command with story ID → $implicit_target"
-        else
-            log "Command '$detected_command' from agent '$current_agent' has no known target"
-        fi
-
-    # Pattern B: Command WITHOUT story ID (*draft, *status, etc.)
-    elif [[ "$last_20_lines" =~ \*([a-z0-9-]+)[[:space:]]*$ ]]; then
-        detected_command="${BASH_REMATCH[1]}"
-
-        log "Detected implicit command without story ID: *$detected_command"
-
-        # Get target agent based on command + current agent
-        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-        if [[ -n "$implicit_target" ]]; then
-            target_agent="$implicit_target"
-            raw_command="$detected_command"
-            log "✓ Matched Pattern B: Implicit command without story ID → $implicit_target"
         else
             log "Command '$detected_command' from agent '$current_agent' has no known target"
         fi
@@ -221,56 +205,86 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
             log "Command '$detected_command' from agent '$current_agent' has no known target"
         fi
 
-    # Pattern D: Plain command with story ID at end of line (review 2.2)
-    # Used to match commands without * prefix
-    # 添加 [[:space:]]* 支持前导空格（如 "  review 3.2"）
-    elif [[ "$last_20_lines" =~ [[:space:]]*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+)[[:space:]]*$ ]]; then
-        detected_command="${BASH_REMATCH[1]}"
-        detected_story_id="${BASH_REMATCH[2]}"
-
-        log "Detected plain command with story ID: $detected_command $detected_story_id"
-
-        # Get target agent based on command + current agent
-        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-        if [[ -n "$implicit_target" ]]; then
-            target_agent="$implicit_target"
-            raw_command="${detected_command} ${detected_story_id}"
-            log "✓ Matched Pattern D: Plain command with story ID → $implicit_target"
-        else
-            log "Command '$detected_command' from agent '$current_agent' has no known target"
-        fi
-
-    # Pattern E: Plain command with optional story ID at end of line (draft, review 3.2)
-    # Used to match commands without * prefix, supports optional story ID as fallback
-    # 添加 [[:space:]]* 支持前导空格，添加可选 story ID 匹配作为 Pattern D 的 fallback
-    elif [[ "$last_20_lines" =~ [[:space:]]*(draft|review|develop-story|revise-story|revise|test-design|apply-qa-fixes)([[:space:]]+([0-9]+\.[0-9]+))?[[:space:]]*$ ]]; then
-        detected_command="${BASH_REMATCH[1]}"
-        detected_story_id="${BASH_REMATCH[3]}"  # 可选的 story ID
-
-        if [[ -n "$detected_story_id" ]]; then
-            log "Detected plain command with optional story ID: $detected_command $detected_story_id"
-        else
-            log "Detected plain command without story ID: $detected_command"
-        fi
-
-        # Get target agent based on command + current agent
-        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-        if [[ -n "$implicit_target" ]]; then
-            target_agent="$implicit_target"
-            if [[ -n "$detected_story_id" ]]; then
-                raw_command="${detected_command} ${detected_story_id}"
-                log "✓ Matched Pattern E: Plain command with optional story ID → $implicit_target"
-            else
-                raw_command="$detected_command"
-                log "✓ Matched Pattern E: Plain command without story ID → $implicit_target"
-            fi
-        else
-            log "Command '$detected_command' from agent '$current_agent' has no known target"
-        fi
     else
-        log "No implicit command pattern found in last 20 lines"
+        # ========== LINE-BY-LINE MATCHING ==========
+        # For patterns that need end-of-line anchoring, we must iterate line by line
+        # because bash regex $ matches end of STRING, not end of LINE
+        log "Checking line-by-line for plain command patterns..."
+
+        # Use reverse order to get the most recent command first
+        while IFS= read -r line; do
+            # Skip empty lines and lines with only whitespace
+            [[ -z "${line// /}" ]] && continue
+
+            # Skip Claude Code UI elements (spinner, prompt lines, etc.)
+            [[ "$line" =~ ^[·✽✳●○◐◑◒◓▸▹►▻] ]] && continue
+            [[ "$line" =~ ^[─━═┈┉┄┅] ]] && continue
+            [[ "$line" =~ "INSERT" ]] && continue
+            [[ "$line" =~ "bypass permissions" ]] && continue
+            [[ "$line" =~ "esc to interrupt" ]] && continue
+            [[ "$line" =~ "running stop hooks" ]] && continue
+
+            # Pattern D: Plain command with story ID (review 3.3)
+            # Must be on its own line, with optional leading/trailing whitespace
+            if [[ "$line" =~ ^[[:space:]]*(draft|review|develop-story|revise-story|revise|test-design|apply-qa-fixes)[[:space:]]+([0-9]+\.[0-9]+)[[:space:]]*$ ]]; then
+                detected_command="${BASH_REMATCH[1]}"
+                detected_story_id="${BASH_REMATCH[2]}"
+
+                log "Detected plain command with story ID: $detected_command $detected_story_id"
+
+                # Get target agent based on command + current agent
+                implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+                if [[ -n "$implicit_target" ]]; then
+                    target_agent="$implicit_target"
+                    raw_command="${detected_command} ${detected_story_id}"
+                    log "✓ Matched Pattern D: Plain command with story ID → $implicit_target"
+                    break
+                else
+                    log "Command '$detected_command' from agent '$current_agent' has no known target"
+                fi
+
+            # Pattern E: Plain command without story ID (draft, review)
+            elif [[ "$line" =~ ^[[:space:]]*(draft|review|develop-story|revise-story|revise|test-design|apply-qa-fixes)[[:space:]]*$ ]]; then
+                detected_command="${BASH_REMATCH[1]}"
+
+                log "Detected plain command without story ID: $detected_command"
+
+                # Get target agent based on command + current agent
+                implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+                if [[ -n "$implicit_target" ]]; then
+                    target_agent="$implicit_target"
+                    raw_command="$detected_command"
+                    log "✓ Matched Pattern E: Plain command without story ID → $implicit_target"
+                    break
+                else
+                    log "Command '$detected_command' from agent '$current_agent' has no known target"
+                fi
+
+            # Pattern B: Command WITHOUT story ID with * prefix (*draft)
+            elif [[ "$line" =~ ^[[:space:]]*\*([a-z0-9-]+)[[:space:]]*$ ]]; then
+                detected_command="${BASH_REMATCH[1]}"
+
+                log "Detected *command without story ID: *$detected_command"
+
+                # Get target agent based on command + current agent
+                implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
+
+                if [[ -n "$implicit_target" ]]; then
+                    target_agent="$implicit_target"
+                    raw_command="$detected_command"
+                    log "✓ Matched Pattern B: *command without story ID → $implicit_target"
+                    break
+                else
+                    log "Command '$detected_command' from agent '$current_agent' has no known target"
+                fi
+            fi
+        done <<< "$last_20_lines"
+
+        if [[ -z "$target_agent" || -z "$raw_command" ]]; then
+            log "No implicit command pattern found in last 20 lines"
+        fi
     fi
 fi
 
