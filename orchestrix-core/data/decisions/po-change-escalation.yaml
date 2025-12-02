@@ -34,6 +34,19 @@ inputs:
         type: string
         enum: [MODIFY_EPIC, CREATE_EPIC, SPLIT_EPIC, MERGE_EPICS, DEPRECATE_EPIC, REORDER_EPICS]
         description: Type of action being performed
+      story_changes:
+        type: array
+        description: List of story-level changes within the epic
+        items:
+          type: object
+          properties:
+            story_id:
+              type: string
+            change_type:
+              type: string
+              enum: [AC_ADD, AC_MODIFY, AC_DELETE, STORY_CREATE, STORY_RESTRUCTURE]
+            story_exists:
+              type: boolean
 
 rules:
   # Rule 1: PRD change or MVP scope affected - escalate to PM
@@ -83,9 +96,26 @@ rules:
       handoff_command: "*revise-prd"
     reasoning: "Epic structure change affects multiple epics, PM should update PRD"
 
-  # Rule 5: Resolvable within epic scope
-  - name: handle_in_epic
+  # Rule 5: Direct to Dev - Story AC changes only, no structural changes
+  - name: route_to_dev_directly
     priority: 5
+    condition: >
+      analysis_result.resolvable_within_epic == true
+      AND analysis_result.epics_impacted <= 1
+      AND analysis_result.requires_architecture_change == false
+      AND analysis_result.requires_prd_change == false
+      AND analysis_result.mvp_scope_affected == false
+      AND analysis_result.story_changes != null
+      AND ALL(analysis_result.story_changes, item.story_exists == true)
+      AND ALL(analysis_result.story_changes, item.change_type IN [AC_ADD, AC_MODIFY, AC_DELETE])
+    result:
+      decision: ROUTE_TO_DEV
+      next_action: direct_handoff_to_dev
+    reasoning: "Story AC changes only, no structural changes needed, routing directly to Dev"
+
+  # Rule 6: Resolvable within epic scope but needs SM
+  - name: handle_in_epic
+    priority: 6
     condition: >
       analysis_result.resolvable_within_epic == true
       AND analysis_result.epics_impacted <= 1
@@ -95,11 +125,11 @@ rules:
     result:
       decision: HANDLE_IN_EPIC
       next_action: present_proposal_to_user
-    reasoning: "Change is within epic scope, handling locally"
+    reasoning: "Change is within epic scope, needs SM for story creation/restructure"
 
-  # Rule 6: Default - handle in epic
+  # Rule 7: Default - handle in epic
   - name: default_handle
-    priority: 6
+    priority: 7
     condition: "true"
     result:
       decision: HANDLE_IN_EPIC
@@ -109,13 +139,13 @@ rules:
 output:
   decision:
     type: enum
-    values: [HANDLE_IN_EPIC, ESCALATE_TO_TECH, ESCALATE_TO_PRODUCT]
+    values: [HANDLE_IN_EPIC, ESCALATE_TO_TECH, ESCALATE_TO_PRODUCT, ROUTE_TO_DEV]
     description: Escalation decision
 
   handoff_to:
     type: string
-    enum: [ARCHITECT, PM]
-    description: Target agent for escalation (if escalating)
+    enum: [ARCHITECT, PM, DEV, SM]
+    description: Target agent for handoff
 
   handoff_command:
     type: string
@@ -144,6 +174,23 @@ handoff_templates:
     MVP impact: {mvp_scope_affected}
     Epics affected: {epics_impacted}
     Reason: {reasoning}
+
+  ROUTE_TO_DEV: >
+    🎯 HANDOFF TO DEV: *develop-story {first_story_id}
+
+    ## 变更上下文
+    - 来源: {change_source}
+    - 变更类型: Story AC修改
+
+    ## 受影响的Stories（按实现顺序）
+    {story_changes_formatted}
+
+    ## 实现顺序
+    {implementation_order}
+    依赖说明: {dependency_notes}
+
+    ---
+    请先实现 Story {first_story_id}，完成后继续下一个。
 
 metadata:
   owner: PO Agent

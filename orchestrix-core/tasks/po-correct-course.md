@@ -184,27 +184,93 @@ analysis_result:
   mvp_scope_affected: {boolean}
   resolvable_within_epic: {boolean}
   action_type: "{action_type}"
+  story_changes:
+    - story_id: "{story_id}"
+      change_type: "AC_ADD" | "AC_MODIFY" | "AC_DELETE" | "STORY_CREATE" | "STORY_RESTRUCTURE"
+      story_exists: {boolean}
 ```
 
 Execute: `data/decisions/po-change-escalation.yaml`
 
-- **HANDLE_IN_EPIC**: Proceed to Step 7
+- **ROUTE_TO_DEV**: Proceed to Step 7a (direct to Dev)
+- **HANDLE_IN_EPIC**: Proceed to Step 7b (via SM)
 - **ESCALATE_TO_TECH**: Output HANDOFF to Architect and **HALT**
 - **ESCALATE_TO_PRODUCT**: Output HANDOFF to PM and **HALT**
 
-### Step 7: Finalize (if HANDLE_IN_EPIC)
+### Step 7a: Finalize - Direct to Dev (if ROUTE_TO_DEV)
+
+适用条件：所有变更都是对已存在Story的AC修改（增加/修改/删除），无需创建新Story或重构Story结构。
+
+1. Present Sprint Change Proposal to user
+2. Request explicit approval
+3. IF approved:
+   - Apply approved changes to story files
+   - Set affected stories status to `Approved`
+   - Determine implementation order based on story dependencies
+4. Output HANDOFF directly to Dev
+
+**实现顺序判定**：
+- 检查Story间的依赖关系（如Story A的AC引用Story B的输出）
+- 无依赖时按Story ID升序
+- 有依赖时按依赖拓扑排序
+
+### Step 7b: Finalize - Via SM (if HANDLE_IN_EPIC)
+
+适用条件：需要创建新Story，或Story需要重新分解/重构。
 
 1. Present Sprint Change Proposal to user
 2. Request explicit approval
 3. IF approved:
    - Apply approved changes to epic/story files
    - Update PRD epic list if structure changed
-4. Output completion summary with downstream HANDOFFs
+4. Output HANDOFF to SM
 
 ## Output
 
-**Success (handled locally):**
+**Success - Direct to Dev (ROUTE_TO_DEV):**
 ```yaml
+routing: DEV_DIRECT
+action_type: MODIFY_EPIC
+affected_stories:
+  - story_id: "{story_id}"
+    change_type: "AC_ADD" | "AC_MODIFY" | "AC_DELETE"
+    changes:
+      - "{description of AC change}"
+implementation_order: ["{story_id_1}", "{story_id_2}", ...]
+dependency_notes: "{dependency explanation}"
+change_summary: "{Brief description}"
+```
+
+**Downstream HANDOFF to Dev:**
+```
+🎯 HANDOFF TO DEV: *develop-story {first_story_id}
+
+## 变更上下文
+- 来源: PRD修订 → Epic {epic_id} 影响
+- 变更类型: Story AC修改
+
+## 受影响的Stories（按实现顺序）
+1. Story {story_id_1}:
+   - 新增AC: AC-{n}: {description}
+   - 修改AC: AC-{m}: {old_description} → {new_description}
+   - 删除AC: AC-{k}: {description} (已移除)
+
+2. Story {story_id_2}: (依赖 Story {story_id_1})
+   - 新增AC: ...
+
+## 实现顺序
+{story_id_1} → {story_id_2} → ...
+依赖说明: {dependency_notes}
+
+---
+请先实现 Story {first_story_id}，完成后继续下一个。
+```
+
+---
+
+**Success - Via SM (HANDLE_IN_EPIC):**
+```yaml
+routing: VIA_SM
 action_type: {MODIFY_EPIC | CREATE_EPIC | SPLIT_EPIC | MERGE_EPICS | DEPRECATE_EPIC | REORDER_EPICS}
 affected_epics:
   - id: "{epic_id}"
@@ -214,19 +280,17 @@ new_epic_ids: ["{new_id}", ...]
 affected_stories: ["{story_id}", ...]
 prd_updated: {boolean}
 change_summary: "{Brief description}"
-downstream_handoffs:
-  - to: SM
-    command: "*correct-course"
-    context: "Stories need revision after epic change"
 ```
 
-**Downstream HANDOFF example:**
+**Downstream HANDOFF to SM:**
 ```
 🎯 HANDOFF TO SM: *correct-course
 Context: Epic {epic_id} restructured, stories need alignment
 Stories to review: [{story_ids}]
 Action needed: Review and update story references
 ```
+
+---
 
 **Escalate to Architect:**
 ```
