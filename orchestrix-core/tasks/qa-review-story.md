@@ -339,7 +339,15 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 8. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
 
-**CRITICAL VERIFICATION Before Handoff**:
+---
+
+### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
+
+**CRITICAL**: This step is NON-NEGOTIABLE. You MUST output a handoff message as the FINAL output of this task. The handoff command MUST be the absolute last line - no summaries, tips, or explanations after it.
+
+---
+
+### Pre-Handoff Verification
 
 Before outputting handoff message, verify Step 7.2 was executed:
 
@@ -354,36 +362,100 @@ Before outputting handoff message, verify Step 7.2 was executed:
   - Log skip reason in handoff message
   - Suggest manual retry: `*finalize-commit {story_id}`
 
-### Handoff Message Generation
+---
 
-Use template: `{root}/templates/qa-handoff-message-tmpl.yaml`
+### Handoff Message Selection
 
-**Step 8.1: Select Message Template**:
-Determine which template to use based on workflow state:
+Based on workflow state, output ONE of the following messages:
 
-1. **If architecture escalation occurred** (Step 3.1):
-   - Use template: `architecture_escalation`
+---
 
-2. **If Gate = PASS AND Status = Done**:
-   - If `commit_result.status = success`: Use template: `gate_pass_committed`
-   - If `commit_result.status = failed`: Use template: `gate_pass_commit_failed`
-
-3. **If Gate = CONCERNS OR Gate = FAIL**:
-   - Use template: `gate_issues_found`
-
-**Step 8.2: Fill Template Variables**:
-Replace ALL `{{variable}}` placeholders with actual values from:
-- Story metadata (story_id, title, status)
-- Gate decision result (gate_result, quality_score, next_status)
-- Review round data (review_round, issues counts by severity)
-- Commit result (commit_hash OR commit_error OR skip_reason)
-- File paths (review_report_path, gate_file_path)
-
-**Step 8.3: Format Output**:
-Generate the final output following this exact structure:
+#### Scenario A: Architecture Escalation (Step 3.1 triggered)
 
 ```
-{emoji} {TITLE}
+🚨 ARCHITECTURE ESCALATION REQUIRED
+
+Story: {story_id}
+Status: Escalated
+Review Round: {review_round}
+
+Critical architecture concerns detected during QA review.
+
+Issues Found:
+{architecture_issues}
+
+Escalation Reason:
+{escalation_reason}
+
+🎯 HANDOFF TO architect: *review-escalation {story_id}
+```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
+
+---
+
+#### Scenario B: Gate PASS + Status Done + Commit Success
+
+```
+🎉 STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
+
+Story: {story_id}
+Status: Done
+Review Round: {review_round}
+Gate Result: PASS
+Quality Score: {quality_score}/100
+
+All quality checks passed. Code committed successfully.
+
+📦 Git Commit: {commit_hash}
+📊 Review Report: {review_report_path}
+✅ Gate File: {gate_file_path}
+
+Total Issues Found: {total_issues}
+- Critical: {critical_count}
+- High: {high_count}
+- Medium: {medium_count}
+- Low: {low_count}
+
+🎯 HANDOFF TO sm: *draft
+```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
+
+---
+
+#### Scenario C: Gate PASS + Status Done + Commit Failed
+
+```
+⚠️ STORY {story_id} PASSED QA - COMMIT FAILED
+
+Story: {story_id}
+Status: Done
+Gate Result: PASS
+Commit Status: FAILED
+
+Quality gate passed, but git commit failed.
+
+Error: {commit_error}
+
+Quality Summary:
+- Gate: PASS
+- Quality Score: {quality_score}/100
+- Review Report: {review_report_path}
+
+Manual commit retry needed.
+
+🎯 HANDOFF TO qa: *finalize-commit {story_id}
+```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
+
+---
+
+#### Scenario D: Gate CONCERNS or FAIL (Issues Found)
+
+```
+⚠️ QA REVIEW COMPLETE - ISSUES FOUND
 
 Story: {story_id}
 Status: {status}
@@ -391,38 +463,35 @@ Review Round: {review_round}
 Gate Result: {gate_result}
 Quality Score: {quality_score}/100
 
-{body_content}
+Issues detected during QA review. Dev action required.
 
-{handoff_command}
+📊 Review Report: {review_report_path}
+⚠️ Gate File: {gate_file_path}
+
+Issues Breakdown:
+- Critical: {critical_count}
+- High: {high_count}
+- Medium: {medium_count}
+- Low: {low_count}
+
+Top Priority Fixes:
+{top_issues_summary}
+
+🎯 HANDOFF TO dev: *apply-qa-fixes {story_id}
 ```
 
-**CRITICAL RULES**:
-- Handoff command (`🎯 HANDOFF TO...` or `🎯 NEXT STEP...`) MUST be the absolute final line
-- NO additional text, summaries, tips, or explanations after handoff command
-- If handoff is null in template, omit the handoff line entirely
-- Use exact emoji and formatting from template
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
 
-**Example Output (Gate PASS + Committed)**:
-```
-🎉 STORY 1.3 DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
+---
 
-Story: 1.3
-Status: Done
-Review Round: 1
-Gate Result: PASS
-Quality Score: 98/100
+### ❌ FORBIDDEN After Handoff
 
-All quality checks passed. Code committed successfully.
+After outputting the handoff message, you MUST NOT output any of the following:
+- ❌ Summaries or recaps
+- ❌ Tips or recommendations
+- ❌ Questions to the user
+- ❌ Explanations of what was done
+- ❌ Suggestions for next steps (beyond the handoff)
+- ❌ Any text whatsoever
 
-📦 Git Commit: abc123def
-📊 Review Report: docs/qa/reviews/1.3-qa-r1.md
-✅ Gate File: docs/qa/gates/1.3-feature-slug.yml
-
-Total Issues Found: 2
-- Critical: 0
-- High: 0
-- Medium: 1
-- Low: 1
-
-🎯 NEXT STEP: Deploy or start next story via SM *draft
-```
+**The handoff command (`🎯 HANDOFF TO...`) is your FINAL output. STOP IMMEDIATELY after it.**
