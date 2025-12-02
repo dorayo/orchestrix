@@ -66,11 +66,11 @@ Set `next_story_id = {story_id}`, continue to Step 1.
 ```
 If project.mode = multi-repo:
   prd_sharded_location = {product_repo_path}/{prdShardedLocation}
-  architecture_location = {product_repo_path}/docs/architecture
 Else:
   prd_sharded_location = {prdShardedLocation}
-  architecture_location = docs/architecture
 ```
+
+**Note**: Architecture paths are NOT overridden here. The `load-architecture-context.md` utility reads architecture configuration directly from `core-config.yaml` (architectureFile, architectureSharded, architectureShardedLocation).
 
 ---
 
@@ -285,8 +285,12 @@ Execute:
 **Input**:
 ```yaml
 story_type: {from story_definition or epic}
-architecture_location: {from Step 1}
 ```
+
+**Note**: The utility automatically reads architecture paths from `core-config.yaml`. Do NOT pass `architecture_location` - it will be determined by:
+- `architectureSharded`: Whether to use sharded or monolithic mode
+- `architectureFile`: Path for monolithic architecture
+- `architectureShardedLocation`: Path for sharded architecture directory
 
 **Output**: `architecture_context` containing:
 - `tech_stack`: Technology stack content

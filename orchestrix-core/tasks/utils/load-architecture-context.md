@@ -69,24 +69,26 @@ fi
 
 ### Step 2: Load Documents by Story Type
 
+**IMPORTANT**: Use glob pattern `*{document-name}.md` to match files with any prefix (e.g., `3-tech-stack.md`, `frontend-tech-stack.md`).
+
 #### Documents Loaded for All Story Types:
-1. `tech-stack.md` - Technology stack and dependencies
-2. `source-tree.md` - Project structure and file organization
-3. `coding-standards.md` - Code style and conventions
-4. `testing-strategy.md` - Testing approach and frameworks
+1. `*tech-stack.md` - Technology stack and dependencies
+2. `*source-tree.md` - Project structure and file organization
+3. `*coding-standards.md` - Code style and conventions
+4. `*testing-strategy.md` - Testing approach and frameworks
 
 #### Additional Documents for Backend/API Stories:
-5. `data-models.md` - Data structures and entities
-6. `database-schema.md` - Database design and relationships
-7. `backend-architecture.md` - Backend system architecture
-8. `rest-api-spec.md` - API endpoints and contracts
-9. `external-apis.md` - Third-party integrations
+5. `*data-models.md` - Data structures and entities
+6. `*database-schema.md` - Database design and relationships
+7. `*backend-architecture.md` - Backend system architecture
+8. `*rest-api-spec.md` - API endpoints and contracts
+9. `*external-apis.md` - Third-party integrations
 
 #### Additional Documents for Frontend/UI Stories:
-5. `frontend-architecture.md` - Frontend system architecture
-6. `components.md` - UI component library and patterns
-7. `core-workflows.md` - User flows and interactions
-8. `data-models.md` - Frontend data structures
+5. `*frontend-architecture.md` - Frontend system architecture
+6. `*components.md` - UI component library and patterns
+7. `*core-workflows.md` - User flows and interactions
+8. `*data-models.md` - Frontend data structures
 
 #### Documents for Full-Stack Stories:
 - Load all Backend documents (items 1-9)
@@ -95,28 +97,29 @@ fi
 
 **Loading Process:**
 1. Build list of required documents based on story_type
-2. For each document in the list:
-   - Attempt to read document
-   - If found: Parse and extract key information
-   - If not found: Log warning, continue with remaining documents
+2. For each document pattern in the list:
+   - Use glob to find matching file: `ls $ARCHITECTURE_PATH/*{pattern}` (e.g., `*tech-stack.md`)
+   - If exactly one match: Read that file
+   - If multiple matches: Read the first match, log warning about multiple matches
+   - If no match: Log warning, continue with remaining documents
 3. Track which documents were successfully loaded
 4. Track which documents were missing
 
 ### Step 3: Extract Key Information
 
-For each loaded document, extract:
-- **tech-stack.md**: Languages, frameworks, libraries, versions
-- **source-tree.md**: Directory structure, key file locations
-- **coding-standards.md**: Naming conventions, patterns, rules
-- **testing-strategy.md**: Test types, coverage requirements, tools
-- **data-models.md**: Entity definitions, relationships
-- **database-schema.md**: Tables, columns, constraints, indexes
-- **backend-architecture.md**: Services, layers, patterns
-- **rest-api-spec.md**: Endpoints, methods, request/response formats
-- **external-apis.md**: Third-party services, authentication, endpoints
-- **frontend-architecture.md**: State management, routing, architecture patterns
-- **components.md**: Component hierarchy, props, usage
-- **core-workflows.md**: User journeys, screen flows
+For each loaded document, extract (match by suffix pattern, ignore prefix):
+- **\*tech-stack.md**: Languages, frameworks, libraries, versions
+- **\*source-tree.md**: Directory structure, key file locations
+- **\*coding-standards.md**: Naming conventions, patterns, rules
+- **\*testing-strategy.md**: Test types, coverage requirements, tools
+- **\*data-models.md**: Entity definitions, relationships
+- **\*database-schema.md**: Tables, columns, constraints, indexes
+- **\*backend-architecture.md**: Services, layers, patterns
+- **\*rest-api-spec.md**: Endpoints, methods, request/response formats
+- **\*external-apis.md**: Third-party services, authentication, endpoints
+- **\*frontend-architecture.md**: State management, routing, architecture patterns
+- **\*components.md**: Component hierarchy, props, usage
+- **\*core-workflows.md**: User journeys, screen flows
 
 ### Step 4: Return Structured Context
 
