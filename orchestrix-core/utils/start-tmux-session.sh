@@ -78,7 +78,59 @@ tmux send-keys -t "$SESSION_NAME:3" "echo '╚═══════════�
 tmux send-keys -t "$SESSION_NAME:3" "echo ''" C-m
 
 # ============================================
-# Start Claude Code (but don't auto-activate agents)
+# Configuration
+# ============================================
+
+# Wait time for Claude Code to start (seconds)
+CC_STARTUP_WAIT=12
+
+# Wait time between command text and Enter key (seconds)
+COMMAND_ENTER_DELAY=1
+
+# Wait time between activating agents (seconds)
+AGENT_ACTIVATION_DELAY=2
+
+# Wait time for agents to fully load before starting workflow (seconds)
+AGENT_LOAD_WAIT=15
+
+# Auto-start workflow command (sent to SM window)
+AUTO_START_COMMAND="1"
+
+# Agent activation commands (mapping window → command)
+declare -a AGENT_COMMANDS=(
+    "/Orchestrix:agents:architect"   # Window 0 - Architect
+    "/Orchestrix:agents:sm"          # Window 1 - SM
+    "/Orchestrix:agents:dev"         # Window 2 - Dev
+    "/Orchestrix:agents:qa"          # Window 3 - QA
+)
+
+declare -a AGENT_NAMES=(
+    "Architect"
+    "SM"
+    "Dev"
+    "QA"
+)
+
+# ============================================
+# Function: Send command with delay before Enter
+# Usage: send_command_with_delay <window> <command>
+# ============================================
+send_command_with_delay() {
+    local window="$1"
+    local command="$2"
+
+    # Send command text first
+    tmux send-keys -t "$SESSION_NAME:$window" "$command"
+
+    # Wait before sending Enter (prevents race condition)
+    sleep "$COMMAND_ENTER_DELAY"
+
+    # Send Enter key
+    tmux send-keys -t "$SESSION_NAME:$window" "Enter"
+}
+
+# ============================================
+# Start Claude Code in all windows
 # ============================================
 
 echo "🤖 Starting Claude Code in all windows..."
@@ -95,61 +147,90 @@ tmux send-keys -t "$SESSION_NAME:2" "cc" C-m
 # Window 3 - QA
 tmux send-keys -t "$SESSION_NAME:3" "cc" C-m
 
+# ============================================
+# Wait for Claude Code to fully initialize
+# ============================================
+
+echo ""
+echo "⏳ Waiting ${CC_STARTUP_WAIT}s for Claude Code to start..."
+echo ""
+
+# Show countdown
+for i in $(seq "$CC_STARTUP_WAIT" -1 1); do
+    printf "\r   %2d seconds remaining..." "$i"
+    sleep 1
+done
+printf "\r   ✓ Claude Code should be ready now!      \n"
+echo ""
+
+# ============================================
+# Auto-activate agents in each window
+# ============================================
+
+echo "🚀 Auto-activating agents..."
+echo ""
+
+for window in 0 1 2 3; do
+    agent_name="${AGENT_NAMES[$window]}"
+    agent_cmd="${AGENT_COMMANDS[$window]}"
+
+    echo "   [Window $window] Activating $agent_name..."
+    send_command_with_delay "$window" "$agent_cmd"
+
+    # Wait before activating next agent (avoid overwhelming the system)
+    if [ "$window" -lt 3 ]; then
+        sleep "$AGENT_ACTIVATION_DELAY"
+    fi
+done
+
+echo ""
+echo "✅ All agents activated!"
+
+# ============================================
+# Wait for agents to fully load
+# ============================================
+
+echo ""
+echo "⏳ Waiting ${AGENT_LOAD_WAIT}s for agents to load..."
+echo ""
+
+for i in $(seq "$AGENT_LOAD_WAIT" -1 1); do
+    printf "\r   %2d seconds remaining..." "$i"
+    sleep 1
+done
+printf "\r   ✓ Agents should be ready now!           \n"
+
+# ============================================
+# Auto-start workflow in SM window
+# ============================================
+
+echo ""
+echo "🎬 Starting workflow in SM window..."
+send_command_with_delay "1" "$AUTO_START_COMMAND"
+
 # Select SM window (window 1) as starting point
 tmux select-window -t "$SESSION_NAME:1"
 
 # Display startup completion message
 echo ""
-echo "✅ tmux session created successfully!"
+echo "═══════════════════════════════════════════════════════════════"
+echo "✅ Orchestrix automation started!"
+echo "═══════════════════════════════════════════════════════════════"
 echo ""
-echo "📋 Window Layout (4 separate windows):"
+echo "📋 Window Layout:"
 echo "  Window 0: 🏛️  Architect"
-echo "  Window 1: 📋 SM (starting point)"
+echo "  Window 1: 📋 SM (current window) ← workflow started"
 echo "  Window 2: 💻 Dev"
 echo "  Window 3: 🧪 QA"
 echo ""
-echo "🎯 Next Steps:"
-echo "  1. ⏱️  Wait for Claude Code to fully start (~10-15 seconds)"
-echo "     - You'll see the Claude Code prompt when ready"
+echo "⌨️  tmux navigation:"
+echo "  Ctrl+b → 0/1/2/3   Jump to window"
+echo "  Ctrl+b → n/p       Next/Previous window"
+echo "  Ctrl+b → d         Detach (runs in background)"
+echo "  Ctrl+b → [         Scroll mode (q to exit)"
 echo ""
-echo "  2. 🚀 Manually activate agents in each window:"
-echo ""
-echo "     Window 0 (Architect):"
-echo "       Ctrl+b → 0"
-echo "       /Orchestrix:agents:architect"
-echo ""
-echo "     Window 1 (SM) - Current window:"
-echo "       /Orchestrix:agents:sm"
-echo ""
-echo "     Window 2 (Dev):"
-echo "       Ctrl+b → 2"
-echo "       /Orchestrix:agents:dev"
-echo ""
-echo "     Window 3 (QA):"
-echo "       Ctrl+b → 3"
-echo "       /Orchestrix:agents:qa"
-echo ""
-echo "  3. 🎬 Start automation:"
-echo "     - Go to SM window: Ctrl+b → 1"
-echo "     - Enter: 1  (or *draft)"
-echo "     - Watch the magic happen! ✨"
-echo ""
-echo "⌨️  tmux window navigation (SIMPLE!):"
-echo "  Ctrl+b → 0        Jump to Architect window"
-echo "  Ctrl+b → 1        Jump to SM window"
-echo "  Ctrl+b → 2        Jump to Dev window"
-echo "  Ctrl+b → 3        Jump to QA window"
-echo "  Ctrl+b → n        Next window"
-echo "  Ctrl+b → p        Previous window"
-echo "  Ctrl+b → w        List all windows"
-echo ""
-echo "  Ctrl+b → z        (N/A - only for panes)"
-echo "  Ctrl+b → d        Detach session (runs in background)"
-echo "  Ctrl+b → [        Scroll mode (press q to exit)"
-echo ""
-echo "📝 Monitor handoffs: tail -f /tmp/orchestrix-handoff.log"
+echo "📝 Monitor: tail -f /tmp/orchestrix-handoff.log"
 echo "📝 Reconnect: tmux attach -t orchestrix"
-echo "📝 Status bar shows: [0:Arch] [1:SM*] [2:Dev] [3:QA] (* = current)"
 echo ""
 
 # Attach to session
