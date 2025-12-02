@@ -52,14 +52,15 @@ Analyze `change_description` to identify action:
    - For multi-repo: `{epics_path}/epic-{epic_id}.yaml`
 2. Get story list and determine `max_story_number` in epic
 3. Read target story file if MODIFY or SPLIT:
-   - `{stories_path}/{story_id}.md`
+   - **Use Glob tool** with pattern: `{devStoryLocation}/{story_id}.*.md`
+   - This handles both `5.2.md` and `5.2.some-title.md` or `5.2.20241117.md` formats
 4. Read relevant architecture sections for technical context
 
 ### Step 4: Execute Action
 
 #### IF MODIFY_STORY:
 
-1. Load story file: `{stories_path}/{story_id}.md`
+1. Load story file using Glob: `{devStoryLocation}/{story_id}.*.md`
 2. Based on change_description, revise:
    - **Acceptance Criteria**: Clarify or adjust
    - **Tasks/Subtasks**: Add, remove, or reorder
@@ -77,11 +78,11 @@ Analyze `change_description` to identify action:
    - Acceptance Criteria (draft)
    - Initial task breakdown
 5. Add story reference to epic file
-6. Write story file: `{stories_path}/{new_story_id}.md`
+6. Write story file: `{devStoryLocation}/{new_story_id}.{kebab-case-title}.md`
 
 #### IF SPLIT_STORY:
 
-1. Load original story: `{stories_path}/{story_id}.md`
+1. Load original story using Glob: `{devStoryLocation}/{story_id}.*.md`
 2. Identify split boundary from change_description
 3. Reduce scope of original story
 4. For each new story:
@@ -93,7 +94,7 @@ Analyze `change_description` to identify action:
 
 #### IF DEPRECATE_STORY:
 
-1. Load story file: `{stories_path}/{story_id}.md`
+1. Load story file using Glob: `{devStoryLocation}/{story_id}.*.md`
 2. Set status to "Deprecated"
 3. Add deprecation reason to Change Log
 4. Update epic file: mark story as skipped
