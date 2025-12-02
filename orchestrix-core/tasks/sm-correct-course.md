@@ -47,14 +47,22 @@ Analyze `change_description` to identify action:
 
 ### Step 3: Load Context
 
-1. Read epic file containing the story:
-   - For monolith: `{epics_path}/epic-{epic_id}.md`
-   - For multi-repo: `{epics_path}/epic-{epic_id}.yaml`
-2. Get story list and determine `max_story_number` in epic
-3. Read target story file if MODIFY or SPLIT:
+1. Read `core-config.yaml` to determine:
+   - `project.mode`: monolith or multi-repo
+   - `devStoryLocation`: Story files directory (e.g., `docs/stories`)
+
+2. Read epic file containing the story using **Glob**:
+   - For monolith: `Glob pattern: docs/prd/epic-{epic_id}-*.md`
+   - For multi-repo: `Glob pattern: docs/prd/epic-{epic_id}-*.yaml`
+
+3. Get story list and determine `max_story_number` in epic
+
+4. Read target story file if MODIFY or SPLIT:
    - **Use Glob tool** with pattern: `{devStoryLocation}/{story_id}.*.md`
-   - This handles both `5.2.md` and `5.2.some-title.md` or `5.2.20241117.md` formats
-4. Read relevant architecture sections for technical context
+   - Example: `docs/stories/3.2.*.md` for Story 3.2
+   - This handles both `3.2.md` and `3.2.some-title.md` formats
+
+5. Read relevant architecture sections for technical context
 
 ### Step 4: Execute Action
 

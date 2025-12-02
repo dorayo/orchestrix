@@ -60,14 +60,34 @@ Analyze `change_description` to identify action:
 
 ### Step 3: Load Context
 
-1. Read core-config.yaml to determine project mode (monolith/multi-repo)
-2. Read all epic files:
-   - Monolith: `{epics_path}/epic-*.md`
-   - Multi-repo: `{epics_path}/epic-*.yaml`
-3. Determine `max_epic_id` across all epics
-4. Read stories within affected epic(s)
-5. Read PRD for epic alignment verification
-6. Read Architecture for technical context
+1. Read `core-config.yaml` to determine:
+   - `project.mode`: monolith or multi-repo
+   - `devStoryLocation`: Story files directory (e.g., `docs/stories`)
+   - `prd.prdFile` or `prd.prdShardedLocation`: PRD location
+
+2. Determine paths based on mode:
+   ```yaml
+   # Path derivation:
+   epics_path:
+     monolith: "docs/prd"  # Epic files alongside PRD
+     multi_repo: "{prdShardedLocation}" or "docs/prd"
+   stories_path: "{devStoryLocation}"  # From core-config.yaml
+   ```
+
+3. Read all epic files using **Glob**:
+   - Monolith: `Glob pattern: docs/prd/epic-*.md`
+   - Multi-repo: `Glob pattern: docs/prd/epic-*.yaml`
+
+4. Determine `max_epic_id` across all epics
+
+5. Read stories within affected epic(s) using **Glob**:
+   - Pattern: `{devStoryLocation}/{epic_id}.*.md`
+   - Example: `docs/stories/3.*.md` for Epic 3's stories
+   - **NOT**: `docs/stories/story-3*.md` (incorrect pattern)
+
+6. Read PRD for epic alignment verification
+
+7. Read Architecture for technical context
 
 ### Step 4: Execute Action
 
@@ -84,15 +104,19 @@ Analyze `change_description` to identify action:
 
 1. Calculate new epic number: `max_epic_id + 1`
 2. Determine format based on project mode:
-   - **Monolith**: Create `epic-{n}.md` using `templates/epic-tmpl.yaml`
-   - **Multi-repo**: Create `epic-{n}.yaml` with repository assignments
-3. Populate from change_description:
+   - **Monolith**: Create `epic-{n}-{title}.md` with epic metadata only
+   - **Multi-repo**: Create `epic-{n}-{title}.yaml` with repository assignments
+3. Populate from change_description (**Epic metadata only, NO stories**):
    - Epic title and goal
-   - Initial story list (placeholders)
+   - Scope description (what this epic covers)
+   - Priority/sequence
    - Target repository (if multi-repo)
+   - **Empty story list** (placeholder section only)
 4. Write epic file
 5. Update PRD epic list reference (or note for PM)
 6. Output downstream HANDOFF to SM for story creation
+
+**重要**：PO 只负责 Epic 结构定义，**不生成任何 Story 内容**。Story 的创建、分解和模板填充由 SM 负责。
 
 #### IF SPLIT_EPIC:
 
@@ -282,12 +306,22 @@ prd_updated: {boolean}
 change_summary: "{Brief description}"
 ```
 
-**Downstream HANDOFF to SM:**
+**Downstream HANDOFF to SM (Epic restructure):**
 ```
 🎯 HANDOFF TO SM: *correct-course
 Context: Epic {epic_id} restructured, stories need alignment
 Stories to review: [{story_ids}]
 Action needed: Review and update story references
+```
+
+**Downstream HANDOFF to SM (New epic created):**
+```
+🎯 HANDOFF TO SM: *draft
+Context: New Epic {epic_id} created, requires story creation
+Epic title: {epic_title}
+Epic goal: {epic_goal}
+Epic scope: {scope_description}
+Action needed: Create stories for Epic {epic_id} using templates/story-tmpl.yaml
 ```
 
 ---
