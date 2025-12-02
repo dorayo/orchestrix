@@ -40,13 +40,21 @@ Request user clarification before proceeding.
 
 ### Step 2: Load Product Context
 
-1. Read current PRD document: `{docs_path}/prd.md`
-2. Read Architecture documents for technical constraints
-3. Read all Epic definitions:
-   - Monolith: `{epics_path}/epic-*.md`
-   - Multi-repo: `{epics_path}/epic-*.yaml`
-4. Understand current MVP scope and priorities
-5. Note escalation context if escalated from lower layer
+1. Read `core-config.yaml` to determine paths:
+   - `prd.prdFile`: PRD document location (e.g., `docs/prd.md`)
+   - `project.mode`: monolith or multi-repo
+
+2. Read current PRD document from configured path
+
+3. Read Architecture documents for technical constraints
+
+4. Read all Epic definitions using **Glob**:
+   - Monolith: `Glob pattern: docs/prd/epic-*.md`
+   - Multi-repo: `Glob pattern: docs/prd/epic-*.yaml`
+
+5. Understand current MVP scope and priorities
+
+6. Note escalation context if escalated from lower layer
 
 ### Step 3: Product Impact Analysis
 
