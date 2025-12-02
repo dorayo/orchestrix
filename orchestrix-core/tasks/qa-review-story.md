@@ -14,7 +14,11 @@ required:
 
 **Purpose**: Prevent re-reviewing already passed stories
 
-**Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md`
+**Locate Story File**:
+
+1. **Use Glob tool** with pattern: `{devStoryLocation}/{story_id}.*.md`
+   - Example: For story_id `3.2`, pattern is `docs/stories/3.2.*.md`
+2. **Then Read** the file path returned by Glob
 
 **Extract Status**: !include tasks/utils/extract-story-status.md
 
