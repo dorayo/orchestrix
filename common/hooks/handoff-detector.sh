@@ -110,16 +110,59 @@ if [[ -n "$handoff_line" ]]; then
 fi
 
 # ========== LAYER 2: Implicit Command Detection ==========
-# Pattern 6: Implicit command detection - check last 20 lines for command patterns
+# Pattern 6: Implicit command detection - check last 10 lines for command patterns
 # This catches cases where agent outputs command without explicit "HANDOFF TO" marker
-# Note: We check last 20 lines because Claude Code UI may add separator lines after the command
+# Note: We check last 10 lines because Claude Code UI may add separator lines after the command
 # IMPORTANT: Use line-by-line matching because $ in bash regex matches end of STRING, not end of LINE
-if [[ -z "$target_agent" || -z "$raw_command" ]]; then
-    log "No explicit HANDOFF found, checking last 20 lines for implicit commands..."
 
-    # Extract last 20 lines from pane output
-    last_20_lines=$(echo "$pane_output" | tail -20)
-    log "Last 20 lines: $last_20_lines"
+# Initialize last_10_lines to empty (will be set if conditions are met)
+last_10_lines=""
+
+if [[ -z "$target_agent" || -z "$raw_command" ]]; then
+    log "No explicit HANDOFF found, checking last 10 lines for implicit commands..."
+
+    # Pre-condition: Skip implicit detection if output is too small (likely just menu)
+    # Agent completing real work typically produces >2000 bytes
+    if [[ ${#pane_output} -lt 2000 ]]; then
+        log "Output too small (${#pane_output} bytes < 2000), likely just menu - skipping implicit detection"
+    else
+        # Extract last 10 lines from pane output, then filter out menu/help lines
+        last_10_lines_raw=$(echo "$pane_output" | tail -10)
+
+        # Filter out lines that are part of help menu or examples
+        # These patterns indicate help/menu content, not actual output
+        last_10_lines=$(echo "$last_10_lines_raw" | grep -v -E \
+            -e '请输入命令编号' \
+            -e '请输入编号' \
+            -e '可用命令' \
+            -e '以下是我可以执行的命令' \
+            -e '如 \*[a-z]' \
+            -e '\{story_id\}' \
+            -e '\{template\}' \
+            -e '\{topic\}' \
+            -e '\{proposal_path\}' \
+            -e '\{checklist\}' \
+            -e '^\[[0-9]+\]' \
+            -e '^[[:space:]]*---[[:space:]]*$' \
+            -e '请选择需要执行的命令' \
+            -e '来开始工作' \
+            -e '来继续' \
+            -e '配置已加载' \
+            -e '项目模式' \
+            2>/dev/null || echo "")
+
+        log "Filtered last 10 lines (removed menu items): $last_10_lines"
+
+        # If all lines were filtered out, skip implicit detection
+        if [[ -z "${last_10_lines// /}" ]]; then
+            log "All lines filtered out (only menu content) - skipping implicit detection"
+        fi
+    fi
+fi
+
+# Only proceed with implicit pattern matching if we have valid filtered content
+# This check ensures we don't match on empty/menu-only content
+if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ -n "${last_10_lines// /}" ]] && [[ ${#pane_output} -ge 2000 ]]; then
 
     # Function to map command + current_agent → target_agent
     get_target_from_command() {
@@ -170,7 +213,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
     }
 
     # Pattern A: Command WITH story ID (*review 5.3) - non-anchored, works on multi-line
-    if [[ "$last_20_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+    if [[ "$last_10_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
         detected_command="${BASH_REMATCH[1]}"
         detected_story_id="${BASH_REMATCH[2]}"
 
@@ -189,7 +232,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
 
     # Pattern C: NEXT STEP format (🎯 NEXT STEP: ... *command)
     # Used to match QA completion prompt format
-    elif [[ "$last_20_lines" =~ 🎯[[:space:]]*NEXT[[:space:]]+STEP:.*\*([a-z0-9-]+) ]]; then
+    elif [[ "$last_10_lines" =~ 🎯[[:space:]]*NEXT[[:space:]]+STEP:.*\*([a-z0-9-]+) ]]; then
         detected_command="${BASH_REMATCH[1]}"
 
         log "Detected NEXT STEP format: *$detected_command"
@@ -280,10 +323,10 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
                     log "Command '$detected_command' from agent '$current_agent' has no known target"
                 fi
             fi
-        done <<< "$last_20_lines"
+        done <<< "$last_10_lines"
 
         if [[ -z "$target_agent" || -z "$raw_command" ]]; then
-            log "No implicit command pattern found in last 20 lines"
+            log "No implicit command pattern found in last 10 lines"
         fi
     fi
 fi
