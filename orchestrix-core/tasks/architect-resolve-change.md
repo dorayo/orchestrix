@@ -92,6 +92,47 @@ Generate impact matrix:
 | {component} | HIGH/MEDIUM/LOW | {description} |
 ```
 
+**Store impact_analysis** for scope classification:
+```yaml
+impact_analysis:
+  api_contracts_affected: {boolean}
+  api_consumers_external: {boolean}  # Do other repos consume these APIs?
+  shared_schema_affected: {boolean}
+  shared_data_structures: {boolean}
+  system_architecture_affected: {boolean}
+  new_services_added: {boolean}
+  messaging_changes: {boolean}
+  deployment_coordination_needed: {boolean}
+  breaking_changes: {boolean}
+```
+
+---
+
+### Step 3.5: Classify Proposal Scope (Multi-Repo Only)
+
+Read: `{root}/core-config.yaml`
+Extract: `project.mode`, `project.multi_repo.role`, `project.multi_repo.product_repo_path`
+
+**IF project.mode = "multi-repo"**:
+
+**Execute**: `tasks/utils/classify-proposal-scope.md`
+
+```yaml
+Input:
+  impact_analysis: {impact_analysis from Step 3}
+  project_mode: "multi-repo"
+```
+
+**Store**:
+- `proposal_scope = result.scope`  # "LOCAL" | "CROSS_REPO"
+- `scope_indicators = result.indicators_triggered`
+
+**ELSE**:
+- `proposal_scope = "LOCAL"`
+- `scope_indicators = []`
+
+---
+
 ### Step 4: Design Technical Solution
 
 Based on analysis, produce:
@@ -122,7 +163,18 @@ Based on analysis, produce:
 
 ### Step 5: Generate Technical Change Proposal
 
-**Proposal location**: `docs/architecture/proposals/`
+**Determine proposal location based on scope**:
+
+```
+IF proposal_scope = "CROSS_REPO" AND project.mode = "multi-repo":
+  proposal_location = {product_repo_path}/docs/architecture/proposals/
+
+  # Validate product repo access
+  IF {product_repo_path} NOT exists:
+    HALT with error: "Cannot store cross-repo proposal - product repo not accessible"
+ELSE:
+  proposal_location = docs/architecture/proposals/
+```
 
 **Filename pattern**: `{proposal-id}-{title-slug}.md`
 - Example: `tcp-2025-001-workflow-data-access-refactor.md`
@@ -142,6 +194,9 @@ Create proposal document:
 | Created | {YYYY-MM-DD} |
 | Author | Architect Agent |
 | Status | DRAFT |
+| Scope | {proposal_scope} |
+| Repository Origin | {repository_id} |
+| Storage Location | {proposal_location} |
 
 ## Problem Statement
 {change_description}
@@ -269,12 +324,39 @@ routing: SM
 default_epic: "0"
 ```
 
-**HANDOFF (Small Scope)**:
+**HANDOFF (Small Scope - LOCAL)**:
 ```
 🎯 HANDOFF TO SM: *create-tech-story {proposal_path}
 Context: Small-scope technical improvement
 Default Epic: 0 (Technical Debt)
 Action: Create Story directly from proposal
+```
+
+---
+
+**Success - Cross-Repo Scope (multi-repo only):**
+
+```yaml
+resolution: RESOLVED
+proposal_path: "{proposal_path}"  # In product repo
+proposal_scope: "CROSS_REPO"
+scope_indicators: [{triggered indicators}]
+architecture_updated: {boolean}
+files_modified:
+  - path: "{file_path}"
+    change: "{description}"
+change_summary: "{Brief description}"
+routing: PRODUCT_ARCHITECT
+```
+
+**HANDOFF (Cross-Repo)**:
+```
+🎯 HANDOFF TO product-architect: *review-cross-repo-change {proposal_path}
+Context: Cross-repository technical change detected
+Scope: CROSS_REPO
+Indicators: [{scope_indicators}]
+Affected repos: [{affected_repository_ids}]
+Action: Coordinate multi-repo implementation plan
 ```
 
 ---

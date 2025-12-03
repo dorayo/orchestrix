@@ -36,40 +36,33 @@ Read: `{root}/core-config.yaml`
 
 **Extract**:
 - `devStoryLocation`: Story file destination (local)
-- `prdShardedLocation`: Epic YAML location (relative path)
-- `project.mode`: monolith | multi-repo
-- `project.multi_repo.role`: product | backend | frontend | ios | android
-- `project.multi_repo.product_repo_path`: Path to product repo (if multi-repo)
-
-**Resolve Epic Location**:
-```
-If project.mode = multi-repo AND role != product:
-  epic_location = {product_repo_path}/{prdShardedLocation}
-Else:
-  epic_location = {prdShardedLocation}
-```
+- `project.multi_repo.repository_id`: Current repository identifier
 
 ---
 
-### Step 3: Determine Epic Assignment
+### Step 3: Resolve Epic Location & Determine Assignment
 
 **IF epic_id provided**: Use provided value
-
 **ELSE**: Set `epic_id = "0"` (Technical Debt Epic)
 
-Read Epic file: `{epic_location}/epic-{epic_id}-*.yaml`
+**Execute**: `tasks/utils/resolve-epic-location.md`
 
-**IF Epic 0 not exists**:
-
-Create file: `{epic_location}/epic-0-technical-debt.yaml`
 ```yaml
-epic_id: 0
-title: "Technical Foundation & Debt"
-description: |
-  Technical improvements, refactoring, and debt reduction.
-  Stories prioritized by impact and urgency.
-stories: []
+Input:
+  epic_id: "{epic_id}"
+  create_if_missing: true
 ```
+
+**IF result.error**:
+- Output: `result.error_message`
+- **HALT**
+
+**Store**:
+- `epic_location = result.epic_location`
+- `epic_file = result.epic_file`
+- `epic_created = result.created`
+
+**Read Epic file**: `{epic_file}`
 
 **Extract from Epic**:
 - `max_story_number`: Highest story number in Epic
@@ -140,7 +133,7 @@ Append to Epic stories array:
 ```yaml
 - id: "{new_story_id}"
   title: "{title}"
-  repository_type: monolith
+  repository_type: "{result.config.role}"  # From resolve-epic-location result
   acceptance_criteria:
     - "AC1: ..."
   estimated_complexity: "{complexity}"

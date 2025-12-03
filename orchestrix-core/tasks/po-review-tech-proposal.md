@@ -28,30 +28,35 @@ Read: `{proposal_path}`
 
 ---
 
-### Step 2: Load Project Context
+### Step 2: Load Project Context & Resolve Epic Location
 
 Read: `{root}/core-config.yaml`
 
 **Extract**:
-- `prdShardedLocation`: Epic YAML location (relative path)
 - `project.mode`: monolith | multi-repo
-- `project.multi_repo.role`: product | backend | frontend | ios | android
-- `project.multi_repo.product_repo_path`: Path to product repo (if multi-repo)
+- `project.multi_repo.repository_id`: Current repository identifier
 
-**Resolve Epic Location**:
+**Execute**: `tasks/utils/resolve-epic-location.md`
+
+```yaml
+Input:
+  epic_id: "0"
+  create_if_missing: false
 ```
-If project.mode = multi-repo AND role != product:
-  epic_location = {product_repo_path}/{prdShardedLocation}
-Else:
-  epic_location = {prdShardedLocation}
-```
+
+**IF result.error**:
+- Output: `result.error_message`
+- **HALT**
+
+**Store**:
+- `epic_location = result.epic_location`
+- `has_epic_0 = result.epic_exists`
 
 Read all Epic files: `{epic_location}/epic-*.yaml`
 
 **Build**:
 - `epic_list`: All existing epics with titles and story counts
 - `max_epic_id`: Highest epic ID
-- `has_epic_0`: Boolean (tech debt epic exists)
 
 ---
 
@@ -89,18 +94,18 @@ Read all Epic files: `{epic_location}/epic-*.yaml`
    - ADD_TO_EPIC: Epic ID aligned with proposal scope
    - ADD_TO_EPIC_0: `0`
 
-2. Read target Epic file: `{epic_location}/epic-{target_epic_id}-*.yaml`
+2. **IF target_epic_id = "0" AND has_epic_0 = false**:
 
-3. **IF Epic 0 not exists AND target = 0**:
-   Create Epic 0 file: `{epic_location}/epic-0-technical-debt.yaml`
+   **Execute**: `tasks/utils/resolve-epic-location.md`
    ```yaml
-   epic_id: 0
-   title: "Technical Foundation & Debt"
-   description: |
-     Technical improvements, refactoring, and debt reduction.
-     Stories prioritized by impact and urgency.
-   stories: []
+   Input:
+     epic_id: "0"
+     create_if_missing: true
    ```
+
+   Update: `has_epic_0 = true`
+
+3. Read target Epic file: `{epic_location}/epic-{target_epic_id}-*.yaml`
 
 4. Generate Story definition from proposal:
    ```yaml

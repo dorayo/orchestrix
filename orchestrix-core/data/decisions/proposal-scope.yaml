@@ -1,0 +1,203 @@
+# Proposal Scope Decision Rules
+#
+# Determines whether a technical proposal has LOCAL or CROSS_REPO scope
+# in multi-repo mode. This classification affects:
+# - Where the proposal document is stored
+# - Who receives the handoff (local SM vs Product Architect)
+# - Whether multi-repo coordination is required
+
+decision_type: proposal-scope
+
+description: |
+  Evaluates technical change impact indicators to determine if the change
+  affects only the current repository (LOCAL) or spans multiple repositories
+  (CROSS_REPO). Cross-repo changes require coordination through the product
+  repository's Architect.
+
+version: "1.0.0"
+
+# Input parameters from impact analysis
+inputs:
+  - name: api_contracts_affected
+    type: boolean
+    description: "Are any API contracts being modified?"
+
+  - name: api_consumers_external
+    type: boolean
+    description: "Do other repositories consume the affected APIs?"
+
+  - name: shared_schema_affected
+    type: boolean
+    description: "Are shared database schemas being modified?"
+
+  - name: shared_data_structures
+    type: boolean
+    description: "Are shared data models/DTOs being modified?"
+
+  - name: system_architecture_affected
+    type: boolean
+    description: "Does this change system-level architecture?"
+
+  - name: new_services_added
+    type: boolean
+    description: "Are new services or major components being added?"
+
+  - name: messaging_changes
+    type: boolean
+    description: "Are message queue schemas or event definitions changing?"
+
+  - name: deployment_coordination_needed
+    type: boolean
+    description: "Does deployment require multi-repo coordination?"
+
+  - name: breaking_changes
+    type: boolean
+    description: "Are there breaking changes requiring sync across repos?"
+
+  - name: project_mode
+    type: string
+    enum: ["monolith", "multi-repo"]
+    description: "Project mode from core-config.yaml"
+
+# Decision rules evaluated in order
+rules:
+  # Rule 0: Monolith mode always returns LOCAL
+  - name: monolith_always_local
+    priority: 0
+    condition: "project_mode == 'monolith'"
+    result:
+      scope: "LOCAL"
+      confidence: "HIGH"
+    reasoning: "Monolith mode has single repository, no cross-repo concerns"
+
+  # Rule 1: External API consumers affected
+  - name: cross_repo_external_api
+    priority: 1
+    condition: "api_contracts_affected == true AND api_consumers_external == true"
+    result:
+      scope: "CROSS_REPO"
+      confidence: "HIGH"
+      indicator: "cross_api"
+    reasoning: "API changes affecting external consumers require coordination"
+
+  # Rule 2: Shared database schema changes
+  - name: cross_repo_shared_schema
+    priority: 2
+    condition: "shared_schema_affected == true"
+    result:
+      scope: "CROSS_REPO"
+      confidence: "HIGH"
+      indicator: "cross_schema"
+    reasoning: "Shared schema changes may impact multiple repositories"
+
+  # Rule 3: System architecture changes
+  - name: cross_repo_architecture
+    priority: 3
+    condition: "system_architecture_affected == true OR new_services_added == true"
+    result:
+      scope: "CROSS_REPO"
+      confidence: "HIGH"
+      indicator: "cross_arch"
+    reasoning: "Architectural changes require product-level visibility"
+
+  # Rule 4: Messaging/event schema changes
+  - name: cross_repo_messaging
+    priority: 4
+    condition: "messaging_changes == true"
+    result:
+      scope: "CROSS_REPO"
+      confidence: "HIGH"
+      indicator: "cross_messaging"
+    reasoning: "Event/message schema changes affect all consumers"
+
+  # Rule 5: Deployment coordination required
+  - name: cross_repo_deployment
+    priority: 5
+    condition: "deployment_coordination_needed == true OR breaking_changes == true"
+    result:
+      scope: "CROSS_REPO"
+      confidence: "HIGH"
+      indicator: "cross_deploy"
+    reasoning: "Multi-repo deployment coordination required"
+
+  # Rule 6: Shared data structures (lower priority)
+  - name: cross_repo_shared_data
+    priority: 6
+    condition: "shared_data_structures == true"
+    result:
+      scope: "CROSS_REPO"
+      confidence: "MEDIUM"
+      indicator: "cross_data"
+    reasoning: "Shared DTOs may require consumer updates"
+
+  # Default rule: LOCAL scope
+  - name: default_local
+    priority: 100
+    condition: "true"
+    result:
+      scope: "LOCAL"
+      confidence: "HIGH"
+    reasoning: "No cross-repo indicators detected"
+
+# Output specification
+output:
+  scope:
+    type: string
+    enum: ["LOCAL", "CROSS_REPO"]
+    description: "The determined scope of the proposal"
+
+  confidence:
+    type: string
+    enum: ["HIGH", "MEDIUM"]
+    description: "Confidence level of the classification"
+
+  indicators_triggered:
+    type: array
+    items: string
+    description: "List of indicator names that triggered CROSS_REPO"
+
+  recommendations:
+    storage_location:
+      type: string
+      enum: ["local", "product_repo"]
+    handoff_target:
+      type: string
+      enum: ["SM", "Product Architect"]
+
+# Examples for validation
+examples:
+  - name: "Internal performance optimization"
+    inputs:
+      api_contracts_affected: false
+      api_consumers_external: false
+      shared_schema_affected: false
+      system_architecture_affected: false
+      deployment_coordination_needed: false
+      project_mode: "multi-repo"
+    expected_output:
+      scope: "LOCAL"
+      confidence: "HIGH"
+
+  - name: "API contract change with external consumers"
+    inputs:
+      api_contracts_affected: true
+      api_consumers_external: true
+      shared_schema_affected: false
+      system_architecture_affected: false
+      deployment_coordination_needed: true
+      project_mode: "multi-repo"
+    expected_output:
+      scope: "CROSS_REPO"
+      indicators_triggered: ["cross_api", "cross_deploy"]
+
+  - name: "Database migration on shared schema"
+    inputs:
+      api_contracts_affected: false
+      api_consumers_external: false
+      shared_schema_affected: true
+      system_architecture_affected: false
+      deployment_coordination_needed: false
+      project_mode: "multi-repo"
+    expected_output:
+      scope: "CROSS_REPO"
+      indicators_triggered: ["cross_schema"]

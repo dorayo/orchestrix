@@ -66,23 +66,29 @@ If scope exceeds 3 stories or requires architectural planning, use full brownfie
 
 ### 3. Generate Epic YAML File
 
-**Step 3.1: Load Configuration & Determine Epic Location**
+**Step 3.1: Load Configuration & Resolve Epic Location**
 
 Read `{root}/core-config.yaml`.
 
 **Extract**:
-- `prdShardedLocation`: Epic YAML location (relative path, default: `docs/prd`)
 - `project.mode`: monolith | multi-repo
-- `project.multi_repo.role`: product | backend | frontend | ios | android
-- `project.multi_repo.product_repo_path`: Path to product repo (if multi-repo)
+- `project.multi_repo.repository_id`: Current repository identifier
 
-**Resolve Epic Location**:
+**Execute**: `tasks/utils/resolve-epic-location.md`
+
+```yaml
+Input:
+  epic_id: "1"  # Just to resolve location, not to find specific Epic
+  create_if_missing: false
 ```
-If project.mode = multi-repo AND role != product:
-  epic_location = {product_repo_path}/{prdShardedLocation}
-Else:
-  epic_location = {prdShardedLocation}
-```
+
+**IF result.error**:
+- Output: `result.error_message`
+- **HALT**
+
+**Store**:
+- `epic_location = result.epic_location`
+- `repository_role = result.config.role`
 
 List existing Epic files: `{epic_location}/epic-*.yaml`
 
@@ -105,7 +111,7 @@ description: |
 stories:
   - id: "{epic_id}.1"
     title: "{Story 1 title}"
-    repository_type: {monolith | backend | frontend | ios | android}
+    repository_type: "{repository_role}"  # From resolve-epic-location result
     acceptance_criteria:
       - "AC1: {Clear, testable criterion from Step 2}"
       - "AC2: {Another criterion}"
@@ -116,7 +122,7 @@ stories:
 
   - id: "{epic_id}.2"
     title: "{Story 2 title}"
-    repository_type: {same as story 1}
+    repository_type: "{repository_role}"
     acceptance_criteria:
       - "AC1: {Story 2 criterion}"
       - "AC2: {Another criterion}"
