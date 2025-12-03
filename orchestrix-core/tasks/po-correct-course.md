@@ -39,6 +39,25 @@ Input:
   🎯 HANDOFF TO ARCHITECT: *resolve-tech-change - {reasoning}
   ```
 - IF level == PRODUCT:
+
+  **IF project.mode = "multi-repo" AND role != "product"**:
+  ```
+  ⚠️ PRODUCT-LEVEL CHANGE REQUIRED
+
+  This change requires PRD modification, which must be done in the product repository.
+
+  📍 ACTION REQUIRED:
+  1. Switch to product repository: cd {product_repo_path}
+  2. Execute: @pm *revise-prd
+
+  Context:
+  - Source repository: {repository_id}
+  - Reason: {reasoning}
+
+  The PRD and Epic definitions are managed in the product repository.
+  ```
+
+  **ELSE**:
   ```
   🎯 HANDOFF TO PM: *revise-prd - {reasoning}
   ```
@@ -336,6 +355,28 @@ Reason: {reasoning}
 ```
 
 **Escalate to PM:**
+
+**IF project.mode = "multi-repo" AND role != "product"**:
+```
+⚠️ PRODUCT-LEVEL CHANGE REQUIRED
+
+This change requires PRD modification, which must be done in the product repository.
+
+📍 ACTION REQUIRED:
+1. Switch to product repository: cd {product_repo_path}
+2. Execute: @pm *revise-prd
+
+Context:
+- Source repository: {repository_id}
+- PRD sections affected: {sections}
+- MVP impact: {boolean}
+- Epics affected: {count}
+- Reason: {reasoning}
+
+The PRD and Epic definitions are managed in the product repository.
+```
+
+**ELSE** (monolith or product repo):
 ```
 🎯 HANDOFF TO PM: *revise-prd
 Context: {escalation_context}

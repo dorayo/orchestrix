@@ -349,19 +349,52 @@ change_summary: "{Brief description}"
 routing: PRODUCT_ARCHITECT
 ```
 
-**HANDOFF (Cross-Repo)**:
+**Cross-Repo Guidance Message**:
 ```
-🎯 HANDOFF TO product-architect: *review-cross-repo-change {proposal_path}
-Context: Cross-repository technical change detected
-Scope: CROSS_REPO
-Indicators: [{scope_indicators}]
-Affected repos: [{affected_repository_ids}]
-Action: Coordinate multi-repo implementation plan
+⚠️ CROSS-REPOSITORY CHANGE DETECTED
+
+This technical change affects multiple repositories and requires coordination
+at the product level.
+
+📍 ACTION REQUIRED:
+1. Switch to product repository: cd {product_repo_path}
+2. Execute: @architect *review-cross-repo-change {proposal_path}
+
+Context:
+- Scope: CROSS_REPO
+- Indicators: [{scope_indicators}]
+- Source repository: {repository_id}
+- Affected repos: [{affected_repository_ids}]
+- Proposal location: {proposal_path}
+
+The proposal has been saved to the product repository for centralized review.
 ```
 
 ---
 
 **Escalate to PM:**
+
+**IF project.mode = "multi-repo" AND role != "product"**:
+```
+⚠️ PRODUCT-LEVEL CHANGE REQUIRED
+
+This change requires PRD modification, which must be done in the product repository.
+
+📍 ACTION REQUIRED:
+1. Switch to product repository: cd {product_repo_path}
+2. Execute: @pm *revise-prd
+
+Context:
+- Source repository: {repository_id}
+- Technical Analysis: {summary}
+- Feature impact: {description}
+- MVP risk: {boolean}
+- Reason: {reasoning}
+
+The PRD and Epic definitions are managed in the product repository.
+```
+
+**ELSE** (monolith or product repo):
 ```
 🎯 HANDOFF TO PM: *revise-prd
 Context: {escalation_context}
