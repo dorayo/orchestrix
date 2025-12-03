@@ -82,22 +82,36 @@ ls -1 docs/prd/*.md | xargs -n1 basename
 
 **Step 2.4: Extract Epic YAML to standalone files**
 
-Find YAML blocks containing `epic_id:` in sharded PRD files (from "Epics" section), extract each to `docs/prd/epic-{n}-{title-slug}.yaml`:
+Use the `extract-epics.js` script to extract all YAML blocks containing `epic_id:` from the PRD file:
 
-```python
-for md_file in glob("docs/prd/*.md"):
-    content = read(md_file)
-    yaml_blocks = extract_yaml_blocks(content)  # Find ```yaml ... ```
+```bash
+# Extract Epic YAML files using the dedicated script
+node .orchestrix-core/utils/extract-epics.js docs/prd.md docs/prd
 
-    for block in yaml_blocks:
-        if 'epic_id:' in block:
-            epic_data = parse_yaml(block)
-            epic_id = epic_data['epic_id']
-            title_slug = slugify(epic_data['title'])  # e.g., "User Authentication" → "user-authentication"
-            output_path = f"docs/prd/epic-{epic_id}-{title_slug}.yaml"
-            write_yaml(output_path, epic_data)
-            print(f"✅ Extracted: epic-{epic_id}-{title_slug}.yaml")
+# The script automatically:
+# - Parses the PRD markdown file
+# - Extracts all YAML code blocks with epic_id:
+# - Validates Epic structure (required: epic_id, title, stories)
+# - Generates slug-based filenames (e.g., "User Authentication" → "user-authentication")
+# - Outputs to docs/prd/epic-{n}-{title-slug}.yaml
+#
+# Example output:
+# ═══════════════════════════════════════════════════════
+# Epic YAML Extractor
+# ═══════════════════════════════════════════════════════
+# ✅ 提取完成
+# 📋 统计:
+#    Epic 数量: 6
+#    Story 数量: 42
+#    Repository 类型: backend, frontend, android
+# 📁 生成的文件:
+#    ✓ epic-1-user-authentication.yaml
+#    ✓ epic-2-product-catalog.yaml
 ```
+
+**Fallback (if script not available):**
+
+If the extraction script is not installed, manually extract each `epic_id:` YAML block from the Epics section and save to `docs/prd/epic-{n}-{title}.yaml`.
 
 **Validate extraction:**
 
