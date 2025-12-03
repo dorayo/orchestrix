@@ -77,8 +77,8 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
 ### Execution Steps:
 1. Load story file from docs/stories/
-2. Load relevant architecture documents based on story type
-3. Validate all technical components against architecture
+2. **Execute `utils/load-architecture-context.md`** to load architecture documents
+3. Validate all technical components against `architecture_context`
 4. Calculate technical accuracy score (0-10 scale)
 5. Generate detailed review report
 6. Determine next status using decision system
@@ -111,54 +111,100 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 ---
 
 ## Architecture Context Loading
+
+**CRITICAL**: Use the standardized architecture loading utility. NEVER hardcode paths.
+
+### Step 2: Load Architecture Context
+
+Execute `{root}/tasks/utils/load-architecture-context.md`:
+
 ```yaml
-# Smart architecture document loading based on story type
-architecture_loading:
-  base_documents: 
-    - docs/architecture/tech-stack.md
-    - docs/architecture/source-tree.md  
-    - docs/architecture/coding-standards.md
-    - docs/architecture/testing-strategy.md
-    
-  backend_additional:
-    - docs/architecture/data-models.md
-    - docs/architecture/database-schema.md
-    - docs/architecture/backend-architecture.md
-    - docs/architecture/rest-api-spec.md
-    - docs/architecture/external-apis.md
-    
-  frontend_additional:
-    - docs/architecture/frontend-architecture.md
-    - docs/architecture/components.md
-    - docs/architecture/core-workflows.md
-    - docs/architecture/data-models.md
-    
-  story_type_detection: Detect from story content and Dev Notes
+input:
+  story_type: {{detected_story_type}}  # Backend | Frontend | FullStack
 ```
+
+**Story Type Detection**:
+- Analyze story content and Dev Notes
+- Backend: API endpoints, database, services mentioned
+- Frontend: UI components, pages, user interactions mentioned
+- FullStack: Both backend and frontend elements present
+
+**Documents Loaded by Story Type**:
+```yaml
+# The utility loads different documents based on story_type
+architecture_loading:
+  base_documents:  # Always loaded
+    - *tech-stack.md
+    - *source-tree.md
+    - *coding-standards.md
+    - *testing-strategy.md
+
+  backend_additional:  # Loaded for Backend/FullStack stories
+    - *data-models.md
+    - *database-schema.md
+    - *backend-architecture.md
+    - *rest-api-spec.md
+    - *external-apis.md
+
+  frontend_additional:  # Loaded for Frontend/FullStack stories
+    - *frontend-architecture.md
+    - *components.md
+    - *core-workflows.md
+    - *data-models.md
+```
+
+**Expected Output** (stored as `architecture_context`):
+```yaml
+context:
+  status: success | partial | error
+  story_type: Backend | Frontend | FullStack
+  architecture_mode: sharded | monolithic
+
+  documents_loaded:
+    - tech-stack.md
+    - source-tree.md
+    - coding-standards.md
+    - testing-strategy.md
+    # + type-specific documents
+
+  documents_missing: []  # Any documents that could not be loaded
+
+  tech_stack: { ... }
+  file_structure: { ... }
+  standards: { ... }
+  testing: { ... }
+  backend: { ... }   # If Backend/FullStack
+  frontend: { ... }  # If Frontend/FullStack
+```
+
+**Error Handling**:
+- If `context.status = "error"`: Record as Major Issue, continue with available info
+- If `context.status = "partial"`: Log missing docs, continue with loaded context
+- If `context.status = "success"`: Proceed with full context
 
 ### Technical Validation Engine:
 ```yaml
-# Comprehensive technical compliance checking
+# Comprehensive technical compliance checking using architecture_context
 validation_engine:
-  tech_stack_compliance: 
-    - Verify all technologies mentioned exist in tech-stack.md
+  tech_stack_compliance:
+    - Verify all technologies mentioned exist in architecture_context.tech_stack
     - Check version compatibility and constraints
     - Validate library/framework usage patterns
-    
+
   naming_conventions:
-    - Component names follow coding-standards.md
-    - File paths align with source-tree.md  
+    - Component names follow architecture_context.standards.naming_conventions
+    - File paths align with architecture_context.file_structure
     - Variable/method names follow established patterns
-    
+
   architecture_patterns:
-    - Backend: Validate against backend-architecture.md patterns
-    - Frontend: Check frontend-architecture.md compliance
-    - Integration: Verify core-workflows.md alignment
-    
+    - Backend: Validate against architecture_context.backend patterns
+    - Frontend: Check architecture_context.frontend compliance
+    - Integration: Verify workflow alignment
+
   api_data_consistency:
-    - API endpoints follow rest-api-spec.md patterns
-    - Data models align with data-models.md definitions
-    - Database interactions match database-schema.md
+    - API endpoints follow architecture_context.backend.api_endpoints patterns
+    - Data models align with architecture_context.backend.data_models definitions
+    - Database interactions match architecture_context.backend.database_schema
 ```
 
 ## Quality Scoring System
@@ -204,21 +250,21 @@ story_analysis:
 
 ## Technical Compliance Check
 ```yaml
-# Systematic validation against architecture standards
+# Systematic validation against architecture_context
 compliance_checking:
   tech_stack_validation:
-    - Cross-reference mentioned technologies with tech-stack.md
+    - Cross-reference mentioned technologies with architecture_context.tech_stack
     - Verify version compatibility
     - Check for deprecated or unsupported technologies
-    
+
   structure_validation:
-    - Validate file paths against source-tree.md
-    - Check component naming conventions from coding-standards.md
-    - Verify test file locations per testing-strategy.md
-    
+    - Validate file paths against architecture_context.file_structure
+    - Check component naming conventions from architecture_context.standards
+    - Verify test file locations per architecture_context.testing
+
   pattern_validation:
-    - Backend: Check service/controller/model patterns
-    - Frontend: Validate component/hook/service patterns
+    - Backend: Check service/controller/model patterns from architecture_context.backend
+    - Frontend: Validate component/hook/service patterns from architecture_context.frontend
     - API: Verify endpoint structure and response formats
     - Data: Check model definitions and relationships
 ```
@@ -390,16 +436,16 @@ assert verify_status == next_status, "Status update failed"
 ```bash
 ✓ Story file exists and is readable
 ✓ Story has required sections (Status, Story, AC, Tasks, Dev Notes)
-✓ Architecture documents are accessible
+✓ Architecture context loaded via load-architecture-context.md
 ✓ Story type can be determined from content
 ```
 
 ### During Review Validation:
-```bash  
-✓ All mentioned technologies found in tech-stack.md
-✓ File paths align with project structure standards
-✓ API patterns follow established specifications  
-✓ Data models match architecture definitions
+```bash
+✓ All mentioned technologies found in architecture_context.tech_stack
+✓ File paths align with architecture_context.file_structure
+✓ API patterns follow architecture_context.backend.api_endpoints
+✓ Data models match architecture_context.backend.data_models
 ✓ Integration approaches are feasible
 ```
 
