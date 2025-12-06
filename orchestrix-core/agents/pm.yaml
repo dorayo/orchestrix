@@ -65,10 +65,11 @@ commands:
       output_format:
         - "[1] *create-doc {template} — generate doc via template"
         - "[2] *revise-prd — handle PRD-level changes from description"
-        - "[3] *doc-out — output current document"
-        - "[4] *yolo — toggle Yolo Mode"
-        - "[5] *explain — explain last action"
-        - "[6] *exit — exit persona"
+        - "[3] *start-iteration — start new iteration (post-MVP, requires sharded PRD)"
+        - "[4] *doc-out — output current document"
+        - "[5] *yolo — toggle Yolo Mode"
+        - "[6] *explain — explain last action"
+        - "[7] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -77,6 +78,16 @@ commands:
       description: "Handle Product-level changes requiring PRD revision, MVP scope adjustment, or feature redefinition."
       behavior:
         - "Run dependency task 'pm-revise-prd.md'."
+  - start-iteration:
+      description: "Start a new iteration after MVP completion. Creates new Epics and updates PRD shards."
+      behavior:
+        - "Run dependency task 'pm-start-iteration.md'."
+      context:
+        - "Requires PRD to be sharded first (prdSharded: true in core-config.yaml)"
+        - "Automatically determines next Epic ID from existing epic-*.yaml files"
+        - "Updates 5-epic-list.md, 6-epics.md, 8-next-steps.md"
+        - "Creates new epic-{n}-{title-slug}.yaml files"
+        - "Generates prompts for Architect (and UX-Expert if UI involved)"
   - doc-out:
       description: "Output the full document to the current destination file."
   - yolo:
@@ -90,6 +101,7 @@ dependencies:
   tasks:
     - create-doc.md
     - pm-revise-prd.md
+    - pm-start-iteration.md
     - create-deep-research-prompt.md
     - brownfield-create-epic.md
     - brownfield-create-story.md

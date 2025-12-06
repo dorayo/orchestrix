@@ -195,7 +195,47 @@ else
 fi
 ```
 
-### 4. Final Report
+### 4. Archive Original Files
+
+After first sharding, archive original files to prevent confusion about source of truth.
+
+**Create archive directory:**
+
+```bash
+mkdir -p docs/.archive
+```
+
+**Archive PRD (if exists and was sharded):**
+
+```bash
+if [ -f "docs/prd.md" ] && [ "$PRD_SHARDED" = "true" ]; then
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  mv docs/prd.md "docs/.archive/prd.md.${TIMESTAMP}"
+  echo "📦 Archived: docs/prd.md → docs/.archive/prd.md.${TIMESTAMP}"
+fi
+```
+
+**Archive Architecture (if exists and was sharded):**
+
+```bash
+if [ -f "docs/architecture.md" ] && [ "$ARCH_SHARDED" = "true" ]; then
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  mv docs/architecture.md "docs/.archive/architecture.md.${TIMESTAMP}"
+  echo "📦 Archived: docs/architecture.md → docs/.archive/architecture.md.${TIMESTAMP}"
+fi
+```
+
+**Archive System Architecture (Multi-repo Product repo):**
+
+```bash
+if [ -f "docs/system-architecture.md" ] && [ "$ARCH_SHARDED" = "true" ]; then
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  mv docs/system-architecture.md "docs/.archive/system-architecture.md.${TIMESTAMP}"
+  echo "📦 Archived: docs/system-architecture.md → docs/.archive/system-architecture.md.${TIMESTAMP}"
+fi
+```
+
+### 5. Final Report
 
 **Count epics and stories (Monolith/Product only):**
 
@@ -222,11 +262,31 @@ REPO_TYPES=$(grep -h 'repository_type:' docs/prd/epic-*.yaml 2>/dev/null | awk '
 🏗️ Architecture:
    - Location: {ARCH_DIR}/
 
+📦 Archived Original Files:
+   - docs/.archive/prd.md.{TIMESTAMP}
+   - docs/.archive/architecture.md.{TIMESTAMP}
+
 ⚙️ Config Updated:
    - prdSharded: true
    - prdShardedLocation: docs/prd
    - architectureSharded: true
    - architectureShardedLocation: {ARCH_DIR}
+
+═══════════════════════════════════════════════════════
+⚠️ IMPORTANT - PARADIGM SHIFT
+═══════════════════════════════════════════════════════
+
+From now on, the sharded directories are the SINGLE SOURCE OF TRUTH:
+   - PRD: docs/prd/
+   - Architecture: {ARCH_DIR}/
+
+Original files have been archived. DO NOT recreate them.
+
+For future iterations:
+   - Use @pm *start-iteration to add new Epics
+   - Use @po *assemble to generate complete documents when needed
+
+═══════════════════════════════════════════════════════
 
 🎯 NEXT STEPS:
    Monolith: @sm *draft

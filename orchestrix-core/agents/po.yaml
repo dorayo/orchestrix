@@ -76,9 +76,10 @@ commands:
         - "[7] *create-story — create user story"
         - "[8] *validate-story-draft {story} — validate a story file"
         - "[9] *doc-out — output current document"
-        - "[10] *yolo — toggle Yolo Mode"
-        - "[11] *explain — explain last action"
-        - "[12] *exit — exit persona"
+        - "[10] *assemble [prd|architecture|both] — assemble sharded docs for export"
+        - "[11] *yolo — toggle Yolo Mode"
+        - "[12] *explain — explain last action"
+        - "[13] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -133,6 +134,19 @@ commands:
       description: "Validate a provided story file."
       behavior:
         - "Run dependency task 'validate-next-story.md' with {story}."
+  - assemble:
+      description: "Assemble sharded documents into complete files (for export/sharing)."
+      behavior:
+        - "Run dependency task 'po-assemble-documents.md'."
+      params:
+        document_type:
+          required: false
+          default: "both"
+          description: "prd | architecture | both"
+      context:
+        - "Uses md-tree assemble command"
+        - "Generated files are DERIVED, not source of truth"
+        - "Source of truth remains in sharded directories"
   - doc-out:
       description: "Output the full document to the current destination file."
   - yolo:
@@ -145,6 +159,7 @@ commands:
 dependencies:
   tasks:
     - po-shard-documents.md
+    - po-assemble-documents.md
     - po-correct-course.md
     - po-review-tech-proposal.md
     - utils/classify-change-level.md
