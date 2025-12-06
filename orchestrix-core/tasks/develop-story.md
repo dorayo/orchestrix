@@ -280,20 +280,30 @@ Checklist verifies (externally defined):
 
 ---
 
-## 11. Final Handoff (Mandatory Last Output)
+## 11. Final Handoff (REQUIRED - MUST BE FINAL OUTPUT)
 
-Generate handoff message using:
+---
+
+### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
+
+**CRITICAL**: This step is NON-NEGOTIABLE. You MUST output the complete handoff message as the FINAL output of this task. The handoff command MUST be the absolute last line - no summaries, tips, or explanations after it.
+
+---
+
+### Handoff Message Generation
+
+Generate handoff message using template:
 
 ```
 {root}/templates/dev-handoff-message-tmpl.md
 ```
 
-Rules:
+### Required Output Format
 
-* Handoff output is the **final** message
-* No summaries or commentary after handoff
-* Last line must be:
+The message MUST end with this EXACT line (for tmux automation hook detection):
 
 ```
-*review {story_id}
+🎯 HANDOFF TO qa: *review {story_id}
 ```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.

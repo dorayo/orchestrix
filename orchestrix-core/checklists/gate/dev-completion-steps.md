@@ -92,11 +92,12 @@ metadata:
 |------|-----------|----------|
 | Handoff message prepared | [ ] | Message ready |
 | Message includes story ID | [ ] | Story ID: ___ |
-| Message includes QA command | [ ] | Command: *review {story_id} |
+| HANDOFF format correct | [ ] | Line: `🎯 HANDOFF TO qa: *review {story_id}` |
+| Emoji prefix present | [ ] | MUST start with `🎯 HANDOFF TO` |
 | Message includes summary metrics | [ ] | Round, gate, tests, files |
 | Message is final output | [ ] | Nothing after this message |
 
-**Result**: ___/5 (Must be 5/5)
+**Result**: ___/6 (Must be 6/6)
 
 **Handoff Message Template** (MUST USE):
 ```
@@ -114,8 +115,7 @@ Self-Review Results:
 
 ⚠️ Warnings: {list or "none"}
 
-🎯 HANDOFF TO qa:
-*review {story_id}
+🎯 HANDOFF TO qa: *review {story_id}
 ```
 
 ---
