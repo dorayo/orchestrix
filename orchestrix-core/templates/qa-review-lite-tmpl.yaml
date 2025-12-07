@@ -82,6 +82,11 @@ sections:
     template: |
       ## Implementation Shortcuts (Spot Check)
 
+      **Items Checked**: 4 (Credentials, i18n, Debug Code, Exception Handlers)
+      {{#if i18n_library_detected}}
+      **i18n Library**: Detected - hardcoded text violations are HIGH severity
+      {{/if}}
+
       {{#if shortcuts_found}}
       {{#each shortcuts_found}}
       - **{{severity}}** - {{type}}: {{description}}

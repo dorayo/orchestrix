@@ -136,23 +136,39 @@ If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and foll
 ---
 
 #### 3.5 Implementation Shortcuts (Spot Check)
-**Focus**: Verify Dev Gate caught critical shortcuts (spot check 3 high-risk items)
+**Focus**: Verify Dev Gate caught critical shortcuts (spot check 4 high-risk items)
 
-**Principle**: Dev Gate executes full implementation-shortcuts.md checklist. QA only spot-checks 3 highest-risk categories to ensure critical issues weren't missed.
+**Principle**: Dev Gate executes full implementation-shortcuts.md checklist. QA spot-checks 4 highest-risk categories to ensure critical issues weren't missed.
 
-**Spot Check Items** (3 categories only):
+**Spot Check Items** (4 categories):
 
 1. **Hardcoded Credentials/Sensitive Data** (CRITICAL)
    - Search for: passwords, API keys, tokens, secrets in code
    - Pattern: `(password|apiKey|token|secret)\s*[:=]\s*["'][^"']+["']`
    - If found: Mark as CRITICAL, gate FAIL
 
-2. **Leftover Debug Code** (HIGH)
+2. **Hardcoded UI Text / i18n Violations** (MEDIUM → HIGH if i18n library exists)
+   - Search for: user-facing text directly in code (not externalized)
+   - Patterns:
+     ```regex
+     # JSX/TSX text content
+     <(button|label|span|p|h[1-6]|a)[^>]*>[A-Za-z\u4e00-\u9fff]{5,}</
+     # Placeholder/title attributes
+     (placeholder|title|alt|aria-label)\s*=\s*["'][A-Za-z\u4e00-\u9fff]{5,}["']
+     # Toast/notification messages
+     (toast|message|notify)\.[a-z]+\s*\(\s*["'][A-Za-z\u4e00-\u9fff]{5,}["']
+     ```
+   - **Pre-check**: Verify if project has i18n library (i18next, react-intl, vue-i18n)
+     - If YES and hardcoded text found: Mark as HIGH
+     - If NO i18n library: Mark as LOW (recommendation only)
+   - Exclude: test files, storybook files, technical identifiers
+
+3. **Leftover Debug Code** (HIGH)
    - Search for: console.log, debugger, print statements
    - Pattern: `console\.(log|debug)|debugger;|print\(`
    - If found in production paths: Mark as HIGH
 
-3. **Empty Exception Handlers** (CRITICAL)
+4. **Empty Exception Handlers** (CRITICAL)
    - Search for: empty catch blocks, swallowed exceptions
    - Pattern: `catch\s*\([^)]*\)\s*\{\s*\}`
    - If found: Mark as CRITICAL, gate FAIL
@@ -160,10 +176,14 @@ If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and foll
 **Spot Check Result**:
 ```yaml
 implementation_shortcuts_spot_check:
-  items_checked: 3
+  items_checked: 4
+  i18n_library_detected: {true|false}
   findings:
     - category: "Hardcoded Credentials"
       severity: CRITICAL | NONE
+      locations: []
+    - category: "Hardcoded UI Text (i18n)"
+      severity: HIGH | MEDIUM | LOW | NONE
       locations: []
     - category: "Leftover Debug Code"
       severity: HIGH | NONE
@@ -172,11 +192,13 @@ implementation_shortcuts_spot_check:
       severity: CRITICAL | NONE
       locations: []
   has_critical: {true|false}
+  has_high: {true|false}
 ```
 
 **Decision**:
 - If `has_critical = true`: Add to gate decision as FAIL factor
-- If `has_critical = false`: Continue to next step
+- If `has_high = true` (including i18n with library): Add to gate decision as CONCERNS factor
+- If no critical/high issues: Continue to next step
 
 ---
 

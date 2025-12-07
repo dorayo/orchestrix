@@ -128,7 +128,7 @@ sections:
     template: |
       ## Implementation Shortcuts (Spot Check)
 
-      QA spot-checked 3 high-risk categories for developer shortcuts.
+      QA spot-checked 4 high-risk categories for developer shortcuts.
 
       ### Hardcoded Credentials/Sensitive Data
 
@@ -140,6 +140,25 @@ sections:
       {{/each}}
       {{else}}
       ✅ No hardcoded credentials detected.
+      {{/if}}
+
+      ### Hardcoded UI Text (i18n Violations)
+
+      {{#if i18n_library_detected}}
+      **i18n Library Detected**: Yes - hardcoded text should be externalized
+      {{else}}
+      **i18n Library Detected**: No - recommendations only
+      {{/if}}
+
+      {{#if hardcoded_ui_text_found}}
+      {{#each hardcoded_ui_text}}
+      - **{{severity}}** - {{description}}
+        - Location: {{location}}
+        - Text: `{{text}}`
+        - Required Action: Externalize to i18n resource file
+      {{/each}}
+      {{else}}
+      ✅ No hardcoded UI text detected.
       {{/if}}
 
       ### Leftover Debug Code
