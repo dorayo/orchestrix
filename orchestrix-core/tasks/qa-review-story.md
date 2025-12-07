@@ -140,38 +140,74 @@ If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and foll
 
 **Principle**: Dev Gate executes full implementation-shortcuts.md checklist. QA spot-checks 4 highest-risk categories to ensure critical issues weren't missed.
 
-**Spot Check Items** (4 categories):
+---
 
-1. **Hardcoded Credentials/Sensitive Data** (CRITICAL)
-   - Search for: passwords, API keys, tokens, secrets in code
-   - Pattern: `(password|apiKey|token|secret)\s*[:=]\s*["'][^"']+["']`
-   - If found: Mark as CRITICAL, gate FAIL
+**⚠️ MANDATORY: Execute ALL 4 searches below. Do NOT skip any search.**
 
-2. **Hardcoded UI Text / i18n Violations** (MEDIUM → HIGH if i18n library exists)
-   - Search for: user-facing text directly in code (not externalized)
-   - Patterns:
-     ```regex
-     # JSX/TSX text content
-     <(button|label|span|p|h[1-6]|a)[^>]*>[A-Za-z\u4e00-\u9fff]{5,}</
-     # Placeholder/title attributes
-     (placeholder|title|alt|aria-label)\s*=\s*["'][A-Za-z\u4e00-\u9fff]{5,}["']
-     # Toast/notification messages
-     (toast|message|notify)\.[a-z]+\s*\(\s*["'][A-Za-z\u4e00-\u9fff]{5,}["']
-     ```
-   - **Pre-check**: Verify if project has i18n library (i18next, react-intl, vue-i18n)
-     - If YES and hardcoded text found: Mark as HIGH
-     - If NO i18n library: Mark as LOW (recommendation only)
-   - Exclude: test files, storybook files, technical identifiers
+---
 
-3. **Leftover Debug Code** (HIGH)
-   - Search for: console.log, debugger, print statements
-   - Pattern: `console\.(log|debug)|debugger;|print\(`
-   - If found in production paths: Mark as HIGH
+**Search 1: Hardcoded Credentials** (CRITICAL)
 
-4. **Empty Exception Handlers** (CRITICAL)
-   - Search for: empty catch blocks, swallowed exceptions
-   - Pattern: `catch\s*\([^)]*\)\s*\{\s*\}`
-   - If found: Mark as CRITICAL, gate FAIL
+Execute this search:
+```
+Search pattern: (password|apiKey|token|secret)\s*[:=]\s*["'][^"']+["']
+File glob: **/*.{ts,tsx,js,jsx}
+```
+If matches found → Severity: CRITICAL
+
+---
+
+**Search 2: Hardcoded UI Text / i18n Violations** (HIGH)
+
+First, check if project uses i18n library:
+```
+Search pattern: (i18next|react-intl|vue-i18n|next-intl|formatjs)
+File: package.json
+```
+
+Then execute these searches to find hardcoded text:
+```
+Search pattern: <(button|label|span|p|h[1-6]|a|div)[^>]*>\s*[A-Za-z\u4e00-\u9fff]{3,}\s*</
+File glob: **/*.{tsx,jsx}
+Exclude: **/*.test.*, **/*.spec.*, **/*.stories.*, **/tests/**, **/__tests__/**
+```
+
+```
+Search pattern: (placeholder|title|alt|aria-label)=["'][A-Za-z\u4e00-\u9fff]{3,}["']
+File glob: **/*.{tsx,jsx}
+Exclude: **/*.test.*, **/*.spec.*, **/*.stories.*
+```
+
+```
+Search pattern: (toast|message|notification)\.(success|error|info|warning)\s*\(\s*["'][A-Za-z\u4e00-\u9fff]{3,}
+File glob: **/*.{ts,tsx,js,jsx}
+```
+
+If i18n library exists AND hardcoded text found → Severity: HIGH
+If no i18n library → Severity: LOW (recommendation)
+
+---
+
+**Search 3: Leftover Debug Code** (HIGH)
+
+Execute this search:
+```
+Search pattern: console\.(log|debug|info|warn|error)|debugger;
+File glob: **/*.{ts,tsx,js,jsx}
+Exclude: **/*.test.*, **/*.spec.*
+```
+If matches found in non-test files → Severity: HIGH
+
+---
+
+**Search 4: Empty Exception Handlers** (CRITICAL)
+
+Execute this search:
+```
+Search pattern: catch\s*\([^)]*\)\s*\{\s*\}
+File glob: **/*.{ts,tsx,js,jsx}
+```
+If matches found → Severity: CRITICAL
 
 **Spot Check Result**:
 ```yaml
