@@ -247,7 +247,101 @@ test_integrity:
 
 ---
 
-### 5. Generate Unified Validation Report
+### 5. Implementation Shortcuts Validation
+
+**Objective**: Detect common developer shortcuts and anti-patterns
+
+**Execute**: `{root}/checklists/gate/implementation-shortcuts.md`
+
+**Input**:
+```yaml
+story_id: {story_id}
+story_path: {story_path}
+implementation_files: {list of modified files from story}
+```
+
+**6 Validation Categories**:
+
+1. **Hardcoding Detection** (Weight: 25%)
+   - Hardcoded URLs / API endpoints
+   - Hardcoded configuration values (timeout, retry count)
+   - Hardcoded credentials (password, API Key, Token) → CRITICAL
+   - Hardcoded environment-specific values (IP, port, domain)
+   - Magic numbers/strings
+
+2. **Leftover Code Detection** (Weight: 20%)
+   - TODO/FIXME/HACK/XXX comments
+   - console.log / print / debugger statements
+   - Commented-out code blocks
+   - Debug-only code
+
+3. **Exception Handling Anti-patterns** (Weight: 20%)
+   - Empty catch blocks → CRITICAL
+   - Log-only exception handling
+   - Swallowed exceptions (silent failures) → HIGH
+   - Overly broad catch
+
+4. **Stub Implementation Detection** (Weight: 15%)
+   - `return null/[]` fake implementations → CRITICAL
+   - TODO without implementation → CRITICAL
+   - Mock data in production code
+   - Placeholder functions
+
+5. **Test Integrity Issues** (Weight: 10%)
+   - Skipped tests (@Skip, xit, .skip)
+   - Weakened assertions
+   - Empty test cases
+   - Happy-path-only tests
+
+6. **Dependency Hygiene** (Weight: 10%)
+   - Unused dependencies
+   - Dev dependencies in production
+   - Duplicate/outdated dependencies
+
+**Implementation Shortcuts Result**:
+```yaml
+implementation_shortcuts:
+  result: PASS | FAIL
+  overall_score: {percentage}
+  sections:
+    - name: "Hardcoding Detection"
+      weight: 25%
+      score: {percentage}
+      findings: []
+    - name: "Leftover Code Detection"
+      weight: 20%
+      score: {percentage}
+      findings: []
+    - name: "Exception Handling Anti-patterns"
+      weight: 20%
+      score: {percentage}
+      findings: []
+    - name: "Stub Implementation Detection"
+      weight: 15%
+      score: {percentage}
+      findings: []
+    - name: "Test Integrity Issues"
+      weight: 10%
+      score: {percentage}
+      findings: []
+    - name: "Dependency Hygiene"
+      weight: 10%
+      score: {percentage}
+      findings: []
+  summary:
+    critical_count: {count}
+    high_count: {count}
+    medium_count: {count}
+    low_count: {count}
+```
+
+**Decision Logic**:
+- PASS: Zero CRITICAL findings AND overall_score >= 80%
+- FAIL: Any CRITICAL finding OR overall_score < 80%
+
+---
+
+### 6. Generate Unified Validation Report
 
 Combine all validation results into a single structured output.
 
@@ -299,7 +393,7 @@ gate_result:
         status: {PASS|FAIL}
         evidence: {dev log file reference}
 
-  # Sections (10 validation sections)
+  # Sections (11 validation sections)
   sections:
     - name: "Requirements Completeness"
       score: {percentage}
@@ -313,7 +407,7 @@ gate_result:
     - name: "Code Quality"
       score: {percentage}
       threshold: 90%
-      weight: 15%
+      weight: 12%
       weighted_score: {percentage}
       passed: {true|false}
       items_total: 10
@@ -322,7 +416,7 @@ gate_result:
     - name: "Testing Quality"
       score: {percentage}
       threshold: 95%
-      weight: 15%
+      weight: 12%
       weighted_score: {percentage}
       passed: {true|false}
       items_total: 10
@@ -350,7 +444,7 @@ gate_result:
     - name: "Architecture Compliance"
       score: {percentage}
       threshold: 90%
-      weight: 15%
+      weight: 13%
       weighted_score: {percentage}
       passed: {true|false}
       items_total: 10
@@ -377,7 +471,7 @@ gate_result:
     - name: "Documentation"
       score: {percentage}
       threshold: 75%
-      weight: 5%
+      weight: 3%
       weighted_score: {percentage}
       passed: {true|false}
       items_total: 4
@@ -392,10 +486,26 @@ gate_result:
       items_total: 10
       items_passed: {count}
 
+    - name: "Implementation Shortcuts"
+      score: {percentage}
+      threshold: 80%
+      weight: 10%
+      weighted_score: {percentage}
+      passed: {true|false}
+      items_total: 25
+      items_passed: {count}
+      findings:
+        hardcoding: []
+        leftover_code: []
+        exception_handling: []
+        stub_implementation: []
+        test_integrity: []
+        dependency_hygiene: []
+
   # Detailed Issues
   issues:
     critical:
-      - category: {architecture|api_contract|test_integrity|security|build}
+      - category: {architecture|api_contract|test_integrity|security|build|implementation_shortcuts}
         section: {section_name}
         item_id: {e.g., "2.3", "C1"}
         issue: {description}
@@ -404,14 +514,14 @@ gate_result:
         expected: {what's required}
         fix: {how to fix}
     major:
-      - category: {architecture|api_contract|code_quality}
+      - category: {architecture|api_contract|code_quality|implementation_shortcuts}
         section: {section_name}
         item_id: {e.g., "6.7"}
         issue: {description}
         location: {file:line}
         recommendation: {how to fix}
     minor:
-      - category: {code_quality|documentation}
+      - category: {code_quality|documentation|implementation_shortcuts}
         section: {section_name}
         item_id: {e.g., "9.2"}
         issue: {description}
@@ -422,8 +532,8 @@ gate_result:
   total_critical_issues: {count}
   total_major_issues: {count}
   total_minor_issues: {count}
-  sections_passed: {count}/10
-  sections_failed: {count}/10
+  sections_passed: {count}/11
+  sections_failed: {count}/11
 
   # Blocking Status
   blocking: {true if status = FAIL}

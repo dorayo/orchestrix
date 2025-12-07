@@ -77,6 +77,21 @@ sections:
       ✅ No performance issues identified.
       {{/if}}
 
+  - id: implementation-shortcuts
+    title: Implementation Shortcuts (Spot Check)
+    template: |
+      ## Implementation Shortcuts (Spot Check)
+
+      {{#if shortcuts_found}}
+      {{#each shortcuts_found}}
+      - **{{severity}}** - {{type}}: {{description}}
+        - Location: {{location}}
+        - Required Action: {{required_action}}
+      {{/each}}
+      {{else}}
+      ✅ No implementation shortcuts detected in spot check.
+      {{/if}}
+
   - id: issues-breakdown
     title: Issues Breakdown
     template: |

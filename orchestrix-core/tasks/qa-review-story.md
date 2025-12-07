@@ -135,6 +135,51 @@ If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and foll
 
 ---
 
+#### 3.5 Implementation Shortcuts (Spot Check)
+**Focus**: Verify Dev Gate caught critical shortcuts (spot check 3 high-risk items)
+
+**Principle**: Dev Gate executes full implementation-shortcuts.md checklist. QA only spot-checks 3 highest-risk categories to ensure critical issues weren't missed.
+
+**Spot Check Items** (3 categories only):
+
+1. **Hardcoded Credentials/Sensitive Data** (CRITICAL)
+   - Search for: passwords, API keys, tokens, secrets in code
+   - Pattern: `(password|apiKey|token|secret)\s*[:=]\s*["'][^"']+["']`
+   - If found: Mark as CRITICAL, gate FAIL
+
+2. **Leftover Debug Code** (HIGH)
+   - Search for: console.log, debugger, print statements
+   - Pattern: `console\.(log|debug)|debugger;|print\(`
+   - If found in production paths: Mark as HIGH
+
+3. **Empty Exception Handlers** (CRITICAL)
+   - Search for: empty catch blocks, swallowed exceptions
+   - Pattern: `catch\s*\([^)]*\)\s*\{\s*\}`
+   - If found: Mark as CRITICAL, gate FAIL
+
+**Spot Check Result**:
+```yaml
+implementation_shortcuts_spot_check:
+  items_checked: 3
+  findings:
+    - category: "Hardcoded Credentials"
+      severity: CRITICAL | NONE
+      locations: []
+    - category: "Leftover Debug Code"
+      severity: HIGH | NONE
+      locations: []
+    - category: "Empty Exception Handlers"
+      severity: CRITICAL | NONE
+      locations: []
+  has_critical: {true|false}
+```
+
+**Decision**:
+- If `has_critical = true`: Add to gate decision as FAIL factor
+- If `has_critical = false`: Continue to next step
+
+---
+
 ### 4. Code Review Only (No Modifications)
 
 - **IMPORTANT**: QA Agent must NOT modify any code files

@@ -123,6 +123,49 @@ sections:
       ✅ No performance issues identified.
       {{/if}}
 
+  - id: implementation-shortcuts
+    title: Implementation Shortcuts (Spot Check)
+    template: |
+      ## Implementation Shortcuts (Spot Check)
+
+      QA spot-checked 3 high-risk categories for developer shortcuts.
+
+      ### Hardcoded Credentials/Sensitive Data
+
+      {{#if hardcoded_credentials_found}}
+      {{#each hardcoded_credentials}}
+      - **CRITICAL** - {{description}}
+        - Location: {{location}}
+        - Required Action: Move to environment variable or secrets manager
+      {{/each}}
+      {{else}}
+      ✅ No hardcoded credentials detected.
+      {{/if}}
+
+      ### Leftover Debug Code
+
+      {{#if debug_code_found}}
+      {{#each debug_code}}
+      - **{{severity}}** - {{description}}
+        - Location: {{location}}
+        - Required Action: Remove before production
+      {{/each}}
+      {{else}}
+      ✅ No leftover debug code detected.
+      {{/if}}
+
+      ### Empty Exception Handlers
+
+      {{#if empty_handlers_found}}
+      {{#each empty_handlers}}
+      - **CRITICAL** - {{description}}
+        - Location: {{location}}
+        - Required Action: Add proper error handling or logging
+      {{/each}}
+      {{else}}
+      ✅ No empty exception handlers detected.
+      {{/if}}
+
   - id: issues-breakdown
     title: Issues Breakdown
     template: |
