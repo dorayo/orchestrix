@@ -4,19 +4,16 @@
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
-    "@semantic-release/npm",
-    "./tools/semantic-release-sync-all.js",
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": false
+      }
+    ],
     [
       "@semantic-release/git",
       {
-        "assets": [
-          "package.json", 
-          "package-lock.json", 
-          "tools/installer/package.json",
-          "orchestrix-core/core-config.yaml",
-          "tools/cli.js",
-          "CHANGELOG.md"
-        ],
+        "assets": ["package.json", "CHANGELOG.md", "orchestrix-core/core-config.yaml", "tools/installer/package.json"],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
