@@ -193,5 +193,11 @@ Stories:
 Technology Stack: {technology stack}
 Integration Points: {key integration points}
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: sm
+command: draft
+args:
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO sm: *draft
 ```

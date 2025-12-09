@@ -490,6 +490,12 @@ Issues Found:
 Escalation Reason:
 {escalation_reason}
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: architect
+command: review-escalation
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
 
@@ -520,6 +526,12 @@ Total Issues Found: {total_issues}
 - Medium: {medium_count}
 - Low: {low_count}
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: sm
+command: draft
+args:
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO sm: *draft
 ```
 
@@ -547,6 +559,12 @@ Quality Summary:
 - Review Report: {review_report_path}
 
 Manual commit retry needed.
+
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: qa
+command: finalize-commit
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO qa: *finalize-commit {story_id}
 ```
@@ -579,6 +597,12 @@ Issues Breakdown:
 
 Top Priority Fixes:
 {top_issues_summary}
+
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: dev
+command: apply-qa-fixes
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO dev: *apply-qa-fixes {story_id}
 ```

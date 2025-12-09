@@ -317,6 +317,12 @@ Pattern Analysis:
 
 Recommendation: Architectural review needed to break the cycle
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: architect
+command: review-escalation
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
 

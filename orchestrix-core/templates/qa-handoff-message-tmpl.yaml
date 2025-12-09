@@ -25,6 +25,12 @@ handoff_messages:
 
       Escalation Reason:
       {{escalation_reason}}
+    stb: |
+      ---ORCHESTRIX-HANDOFF-BEGIN---
+      target: architect
+      command: review-escalation
+      args: {{story_id}}
+      ---ORCHESTRIX-HANDOFF-END---
     handoff: "🎯 HANDOFF TO architect: *review-escalation {{story_id}}"
 
   # Gate PASS + Commit Success - story complete
@@ -59,6 +65,12 @@ handoff_messages:
       Issues Resolved This Round: {{resolved_count}}/{{previous_issues}}
       Improvement: {{improvement_percentage}}%
       {{/if}}
+    stb: |
+      ---ORCHESTRIX-HANDOFF-BEGIN---
+      target: sm
+      command: draft
+      args:
+      ---ORCHESTRIX-HANDOFF-END---
     handoff: "🎯 NEXT STEP: Deploy or start next story via SM *draft"
 
   # Gate PASS + Commit Failed - retry needed
@@ -85,6 +97,12 @@ handoff_messages:
       - Review Report: {{review_report_path}}
 
       Manual commit retry needed.
+    stb: |
+      ---ORCHESTRIX-HANDOFF-BEGIN---
+      target: qa
+      command: finalize-commit
+      args: {{story_id}}
+      ---ORCHESTRIX-HANDOFF-END---
     handoff: "🎯 RETRY COMMIT: *finalize-commit {{story_id}}"
 
   # Gate CONCERNS or FAIL - handoff back to Dev
@@ -122,6 +140,12 @@ handoff_messages:
 
       Top Priority Fixes:
       {{top_issues_summary}}
+    stb: |
+      ---ORCHESTRIX-HANDOFF-BEGIN---
+      target: dev
+      command: apply-qa-fixes
+      args: {{story_id}}
+      ---ORCHESTRIX-HANDOFF-END---
     handoff: "🎯 HANDOFF TO dev: *apply-qa-fixes {{story_id}}"
 
   # Test design complete - handoff to Dev
@@ -136,6 +160,12 @@ handoff_messages:
     body: |
       📋 Test Design: {{test_design_path}}
       📊 {{total_scenarios}} scenarios ({{unit_count}}U, {{integration_count}}I, {{e2e_count}}E) | P0:{{p0_count}} P1:{{p1_count}} P2:{{p2_count}}
+    stb: |
+      ---ORCHESTRIX-HANDOFF-BEGIN---
+      target: dev
+      command: develop-story
+      args: {{story_id}}
+      ---ORCHESTRIX-HANDOFF-END---
     handoff: "🎯 HANDOFF TO dev: *develop-story {{story_id}}"
 
   # QA fixes complete - ready for re-review
@@ -152,6 +182,12 @@ handoff_messages:
       - {{issues_fixed_count}} issues fixed
       - All tests passing
       - Ready for QA re-review
+    stb: |
+      ---ORCHESTRIX-HANDOFF-BEGIN---
+      target: qa
+      command: review
+      args: {{story_id}}
+      ---ORCHESTRIX-HANDOFF-END---
     handoff: "🎯 HANDOFF TO qa: *review {{story_id}}"
 
   # QA fixes in progress - still working
@@ -172,6 +208,17 @@ handoff_messages:
 # 1. Determine appropriate handoff scenario based on workflow state
 # 2. Select corresponding template from handoff_messages
 # 3. Replace all {{variable}} placeholders with actual values
-# 4. Output the formatted message
-# 5. If handoff is not null, ensure handoff command is the FINAL line
-# 6. Do NOT add any content after handoff command
+# 4. Output the formatted message body
+# 5. If stb field exists, output STB block BEFORE emoji handoff (required for automation)
+# 6. Output emoji handoff as the FINAL line (for human readability)
+# 7. Do NOT add any content after handoff command
+#
+# STB (Structured Termination Block) format:
+# ---ORCHESTRIX-HANDOFF-BEGIN---
+# target: <agent_name>
+# command: <command_without_asterisk>
+# args: <optional_arguments>
+# ---ORCHESTRIX-HANDOFF-END---
+#
+# STB is primary for tmux automation (pure ASCII, reliable detection)
+# Emoji handoff is secondary for human readability (fallback)

@@ -31,6 +31,12 @@ Output handoff_message and **HALT**.
 
 Example:
 ```
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: po
+command: correct-course
+args:
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO PO: *correct-course - Multi-story impact detected
 ```
 
@@ -165,6 +171,12 @@ Summary: {change_summary}
 
 **Escalate to PO:**
 ```
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: po
+command: correct-course
+args:
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO PO: *correct-course
 Context: {escalation_context}
 Stories affected: {count}
@@ -173,6 +185,12 @@ Reason: {reasoning}
 
 **Escalate to Architect:**
 ```
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: architect
+command: resolve-tech-change
+args:
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO ARCHITECT: *resolve-tech-change
 Context: {escalation_context}
 Architecture impact: {description}

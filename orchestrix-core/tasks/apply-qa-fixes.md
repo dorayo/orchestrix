@@ -217,7 +217,13 @@ Fix plan:
   - All tests passing
   - Ready for QA re-review
 
-  🎯 HANDOFF TO qa: *review 2.2
+  ---ORCHESTRIX-HANDOFF-BEGIN---
+  target: qa
+  command: review
+  args: {story_id}
+  ---ORCHESTRIX-HANDOFF-END---
+
+  🎯 HANDOFF TO qa: *review {story_id}
   ```
 
 ## Key Principles

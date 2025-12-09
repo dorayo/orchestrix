@@ -468,6 +468,12 @@ Issues Resolved:
 
 Test Design: {level}
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: dev
+command: develop-story
+args: {epic}.{story}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO dev: *develop-story {epic}.{story}
 ```
 
@@ -484,6 +490,12 @@ Quality Improvement:
 
 Issues Resolved: Critical {c}, High {h}, Medium {m}, Low {l}
 Test Design Level: {Standard | Comprehensive}
+
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: qa
+command: test-design
+args: {epic}.{story}
+---ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO qa: *test-design {epic}.{story}
 ```
@@ -503,6 +515,12 @@ Issues Resolved: Critical {c}, High {h}, Medium {m}, Low {l}
 Remaining Issues: Require Architect Round 2 review
 
 Reason for Round 2: {reason}
+
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: architect
+command: review
+args: {epic}.{story}
+---ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO architect: *review {epic}.{story}
 ```

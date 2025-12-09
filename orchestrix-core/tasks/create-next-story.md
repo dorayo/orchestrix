@@ -600,6 +600,12 @@ Quality Metrics:
 
 Architect Review Reason: {reasoning from Decision 8A}
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: architect
+command: review
+args: {epic}.{story}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO architect: *review {epic}.{story}
 ```
 
@@ -614,6 +620,12 @@ Quality Metrics:
 - Complexity: {count}/7 indicators ({list})
 - Test Design: Simple (unit tests only)
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: dev
+command: develop-story
+args: {epic}.{story}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO dev: *develop-story {epic}.{story}
 ```
 
@@ -627,6 +639,12 @@ Quality Metrics:
 - Quality Score: {score}/10
 - Complexity: {count}/7 indicators ({list})
 - Test Design Level: {Standard | Comprehensive}
+
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: qa
+command: test-design
+args: {epic}.{story}
+---ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO qa: *test-design {epic}.{story}
 ```

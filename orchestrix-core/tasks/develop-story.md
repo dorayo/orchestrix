@@ -300,9 +300,15 @@ Generate handoff message using template:
 
 ### Required Output Format
 
-The message MUST end with this EXACT line (for tmux automation hook detection):
+The message MUST end with BOTH blocks (for tmux automation hook detection):
 
 ```
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: qa
+command: review
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO qa: *review {story_id}
 ```
 

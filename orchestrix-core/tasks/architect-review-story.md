@@ -24,6 +24,12 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
   Architect review already completed. Story ready for Dev implementation.
 
+  ---ORCHESTRIX-HANDOFF-BEGIN---
+  target: dev
+  command: develop-story
+  args: {story_id}
+  ---ORCHESTRIX-HANDOFF-END---
+
   🎯 HANDOFF TO dev: *develop-story {story_id}
   ```
   **HALT: Review completed, Dev handoff sent ✋**
@@ -36,6 +42,12 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
   Test Design Level: {test_design_level}
 
   Architect review already completed. Forwarding to QA for test design.
+
+  ---ORCHESTRIX-HANDOFF-BEGIN---
+  target: qa
+  command: test-design
+  args: {story_id}
+  ---ORCHESTRIX-HANDOFF-END---
 
   🎯 HANDOFF TO qa: *test-design {story_id}
   ```
@@ -539,6 +551,12 @@ Test Design Level: {test_design_level}
 
 Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: qa
+command: test-design
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO qa: *test-design {story_id}
 ```
 
@@ -550,6 +568,12 @@ Score: {score}/10 | Decision: Approved
 
 Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: dev
+command: develop-story
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
+
 🎯 HANDOFF TO dev: *develop-story {story_id}
 ```
 
@@ -560,6 +584,12 @@ Story: {story_id} → Status: RequiresRevision
 Score: {score}/10 | Critical: {critical_count} | Major: {major_count}
 
 Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
+
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: sm
+command: revise-story
+args: {story_id}
+---ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO sm: *revise-story {story_id}
 ```
