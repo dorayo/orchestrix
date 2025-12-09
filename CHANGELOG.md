@@ -1,3 +1,10 @@
+## [13.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.1.0...v13.1.1) (2025-12-09)
+
+
+### Bug Fixes
+
+* **release:** restore version sync script and manually sync to 13.1.0 ([bcffa57](https://github.com/dorayo/ORCHESTRIX/commit/bcffa579957d31eea50e62e1c0b4e29da7baea8e))
+
 # [13.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.0.1...v13.1.0) (2025-12-09)
 
 
