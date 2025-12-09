@@ -10,6 +10,7 @@
         "npmPublish": false
       }
     ],
+    "./tools/semantic-release-sync-all.js",
     [
       "@semantic-release/git",
       {
