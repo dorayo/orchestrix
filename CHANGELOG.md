@@ -1,3 +1,39 @@
+# [13.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.0.1...v13.1.0) (2025-12-09)
+
+
+### Bug Fixes
+
+* **architect:** use load-architecture-context utility instead of hardcoded paths ([6463558](https://github.com/dorayo/ORCHESTRIX/commit/64635581a1e734a5d0ddd094952c1ca829603fa0))
+* **dev:** enforce mandatory HANDOFF format for tmux automation ([b6d7c45](https://github.com/dorayo/ORCHESTRIX/commit/b6d7c4552359e483b4acc604fbfe0b8cc79fc890))
+* **dev:** use load-architecture-context utility and fix path references ([bd0372e](https://github.com/dorayo/ORCHESTRIX/commit/bd0372efa5471cb3b460bc3c650743cff88c5e96))
+* **hooks:** improve tmux handoff reliability ([d95b8ab](https://github.com/dorayo/ORCHESTRIX/commit/d95b8abf7cb2ad41887dad65240f15f0241bb8be))
+* **hooks:** prevent false HANDOFF detection from agent menu examples ([5312e9a](https://github.com/dorayo/ORCHESTRIX/commit/5312e9ab07993e41bd558adb62d98fb8888a09f5))
+* **hooks:** support leading whitespace in handoff command detection ([6b4c0b4](https://github.com/dorayo/ORCHESTRIX/commit/6b4c0b4da40ebcc9579dfcf6da9b4d2a397ac6d5))
+* **hooks:** use line-by-line matching for implicit command detection ([7de16d7](https://github.com/dorayo/ORCHESTRIX/commit/7de16d70c1a489badc92d2ae44d0b8b120849f61))
+* **pm:** standardize next-steps.md output format with HANDOFF pattern ([b0ebe35](https://github.com/dorayo/ORCHESTRIX/commit/b0ebe3543ece01517cc74abf7dfa1ed5d6ab09e7))
+* **pm:** use core-config.yaml for path resolution in revise-prd task ([2f0af37](https://github.com/dorayo/ORCHESTRIX/commit/2f0af37d87be8eeb98ae7cc5128e33691cdf7054))
+* **po:** enforce role separation - PO creates epic metadata only, SM creates stories ([69d753f](https://github.com/dorayo/ORCHESTRIX/commit/69d753fb084bc0c8ae29af6d975f5938cbe5b8ee))
+* **qa:** add i18n hardcoding to QA spot check items ([d26fb08](https://github.com/dorayo/ORCHESTRIX/commit/d26fb088fe0aeffa135fa80691eab72b56961d6f))
+* **qa:** clarify story file lookup with explicit Glob-then-Read steps ([f80bddb](https://github.com/dorayo/ORCHESTRIX/commit/f80bddb955d20e4ae53bbd22bacbb1327d625bec))
+* **qa:** enforce mandatory handoff message output in review-story task ([2dca0ae](https://github.com/dorayo/ORCHESTRIX/commit/2dca0ae212add2d40d2fa73353b0b4f0000089cc))
+* **qa:** make i18n search mandatory with explicit patterns ([512da26](https://github.com/dorayo/ORCHESTRIX/commit/512da260f52e024d08fa4f0d4e4932ac1750643f))
+* **release:** disable NPM publishing while keeping semantic versioning ([c2879ce](https://github.com/dorayo/ORCHESTRIX/commit/c2879ce4b1b0551a602baff1e8e34a4339075f0d))
+* **sm:** auto-create cumulative registries on first story ([145edd6](https://github.com/dorayo/ORCHESTRIX/commit/145edd6422f181d930ad3bc0b9388c8f3f09e3f9))
+* **sm:** use correct story file path pattern in correct-course task ([bc8b3f5](https://github.com/dorayo/ORCHESTRIX/commit/bc8b3f56866d16b5920902a1a7ca40fff68d229d))
+* **sm:** use glob pattern for architecture file matching ([93de760](https://github.com/dorayo/ORCHESTRIX/commit/93de760e7bbbc1faf7c6eaff5e75b9c5a08593c1))
+
+
+### Features
+
+* **handoff:** implement Structured Termination Protocol (STP) for reliable automation ([7216e72](https://github.com/dorayo/ORCHESTRIX/commit/7216e72c11f47b1d7b4baadcacf20bd4003254b9))
+* **iteration:** add post-MVP iteration workflow support ([e3c4fa3](https://github.com/dorayo/ORCHESTRIX/commit/e3c4fa304ed5f25736c60bada806a181c04094bd))
+* **multi-repo:** add product drift guidance messages for cross-repo escalation ([554af10](https://github.com/dorayo/ORCHESTRIX/commit/554af10873355c94378f835818d50d3c833e606b))
+* **multi-repo:** add unified Epic location resolution and proposal scope classification ([acb565d](https://github.com/dorayo/ORCHESTRIX/commit/acb565dbb181c103e6605fc8df447dc76143f3c8))
+* **po:** add extract-epics.js script for automated Epic YAML extraction ([732f6d6](https://github.com/dorayo/ORCHESTRIX/commit/732f6d628dbec42cc93e76ea546a1752879d9419))
+* **qa:** add implementation shortcuts detection for Dev and QA review ([3260dac](https://github.com/dorayo/ORCHESTRIX/commit/3260dac73e642f8a99d64e108801c0437cfd5e1b))
+* **tmux:** auto-activate agents and start workflow on session launch ([500febc](https://github.com/dorayo/ORCHESTRIX/commit/500febcbfcf4a3d47ac4292b423e4eb4d6d6d7ca))
+* **workflow:** add direct PO→Dev routing for AC-only changes ([e7d7c22](https://github.com/dorayo/ORCHESTRIX/commit/e7d7c223537819f2c4ddfdbafa435a8e616d759a))
+
 # [12.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v12.0.1...v12.1.0) (2025-11-23)
 
 
