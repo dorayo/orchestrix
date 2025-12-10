@@ -1,13 +1,19 @@
 #!/bin/bash
 # Claude Code Stop Hook - HANDOFF Detector
 # Uses tmux capture-pane to read Claude's output
+# Supports multi-repo: Reads session name from ORCHESTRIX_SESSION environment variable
 
 # Note: No 'set -e' to avoid hook failure on non-critical errors
 # We handle errors explicitly where needed
 
-# Configuration
-SESSION_NAME="orchestrix"
-LOG_FILE="/tmp/orchestrix-handoff.log"
+# ============================================
+# Configuration (Multi-Repo Support)
+# ============================================
+# Priority: Environment variable > Default
+# ORCHESTRIX_SESSION and ORCHESTRIX_LOG are set by start-tmux-session.sh
+
+SESSION_NAME="${ORCHESTRIX_SESSION:-orchestrix}"
+LOG_FILE="${ORCHESTRIX_LOG:-/tmp/orchestrix-handoff.log}"
 
 # Agent to window mapping (Bash 3.2 compatible)
 get_agent_window() {
@@ -38,7 +44,7 @@ get_agent_command() {
 }
 
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$SESSION_NAME] $*" >> "$LOG_FILE"
 }
 
 # Get current agent ID

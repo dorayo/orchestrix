@@ -1,16 +1,48 @@
 #!/bin/bash
 # Orchestrix tmux Multi-Agent Session Starter
 # Purpose: Create 4 separate windows, each running a Claude Code agent
+# Supports multi-repo: Each repo gets its own tmux session based on repository_id
 
 set -e
-
-SESSION_NAME="orchestrix"
 
 # Dynamically get project root directory (where .orchestrix-core is located)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo "📂 Working directory: $WORK_DIR"
+
+# ============================================
+# Dynamic Session Naming (Multi-Repo Support)
+# ============================================
+
+# Try to read repository_id from core-config.yaml
+CONFIG_FILE="$WORK_DIR/.orchestrix-core/core-config.yaml"
+REPO_ID=""
+
+if [ -f "$CONFIG_FILE" ]; then
+    # Extract repository_id using grep and sed (POSIX compatible)
+    REPO_ID=$(grep -E "^\s*repository_id:" "$CONFIG_FILE" 2>/dev/null | head -1 | sed "s/.*repository_id:[[:space:]]*['\"]*//" | sed "s/['\"].*//")
+
+    # Clean up: remove quotes and whitespace
+    REPO_ID=$(echo "$REPO_ID" | tr -d "'" | tr -d '"' | tr -d ' ')
+fi
+
+# Fallback: use directory name if repository_id is empty
+if [ -z "$REPO_ID" ]; then
+    REPO_ID=$(basename "$WORK_DIR")
+    echo "⚠️  No repository_id in config, using directory name: $REPO_ID"
+fi
+
+# Sanitize REPO_ID for tmux session name (alphanumeric, dash, underscore only)
+REPO_ID=$(echo "$REPO_ID" | tr -cd 'a-zA-Z0-9_-')
+
+# Generate dynamic session name and log file
+SESSION_NAME="orchestrix-${REPO_ID}"
+LOG_FILE="/tmp/orchestrix-${REPO_ID}-handoff.log"
+
+echo "🏷️  Repository ID: $REPO_ID"
+echo "📺 tmux Session: $SESSION_NAME"
+echo "📝 Log file: $LOG_FILE"
 
 # Check if tmux is installed
 if ! command -v tmux &> /dev/null; then
@@ -43,7 +75,10 @@ tmux set-option -t "$SESSION_NAME" window-status-format "#I:#W"
 tmux set-option -t "$SESSION_NAME" window-status-current-format "#I:#W*"
 
 # Set environment variables for Architect window
+# ORCHESTRIX_SESSION and ORCHESTRIX_LOG are used by handoff-detector.sh
 tmux send-keys -t "$SESSION_NAME:0" "export AGENT_ID=architect" C-m
+tmux send-keys -t "$SESSION_NAME:0" "export ORCHESTRIX_SESSION=$SESSION_NAME" C-m
+tmux send-keys -t "$SESSION_NAME:0" "export ORCHESTRIX_LOG=$LOG_FILE" C-m
 tmux send-keys -t "$SESSION_NAME:0" "clear" C-m
 tmux send-keys -t "$SESSION_NAME:0" "echo '╔════════════════════════════════════════╗'" C-m
 tmux send-keys -t "$SESSION_NAME:0" "echo '║  🏛️  Architect Agent (Window 0)      ║'" C-m
@@ -53,6 +88,8 @@ tmux send-keys -t "$SESSION_NAME:0" "echo ''" C-m
 # Create window 1 - SM
 tmux new-window -t "$SESSION_NAME:1" -n "SM" -c "$WORK_DIR"
 tmux send-keys -t "$SESSION_NAME:1" "export AGENT_ID=sm" C-m
+tmux send-keys -t "$SESSION_NAME:1" "export ORCHESTRIX_SESSION=$SESSION_NAME" C-m
+tmux send-keys -t "$SESSION_NAME:1" "export ORCHESTRIX_LOG=$LOG_FILE" C-m
 tmux send-keys -t "$SESSION_NAME:1" "clear" C-m
 tmux send-keys -t "$SESSION_NAME:1" "echo '╔════════════════════════════════════════╗'" C-m
 tmux send-keys -t "$SESSION_NAME:1" "echo '║  📋 SM Agent (Window 1)               ║'" C-m
@@ -62,6 +99,8 @@ tmux send-keys -t "$SESSION_NAME:1" "echo ''" C-m
 # Create window 2 - Dev
 tmux new-window -t "$SESSION_NAME:2" -n "Dev" -c "$WORK_DIR"
 tmux send-keys -t "$SESSION_NAME:2" "export AGENT_ID=dev" C-m
+tmux send-keys -t "$SESSION_NAME:2" "export ORCHESTRIX_SESSION=$SESSION_NAME" C-m
+tmux send-keys -t "$SESSION_NAME:2" "export ORCHESTRIX_LOG=$LOG_FILE" C-m
 tmux send-keys -t "$SESSION_NAME:2" "clear" C-m
 tmux send-keys -t "$SESSION_NAME:2" "echo '╔════════════════════════════════════════╗'" C-m
 tmux send-keys -t "$SESSION_NAME:2" "echo '║  💻 Dev Agent (Window 2)              ║'" C-m
@@ -71,6 +110,8 @@ tmux send-keys -t "$SESSION_NAME:2" "echo ''" C-m
 # Create window 3 - QA
 tmux new-window -t "$SESSION_NAME:3" -n "QA" -c "$WORK_DIR"
 tmux send-keys -t "$SESSION_NAME:3" "export AGENT_ID=qa" C-m
+tmux send-keys -t "$SESSION_NAME:3" "export ORCHESTRIX_SESSION=$SESSION_NAME" C-m
+tmux send-keys -t "$SESSION_NAME:3" "export ORCHESTRIX_LOG=$LOG_FILE" C-m
 tmux send-keys -t "$SESSION_NAME:3" "clear" C-m
 tmux send-keys -t "$SESSION_NAME:3" "echo '╔════════════════════════════════════════╗'" C-m
 tmux send-keys -t "$SESSION_NAME:3" "echo '║  🧪 QA Agent (Window 3)               ║'" C-m
@@ -229,8 +270,8 @@ echo "  Ctrl+b → n/p       Next/Previous window"
 echo "  Ctrl+b → d         Detach (runs in background)"
 echo "  Ctrl+b → [         Scroll mode (q to exit)"
 echo ""
-echo "📝 Monitor: tail -f /tmp/orchestrix-handoff.log"
-echo "📝 Reconnect: tmux attach -t orchestrix"
+echo "📝 Monitor: tail -f $LOG_FILE"
+echo "📝 Reconnect: tmux attach -t $SESSION_NAME"
 echo ""
 
 # Attach to session
