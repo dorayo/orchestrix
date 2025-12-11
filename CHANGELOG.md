@@ -1,3 +1,10 @@
+## [13.3.3](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.2...v13.3.3) (2025-12-11)
+
+
+### Bug Fixes
+
+* **sm:** enforce strict template compliance for story tasks structure ([b9d6ffb](https://github.com/dorayo/ORCHESTRIX/commit/b9d6ffbe1e9cbbce1f087fc29f1ff1140bbe996f))
+
 ## [13.3.2](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.1...v13.3.2) (2025-12-11)
 
 
