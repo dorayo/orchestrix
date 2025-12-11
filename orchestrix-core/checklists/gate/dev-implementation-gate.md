@@ -24,13 +24,25 @@ required:
 optional:
   - project_mode: 'monolith' | 'multi-repo' (from core-config.yaml)
   - repository_role: 'backend' | 'frontend' | 'ios' | 'android' (from core-config.yaml)
+  - architecture_context: Pre-loaded context object from parent task
+  - cumulative_context: Pre-loaded cumulative context from parent task
 ```
 
 ## Process
 
-### 1. Load Architecture Context
+### 1. Architecture Context Resolution
 
-Execute: `{root}/tasks/utils/load-architecture-context.md`
+**Context Reuse Protocol**:
+
+```yaml
+if architecture_context provided in inputs:
+  use: inputs.architecture_context
+  proceed_to: Step 2
+else:
+  execute: {root}/tasks/utils/load-architecture-context.md
+```
+
+**Full Load Process** (only if no context provided):
 
 **Base Documents** (always load):
 - `docs/architecture/tech-stack.md`

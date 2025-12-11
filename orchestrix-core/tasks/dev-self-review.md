@@ -11,6 +11,19 @@ Comprehensive self-review before marking story as Review. This is a MANDATORY ga
 - Lint checks passing
 - Dev Log completed with Final Summary
 
+## Inputs
+
+```yaml
+required:
+  - story_id: '{epic}.{story}'
+  - story_path: Path to story file
+  - dev_log_path: Path to dev log
+
+optional:
+  - architecture_context: Pre-loaded context from develop-story.md Step 3.2
+  - cumulative_context: Pre-loaded context from develop-story.md Step 3.4
+```
+
 ## Validation
 
 **Execute**: `{root}/tasks/utils/validate-agent-action.md`
@@ -30,21 +43,25 @@ action: self_review
 
 ### 1. Load Context
 
-Load required documents:
+**Context Reuse Protocol**:
+
+```yaml
+if architecture_context provided in inputs:
+  use: inputs.architecture_context
+else:
+  execute: {root}/tasks/utils/load-architecture-context.md
+```
+
+**Load Required Documents**:
 - Story file from `{devStoryLocation}/{epic}.{story}.*.md`
 - Dev Log from `{devLogLocation}/{story-id}-dev-log.md`
-- Architecture documents (via load-architecture-context.md)
+- Architecture documents: **REUSE from input or load if missing**
 - API contracts (if multi-repo, from product repo)
 - QA test design (if exists)
 
 ### 2. Execute Implementation Gate
 
 **Execute**: `{root}/checklists/gate/dev-implementation-gate.md`
-
-This is a complex validation engine with a complete ## Process section. Follow its execution flow:
-- Read the ## Inputs section to understand required parameters
-- Execute the ## Process section step-by-step
-- Generate gate_result as defined
 
 **Input**:
 ```yaml
@@ -53,6 +70,7 @@ story_path: {story_path}
 dev_log_path: {dev_log_path}
 project_mode: {from core-config.yaml}
 repository_role: {from core-config.yaml}
+architecture_context: {from Step 1}
 ```
 
 **Output**: `gate_result` (complete implementation gate validation)

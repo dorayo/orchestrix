@@ -209,6 +209,15 @@ Execute:
 {root}/tasks/dev-self-review.md
 ```
 
+**Input**:
+```yaml
+story_id: {story_id}
+story_path: {story_path}
+dev_log_path: {dev_log_path}
+architecture_context: {from Step 3.2}
+cumulative_context: {from Step 3.4}
+```
+
 **Handle return value**:
 
 **If result = "PASS"**:
