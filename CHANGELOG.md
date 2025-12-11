@@ -1,3 +1,10 @@
+## [13.3.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.0...v13.3.1) (2025-12-11)
+
+
+### Performance Improvements
+
+* **dev:** add context passthrough to avoid redundant architecture loading ([a3625f1](https://github.com/dorayo/ORCHESTRIX/commit/a3625f19351a05c6d2151f3ba267edccbd5a31c6))
+
 # [13.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.2.0...v13.3.0) (2025-12-11)
 
 
