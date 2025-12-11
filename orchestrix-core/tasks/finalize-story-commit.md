@@ -21,7 +21,7 @@ This task can be executed by:
 1. Story Status = `Done`
 2. Latest QA Gate = `PASS`
 3. All code changes are staged and ready to commit
-4. QA review has been completed (review report and gate file exist)
+4. QA review has been completed (gate file exists)
 
 ## Process
 

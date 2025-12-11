@@ -246,69 +246,25 @@ implementation_shortcuts_spot_check:
 - If refactoring needed: add to "Issues Breakdown" for Dev to address
 - Do NOT alter story beyond QA Results section
 
-## Output 1: Create Detailed Review Report
+## Output 1: Update Story - QA Review Section (Simplified)
 
-**Save to**: `{qa.qaReviewsLocation}/{story_id}-qa-r{review_round}.md`
-
-Use template: `{root}/templates/qa-review-lite-tmpl.yaml`
-
-**Include** (Lite Version):
-- Review summary (gate, issues count, quality score)
-- Architecture concerns (if any)
-- Security & performance findings (NFR deep dive)
-- Issues breakdown by severity
-- Gate decision reasoning
-- Next steps
-
-**Exclude** (Dev Gate Already Verified):
-- ❌ Code quality assessment (Gate Section 2)
-- ❌ Compliance check (Gate Sections 2,3,6)
-- ❌ Test architecture details (Gate Section 3,4)
-- ❌ Detailed metrics (simplified in lite version)
-
-### Output 2: Update Story - QA Review Metadata ONLY
-
-**QA Review Metadata section:**
-- Update `review_round` (increment by 1)
-- Increment `total_reviews_conducted`
-- Append to `review_history`:
-  ```yaml
-  - round: {{round_number}}
-    date: {{review_date}}
-    reviewer: {{reviewer_id}}
-    gate: {{gate_result}}
-    total_issues: {{total_issues}}
-    critical: {{critical_count}}
-    high: {{high_count}}
-    issues_from_previous: {{previous_issues}}
-    issues_resolved: {{resolved_count}}
-    improvement_percentage: {{improvement_pct}}
-    decision: {{decision}}
-  ```
-
-**QA Review Summary section:**
+Update or create `## QA Review` section in Story with minimal info:
 
 ```markdown
-## QA Review Summary
+## QA Review
 
-- **Total Reviews**: {{total_reviews}}
-- **Latest Review**: {{latest_review_date}}
-- **Latest Gate**: {{latest_gate}}
-- **Final Quality Score**: {{final_quality_score}}/100
-- **Total Issues Found**: {{cumulative_issues}}
-- **Total Issues Resolved**: {{cumulative_resolved}}
-- **Overall Improvement**: {{overall_improvement}}%
-
-### Review History
-- **Round {{round}}** ({{date}}): [QA Review R{{round}}](docs/qa/reviews/{{story_id}}-qa-r{{round}}.md) - {{gate}} - {{issues_count}} issues ({{improvement}}% improvement)
-
-### Final Gate
-- **Gate File**: [{{gate_file_name}}](docs/qa/gates/{{gate_file_name}})
-- **Gate Result**: {{final_gate}}
-- **Status Reason**: {{final_status_reason}}
+- **Round**: {{review_round}}
+- **Gate**: {{gate_result}}
+- **Issues**: {{critical_count}} critical / {{high_count}} high / {{medium_count}} medium / {{low_count}} low
+- **Gate File**: `docs/qa/gates/{{epic}}.{{story}}-{{slug}}.yml`
 ```
 
-## Output 3: Create Gate File
+**Notes**:
+- If section exists, replace it entirely with updated values
+- No history arrays, no cumulative statistics
+- Gate YAML contains all details Dev needs
+
+## Output 2: Create Gate File
 
 **Template:** `{root}/templates/qa-gate-tmpl.yaml`
 **Path:** `qa.qaLocation/gates/{epic}.{story}-{slug}.yml` (from `core-config.yaml`)
@@ -359,48 +315,46 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 **Execute these steps in order (ALL MANDATORY):**
 
-1. Create detailed review report in `{qa.qaReviewsLocation}/{story_id}-qa-r{review_round}.md`
-2. Update Story: QA Review Metadata section
-3. Update Story: QA Review Summary section
-4. Create gate file in `qa.qaLocation/gates`
-5. **Update Story: Change Log** - Add table entry:
+1. Update Story: QA Review section (simplified, see Output 1)
+2. Create gate file in `qa.qaLocation/gates` (see Output 2)
+3. **Update Story: Change Log** - Add table entry:
    ```
-   | {{date}} {{time}} | QA | Review → {{next_status}} | Round {{round}}, Gate: {{gate}}, {{issues_count}} issues [QA R{{round}}](docs/qa/reviews/{{story_id}}-qa-r{{round}}.md) |
+   | {{date}} {{time}} | QA | Review → {{next_status}} | Round {{round}}, Gate: {{gate}}, {{issues_count}} issues |
    ```
-6. **Validate and Update Status** (REQUIRED):
+4. **Validate and Update Status** (REQUIRED):
 
-   **6.1 Determine Target Status**:
+   **4.1 Determine Target Status**:
    - If architecture escalation detected in Step 3.1: `target_status = Escalated`
-   - Else: Use `result.next_status` from gate decision (Step 4)
+   - Else: Use `result.next_status` from gate decision
 
-   **6.2 Validate Status Transition**:
+   **4.2 Validate Status Transition**:
    Execute: `{root}/tasks/utils/validate-status-transition.md`
    Input:
    ```yaml
    story_path: {story_path}
    current_status: Review
-   target_status: {target_status from 6.1}
+   target_status: {target_status from 4.1}
    agent_id: qa
    ```
    - If validation FAILS: HALT with error message
-   - If validation PASSES: Continue to 6.3
+   - If validation PASSES: Continue to 4.3
 
-   **6.3 Update Story Status Field**:
+   **4.3 Update Story Status Field**:
    - Locate Story's `Status:` field (near top of document)
    - Replace current status with `{target_status}`
    - **Example**: `Status: Review` → `Status: Done`
    - **CRITICAL**: This is a literal string replacement in the Story file, not just logging
 
-7. **DETERMINE POST-REVIEW WORKFLOW** (REQUIRED - Always Execute):
+5. **DETERMINE POST-REVIEW WORKFLOW** (REQUIRED - Always Execute):
 
-   **7.1. Execute Post-Review Decision**:
+   **5.1. Execute Post-Review Decision**:
 
    Use `make-decision.md` to determine next actions:
    ```yaml
    decision_type: qa-post-review-workflow
    context:
-     gate_result: {from Step 4 gate file}
-     final_status: {from Step 6 status field}
+     gate_result: {from Step 2 gate file}
+     final_status: {from Step 4 status field}
      review_round: {current_round}
      issues_by_severity:
        critical: {critical_count}
@@ -409,14 +363,14 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
        low: {low_count}
    ```
 
-   **Store decision result for Step 8 handoff**:
+   **Store decision result for Step 6 handoff**:
    - `workflow_action` (e.g., finalize_commit, handoff_dev, escalate_architect)
    - `requires_git_commit` (boolean)
    - `handoff_target` (e.g., SM, dev, architect)
    - `reasoning` (explanation of the decision)
    - `next_command` (command to execute)
 
-   **7.2. Execute Git Commit (MANDATORY - Always Execute)**:
+   **5.2. Execute Git Commit (MANDATORY - Always Execute)**:
 
    **ALWAYS execute finalize-story-commit.md regardless of decision**:
 
@@ -435,12 +389,12 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
    - Update Story Change Log with commit entry
    - Return commit result (success with hash OR skip reason OR error message)
 
-   **Store commit result** for Step 8 handoff:
+   **Store commit result** for Step 6 handoff:
    - If succeeded: `commit_hash` and `commit_message`
    - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
    - If failed: `commit_error`
 
-8. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
+6. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
 
 ---
 
@@ -452,12 +406,12 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 ### Pre-Handoff Verification
 
-Before outputting handoff message, verify Step 7.2 was executed:
+Before outputting handoff message, verify Step 5.2 was executed:
 
 - **Check commit_result exists** (not empty)
   - If `commit_result` is empty/missing:
-    - ❌ **ERROR**: Step 7.2 was not executed
-    - Go back to Step 7.2 and execute finalize-story-commit.md
+    - ❌ **ERROR**: Step 5.2 was not executed
+    - Go back to Step 5.2 and execute finalize-story-commit.md
     - Do NOT proceed until commit_result is populated
 
 - **If decision.requires_git_commit = true AND commit_result.skip_reason exists**:
@@ -517,7 +471,6 @@ Quality Score: {quality_score}/100
 All quality checks passed. Code committed successfully.
 
 📦 Git Commit: {commit_hash}
-📊 Review Report: {review_report_path}
 ✅ Gate File: {gate_file_path}
 
 Total Issues Found: {total_issues}
@@ -556,7 +509,6 @@ Error: {commit_error}
 Quality Summary:
 - Gate: PASS
 - Quality Score: {quality_score}/100
-- Review Report: {review_report_path}
 
 Manual commit retry needed.
 
@@ -586,7 +538,6 @@ Quality Score: {quality_score}/100
 
 Issues detected during QA review. Dev action required.
 
-📊 Review Report: {review_report_path}
 ⚠️ Gate File: {gate_file_path}
 
 Issues Breakdown:
