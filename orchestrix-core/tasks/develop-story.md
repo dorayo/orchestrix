@@ -83,7 +83,17 @@ input:
 **DO NOT** directly read files like `docs/architecture/coding-standards.md` - use the utility.
 
 ### 3.3 QA Test Design (if present)
-Load from `{qaLocation}/test-designs/{story_id}-test-design.md` if exists.
+
+**Search for test design file**:
+```yaml
+# Use glob pattern to find test design (filename includes date)
+pattern: "{qa.qaLocation}/assessments/{story_id}-test-design-*.md"
+example: "docs/qa/assessments/1.3-test-design-20250115.md"
+
+# If multiple matches, use the most recent (latest date in filename)
+```
+
+Load the matched file if exists. Extract test scenarios for TDD reference.
 
 ### 3.4 Cumulative Context
 Execute `{root}/tasks/utils/load-cumulative-context.md` to load:

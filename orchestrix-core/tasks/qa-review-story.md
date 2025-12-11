@@ -207,6 +207,7 @@ review_mode: {from Step 1}
 project_type: {from Step 2}
 environment_url: {from Step 3}
 story_path: {story_path}
+test_design_path: {glob "{qa.qaLocation}/assessments/{story_id}-test-design-*.md", use latest if multiple}
 ```
 
 **Store result**:

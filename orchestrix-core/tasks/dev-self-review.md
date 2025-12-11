@@ -62,7 +62,7 @@ else:
 - Dev Log from `{devLogLocation}/{story-id}-dev-log.md`
 - Architecture documents: **REUSE from input or load if missing**
 - API contracts (if multi-repo, from product repo)
-- QA test design (if exists)
+- QA test design (if exists): glob `{qa.qaLocation}/assessments/{story_id}-test-design-*.md`
 
 ### 2. Execute Implementation Gate
 
