@@ -92,10 +92,9 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 2. **Execute `utils/load-architecture-context.md`** to load architecture documents
 3. Validate all technical components against `architecture_context`
 4. Calculate technical accuracy score (0-10 scale)
-5. Generate detailed review report
-6. Determine next status using decision system
-7. Update story Status field with new status
-8. Save results to story file and external report
+5. Determine next status using decision system
+6. Update story Status field with new status
+7. Save Architect Review Results to story file
 
 ### Requirements:
 - ✅ Load all relevant architecture documents for story type
@@ -104,10 +103,10 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 - ✅ Identify critical/major/minor issues with specific locations
 - ✅ Provide actionable recommendations
 - ✅ Check test design level from Story metadata
-- ✅ Determine next status via make-decision.md (Step 6)
-- ✅ Validate status transition via validate-status-transition.md (Step 7)
-- ✅ Update Story.status field directly (Step 7)
-- ✅ Verify status update successful (Step 7)
+- ✅ Determine next status via make-decision.md (Step 5)
+- ✅ Validate status transition via validate-status-transition.md (Step 6)
+- ✅ Update Story.status field directly (Step 6)
+- ✅ Verify status update successful (Step 6)
 
 ### Halt Conditions (ONLY when review cannot proceed):
 - ❌ Story file not found or cannot be read
@@ -367,7 +366,7 @@ report_generation:
 
 **Execute AFTER report generation, BEFORE saving outputs**
 
-### Step 6: Determine Next Status
+### Step 5: Determine Next Status
 
 Execute `{root}/tasks/make-decision.md`:
 
@@ -384,7 +383,7 @@ result:
   handoff_action: (test-design | develop-story | revise-story | escalate)
 ```
 
-### Step 7: Update Story Status Field
+### Step 6: Update Story Status Field
 
 **CRITICAL**: This step updates the actual Story.status field, not just metadata.
 
@@ -394,7 +393,7 @@ Execute `{root}/tasks/utils/validate-agent-action.md`:
 agent_id: architect
 story_path: {{story_file_path}}
 action: update_status
-target_status: {{next_status from Step 6}}
+target_status: {{next_status from Step 5}}
 ```
 
 **On validation PASS**:
@@ -466,10 +465,10 @@ assert verify_status == next_status, "Status update failed"
 ✓ Technical accuracy score calculated correctly
 ✓ All issues classified and documented with locations
 ✓ Recommendations are specific and actionable
-✓ Next status determined via decision system (Step 6)
-✓ Status transition validated via validate-status-transition.md (Step 7)
-✓ Story.status field updated and verified (Step 7)
-✓ Report saved to story file or separate review document (Step 8)
+✓ Next status determined via decision system (Step 5)
+✓ Status transition validated via validate-status-transition.md (Step 6)
+✓ Story.status field updated and verified (Step 6)
+✓ Architect Review Results saved to story file (Step 7)
 ```
 
 ---
@@ -487,56 +486,64 @@ assert verify_status == next_status, "Status update failed"
 - Confirm status field shows {{next_status}}
 - If verification fails: HALT
 
-### Output 2: Detailed Review Report
+### Output 2: Update Story - Architect Review Results (SM Readable Format)
 
-**Save to**: `{architect.storyReviewsLocation}/{story_id}-arch-review-r{review_round}.md`
-
-Use template: `{root}/templates/architect-review-tmpl.yaml`
-
-**Include**:
-- Complete technical analysis
-- All issues (Critical, Major, Minor) with details
-- Architecture guidance and recommendations
-- Metadata (review duration, docs reviewed, etc.)
-
-### Output 3: Update Story File Metadata
-
-**Update Story section**: `Architect Review Metadata`
-
-```yaml
-review_round: {{current_round}}
-total_reviews_conducted: {{total_count}}
-review_history:
-  - round: {{current_round}}
-    date: {{review_date}}
-    reviewer: {{reviewer_id}}
-    score: {{review_score}}
-    decision: {{decision}}
-    critical_issues: {{critical_count}}
-    key_findings: {{brief_summary}}
-```
-
-**Update Story section**: `Architect Review Summary`
+Update or create `## Architect Review Results` section in Story. This section is read by SM when story requires revision.
 
 ```markdown
-- **Total Reviews**: {{total_reviews}}
-- **Latest Review**: {{latest_review_date}}
-- **Latest Score**: {{latest_score}}/10
-- **Latest Decision**: {{latest_decision}}
-- **Critical Issues (Latest)**: {{latest_critical_count}}
+## Architect Review Results
 
-### Review Documents
-- Round {{round}}: [Arch Review R{{round}}](docs/architecture/story-reviews/{{story_id}}-arch-review-r{{round}}.md) - Score: {{score}}/10 - Decision: {{decision}} - {{date}}
+### Review Date: {{review_date}}
+### Reviewed By: {{reviewer_name}}
+### Architecture Score: {{score}}/10
+### Review Round: {{review_round}}
+
+### Decision: {{decision}}
+
+### Issues
+
+#### Critical Issues ({{critical_count}})
+{{#each critical_issues}}
+- **{{title}}** ({{location}}): {{description}}
+  - Fix: {{fix}}
+{{/each}}
+
+#### High Issues ({{major_count}})
+{{#each major_issues}}
+- **{{title}}** ({{location}}): {{description}}
+  - Fix: {{fix}}
+{{/each}}
+
+#### Medium Issues ({{medium_count}})
+{{#each medium_issues}}
+- **{{title}}** ({{location}}): {{description}}
+  - Recommendation: {{recommendation}}
+{{/each}}
+
+#### Low Issues ({{minor_count}})
+{{#each minor_issues}}
+- {{title}} ({{location}}): {{suggestion}}
+{{/each}}
+
+### Recommendations
+{{#each recommendations}}
+- {{item}}
+{{/each}}
 ```
+
+**Notes**:
+- If section exists, replace it entirely with updated values
+- This is the primary data source for SM's `revise-story-from-architect-feedback.md` task
+- No separate report file generated (all info is in Story)
 
 **Update Story section**: `Change Log`
 
 Add entry:
 ```
-| {{date}} {{time}} | Architect | AwaitingArchReview → {{next_status}} | Score: {{score}}/10, {{critical_count}} critical issues [Review R{{round}}](docs/architecture/story-reviews/{{story_id}}-arch-review-r{{round}}.md) |
+| {{date}} {{time}} | Architect | AwaitingArchReview → {{next_status}} | Score: {{score}}/10, {{critical_count}} critical / {{major_count}} major issues |
 ```
 
-### Output 4: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
+### Output 3: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
 
 **CRITICAL**: The handoff message below MUST be the absolute last line of your output. Do NOT add any summaries, recommendations, tips, or explanations after the handoff.
 
@@ -548,8 +555,6 @@ Based on decision, output the appropriate handoff using exact format:
 Story: {story_id} → Status: AwaitingTestDesign
 Score: {score}/10 | Decision: Approved
 Test Design Level: {test_design_level}
-
-Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
 ---ORCHESTRIX-HANDOFF-BEGIN---
 target: qa
@@ -566,8 +571,6 @@ args: {story_id}
 Story: {story_id} → Status: Approved
 Score: {score}/10 | Decision: Approved
 
-Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
-
 ---ORCHESTRIX-HANDOFF-BEGIN---
 target: dev
 command: develop-story
@@ -582,8 +585,6 @@ args: {story_id}
 ⚠️ ARCHITECT REVIEW COMPLETE - REVISION REQUIRED
 Story: {story_id} → Status: RequiresRevision
 Score: {score}/10 | Critical: {critical_count} | Major: {major_count}
-
-Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
 ---ORCHESTRIX-HANDOFF-BEGIN---
 target: sm
@@ -601,8 +602,6 @@ args: {story_id}
 🚨 ESCALATED TO SENIOR ARCHITECT
 Story: {story_id} → Status: Escalated
 Reason: {escalation_reason}
-
-Review: docs/architecture/story-reviews/{story_id}-arch-review-r{round}.md
 
 ⚠️ Requires human intervention
 ```
@@ -701,12 +700,12 @@ Return error to user
 - ✅ Technical accuracy score generated with justification
 - ✅ All architecture compliance checks completed
 - ✅ Issues classified with specific locations and recommendations
-- ✅ Next status determined via make-decision.md (Step 6)
-- ✅ Status transition validated (Step 7)
-- ✅ **Story.status field updated and verified** (Step 7 - CRITICAL)
-- ✅ Metadata sections updated (Output 3)
+- ✅ Next status determined via make-decision.md (Step 5)
+- ✅ Status transition validated (Step 6)
+- ✅ **Story.status field updated and verified** (Step 6 - CRITICAL)
+- ✅ Architect Review Results updated in Story (Output 2)
 - ✅ Actionable feedback provided for next agent
-- ✅ Handoff message with correct next action (Output 4)
+- ✅ Handoff message with correct next action (Output 3)
 
 ### Quality Gates:
 - **Score ≥7/10 + Test Design Level = Simple**: Approve for development (Status = Approved)
