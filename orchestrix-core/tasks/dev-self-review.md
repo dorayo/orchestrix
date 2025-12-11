@@ -50,6 +50,11 @@ if architecture_context provided in inputs:
   use: inputs.architecture_context
 else:
   execute: {root}/tasks/utils/load-architecture-context.md
+
+if cumulative_context provided in inputs:
+  use: inputs.cumulative_context
+else:
+  execute: {root}/tasks/utils/load-cumulative-context.md
 ```
 
 **Load Required Documents**:

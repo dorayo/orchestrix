@@ -69,7 +69,7 @@ metadata:
 
 | Step | Completed | Evidence |
 |------|-----------|----------|
-| Status transition validated | [ ] | validate-agent-permission.md executed |
+| Status transition validated | [ ] | validate-agent-action.md executed |
 | Story Status field changed to "Review" | [ ] | Status: Review in story file |
 | Status update verified (read back from file) | [ ] | Confirmed "Review" |
 
@@ -213,4 +213,4 @@ HALTING - Complete missing steps first
 - Called by: `develop-story.md` (GATE 2, after self-review PASS and registry update)
 - Quality validation: `tasks/dev-self-review.md` → `tasks/dev-implementation-gate.md`
 - Status transitions: `data/story-status-transitions.yaml`
-- Permission validation: `tasks/utils/validate-agent-permission.md`
+- Permission validation: `tasks/utils/validate-agent-action.md`

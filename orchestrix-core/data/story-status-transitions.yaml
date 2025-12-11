@@ -429,6 +429,7 @@ permissions:
       - TestDesignComplete -> InProgress
       - InProgress -> Review
       - InProgress -> Blocked
+      - InProgress -> Escalated
   
   QA:
     modify: [AwaitingTestDesign, TestDesignComplete, Review]

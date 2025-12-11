@@ -351,6 +351,8 @@ implementation_shortcuts:
 - PASS: Zero CRITICAL findings AND overall_score >= 80%
 - FAIL: Any CRITICAL finding OR overall_score < 80%
 
+**Note**: Implementation Shortcuts validation is executed externally via `implementation-shortcuts.md`. Its results are merged into `gate_result.sections[10]` (index 10, "Implementation Shortcuts" section).
+
 ---
 
 ### 6. Generate Unified Validation Report

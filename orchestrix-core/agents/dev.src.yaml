@@ -75,7 +75,7 @@ dependencies:
     - apply-qa-fixes.md
     - make-decision.md
     - validate-next-story.md
-    - utils/validate-agent-permission.md
+    - utils/validate-agent-action.md
     - utils/validate-api-contract.md
     - utils/update-resumption-guide.md
     - utils/load-cumulative-context.md
