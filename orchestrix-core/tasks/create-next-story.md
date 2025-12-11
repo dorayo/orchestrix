@@ -407,10 +407,12 @@ Story:
 - **PREFERRED**: Use `story_definition.acceptance_criteria` (array format, each item starts with "ACn:")
 - **FALLBACK**: If `acceptance_criteria` not present, parse from `story_definition.acceptance_criteria_summary` (deprecated paragraph format)
 
-**Tasks/Subtasks**: Generate following template's TDD-First Vertical Slice structure (lines 142-202)
-- Map each task to acceptance criteria
-- Use template's Phase 1 (Test-Driven) + Phase 2 (QA) structure
-- Ensure all ACs covered
+**Tasks/Subtasks**: Render the template from `story-tmpl.yaml` section `tasks-subtasks` verbatim.
+
+- One task per AC with TDD cycle (Write test → Implement → Verify & refactor)
+- Fixed Integration & Edge Cases section
+- Fixed Final Verification section
+- Tasks define WHAT to do; Dev Notes define HOW (technical details, patterns, file paths)
 
 **Dev Notes** (following template instructions lines 206-251):
 - **Technical Constraints**: Story-specific constraints with doc references `[→ file.md#section]`

@@ -123,27 +123,22 @@ sections:
     title: Tasks / Subtasks
     type: bullet-list
     instruction: |
-      Break down the story into tasks. Apply TDD for each AC:
-      - Write failing test (RED)
-      - Implement to pass (GREEN)
-      - Refactor (REFACTOR)
-
-      Order tasks by dependency, not priority labels.
+      Render the template verbatim. One task per AC with TDD cycle.
+      Tasks define WHAT to do. Dev Notes define HOW (technical details, patterns, file paths).
     owner: scrum-master
     editors: [scrum-master, dev-agent]
     template: |
       {{#each acceptance_criteria}}
       - [ ] AC{{@index}}: {{this.title}}
-        - [ ] Write test
-        - [ ] Implement
-        - [ ] Verify
-        - (AC: {{@index}})
+        - [ ] Write test for AC{{@index}}
+        - [ ] Implement to pass test
+        - [ ] Verify & refactor
       {{/each}}
 
       - [ ] Integration & Edge Cases
-        - [ ] Integration tests
-        - [ ] Error handling
-        - [ ] Edge cases
+        - [ ] Cross-AC integration tests
+        - [ ] Error handling verification
+        - [ ] Edge case coverage
 
       - [ ] Final Verification
         - [ ] All tests passing
