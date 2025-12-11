@@ -1,3 +1,10 @@
+## [13.3.4](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.3...v13.3.4) (2025-12-11)
+
+
+### Bug Fixes
+
+* **qa:** unify test-design file path across Dev and QA workflows ([357857a](https://github.com/dorayo/ORCHESTRIX/commit/357857a977ceefd2d3555c211ae2f3c04f28d345))
+
 ## [13.3.3](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.2...v13.3.3) (2025-12-11)
 
 
