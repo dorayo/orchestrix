@@ -123,83 +123,32 @@ sections:
     title: Tasks / Subtasks
     type: bullet-list
     instruction: |
-      Break down the story into specific tasks and subtasks using the TDD-First Vertical Slice strategy.
+      Break down the story into tasks. Apply TDD for each AC:
+      - Write failing test (RED)
+      - Implement to pass (GREEN)
+      - Refactor (REFACTOR)
 
-      **TDD-First 2-Phase Approach:**
-      - Phase 1: Test-Driven Implementation - Define contracts, write tests, implement features (TDD cycle: RED → GREEN → REFACTOR)
-      - Phase 2: Quality Assurance - Integration testing, edge cases, performance optimization, and QA review preparation
-
-      **Key Principles:**
-      - Start with contracts (interfaces, types, schemas) based on SM Dev Notes business contracts
-      - Follow strict TDD cycle: Write test → Implement → Refactor
-      - Follow test priorities from QA test design (P0 → P1 → P2)
-      - Reference applicable acceptance criteria numbers for each task
-      - No mock data or skeleton phases - implement complete features guided by tests
-      - AI agents can generate complete implementations efficiently without staged approaches
+      Order tasks by dependency, not priority labels.
     owner: scrum-master
     editors: [scrum-master, dev-agent]
     template: |
-      **Phase 1: Test-Driven Implementation**
-      - [ ] 1.1 Define technical contracts
-        - [ ] Create interfaces/types/schemas based on SM Dev Notes business contracts
-        - [ ] Define API request/response types and validation schemas
-        - [ ] Define data models and entity structures
-        - [ ] Document contract decisions in Dev Log
-        - (AC: [reference acceptance criteria numbers])
+      {{#each acceptance_criteria}}
+      - [ ] AC{{@index}}: {{this.title}}
+        - [ ] Write test
+        - [ ] Implement
+        - [ ] Verify
+        - (AC: {{@index}})
+      {{/each}}
 
-      - [ ] 1.2 Implement P0 features (Critical Path - TDD cycle)
-        - [ ] Write P0 unit tests (TDD RED)
-        - [ ] Implement P0 features to pass tests (TDD GREEN)
-        - [ ] Refactor P0 code for clarity and maintainability (TDD REFACTOR)
-        - [ ] Verify all P0 tests pass
-        - [ ] Record P0 implementation in Dev Log
-        - (AC: [reference acceptance criteria numbers])
+      - [ ] Integration & Edge Cases
+        - [ ] Integration tests
+        - [ ] Error handling
+        - [ ] Edge cases
 
-      - [ ] 1.3 Implement P1 features (Important - TDD cycle)
-        - [ ] Write P1 unit tests (TDD RED)
-        - [ ] Implement P1 features to pass tests (TDD GREEN)
-        - [ ] Refactor P1 code (TDD REFACTOR)
-        - [ ] Verify all P0 + P1 tests pass
-        - [ ] Record P1 implementation in Dev Log
-        - (AC: [reference acceptance criteria numbers])
-
-      - [ ] 1.4 Implement P2 features (Nice-to-Have - TDD cycle, if time permits)
-        - [ ] Write P2 unit tests (TDD RED)
-        - [ ] Implement P2 features to pass tests (TDD GREEN)
-        - [ ] Refactor P2 code (TDD REFACTOR)
-        - [ ] Verify all P0 + P1 + P2 tests pass
-        - [ ] Record P2 implementation in Dev Log
-        - (AC: [reference acceptance criteria numbers])
-
-      **Phase 2: Quality Assurance**
-      - [ ] 2.1 Integration testing
-        - [ ] Write and execute integration tests for component interactions
-        - [ ] Test API integration points and data flow
-        - [ ] Test error scenarios and error handling
-        - [ ] Verify end-to-end functionality works as expected
-        - (AC: [reference acceptance criteria numbers])
-
-      - [ ] 2.2 Edge case handling
-        - [ ] Implement boundary condition handling
-        - [ ] Implement graceful error state handling
-        - [ ] Add loading states and user feedback
-        - [ ] Test edge cases and corner scenarios
-        - (AC: [reference acceptance criteria numbers])
-
-      - [ ] 2.3 Performance optimization (if applicable)
-        - [ ] Identify performance bottlenecks
-        - [ ] Optimize critical paths
-        - [ ] Implement caching strategies where appropriate
-        - [ ] Verify performance meets requirements
-        - (AC: [reference acceptance criteria numbers])
-
-      - [ ] 2.4 Final QA review preparation
-        - [ ] Verify all acceptance criteria are met
-        - [ ] Ensure all tests (unit + integration) are passing
-        - [ ] Complete Dev Log with implementation summary
-        - [ ] Update Dev Agent Record with structured metadata
-        - [ ] Update story status to Review
-        - (AC: [reference acceptance criteria numbers])
+      - [ ] Final Verification
+        - [ ] All tests passing
+        - [ ] Dev Log complete
+        - [ ] Status → Review
 
   - id: dev-notes
     title: Dev Notes

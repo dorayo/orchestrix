@@ -154,34 +154,13 @@ For each task/subtask in the story:
 6. Update Dev Log
 7. Update File List
 
-**Resumption Guide Update Rules** (Deterministic Triggers):
+**Resumption Guide Update Rules**:
 
-Execute `{root}/tasks/utils/update-resumption-guide.md` in these cases ONLY:
+Execute `{root}/tasks/utils/update-resumption-guide.md` ONLY when:
 
-1. **Phase Transitions** (MANDATORY):
-   - When switching from Setup → Implementation
-   - When switching from Implementation → Testing
-   - When switching from Testing → Self-review
-
-2. **User-Initiated Interruption** (MANDATORY):
-   - User says "pause", "stop", or "continue later"
-   - Before closing session at user request
-
-3. **Blocker Encountered** (MANDATORY):
-   - Missing dependency detected
-   - Architecture conflict found
-   - Test failures after 3 attempts
-   - Any HALT condition triggered
-
-4. **Natural Stopping Points** (RECOMMENDED):
-   - Before running self-review (Step 8)
-   - After implementing all ACs (before testing phase)
-   - After all tests pass (before self-review)
-
-**Do NOT update** for:
-- ❌ Arbitrary subtask counts (removed "≥3 subtasks" rule)
-- ❌ Time-based triggers (too unpredictable)
-- ❌ After every single subtask (wasteful)
+1. **HALT condition** - Any blocker or error
+2. **User pause** - User requests to stop
+3. **Before self-review** - Final checkpoint
 
 ---
 
