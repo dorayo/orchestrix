@@ -1,6 +1,12 @@
-# review-story
+# qa-review-story
 
-Comprehensive test architecture review with quality gate decision.
+Test-based quality review with risk-aware E2E testing and evidence collection.
+
+## Purpose
+
+Execute real tests against the running application to verify story implementation.
+Uses risk-based approach to determine testing depth, from automated-only for
+low-risk stories to full E2E testing for high-risk ones.
 
 ## Inputs
 
@@ -9,6 +15,8 @@ required:
   - story_id: '{epic}.{story}'
   - story_path: '{devStoryLocation}/{epic}.{story}.*.md'
 ```
+
+---
 
 ## Step 0: Idempotency Check (MANDATORY - Fast Exit to Save Tokens)
 
@@ -26,15 +34,15 @@ required:
 
 Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
-- **If status = "Done"**: Output `already_done` message → **HALT**
-- **If status = "Approved"**: Output `not_started` message → **HALT**
-- **If status = "AwaitingTestDesign"**: Output `needs_test_design` message → **HALT**
-- **If status = "InProgress"**: Output `in_progress` message → **HALT**
-- **If status = "AwaitingArchReview"**: Output `needs_arch_review` message → **HALT**
-- **If status in ["Blocked", "RequiresRevision", "Escalated"]**: Output `blocked_or_revision` message → **HALT**
+- **If status = "Done"**: Output `already_done` message -> **HALT**
+- **If status = "Approved"**: Output `not_started` message -> **HALT**
+- **If status = "AwaitingTestDesign"**: Output `needs_test_design` message -> **HALT**
+- **If status = "InProgress"**: Output `in_progress` message -> **HALT**
+- **If status = "AwaitingArchReview"**: Output `needs_arch_review` message -> **HALT**
+- **If status in ["Blocked", "RequiresRevision", "Escalated"]**: Output `blocked_or_revision` message -> **HALT**
 
 **If status = "Review"**:
-- ✅ Log: "Idempotency check passed - proceeding with QA review"
+- Log: "Idempotency check passed - proceeding with QA review"
 - Continue to Validation
 
 ---
@@ -53,200 +61,255 @@ story_path: {story_path}
 action: review
 ```
 
-* On failure → output error → **HALT**
-* On success → continue
+* On failure -> output error -> **HALT**
+* On success -> continue
 
-## Review Process
+---
 
-### 1. Initialize Review Round
+## Step 1: Risk Assessment
+
+**Purpose**: Determine testing depth based on story risk level
+
+### 1.1 Load Context for Risk Assessment
+
+Read from Story file:
+- `complexity_indicators` from metadata (if available from SM assessment)
+- `security_sensitive` flag
+- File List to detect `has_ui_changes` and `has_api_changes`
+
+Read from Dev Agent Record:
+- `self_review.implementation_gate_score` as `dev_gate_score`
+- Test coverage information if available
+
+### 1.2 Calculate Risk Level
+
+Execute `make-decision.md`:
+```yaml
+decision_type: qa-risk-level
+context:
+  complexity_count: {count from story metadata, default 2}
+  security_sensitive: {from story metadata, default false}
+  dev_gate_score: {from Dev Agent Record, default 95}
+  has_ui_changes: {detected from File List}
+  has_api_changes: {detected from File List}
+  test_coverage_level: {from Dev Agent Record, default 'medium'}
+```
+
+**Store result**:
+```yaml
+risk_level: LOW | MEDIUM | HIGH
+review_mode: automated_only | automated_plus_spot_check | full_testing
+skip_e2e: true | false
+```
+
+### 1.3 Initialize Review Round
 
 1. Read/update `review_round` in Story `QA Review Metadata`:
    - If missing/0: Set to 1
    - Else: Increment by 1
-   - **IMPORTANT**: If story was previously Escalated and returned from Architect, review_round continues from last value (does NOT reset)
-   - Escalation is considered an intervention, not a reset of quality expectations
-2. Apply progressive standards based on round:
-   - Round 1 (Strict): All criteria must be met
-   - Round 2 (Moderate): 50% improvement required, no high severity issues
-   - Round 3 (Pragmatic): No critical issues, acceptable technical debt
-3. If Round ≥ 4: STOP, prompt user (Accept/Escalate/Continue), exit
-
-### 2. Load Context
-
-Load required documents:
-- Story file from `{devStoryLocation}/{epic}.{story}.*.md`
-- Dev Agent Record → Extract `self_review.implementation_gate_score`
-- Dev Log from `{devLogLocation}/{story-id}-dev-log.md`
-- Architecture documents (via load-architecture-context.md if needed)
-
-### 3. Differential Review (4 Dimensions Only)
-
-**Principle**: Trust Dev Gate ≥95%, focus on what Dev cannot validate
-
-#### 3.1 Architecture Concerns (Architect-Level Perspective)
-**Focus**: Cross-component impact, design patterns, scalability
-- Evaluate architectural patterns and SOLID principles
-- Check for circular dependencies or tight coupling
-- Assess data flow design and component boundaries
-- Identify violations of separation of concerns
-
-**Architecture Concern Detection**:
-If detected, execute `make-decision.md` (type: `qa-escalate-architect`) and follow result actions
+2. If Round >= 4: STOP, prompt user (Accept/Escalate/Continue), exit
 
 ---
 
-#### 3.2 NFR Deep Dive (Security & Performance Critical Paths)
-**Focus**: OWASP Top 10, performance bottlenecks, production risks
+## Step 2: Project Type Detection
 
-**Security Checklist**:
-- SQL injection prevention (parameterized queries)
-- XSS vulnerability scan (output encoding)
-- CSRF protection (tokens, SameSite cookies)
-- Authentication/authorization correctness
-- Sensitive data encryption (at rest, in transit)
-- Secrets management (no hardcoded credentials)
-- Error messages (no info leakage)
+**Purpose**: Determine how to test this project (web, CLI, API, etc.)
 
-**Performance Checklist**:
-- N+1 query detection
-- Memory leak risks (closures, event listeners)
-- Batch operation optimization
-- Caching strategy appropriateness
-- Index usage for database queries
+Execute: `{root}/tasks/utils/detect-project-type.md`
 
----
-
-#### 3.3 Technical Debt & Long-Term Impact
-**Focus**: Shortcuts, maintainability, future burden
-- Identify quick-fix solutions vs proper implementation
-- Assess code maintainability and readability
-- Evaluate extensibility for future requirements
-- Document acceptable technical debt with rationale
-- Flag code that will become maintenance burden
-
----
-
-#### 3.4 Requirements Trace (Sampling, Not Exhaustive)
-**Focus**: Spot-check 3 most complex ACs (not full coverage)
-- Select 3 most complex ACs for validation
-- Verify edge case handling for selected ACs
-- Check business logic correctness
-- Validate error scenario implementation
-
----
-
-#### 3.5 Implementation Shortcuts (Spot Check)
-**Focus**: Verify Dev Gate caught critical shortcuts (spot check 4 high-risk items)
-
-**Principle**: Dev Gate executes full implementation-shortcuts.md checklist. QA spot-checks 4 highest-risk categories to ensure critical issues weren't missed.
-
----
-
-**⚠️ MANDATORY: Execute ALL 4 searches below. Do NOT skip any search.**
-
----
-
-**Search 1: Hardcoded Credentials** (CRITICAL)
-
-Execute this search:
-```
-Search pattern: (password|apiKey|token|secret)\s*[:=]\s*["'][^"']+["']
-File glob: **/*.{ts,tsx,js,jsx}
-```
-If matches found → Severity: CRITICAL
-
----
-
-**Search 2: Hardcoded UI Text / i18n Violations** (HIGH)
-
-First, check if project uses i18n library:
-```
-Search pattern: (i18next|react-intl|vue-i18n|next-intl|formatjs)
-File: package.json
-```
-
-Then execute these searches to find hardcoded text:
-```
-Search pattern: <(button|label|span|p|h[1-6]|a|div)[^>]*>\s*[A-Za-z\u4e00-\u9fff]{3,}\s*</
-File glob: **/*.{tsx,jsx}
-Exclude: **/*.test.*, **/*.spec.*, **/*.stories.*, **/tests/**, **/__tests__/**
-```
-
-```
-Search pattern: (placeholder|title|alt|aria-label)=["'][A-Za-z\u4e00-\u9fff]{3,}["']
-File glob: **/*.{tsx,jsx}
-Exclude: **/*.test.*, **/*.spec.*, **/*.stories.*
-```
-
-```
-Search pattern: (toast|message|notification)\.(success|error|info|warning)\s*\(\s*["'][A-Za-z\u4e00-\u9fff]{3,}
-File glob: **/*.{ts,tsx,js,jsx}
-```
-
-If i18n library exists AND hardcoded text found → Severity: HIGH
-If no i18n library → Severity: LOW (recommendation)
-
----
-
-**Search 3: Leftover Debug Code** (HIGH)
-
-Execute this search:
-```
-Search pattern: console\.(log|debug|info|warn|error)|debugger;
-File glob: **/*.{ts,tsx,js,jsx}
-Exclude: **/*.test.*, **/*.spec.*
-```
-If matches found in non-test files → Severity: HIGH
-
----
-
-**Search 4: Empty Exception Handlers** (CRITICAL)
-
-Execute this search:
-```
-Search pattern: catch\s*\([^)]*\)\s*\{\s*\}
-File glob: **/*.{ts,tsx,js,jsx}
-```
-If matches found → Severity: CRITICAL
-
-**Spot Check Result**:
+**Store result**:
 ```yaml
-implementation_shortcuts_spot_check:
-  items_checked: 4
-  i18n_library_detected: {true|false}
-  findings:
-    - category: "Hardcoded Credentials"
-      severity: CRITICAL | NONE
-      locations: []
-    - category: "Hardcoded UI Text (i18n)"
-      severity: HIGH | MEDIUM | LOW | NONE
-      locations: []
-    - category: "Leftover Debug Code"
-      severity: HIGH | NONE
-      locations: []
-    - category: "Empty Exception Handlers"
-      severity: CRITICAL | NONE
-      locations: []
-  has_critical: {true|false}
-  has_high: {true|false}
-```
+project_type:
+  type: web_frontend | web_backend | cli_tool | fullstack | library
+  subtype: next | express | etc.
 
-**Decision**:
-- If `has_critical = true`: Add to gate decision as FAIL factor
-- If `has_high = true` (including i18n with library): Add to gate decision as CONCERNS factor
-- If no critical/high issues: Continue to next step
+test_strategy:
+  primary_tool: playwright_mcp | bash | bash_curl | automated_tests_only
+  requires_environment: true | false
+  startup_command: "npm run dev"
+  expected_port: 3000
+```
 
 ---
 
-### 4. Code Review Only (No Modifications)
+## Step 3: Environment Setup
 
-- **IMPORTANT**: QA Agent must NOT modify any code files
-- Role: Review, analyze, and report - NOT refactor or fix
-- Document all findings in QA Results with specific locations
-- If refactoring needed: add to "Issues Breakdown" for Dev to address
-- Do NOT alter story beyond QA Results section
+**Purpose**: Start the application server for testing
 
-## Output 1: Update Story - QA Review Section (Simplified)
+**Skip condition**: If `test_strategy.requires_environment == false`, skip to Step 4.
+
+Execute: `{root}/tasks/qa-environment-setup.md`
+
+Input:
+```yaml
+project_type: {from Step 2}
+test_strategy: {from Step 2}
+story_id: {story_id}
+```
+
+**On failure**: HALT with error message. Environment must be running for E2E tests.
+
+**Store result**:
+```yaml
+environment_ready: true
+environment_url: "http://localhost:3000"
+process_ids: [12345]
+```
+
+---
+
+## Step 4: Automated Testing
+
+**Purpose**: Run existing automated tests (unit, integration, e2e)
+
+Execute: `{root}/tasks/qa-run-automated-tests.md`
+
+Input:
+```yaml
+project_type: {from Step 2}
+story_id: {story_id}
+```
+
+**Store result**:
+```yaml
+automated_tests:
+  passed: true | false
+  total: 150
+  passed_count: 148
+  failed_count: 2
+  skipped_count: 5
+  pass_rate: 98.7
+  coverage_percentage: 85
+  failed_tests: []
+```
+
+**Decision point**:
+- If `automated_tests.passed == false`:
+  - Record issues with severity HIGH
+  - Continue to Step 7 (Gate Decision) - skip E2E testing
+- If `automated_tests.passed == true`:
+  - Continue to Step 5
+
+---
+
+## Step 5: E2E Testing (Conditional)
+
+**Purpose**: Execute end-to-end tests based on risk level
+
+**Skip condition**: If `review_mode == "automated_only"`, skip to Step 7.
+
+Execute: `{root}/tasks/qa-e2e-testing.md`
+
+Input:
+```yaml
+story_id: {story_id}
+review_mode: {from Step 1}
+project_type: {from Step 2}
+environment_url: {from Step 3}
+story_path: {story_path}
+```
+
+**Store result**:
+```yaml
+e2e_tests:
+  executed: true
+  passed: true | false
+  skipped: false
+  scenarios_tested: 5
+  scenarios_passed: 4
+  scenarios_failed: 1
+  console_errors_found: false
+  network_errors_found: false
+  issues: [{id, severity, finding, evidence}]
+```
+
+---
+
+## Step 6: Evidence Collection
+
+**Purpose**: Organize all test evidence for the Gate file
+
+**Skip condition**: If no issues found, skip to Step 7.
+
+Execute: `{root}/tasks/qa-collect-evidence.md`
+
+Input:
+```yaml
+story_id: {story_id}
+issues: {collected from Steps 4 and 5}
+```
+
+**Store result**:
+```yaml
+evidence:
+  directory: "docs/qa/evidence/{story_id}/"
+  files_collected: 5
+  issues_with_evidence: [{issue_id, screenshots, logs, reproduction_steps}]
+```
+
+---
+
+## Step 7: Gate Decision
+
+**Purpose**: Determine PASS/FAIL/CONCERNS based on test results
+
+### 7.1 Prepare Decision Context
+
+Compile test results:
+```yaml
+automated_tests_passed: {from Step 4}
+automated_tests_metrics: {from Step 4}
+e2e_tests_passed: {from Step 5, or null if skipped}
+e2e_tests_skipped: {true if review_mode == automated_only}
+console_errors_found: {from Step 5}
+network_errors_found: {from Step 5}
+issues_by_severity:
+  critical: {count}
+  high: {count}
+  medium: {count}
+  low: {count}
+review_round: {current round}
+review_mode: {from Step 1}
+```
+
+### 7.2 Execute Gate Decision
+
+Execute `make-decision.md`:
+```yaml
+decision_type: qa-gate-decision
+context: {prepared above}
+```
+
+**Store result**:
+```yaml
+gate_result: PASS | FAIL | CONCERNS
+reasoning: "..."
+next_status: Done | InProgress | Escalated
+next_action: "mark_story_complete" | "handoff_to_dev_fix" | etc.
+```
+
+---
+
+## Step 8: Environment Cleanup
+
+**Purpose**: Stop any processes started in Step 3
+
+**Always execute** (even if previous steps failed)
+
+Execute: `{root}/tasks/qa-environment-cleanup.md`
+
+Input:
+```yaml
+story_id: {story_id}
+```
+
+Log cleanup result but do not block on failures.
+
+---
+
+## Step 9: Output and Handoff
+
+### 9.1 Update Story - QA Review Section
 
 Update or create `## QA Review` section in Story with minimal info:
 
@@ -254,151 +317,98 @@ Update or create `## QA Review` section in Story with minimal info:
 ## QA Review
 
 - **Round**: {{review_round}}
+- **Risk Level**: {{risk_level}}
+- **Review Mode**: {{review_mode}}
 - **Gate**: {{gate_result}}
-- **Issues**: {{critical_count}} critical / {{high_count}} high / {{medium_count}} medium / {{low_count}} low
+- **Tests**: {{automated_passed}}/{{automated_total}} automated, {{e2e_scenarios_passed}}/{{e2e_scenarios_tested}} E2E
+- **Issues**: {{critical_count}} critical / {{high_count}} high / {{medium_count}} medium
 - **Gate File**: `docs/qa/gates/{{epic}}.{{story}}-{{slug}}.yml`
+- **Evidence**: `docs/qa/evidence/{{story_id}}/` (if issues found)
 ```
 
-**Notes**:
-- If section exists, replace it entirely with updated values
-- No history arrays, no cumulative statistics
-- Gate YAML contains all details Dev needs
+### 9.2 Create Gate File
 
-## Output 2: Create Gate File
+**Template**: `{root}/templates/qa-gate-tmpl.yaml`
+**Path**: `qa.qaLocation/gates/{epic}.{story}-{slug}.yml`
 
-**Template:** `{root}/templates/qa-gate-tmpl.yaml`
-**Path:** `qa.qaLocation/gates/{epic}.{story}-{slug}.yml` (from `core-config.yaml`)
+Include all required fields plus new test_results and evidence sections.
 
-**Required Fields:**
-- schema, story, story_title, gate, status_reason, reviewer, updated
-- review_round, issues_from_previous_round, issues_resolved, improvement_percentage
-- top_issues, waiver, quality_score, evidence, nfr_validation, recommendations
+### 9.3 Update Story Status
 
-**Round Tracking Calculation:**
-- `issues_from_previous_round`: 0 if Round 1, else count from previous gate file
-- `issues_resolved`: 0 if Round 1, else (previous_issues - current_issues)
-- `improvement_percentage`: 0 if Round 1, else (issues_resolved / previous_issues) × 100
+**Validate Status Transition**:
+Execute: `{root}/tasks/utils/validate-status-transition.md`
 
-### Gate Decision
-
-Execute `make-decision.md`:
+Input:
 ```yaml
-decision_type: qa-gate-decision
-context:
-  review_round: {current_round}
-  issues_by_severity: {critical, high, medium, low counts}
-  previous_issues: {from previous gate file if R2+}
+story_path: {story_path}
+current_status: Review
+target_status: {from gate decision}
+agent_id: qa
 ```
 
-Apply result:
-- Set gate file: `gate`, `status_reason` from result
-- Use `result.next_status` for Story Status
-- Use `result.next_action` for handoff
+If validation PASSES, update Story Status field.
 
-**WAIVED Gate:** Set `waiver.active: true` with reason, approver, timestamp
+### 9.4 Update Change Log
 
-**Quality Score:** `100 - (20×FAILs) - (10×CONCERNS)` or use `technical-preferences.md` weights
+Add table entry:
+```
+| {{date}} {{time}} | QA | Review -> {{next_status}} | Round {{round}}, Gate: {{gate}}, Tests: {{pass_rate}}% |
+```
 
-**Issue Owner:** dev (code), sm (requirements), po (business)
+### 9.5 DETERMINE POST-REVIEW WORKFLOW (REQUIRED - Always Execute)
 
-## Principles
+**9.5.1. Execute Post-Review Decision**:
 
-- Comprehensive quality assessment with authority to improve code directly
-- Balance perfection vs pragmatism, risk-based prioritization
-- Actionable recommendations with ownership
+Use `make-decision.md` to determine next actions:
+```yaml
+decision_type: qa-post-review-workflow
+context:
+  gate_result: {from Step 7 gate file}
+  final_status: {from Step 9.3 status field}
+  review_round: {current_round}
+  issues_by_severity:
+    critical: {critical_count}
+    high: {high_count}
+    medium: {medium_count}
+    low: {low_count}
+```
 
-## Blocking Conditions
+**Store decision result for Step 9.7 handoff**:
+- `workflow_action` (e.g., finalize_commit, handoff_dev, escalate_architect)
+- `requires_git_commit` (boolean)
+- `handoff_target` (e.g., SM, dev, architect)
+- `reasoning` (explanation of the decision)
+- `next_command` (command to execute)
 
-HALT if: Story incomplete, File List empty, required tests missing, code misaligned with requirements, critical architecture issues
+**9.5.2. Execute Git Commit (MANDATORY - Always Execute)**:
 
-## Completion
+**ALWAYS execute finalize-story-commit.md regardless of decision**:
 
-**Execute these steps in order (ALL MANDATORY):**
+Execute `finalize-story-commit.md` task with `story_id` parameter.
 
-1. Update Story: QA Review section (simplified, see Output 1)
-2. Create gate file in `qa.qaLocation/gates` (see Output 2)
-3. **Update Story: Change Log** - Add table entry:
-   ```
-   | {{date}} {{time}} | QA | Review → {{next_status}} | Round {{round}}, Gate: {{gate}}, {{issues_count}} issues |
-   ```
-4. **Validate and Update Status** (REQUIRED):
+The task will internally verify prerequisites (Step 1):
+- If Status = Done AND Gate = PASS -> Execute commit
+- Otherwise -> Skip with informative message
 
-   **4.1 Determine Target Status**:
-   - If architecture escalation detected in Step 3.1: `target_status = Escalated`
-   - Else: Use `result.next_status` from gate decision
+This task will:
+- Verify prerequisites (Status=Done, Gate=PASS)
+- Collect commit metadata from Story, Gate, and Dev Agent Record
+- Stage all changes with `git add -A` (if prerequisites met)
+- Create conventional commit with proper formatting
+- Verify commit succeeded and capture commit hash
+- Update Story Change Log with commit entry
+- Return commit result (success with hash OR skip reason OR error message)
 
-   **4.2 Validate Status Transition**:
-   Execute: `{root}/tasks/utils/validate-status-transition.md`
-   Input:
-   ```yaml
-   story_path: {story_path}
-   current_status: Review
-   target_status: {target_status from 4.1}
-   agent_id: qa
-   ```
-   - If validation FAILS: HALT with error message
-   - If validation PASSES: Continue to 4.3
+**Store commit result** for Step 9.7 handoff:
+- If succeeded: `commit_hash` and `commit_message`
+- If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
+- If failed: `commit_error`
 
-   **4.3 Update Story Status Field**:
-   - Locate Story's `Status:` field (near top of document)
-   - Replace current status with `{target_status}`
-   - **Example**: `Status: Review` → `Status: Done`
-   - **CRITICAL**: This is a literal string replacement in the Story file, not just logging
-
-5. **DETERMINE POST-REVIEW WORKFLOW** (REQUIRED - Always Execute):
-
-   **5.1. Execute Post-Review Decision**:
-
-   Use `make-decision.md` to determine next actions:
-   ```yaml
-   decision_type: qa-post-review-workflow
-   context:
-     gate_result: {from Step 2 gate file}
-     final_status: {from Step 4 status field}
-     review_round: {current_round}
-     issues_by_severity:
-       critical: {critical_count}
-       high: {high_count}
-       medium: {medium_count}
-       low: {low_count}
-   ```
-
-   **Store decision result for Step 6 handoff**:
-   - `workflow_action` (e.g., finalize_commit, handoff_dev, escalate_architect)
-   - `requires_git_commit` (boolean)
-   - `handoff_target` (e.g., SM, dev, architect)
-   - `reasoning` (explanation of the decision)
-   - `next_command` (command to execute)
-
-   **5.2. Execute Git Commit (MANDATORY - Always Execute)**:
-
-   **ALWAYS execute finalize-story-commit.md regardless of decision**:
-
-   Execute `finalize-story-commit.md` task with `story_id` parameter.
-
-   The task will internally verify prerequisites (Step 1):
-   - If Status = Done AND Gate = PASS → Execute commit
-   - Otherwise → Skip with informative message
-
-   This task will:
-   - Verify prerequisites (Status=Done, Gate=PASS)
-   - Collect commit metadata from Story, Gate, and Dev Agent Record
-   - Stage all changes with `git add -A` (if prerequisites met)
-   - Create conventional commit with proper formatting
-   - Verify commit succeeded and capture commit hash
-   - Update Story Change Log with commit entry
-   - Return commit result (success with hash OR skip reason OR error message)
-
-   **Store commit result** for Step 6 handoff:
-   - If succeeded: `commit_hash` and `commit_message`
-   - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
-   - If failed: `commit_error`
-
-6. **OUTPUT HANDOFF MESSAGE** (REQUIRED - MUST BE FINAL OUTPUT):
+### 9.7 OUTPUT HANDOFF MESSAGE (REQUIRED - MUST BE FINAL OUTPUT)
 
 ---
 
-### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
+### MANDATORY HANDOFF - DO NOT SKIP
 
 **CRITICAL**: This step is NON-NEGOTIABLE. You MUST output a handoff message as the FINAL output of this task. The handoff command MUST be the absolute last line - no summaries, tips, or explanations after it.
 
@@ -406,16 +416,16 @@ HALT if: Story incomplete, File List empty, required tests missing, code misalig
 
 ### Pre-Handoff Verification
 
-Before outputting handoff message, verify Step 5.2 was executed:
+Before outputting handoff message, verify Step 9.6 was executed:
 
 - **Check commit_result exists** (not empty)
   - If `commit_result` is empty/missing:
-    - ❌ **ERROR**: Step 5.2 was not executed
-    - Go back to Step 5.2 and execute finalize-story-commit.md
+    - ERROR: Step 9.6 was not executed
+    - Go back to Step 9.6 and execute finalize-story-commit.md
     - Do NOT proceed until commit_result is populated
 
 - **If decision.requires_git_commit = true AND commit_result.skip_reason exists**:
-  - ⚠️ **WARNING**: Commit was expected but skipped
+  - WARNING: Commit was expected but skipped
   - Log skip reason in handoff message
   - Suggest manual retry: `*finalize-commit {story_id}`
 
@@ -430,7 +440,7 @@ Based on workflow state, output ONE of the following messages:
 #### Scenario A: Architecture Escalation (Step 3.1 triggered)
 
 ```
-🚨 ARCHITECTURE ESCALATION REQUIRED
+ARCHITECTURE ESCALATION REQUIRED
 
 Story: {story_id}
 Status: Escalated
@@ -450,7 +460,7 @@ command: review-escalation
 args: {story_id}
 ---ORCHESTRIX-HANDOFF-END---
 
-🎯 HANDOFF TO architect: *review-escalation {story_id}
+HANDOFF TO architect: *review-escalation {story_id}
 ```
 
 **STOP HERE**: Handoff message must be the last line. No additional output allowed.
@@ -460,18 +470,26 @@ args: {story_id}
 #### Scenario B: Gate PASS + Status Done + Commit Success
 
 ```
-🎉 STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT ✅
+STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT
 
 Story: {story_id}
 Status: Done
 Review Round: {review_round}
+Risk Level: {risk_level}
+Review Mode: {review_mode}
 Gate Result: PASS
 Quality Score: {quality_score}/100
 
 All quality checks passed. Code committed successfully.
 
-📦 Git Commit: {commit_hash}
-✅ Gate File: {gate_file_path}
+Test Results:
+- Automated: {passed}/{total} passed ({pass_rate}%)
+- E2E: {e2e_passed}/{e2e_tested} scenarios passed
+- Console Errors: None
+- Network Errors: None
+
+Git Commit: {commit_hash}
+Gate File: {gate_file_path}
 
 Total Issues Found: {total_issues}
 - Critical: {critical_count}
@@ -485,7 +503,7 @@ command: draft
 args:
 ---ORCHESTRIX-HANDOFF-END---
 
-🎯 HANDOFF TO sm: *draft
+HANDOFF TO sm: *draft
 ```
 
 **STOP HERE**: Handoff message must be the last line. No additional output allowed.
@@ -495,7 +513,7 @@ args:
 #### Scenario C: Gate PASS + Status Done + Commit Failed
 
 ```
-⚠️ STORY {story_id} PASSED QA - COMMIT FAILED
+STORY {story_id} PASSED QA - COMMIT FAILED
 
 Story: {story_id}
 Status: Done
@@ -518,7 +536,7 @@ command: finalize-commit
 args: {story_id}
 ---ORCHESTRIX-HANDOFF-END---
 
-🎯 HANDOFF TO qa: *finalize-commit {story_id}
+HANDOFF TO qa: *finalize-commit {story_id}
 ```
 
 **STOP HERE**: Handoff message must be the last line. No additional output allowed.
@@ -528,17 +546,26 @@ args: {story_id}
 #### Scenario D: Gate CONCERNS or FAIL (Issues Found)
 
 ```
-⚠️ QA REVIEW COMPLETE - ISSUES FOUND
+QA REVIEW COMPLETE - ISSUES FOUND
 
 Story: {story_id}
 Status: {status}
 Review Round: {review_round}
+Risk Level: {risk_level}
+Review Mode: {review_mode}
 Gate Result: {gate_result}
 Quality Score: {quality_score}/100
 
-Issues detected during QA review. Dev action required.
+Issues detected during QA testing. Dev action required.
 
-⚠️ Gate File: {gate_file_path}
+Test Results:
+- Automated: {passed}/{total} passed ({pass_rate}%)
+- E2E: {e2e_passed}/{e2e_tested} scenarios passed
+- Console Errors: {console_errors_found}
+- Network Errors: {network_errors_found}
+
+Gate File: {gate_file_path}
+Evidence: docs/qa/evidence/{story_id}/
 
 Issues Breakdown:
 - Critical: {critical_count}
@@ -555,21 +582,80 @@ command: apply-qa-fixes
 args: {story_id}
 ---ORCHESTRIX-HANDOFF-END---
 
-🎯 HANDOFF TO dev: *apply-qa-fixes {story_id}
+HANDOFF TO dev: *apply-qa-fixes {story_id}
 ```
 
 **STOP HERE**: Handoff message must be the last line. No additional output allowed.
 
 ---
 
-### ❌ FORBIDDEN After Handoff
+#### Scenario E: Low Risk - Automated Only Pass
+
+```
+STORY {story_id} DONE - LOW RISK REVIEW COMPLETE
+
+Story: {story_id}
+Status: Done
+Review Round: {review_round}
+Risk Level: LOW
+Review Mode: automated_only
+Gate Result: PASS
+
+Test Results:
+- Automated: {passed}/{total} passed ({pass_rate}%)
+- E2E: Skipped (low risk story)
+
+All automated tests passed. Story approved for low-risk fast-track.
+
+Git Commit: {commit_hash}
+Gate File: {gate_file_path}
+
+---ORCHESTRIX-HANDOFF-BEGIN---
+target: sm
+command: draft
+args:
+---ORCHESTRIX-HANDOFF-END---
+
+HANDOFF TO sm: *draft
+```
+
+**STOP HERE**: Handoff message must be the last line. No additional output allowed.
+
+---
+
+### FORBIDDEN After Handoff
 
 After outputting the handoff message, you MUST NOT output any of the following:
-- ❌ Summaries or recaps
-- ❌ Tips or recommendations
-- ❌ Questions to the user
-- ❌ Explanations of what was done
-- ❌ Suggestions for next steps (beyond the handoff)
-- ❌ Any text whatsoever
+- Summaries or recaps
+- Tips or recommendations
+- Questions to the user
+- Explanations of what was done
+- Suggestions for next steps (beyond the handoff)
+- Any text whatsoever
 
-**The handoff command (`🎯 HANDOFF TO...`) is your FINAL output. STOP IMMEDIATELY after it.**
+**The handoff command (`HANDOFF TO...`) is your FINAL output. STOP IMMEDIATELY after it.**
+
+---
+
+## Summary of New Workflow
+
+| Step | Name | Purpose |
+|------|------|---------|
+| 0 | Idempotency Check | Skip already-done stories |
+| 1 | Risk Assessment | Determine testing depth |
+| 2 | Project Type Detection | Choose testing tools |
+| 3 | Environment Setup | Start application |
+| 4 | Automated Testing | Run npm test |
+| 5 | E2E Testing | Execute user flows |
+| 6 | Evidence Collection | Capture screenshots/logs |
+| 7 | Gate Decision | PASS/FAIL/CONCERNS |
+| 8 | Environment Cleanup | Stop processes |
+| 9 | Output & Handoff | Update story, commit, handoff |
+
+## Key Principles
+
+1. **Test-based decisions**: Gate result based on actual test execution, not code review
+2. **Risk-aware**: Low-risk stories get fast-track review (automated only)
+3. **Evidence-driven**: Issues include screenshots and reproduction steps
+4. **User perspective**: E2E tests verify real user journeys
+5. **Clean environment**: Always cleanup, even on failure

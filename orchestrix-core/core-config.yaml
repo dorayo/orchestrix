@@ -37,6 +37,7 @@ architect:
 qa:
   qaLocation: docs/qa
   qaReviewsLocation: docs/qa/reviews
+  evidenceLocation: docs/qa/evidence
   testDesignThresholds:
     simple:
       maxComplexity: 0

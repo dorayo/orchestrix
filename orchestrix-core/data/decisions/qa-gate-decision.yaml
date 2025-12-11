@@ -2,13 +2,48 @@
 decision_type: qa-gate-decision
 
 description: >
-  Determine QA Gate result (PASS/FAIL/CONCERNS) using progressive standards:
-  stricter on first review, more lenient on subsequent reviews.
+  Determine QA Gate result (PASS/FAIL/CONCERNS) based on automated test results
+  and E2E testing outcomes. Focuses on real test execution rather than static
+  code review. Uses progressive standards for re-reviews.
 
 inputs:
-  - name: review_round
-    type: number
+  # Test execution results (primary inputs)
+  - name: automated_tests_passed
+    type: boolean
     required: true
+    description: "Whether all automated tests passed (npm test)"
+
+  - name: automated_tests_metrics
+    type: object
+    required: false
+    properties:
+      total: {type: number}
+      passed: {type: number}
+      failed: {type: number}
+      skipped: {type: number}
+      pass_rate: {type: number}
+
+  - name: e2e_tests_passed
+    type: boolean
+    required: false
+    description: "Whether E2E tests passed (null if skipped)"
+
+  - name: e2e_tests_skipped
+    type: boolean
+    required: false
+    description: "Whether E2E tests were skipped (automated_only mode)"
+
+  - name: console_errors_found
+    type: boolean
+    required: false
+    description: "Whether browser console errors were found during E2E"
+
+  - name: network_errors_found
+    type: boolean
+    required: false
+    description: "Whether network request failures were found during E2E"
+
+  # Issue tracking (from E2E findings)
   - name: issues_by_severity
     type: object
     required: true
@@ -17,6 +52,17 @@ inputs:
       high: {type: number}
       medium: {type: number}
       low: {type: number}
+
+  # Review context
+  - name: review_round
+    type: number
+    required: true
+
+  - name: review_mode
+    type: enum
+    values: [automated_only, automated_plus_spot_check, full_testing]
+    required: false
+
   - name: previous_issues
     type: object
     required: false
@@ -28,70 +74,185 @@ inputs:
       low: {type: number}
 
 rules:
-  # PASS: Perfect or high quality
-  - condition: "issues_by_severity.critical == 0 AND issues_by_severity.high == 0 AND (issues_by_severity.medium <= 1 OR review_round >= 2)"
+  # ============================================
+  # PRIMARY RULES: Based on Test Execution
+  # ============================================
+
+  # PASS: All tests pass, no issues (automated_only mode)
+  - id: pass_automated_only
+    priority: 1
+    condition: >
+      automated_tests_passed == true AND
+      e2e_tests_skipped == true AND
+      issues_by_severity.critical == 0 AND
+      issues_by_severity.high == 0
     result: PASS
-    reasoning: "No critical/high issues, quality meets standards"
+    reasoning: "All automated tests passed. E2E skipped per low-risk review mode."
     next_status: Done
     next_action: "mark_story_complete"
     metadata:
       quality_level: "excellent"
+      test_based_decision: true
+      review_mode: "automated_only"
+
+  # PASS: All tests pass, no runtime errors
+  - id: pass_all_tests
+    priority: 2
+    condition: >
+      automated_tests_passed == true AND
+      (e2e_tests_passed == true OR e2e_tests_skipped == true) AND
+      console_errors_found == false AND
+      network_errors_found == false AND
+      issues_by_severity.critical == 0 AND
+      issues_by_severity.high == 0 AND
+      (issues_by_severity.medium <= 1 OR review_round >= 2)
+    result: PASS
+    reasoning: "All automated and E2E tests passed with no runtime errors."
+    next_status: Done
+    next_action: "mark_story_complete"
+    metadata:
+      quality_level: "excellent"
+      test_based_decision: true
 
   # PASS: Progressive standard for re-review
-  - condition: "review_round >= 2 AND issues_by_severity.critical == 0 AND issues_by_severity.high <= 1 AND issues_by_severity.medium <= 2"
+  - id: pass_progressive
+    priority: 3
+    condition: >
+      review_round >= 2 AND
+      automated_tests_passed == true AND
+      issues_by_severity.critical == 0 AND
+      issues_by_severity.high <= 1 AND
+      issues_by_severity.medium <= 2
     result: PASS
-    reasoning: "Re-review with minimal issues, progressive standard applied"
+    reasoning: "Re-review with acceptable issues. Progressive standard applied."
     next_status: Done
     next_action: "mark_story_complete"
     metadata:
       quality_level: "acceptable"
       progressive_standard_applied: true
-  
-  # CONCERNS: Moderate issues
-  - condition: "issues_by_severity.critical <= 1 AND issues_by_severity.high <= 2 AND issues_by_severity.medium <= 4"
-    result: CONCERNS
-    reasoning: "Moderate issues found, targeted fixes needed"
-    next_status: InProgress
-    next_action: "handoff_to_dev_fix"
-    metadata:
-      quality_level: "needs_improvement"
-      expected_effort: "medium"
+      test_based_decision: true
 
-  # FAIL: Multiple critical or excessive high issues
-  - condition: "issues_by_severity.critical >= 2 OR (issues_by_severity.critical >= 1 AND issues_by_severity.high >= 3) OR issues_by_severity.high >= 4"
+  # ============================================
+  # FAIL RULES: Critical Test Failures
+  # ============================================
+
+  # FAIL: Automated tests failed
+  - id: fail_automated_tests
+    priority: 10
+    condition: "automated_tests_passed == false"
     result: FAIL
-    reasoning: "Multiple critical/high issues indicate systemic problems"
+    reasoning: "Automated tests failed. Dev must fix failing tests before re-review."
     next_status: InProgress
     next_action: "handoff_to_dev_rework"
     metadata:
       quality_level: "poor"
       expected_effort: "high"
-      rework_required: true
-  
-  # FAIL: No improvement after multiple reviews
-  - condition: "review_round >= 3 AND previous_issues != null AND (issues_by_severity.critical + issues_by_severity.high) >= (previous_issues.critical + previous_issues.high)"
+      test_based_decision: true
+      failure_type: "automated_tests"
+
+  # FAIL: E2E tests failed with critical issues
+  - id: fail_e2e_critical
+    priority: 11
+    condition: >
+      e2e_tests_passed == false AND
+      issues_by_severity.critical >= 1
     result: FAIL
-    reasoning: "No improvement after multiple reviews, escalating"
+    reasoning: "E2E tests found critical issues. Core functionality broken."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      expected_effort: "high"
+      test_based_decision: true
+      failure_type: "e2e_critical"
+
+  # FAIL: Console errors in production code
+  - id: fail_console_errors
+    priority: 12
+    condition: >
+      console_errors_found == true AND
+      issues_by_severity.critical >= 1
+    result: FAIL
+    reasoning: "Browser console errors detected during testing. Application stability issue."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      expected_effort: "medium"
+      test_based_decision: true
+      failure_type: "console_errors"
+
+  # FAIL: No improvement after multiple reviews
+  - id: fail_no_improvement
+    priority: 13
+    condition: >
+      review_round >= 3 AND
+      previous_issues != null AND
+      (issues_by_severity.critical + issues_by_severity.high) >= (previous_issues.critical + previous_issues.high)
+    result: FAIL
+    reasoning: "No improvement after multiple reviews. Escalating to Architect."
     next_status: Escalated
     next_action: "escalate_to_architect"
     metadata:
       quality_level: "stalled"
       escalation_reason: "no_improvement"
-  
+
   # FAIL: Excessive total issues
-  - condition: "(issues_by_severity.critical + issues_by_severity.high + issues_by_severity.medium) >= 10"
+  - id: fail_excessive_issues
+    priority: 14
+    condition: "(issues_by_severity.critical + issues_by_severity.high + issues_by_severity.medium) >= 10"
     result: FAIL
-    reasoning: "Excessive issue count, thorough self-review needed"
+    reasoning: "Excessive issue count from testing. Thorough rework needed."
     next_status: InProgress
     next_action: "handoff_to_dev_rework"
     metadata:
       quality_level: "poor"
       expected_effort: "high"
+      test_based_decision: true
+
+  # ============================================
+  # CONCERNS RULES: Issues Found but Not Critical
+  # ============================================
+
+  # CONCERNS: E2E found non-critical issues
+  - id: concerns_e2e_issues
+    priority: 20
+    condition: >
+      automated_tests_passed == true AND
+      (e2e_tests_passed == false OR console_errors_found == true OR network_errors_found == true) AND
+      issues_by_severity.critical == 0
+    result: CONCERNS
+    reasoning: "E2E testing found issues but no critical blockers. Targeted fixes needed."
+    next_status: InProgress
+    next_action: "handoff_to_dev_fix"
+    metadata:
+      quality_level: "needs_improvement"
+      expected_effort: "medium"
+      test_based_decision: true
+
+  # CONCERNS: Tests pass but moderate issues found
+  - id: concerns_moderate_issues
+    priority: 21
+    condition: >
+      automated_tests_passed == true AND
+      issues_by_severity.critical == 0 AND
+      issues_by_severity.high <= 2 AND
+      issues_by_severity.medium <= 4
+    result: CONCERNS
+    reasoning: "Tests pass but moderate issues found during E2E. Fixes needed."
+    next_status: InProgress
+    next_action: "handoff_to_dev_fix"
+    metadata:
+      quality_level: "needs_improvement"
+      expected_effort: "medium"
+      test_based_decision: true
 
   # CONCERNS: Default for borderline cases
-  - condition: "issues_by_severity.critical == 0"
+  - id: concerns_default
+    priority: 99
+    condition: "issues_by_severity.critical == 0"
     result: CONCERNS
-    reasoning: "Issues found but no critical blockers"
+    reasoning: "Issues found during testing but no critical blockers."
     next_status: InProgress
     next_action: "handoff_to_dev_fix"
     metadata:
@@ -115,23 +276,74 @@ output:
       expected_effort: {type: string}
       progressive_standard_applied: {type: boolean}
       rework_required: {type: boolean}
+      test_based_decision: {type: boolean}
+      review_mode: {type: string}
+      failure_type: {type: string}
 
 metadata:
-  version: "1.0.0"
-  last_updated: "2025-01-17"
+  version: "2.0.0"
+  last_updated: "2025-01-15"
   owner: "QA Agent"
   related_requirements: ["6.2", "6.4", "6.8"]
   usage_context: >
-    Called by QA at end of review-story. Progressive standards: strict on first review,
-    lenient on re-reviews. PASS: Set Status=Complete. FAIL/CONCERNS: Set Status=Review,
-    handoff to Dev with issue details.
+    Called by QA at end of review-story. Decision based on test execution results
+    rather than static code review. Primary factors: automated test pass/fail,
+    E2E test results, console/network errors. Progressive standards apply to re-reviews.
+    PASS: Set Status=Done. FAIL/CONCERNS: Set Status=InProgress, handoff to Dev.
 
 examples:
-  - input: {review_round: 1, issues_by_severity: {critical: 0, high: 0, medium: 0, low: 2}}
-    output: {gate_result: PASS, next_status: Complete}
-  - input: {review_round: 1, issues_by_severity: {critical: 0, high: 2, medium: 3, low: 1}}
-    output: {gate_result: CONCERNS, next_status: Review}
-  - input: {review_round: 2, issues_by_severity: {critical: 0, high: 1, medium: 2, low: 0}}
-    output: {gate_result: PASS, next_status: Complete}
-  - input: {review_round: 1, issues_by_severity: {critical: 2, high: 1, medium: 0, low: 0}}
-    output: {gate_result: FAIL, next_status: Review}
+  # All tests pass, low risk mode
+  - input:
+      automated_tests_passed: true
+      e2e_tests_skipped: true
+      issues_by_severity: {critical: 0, high: 0, medium: 0, low: 0}
+      review_round: 1
+    output:
+      gate_result: PASS
+      next_status: Done
+      reasoning: "All automated tests passed. E2E skipped per low-risk review mode."
+
+  # All tests pass including E2E
+  - input:
+      automated_tests_passed: true
+      e2e_tests_passed: true
+      console_errors_found: false
+      network_errors_found: false
+      issues_by_severity: {critical: 0, high: 0, medium: 1, low: 2}
+      review_round: 1
+    output:
+      gate_result: PASS
+      next_status: Done
+      reasoning: "All automated and E2E tests passed with no runtime errors."
+
+  # Automated tests failed
+  - input:
+      automated_tests_passed: false
+      issues_by_severity: {critical: 0, high: 0, medium: 0, low: 0}
+      review_round: 1
+    output:
+      gate_result: FAIL
+      next_status: InProgress
+      reasoning: "Automated tests failed. Dev must fix failing tests before re-review."
+
+  # E2E found issues but not critical
+  - input:
+      automated_tests_passed: true
+      e2e_tests_passed: false
+      console_errors_found: true
+      issues_by_severity: {critical: 0, high: 1, medium: 2, low: 1}
+      review_round: 1
+    output:
+      gate_result: CONCERNS
+      next_status: InProgress
+      reasoning: "E2E testing found issues but no critical blockers. Targeted fixes needed."
+
+  # Progressive standard on re-review
+  - input:
+      automated_tests_passed: true
+      issues_by_severity: {critical: 0, high: 1, medium: 2, low: 0}
+      review_round: 2
+    output:
+      gate_result: PASS
+      next_status: Done
+      reasoning: "Re-review with acceptable issues. Progressive standard applied."

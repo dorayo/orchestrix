@@ -1,7 +1,10 @@
 template:
-  id: qa-gate-template-v1
+  id: qa-gate-template-v2
   name: Quality Gate Decision
-  version: 1.0
+  version: 2.0
+  description: >
+    Test-based quality gate decision. Focuses on automated test results
+    and E2E testing outcomes rather than static code review.
   output:
     format: yaml
     filename: qa.qaLocation/gates/{{epic_num}}.{{story_num}}-{{story_slug}}.yml
@@ -32,6 +35,46 @@ escalation_reason: ""  # Describe architecture concern if escalating to Architec
 # Issues (if any) - Use fixed severity: low | medium | high
 top_issues: []
 
+# Test execution results (new in v2)
+test_results:
+  automated:
+    executed: true
+    passed: true
+    total: 0
+    passed_count: 0
+    failed_count: 0
+    skipped_count: 0
+    pass_rate: 100
+    coverage_percentage: 0
+    failed_tests: []  # [{name, file, error}]
+  e2e:
+    executed: true  # false if skipped (automated_only mode)
+    passed: true
+    skipped: false
+    skip_reason: ""  # "Review mode is automated_only" if skipped
+    scenarios_tested: 0
+    scenarios_passed: 0
+    scenarios_failed: 0
+    console_errors_found: false
+    network_errors_found: false
+
+# Evidence collected during testing (new in v2)
+evidence:
+  directory: ""  # docs/qa/evidence/{story_id}/
+  issues:
+    - issue_id: ""
+      screenshots: []  # [{path, description}]
+      logs: []  # [{path, type}]
+      reproduction_steps: ""
+
+# Risk assessment (new in v2)
+risk_assessment:
+  risk_level: MEDIUM  # LOW | MEDIUM | HIGH
+  review_mode: automated_plus_spot_check  # automated_only | automated_plus_spot_check | full_testing
+  complexity_count: 0
+  security_sensitive: false
+  dev_gate_score: 95
+
 # Risk summary (from risk-profile task if run)
 risk_summary:
   totals: { critical: 0, high: 0, medium: 0, low: 0 }
@@ -41,63 +84,126 @@ risk_summary:
 
 # Examples section using block scalars for clarity
 examples:
-  round_1_example: |
-    # Round 1: First review with strict standards
-    review_round: 1
-    issues_from_previous_round: 0
-    issues_resolved: 0
-    improvement_percentage: 0
+  # Test-based examples (v2)
+  low_risk_pass: |
+    # Low risk story - automated tests only, all pass
+    gate: PASS
+    status_reason: "All automated tests passed. E2E skipped per low-risk review mode."
+    risk_assessment:
+      risk_level: LOW
+      review_mode: automated_only
+      complexity_count: 1
+      security_sensitive: false
+      dev_gate_score: 98
+    test_results:
+      automated:
+        executed: true
+        passed: true
+        total: 45
+        passed_count: 45
+        failed_count: 0
+        skipped_count: 0
+        pass_rate: 100
+        coverage_percentage: 87
+      e2e:
+        executed: false
+        skipped: true
+        skip_reason: "Review mode is automated_only"
+
+  full_testing_pass: |
+    # High risk story - full testing, all pass
+    gate: PASS
+    status_reason: "All automated and E2E tests passed with no runtime errors."
+    risk_assessment:
+      risk_level: HIGH
+      review_mode: full_testing
+      complexity_count: 5
+      security_sensitive: true
+      dev_gate_score: 96
+    test_results:
+      automated:
+        executed: true
+        passed: true
+        total: 120
+        passed_count: 120
+        failed_count: 0
+        skipped_count: 2
+        pass_rate: 100
+        coverage_percentage: 92
+      e2e:
+        executed: true
+        passed: true
+        scenarios_tested: 8
+        scenarios_passed: 8
+        scenarios_failed: 0
+        console_errors_found: false
+        network_errors_found: false
+
+  automated_tests_fail: |
+    # Automated tests failed
     gate: FAIL
-    status_reason: "Critical security issues and missing test coverage"
+    status_reason: "Automated tests failed. Dev must fix failing tests before re-review."
+    test_results:
+      automated:
+        executed: true
+        passed: false
+        total: 45
+        passed_count: 42
+        failed_count: 3
+        skipped_count: 0
+        pass_rate: 93.3
+        failed_tests:
+          - name: "LoginForm > should validate email"
+            file: "src/components/LoginForm.test.tsx"
+            error: "Expected element to have text 'Invalid email'"
     top_issues:
-      - id: "SEC-001"
-        severity: high
-        finding: "No rate limiting on login endpoint"
-        suggested_action: "Add rate limiting middleware before production"
       - id: "TEST-001"
+        severity: high
+        finding: "3 automated tests failing in LoginForm component"
+        suggested_action: "Fix form validation logic to match expected behavior"
+
+  e2e_issues_found: |
+    # E2E testing found issues
+    gate: CONCERNS
+    status_reason: "E2E testing found issues but no critical blockers. Targeted fixes needed."
+    test_results:
+      automated:
+        executed: true
+        passed: true
+        total: 45
+        passed_count: 45
+        failed_count: 0
+      e2e:
+        executed: true
+        passed: false
+        scenarios_tested: 5
+        scenarios_passed: 3
+        scenarios_failed: 2
+        console_errors_found: true
+        network_errors_found: false
+    evidence:
+      directory: "docs/qa/evidence/1.3/"
+      issues:
+        - issue_id: "E2E-001"
+          screenshots:
+            - path: "screenshots/1.3-login-error.png"
+              description: "Login button unresponsive after validation"
+          reproduction_steps: |
+            1. Navigate to /login
+            2. Enter invalid email
+            3. Correct email format
+            4. Click login - button stays disabled
+    top_issues:
+      - id: "E2E-001"
+        severity: high
+        finding: "Login button unresponsive after form validation error"
+        suggested_action: "Fix form state reset after validation"
+      - id: "E2E-002"
         severity: medium
-        finding: "Missing integration tests for auth flow"
-        suggested_action: "Add test coverage for critical paths"
+        finding: "Console error on dashboard load"
+        suggested_action: "Handle undefined data case in dashboard"
 
-  round_2_example: |
-    # Round 2: After Dev fixes, moderate standards applied
-    review_round: 2
-    issues_from_previous_round: 5
-    issues_resolved: 3
-    improvement_percentage: 60  # (3/5) × 100 = 60%
-    gate: PASS
-    status_reason: "Issues reduced by 60%, no high severity issues remain, core functionality verified"
-    top_issues:
-      - id: "DOC-001"
-        severity: low
-        finding: "API documentation could be more detailed"
-        suggested_action: "Enhance API documentation in future iteration"
-
-  round_3_example: |
-    # Round 3: Pragmatic standards, accepting technical debt
-    review_round: 3
-    issues_from_previous_round: 3
-    issues_resolved: 2
-    improvement_percentage: 67  # (2/3) × 100 = 67%
-    gate: PASS
-    status_reason: "No critical issues, remaining minor issues documented as technical debt"
-    top_issues:
-      - id: "PERF-001"
-        severity: low
-        finding: "Query optimization opportunity in user search"
-        suggested_action: "Optimize in future performance sprint"
-
-  with_issues: |
-    top_issues:
-      - id: "SEC-001"
-        severity: high  # ONLY: low|medium|high
-        finding: "No rate limiting on login endpoint"
-        suggested_action: "Add rate limiting middleware before production"
-      - id: "TEST-001"  
-        severity: medium
-        finding: "Missing integration tests for auth flow"
-        suggested_action: "Add test coverage for critical paths"
-
+  # Legacy examples (still valid)
   when_waived: |
     waiver:
       active: true
