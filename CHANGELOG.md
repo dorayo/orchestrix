@@ -1,3 +1,10 @@
+# [13.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.2.0...v13.3.0) (2025-12-11)
+
+
+### Features
+
+* **hook:** add STB (Structured Termination Block) detection as Layer 0 ([90d3a46](https://github.com/dorayo/ORCHESTRIX/commit/90d3a46743c80f6e16a176b77d847369f68d5fbf))
+
 # [13.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.1.1...v13.2.0) (2025-12-11)
 
 
