@@ -1,3 +1,10 @@
+# [13.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.1.1...v13.2.0) (2025-12-11)
+
+
+### Features
+
+* **tmux:** support multi-repo parallel automation with dynamic session naming ([f3f1d03](https://github.com/dorayo/ORCHESTRIX/commit/f3f1d03fe0009a67c58bb3ed71a8580bf19bff82))
+
 ## [13.1.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.1.0...v13.1.1) (2025-12-09)
 
 
