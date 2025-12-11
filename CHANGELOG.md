@@ -1,3 +1,10 @@
+## [13.3.2](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.1...v13.3.2) (2025-12-11)
+
+
+### Bug Fixes
+
+* **dev:** resolve dev workflow audit issues ([c71ec48](https://github.com/dorayo/ORCHESTRIX/commit/c71ec482173ee0b6ce1c3717d9e805c0bbc2ccb9))
+
 ## [13.3.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.0...v13.3.1) (2025-12-11)
 
 
