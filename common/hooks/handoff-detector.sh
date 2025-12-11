@@ -87,31 +87,75 @@ echo "---START-OUTPUT---" >> "$LOG_FILE"
 echo "${pane_output: -500}" >> "$LOG_FILE"
 echo "---END-OUTPUT---" >> "$LOG_FILE"
 
-# HANDOFF pattern matching (two-layer strategy)
+# HANDOFF pattern matching (three-layer strategy)
+# Layer 0: Structured Termination Block (STB) - most reliable, pure ASCII
 # Layer 1: Explicit HANDOFF detection (grep-based)
 # Layer 2: Implicit command detection (fallback)
 
 target_agent=""
 raw_command=""
 
+# ========== LAYER 0: Structured Termination Block (STB) Detection ==========
+# Priority: STB is parsed FIRST because it's pure ASCII and most reliable
+# Format:
+# ---ORCHESTRIX-HANDOFF-BEGIN---
+# target: <agent>
+# command: <cmd>
+# args: <optional args>
+# ---ORCHESTRIX-HANDOFF-END---
+
+if echo "$pane_output" | grep -q -- '---ORCHESTRIX-HANDOFF-BEGIN---' 2>/dev/null; then
+    log "Found STB marker, attempting to parse..."
+
+    # Extract the LAST STB block using awk (handles multiple blocks)
+    stb_block=$(echo "$pane_output" | awk '
+        /---ORCHESTRIX-HANDOFF-BEGIN---/ { found=1; block="" }
+        found { block = block $0 "\n" }
+        /---ORCHESTRIX-HANDOFF-END---/ { if(found) last=block; found=0 }
+        END { printf "%s", last }
+    ')
+
+    if [[ -n "$stb_block" ]]; then
+        # Parse fields from STB block
+        stb_target=$(echo "$stb_block" | grep -E '^[[:space:]]*target:' | head -1 | sed 's/^[[:space:]]*target:[[:space:]]*//' | tr -d '[:space:]')
+        stb_cmd=$(echo "$stb_block" | grep -E '^[[:space:]]*command:' | head -1 | sed 's/^[[:space:]]*command:[[:space:]]*//' | tr -d '[:space:]')
+        stb_args=$(echo "$stb_block" | grep -E '^[[:space:]]*args:' | head -1 | sed 's/^[[:space:]]*args:[[:space:]]*//' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+
+        log "STB parsed - target: '$stb_target', command: '$stb_cmd', args: '$stb_args'"
+
+        if [[ -n "$stb_target" && -n "$stb_cmd" ]]; then
+            target_agent=$(echo "$stb_target" | tr '[:upper:]' '[:lower:]')
+            if [[ -n "$stb_args" ]]; then
+                raw_command="$stb_cmd $stb_args"
+            else
+                raw_command="$stb_cmd"
+            fi
+            log "✓ Layer 0 (STB): target=$target_agent, command=$raw_command"
+        fi
+    fi
+fi
+
 # ========== LAYER 1: Explicit HANDOFF Detection ==========
-# Extract the handoff line if it exists
-handoff_line=$(echo "$pane_output" | grep -E '🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO' | tail -1)
+# Only run if Layer 0 didn't find a valid handoff
+if [[ -z "$target_agent" || -z "$raw_command" ]]; then
+    # Extract the handoff line if it exists
+    handoff_line=$(echo "$pane_output" | grep -E '🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO' | tail -1)
 
-if [[ -n "$handoff_line" ]]; then
-    log "Found HANDOFF line: $handoff_line"
+    if [[ -n "$handoff_line" ]]; then
+        log "Found HANDOFF line: $handoff_line"
 
-    # Pattern 1: HANDOFF with story ID (e.g., 🎯 HANDOFF TO dev: *review 5.3)
-    if [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
-        target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-        raw_command="${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
-        log "Matched Pattern 1: HANDOFF with story ID"
+        # Pattern 1: HANDOFF with story ID (e.g., 🎯 HANDOFF TO dev: *review 5.3)
+        if [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+            target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+            raw_command="${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
+            log "Matched Pattern 1: HANDOFF with story ID"
 
-    # Pattern 0: HANDOFF without story ID (e.g., 🎯 HANDOFF TO sm: *draft)
-    elif [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+) ]]; then
-        target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-        raw_command="${BASH_REMATCH[2]}"
-        log "Matched Pattern 0: HANDOFF without story ID"
+        # Pattern 0: HANDOFF without story ID (e.g., 🎯 HANDOFF TO sm: *draft)
+        elif [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+) ]]; then
+            target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+            raw_command="${BASH_REMATCH[2]}"
+            log "Matched Pattern 0: HANDOFF without story ID"
+        fi
     fi
 fi
 
