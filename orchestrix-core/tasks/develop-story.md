@@ -3,7 +3,7 @@
 * Gates are strict, linear, and non-skippable
 
 **Path Convention**: `{root}` refers to `.orchestrix-core/` directory (the Orchestrix installation root).
-Example: `{root}/tasks/utils/load-architecture-context.md` → `.orchestrix-core/tasks/utils/load-architecture-context.md`
+Example: `{root}/tasks/util-load-architecture-context.md` → `.orchestrix-core/tasks/util-load-architecture-context.md`
 
 ---
 
@@ -43,7 +43,7 @@ Continue execution
 Execute:
 
 ```
-{root}/tasks/utils/validate-agent-action.md
+{root}/tasks/util-validate-agent-action.md
 ```
 
 Input:
@@ -67,7 +67,7 @@ Load and parse the following, in this exact order:
 Read story from `{devStoryLocation}/{story_id}.*.md`, validate status again.
 
 ### 3.2 Architecture Context (CRITICAL)
-Execute `{root}/tasks/utils/load-architecture-context.md`:
+Execute `{root}/tasks/util-load-architecture-context.md`:
 
 ```yaml
 input:
@@ -96,7 +96,7 @@ example: "docs/qa/assessments/1.3-test-design-20250115.md"
 Load the matched file if exists. Extract test scenarios for TDD reference.
 
 ### 3.4 Cumulative Context
-Execute `{root}/tasks/utils/load-cumulative-context.md` to load:
+Execute `{root}/tasks/util-load-cumulative-context.md` to load:
 - Database registry
 - API registry
 - Shared models
@@ -131,7 +131,7 @@ If log exists (resuming work):
 Execute:
 
 ```
-{root}/tasks/utils/validate-against-cumulative-context.md
+{root}/tasks/util-validate-against-cumulative-context.md
 ```
 
 **Expected Result**: PASS (SM should have already caught conflicts)
@@ -166,7 +166,7 @@ For each task/subtask in the story:
 
 **Resumption Guide Update Rules**:
 
-Execute `{root}/tasks/utils/update-resumption-guide.md` ONLY when:
+Execute `{root}/tasks/util-update-resumption-guide.md` ONLY when:
 
 1. **HALT condition** - Any blocker or error
 2. **User pause** - User requests to stop
@@ -246,8 +246,8 @@ Only if the story includes DB / API / Model changes:
 
 2. Execute (as applicable):
 
-   * `{root}/tasks/utils/update-database-registry.md`
-   * `{root}/tasks/utils/update-api-registry.md`
+   * `{root}/tasks/util-update-database-registry.md`
+   * `{root}/tasks/util-update-api-registry.md`
 
 3. Verify results (registry readable, merged successfully)
 
@@ -260,7 +260,7 @@ Failure does **not** halt story completion; log the issue.
 Execute:
 
 ```
-{root}/checklists/gate/dev-completion-steps.md
+{root}/checklists/gate-dev-completion-steps.md
 ```
 
 * 100% required

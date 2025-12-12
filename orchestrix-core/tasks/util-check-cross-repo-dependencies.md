@@ -219,7 +219,7 @@ Replace **Step 2.4 (Manual Warning)** with automated check:
 ```markdown
 #### 2.4 Check Cross-Repo Dependencies (Stage 2: Automated)
 
-Execute: `{root}/tasks/utils/check-cross-repo-dependencies.md`
+Execute: `{root}/tasks/util-check-cross-repo-dependencies.md`
 
 Input:
 - story_id: next_story.id
@@ -269,7 +269,7 @@ Add dependency check before implementation:
 
 **If project.mode = 'multi-repo' AND project.multi_repo.role IN [backend, frontend, ios, android]**:
 
-Execute: `{root}/tasks/utils/check-cross-repo-dependencies.md`
+Execute: `{root}/tasks/util-check-cross-repo-dependencies.md`
 
 If result.status = "blocked":
   HALT with dependency error message

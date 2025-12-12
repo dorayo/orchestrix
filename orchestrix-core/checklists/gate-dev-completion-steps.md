@@ -213,4 +213,4 @@ HALTING - Complete missing steps first
 - Called by: `develop-story.md` (GATE 2, after self-review PASS and registry update)
 - Quality validation: `tasks/dev-self-review.md` → `tasks/dev-implementation-gate.md`
 - Status transitions: `data/story-status-transitions.yaml`
-- Permission validation: `tasks/utils/validate-agent-action.md`
+- Permission validation: `tasks/util-validate-agent-action.md`

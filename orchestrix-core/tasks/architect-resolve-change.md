@@ -18,7 +18,7 @@ Escalate to PM if PRD/feature changes required.
 
 ### Step 1: Classify Change Level
 
-Execute: `tasks/utils/classify-change-level.md`
+Execute: `tasks/util-classify-change-level.md`
 
 ```yaml
 Input:
@@ -127,7 +127,7 @@ Extract: `project.mode`, `project.multi_repo.role`, `project.multi_repo.product_
 
 **IF project.mode = "multi-repo"**:
 
-**Execute**: `tasks/utils/classify-proposal-scope.md`
+**Execute**: `tasks/util-classify-proposal-scope.md`
 
 ```yaml
 Input:
@@ -277,7 +277,7 @@ analysis_result:
   proposal_path: "{proposal_path from Step 5}"
 ```
 
-Execute: `data/decisions/architect-change-escalation.yaml`
+Execute: `data/decisions-architect-change-escalation.yaml`
 
 **Decision outcomes**:
 - **ESCALATE_TO_PRODUCT**: Output HANDOFF to PM and **HALT**

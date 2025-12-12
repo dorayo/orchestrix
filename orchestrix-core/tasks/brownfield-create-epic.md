@@ -74,7 +74,7 @@ Read `{root}/core-config.yaml`.
 - `project.mode`: monolith | multi-repo
 - `project.multi_repo.repository_id`: Current repository identifier
 
-**Execute**: `tasks/utils/resolve-epic-location.md`
+**Execute**: `tasks/util-resolve-epic-location.md`
 
 ```yaml
 Input:

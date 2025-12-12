@@ -283,10 +283,10 @@ HALTING - Complete missing steps first
 ## References
 
 - Called by: `create-next-story.md` (Step 9, after quality gate PASS and decisions executed)
-- Quality validation: `checklists/gate/sm-story-creation-gate.md`
+- Quality validation: `checklists/gate-sm-story-creation-gate.md`
 - Decision execution: `tasks/make-decision.md`
 - Status transitions: `data/story-status-transitions.yaml`
-- Status validation: `tasks/utils/validate-status-transition.md`
+- Status validation: `tasks/util-validate-status-transition.md`
 
 ## Notes
 

@@ -52,7 +52,7 @@ suggestions:
 
 **Load from File:**
 ```
-Decision File Path: {root}/data/decisions/{decision_type}.yaml
+Decision File Path: {root}/data/decisions-{decision_type}.yaml
 ```
 
 Use the Read tool to load the file.
@@ -73,8 +73,8 @@ Cached Decisions (Session Memory):
 If file not found or invalid YAML:
 ```yaml
 status: error
-message: "Decision file not found or invalid: {decision_type}.yaml"
-file_path: "{root}/data/decisions/{decision_type}.yaml"
+message: "Decision file not found or invalid: decisions-{decision_type}.yaml"
+file_path: "{root}/data/decisions-{decision_type}.yaml"
 suggestions:
   - "Check if decision file exists"
   - "Verify YAML syntax is valid"

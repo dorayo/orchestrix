@@ -18,7 +18,7 @@ Escalate to higher layers if architecture or PRD changes detected.
 
 ### Step 1: Classify Change Level
 
-Execute: `tasks/utils/classify-change-level.md`
+Execute: `tasks/util-classify-change-level.md`
 
 ```yaml
 Input:
@@ -233,7 +233,7 @@ analysis_result:
       story_exists: {boolean}
 ```
 
-Execute: `data/decisions/po-change-escalation.yaml`
+Execute: `data/decisions-po-change-escalation.yaml`
 
 - **ROUTE_TO_DEV**: Proceed to Step 7a (direct to Dev)
 - **HANDLE_IN_EPIC**: Proceed to Step 7b (via SM)

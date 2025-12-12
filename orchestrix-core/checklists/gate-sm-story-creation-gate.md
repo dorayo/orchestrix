@@ -328,11 +328,11 @@ gate_result:
 
 - Template: `templates/story-tmpl.yaml`
 - Architecture docs: `docs/architecture/*.md`
-- Decision files: `data/decisions/sm-*.yaml`
+- Decision files: `data/decisions-sm-*.yaml`
 - Story status transitions: `data/story-status-transitions.yaml`
 
 ## Notes
 
-- **Replaces**: `checklists/scoring/sm-story-quality.md` (old assessment checklist)
+- **Replaces**: `checklists/scoring-sm-story-quality.md` (old assessment checklist)
 - **New in v8.4.0**: Unified gate approach following Dev agent pattern
 - **Breaking Change**: Output format changed from loose checklist to structured gate_result

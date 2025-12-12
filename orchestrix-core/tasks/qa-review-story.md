@@ -28,7 +28,7 @@ required:
    - Example: For story_id `3.2`, pattern is `docs/stories/3.2.*.md`
 2. **Then Read** the file path returned by Glob
 
-**Extract Status**: !include tasks/utils/extract-story-status.md
+**Extract Status**: !include tasks/util-extract-story-status.md
 
 **Check Status and Output Appropriate Message**:
 
@@ -51,7 +51,7 @@ Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
 Execute:
 ```
-{root}/tasks/utils/validate-agent-action.md
+{root}/tasks/util-validate-agent-action.md
 ```
 
 Input:
@@ -115,7 +115,7 @@ skip_e2e: true | false
 
 **Purpose**: Determine how to test this project (web, CLI, API, etc.)
 
-Execute: `{root}/tasks/utils/detect-project-type.md`
+Execute: `{root}/tasks/util-detect-project-type.md`
 
 **Store result**:
 ```yaml
@@ -337,7 +337,7 @@ Include all required fields plus new test_results and evidence sections.
 ### 9.3 Update Story Status
 
 **Validate Status Transition**:
-Execute: `{root}/tasks/utils/validate-status-transition.md`
+Execute: `{root}/tasks/util-validate-status-transition.md`
 
 Input:
 ```yaml

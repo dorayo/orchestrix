@@ -121,7 +121,7 @@ metadata:
   - critical_issues: [count from above]
   - review_round: [current iteration number]
 
-**Decision file:** `data/decisions/architect-review-result.yaml`
+**Decision file:** `data/decisions-architect-review-result.yaml`
 
 The decision determines: Approved | RequiresRevision | Escalated
 

@@ -294,7 +294,7 @@ Add to your task file:
 ```markdown
 ## Step X: Make Decision
 
-!include tasks/utils/call-decision-evaluator.md
+!include tasks/util-call-decision-evaluator.md
 
 Decision Type: {your_decision_type}
 Context:

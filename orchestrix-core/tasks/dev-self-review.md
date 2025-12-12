@@ -26,7 +26,7 @@ optional:
 
 ## Validation
 
-**Execute**: `{root}/tasks/utils/validate-agent-action.md`
+**Execute**: `{root}/tasks/util-validate-agent-action.md`
 
 **Input**:
 ```yaml
@@ -49,12 +49,12 @@ action: self_review
 if architecture_context provided in inputs:
   use: inputs.architecture_context
 else:
-  execute: {root}/tasks/utils/load-architecture-context.md
+  execute: {root}/tasks/util-load-architecture-context.md
 
 if cumulative_context provided in inputs:
   use: inputs.cumulative_context
 else:
-  execute: {root}/tasks/utils/load-cumulative-context.md
+  execute: {root}/tasks/util-load-cumulative-context.md
 ```
 
 **Load Required Documents**:
@@ -66,7 +66,7 @@ else:
 
 ### 2. Execute Implementation Gate
 
-**Execute**: `{root}/checklists/gate/dev-implementation-gate.md`
+**Execute**: `{root}/checklists/gate-dev-implementation-gate.md`
 
 **Input**:
 ```yaml
@@ -403,9 +403,9 @@ HALT immediately if:
 
 ## References
 
-- `checklists/gate/dev-implementation-gate.md` - Implementation Gate (unified quality validation engine)
+- `checklists/gate-dev-implementation-gate.md` - Implementation Gate (unified quality validation engine)
 - `tasks/make-decision.md` - Decision execution framework
-- `data/decisions/dev-self-review-decision.yaml` - Self-review decision rules
+- `data/decisions-dev-self-review-decision.yaml` - Self-review decision rules
 - `data/story-status-transitions.yaml` - Status transition permissions
 
 ## Notes

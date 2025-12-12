@@ -39,7 +39,7 @@ if architecture_context provided in inputs:
   use: inputs.architecture_context
   proceed_to: Step 2
 else:
-  execute: {root}/tasks/utils/load-architecture-context.md
+  execute: {root}/tasks/util-load-architecture-context.md
 ```
 
 **Full Load Process** (only if no context provided):
@@ -263,7 +263,7 @@ test_integrity:
 
 **Objective**: Detect common developer shortcuts and anti-patterns
 
-**Execute**: `{root}/checklists/gate/implementation-shortcuts.md`
+**Execute**: `{root}/checklists/gate-implementation-shortcuts.md`
 
 **Input**:
 ```yaml
@@ -598,7 +598,7 @@ gate_result:
 
 ## References
 
-- `tasks/utils/load-architecture-context.md`
+- `tasks/util-load-architecture-context.md`
 - Architecture documents in `docs/architecture/`
 - API contracts in product repo: `docs/api-contracts.md`
 - Epic YAML in product repo: `docs/prd/epic-{epic_id}-{title-slug}.yaml`

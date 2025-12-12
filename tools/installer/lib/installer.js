@@ -1427,7 +1427,8 @@ class Installer {
           const dependencies = agentConfig.dependencies || {};
           
           // Check for core dependencies (those that don't exist in the expansion pack)
-          for (const depType of ['tasks', 'templates', 'checklists', 'workflows', 'utils', 'data']) {
+          // Note: 'utils' removed as utils tasks are now flattened into tasks/ with 'util-' prefix
+          for (const depType of ['tasks', 'templates', 'checklists', 'workflows', 'data']) {
             const deps = dependencies[depType] || [];
             
             for (const dep of deps) {
@@ -1528,7 +1529,8 @@ class Installer {
                   const dependencies = agentConfig.dependencies || {};
                   
                   // Copy all dependencies for this agent
-                  for (const depType of ['tasks', 'templates', 'checklists', 'workflows', 'utils', 'data']) {
+                  // Note: 'utils' removed as utils tasks are now flattened into tasks/ with 'util-' prefix
+                  for (const depType of ['tasks', 'templates', 'checklists', 'workflows', 'data']) {
                     const deps = dependencies[depType] || [];
                     
                     for (const dep of deps) {

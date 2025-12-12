@@ -3324,7 +3324,8 @@ formatDependencyMapping(metadata) {
   }
 
   if (deps.decisions && deps.decisions.length > 0) {
-    sections.push(`**Decisions**:\n${deps.decisions.map(d => `- \`${d}\` → \`.orchestrix-core/data/decisions/${d}\``).join('\n')}`);
+    // Note: decisions are now flattened into data/ with 'decisions-' prefix
+    sections.push(`**Decisions**:\n${deps.decisions.map(d => `- \`${d}\` → \`.orchestrix-core/data/${d}\``).join('\n')}`);
   }
 
   if (sections.length === 0) {

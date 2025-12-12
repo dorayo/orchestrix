@@ -119,7 +119,7 @@ strategy_used: '{1|2|3|4}'    # Which strategy succeeded
 Include this utility at the beginning of any task that needs to extract story status:
 
 ```markdown
-!include tasks/utils/extract-story-status.md
+!include tasks/util-extract-story-status.md
 
 # Use extracted status
 {status} → One of the valid enum values

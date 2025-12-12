@@ -127,7 +127,7 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
 ### Step 2: Load Architecture Context
 
-Execute `{root}/tasks/utils/load-architecture-context.md`:
+Execute `{root}/tasks/util-load-architecture-context.md`:
 
 ```yaml
 input:
@@ -387,7 +387,7 @@ result:
 
 **CRITICAL**: This step updates the actual Story.status field, not just metadata.
 
-Execute `{root}/tasks/utils/validate-agent-action.md`:
+Execute `{root}/tasks/util-validate-agent-action.md`:
 
 ```yaml
 agent_id: architect

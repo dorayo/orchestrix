@@ -48,9 +48,7 @@ IDE-FILE-RESOLUTION:
   - Dependencies map to {root}/{type}/{name} where type ∈ {tasks,templates,checklists,data,workflows,utils,etc}.
   - Examples:
     - "create-doc.md → {root}/tasks/create-doc.md"
-    - "orchestrator-automation.md → {root}/tasks/orchestrator-automation.md"
     - "orchestrix-kb.md → {root}/data/orchestrix-kb.md"
-    - "workflow-management.md → {root}/utils/workflow-management.md"
 
 workflow_rules:
   - Do NOT begin execution until a command is selected from *help.
@@ -151,12 +149,8 @@ dependencies:
   tasks:
     - advanced-elicitation.md
     - create-doc.md
-    - create-doc-auto.md
-    - create-story-auto.md
     - develop-story.md
     - architect-review-story.md
-    - review-code-auto.md
-    - orchestrator-automation.md
     - kb-mode-interaction.md
   data:
     - orchestrix-kb.md

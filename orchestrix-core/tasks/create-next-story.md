@@ -279,7 +279,7 @@ Action: Complete blocking stories first
 
 Execute:
 ```
-{root}/tasks/utils/load-architecture-context.md
+{root}/tasks/util-load-architecture-context.md
 ```
 
 **Input**:
@@ -307,7 +307,7 @@ story_type: {from story_definition or epic}
 
 Execute:
 ```
-{root}/tasks/utils/load-cumulative-context.md
+{root}/tasks/util-load-cumulative-context.md
 ```
 
 **Input**: `{devStoryLocation}`
@@ -332,7 +332,7 @@ models_registry:
 
 Execute:
 ```
-{root}/tasks/utils/validate-against-cumulative-context.md
+{root}/tasks/util-validate-against-cumulative-context.md
 ```
 
 **Input**:
@@ -445,7 +445,7 @@ Verify file written successfully.
 
 Execute:
 ```
-checklists/gate/sm-story-creation-gate.md
+checklists/gate-sm-story-creation-gate.md
 ```
 
 **Input**:
@@ -567,7 +567,7 @@ Store `final_status` and `next_action` for Step 9.
 
 Execute:
 ```
-checklists/gate/sm-story-completion-gate.md
+checklists/gate-sm-story-completion-gate.md
 ```
 
 **Verify** (100% required, 21 items):

@@ -16,7 +16,7 @@
 
 ### Step 1: Load Decision File
 
-Load the specified decision file from `{root}/data/decisions/{decision_type}.yaml`.
+Load the specified decision file from `{root}/data/decisions-{decision_type}.yaml`.
 
 Display decision metadata:
 ```

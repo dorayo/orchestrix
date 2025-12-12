@@ -36,7 +36,7 @@ Read: `{root}/core-config.yaml`
 - `project.mode`: monolith | multi-repo
 - `project.multi_repo.repository_id`: Current repository identifier
 
-**Execute**: `tasks/utils/resolve-epic-location.md`
+**Execute**: `tasks/util-resolve-epic-location.md`
 
 ```yaml
 Input:
@@ -96,7 +96,7 @@ Read all Epic files: `{epic_location}/epic-*.yaml`
 
 2. **IF target_epic_id = "0" AND has_epic_0 = false**:
 
-   **Execute**: `tasks/utils/resolve-epic-location.md`
+   **Execute**: `tasks/util-resolve-epic-location.md`
    ```yaml
    Input:
      epic_id: "0"

@@ -9,7 +9,7 @@
 > - **Product-level changes**: `pm-revise-prd.md` (PM agent: `*revise-prd`)
 >
 > The new system provides semantic routing based on change description analysis.
-> See `data/decisions/change-level-classification.yaml` for routing rules.
+> See `data/decisions-change-level-classification.yaml` for routing rules.
 
 ---
 
@@ -26,14 +26,14 @@ This task was a unified change management workflow that guided structured respon
 
 ## Migration Guide
 
-1. When receiving a change description, use `tasks/utils/classify-change-level.md` to determine the appropriate layer
+1. When receiving a change description, use `tasks/util-classify-change-level.md` to determine the appropriate layer
 2. Route to the layer-specific task based on classification result
 3. Each layer can escalate to higher layers if needed
 4. Higher layers cascade changes down after resolution
 
 ## Related Files
 
-- Classification utility: `tasks/utils/classify-change-level.md`
-- Decision rules: `data/decisions/change-level-classification.yaml`
-- Escalation rules: `data/decisions/{agent}-change-escalation.yaml`
+- Classification utility: `tasks/util-classify-change-level.md`
+- Decision rules: `data/decisions-change-level-classification.yaml`
+- Escalation rules: `data/decisions-{agent}-change-escalation.yaml`
 - Status transitions: `data/story-status-transitions.yaml`

@@ -4,7 +4,7 @@ REQUEST-RESOLUTION: >
   Do not load dependency files until the user selects an option.
   Examples: "refine this story → *create-story or *validate-story-draft <file>;
             "split this large document → *shard-doc <doc> <dest>;
-            "run the PO checklist → *execute-checklist workflow/po-master-validation.md;
+            "run the PO checklist → *execute-checklist workflow-po-master-validation.md;
             "export the document → *doc-out.
 
 activation_instructions:
@@ -52,7 +52,7 @@ IDE-FILE-RESOLUTION:
   - Examples:
     - "execute-checklist.md → {root}/tasks/execute-checklist.md"
     - "story-tmpl.yaml → {root}/templates/story-tmpl.yaml"
-    - "workflow/po-master-validation.md → {root}/checklists/workflow/po-master-validation.md"
+    - "workflow-po-master-validation.md → {root}/checklists/workflow-po-master-validation.md"
     - "shard-doc.md → {root}/tasks/shard-doc.md"
   - Load files only when executing specific commands.
 
@@ -68,7 +68,7 @@ commands:
       description: "Show a numbered list of available commands and wait for a selection."
       output_format:
         - "[1] *create-doc {template} — create from template (or list templates)"
-        - "[2] *execute-checklist {checklist} — run a checklist (default: workflow/po-master-validation.md)"
+        - "[2] *execute-checklist {checklist} — run a checklist (default: workflow-po-master-validation.md)"
         - "[3] *shard — shard PRD and Architecture documents (unified)"
         - "[4] *correct-course — handle Epic-level course correction"
         - "[5] *review-tech-proposal {path} — evaluate Architect tech proposal for Epic assignment"
@@ -85,9 +85,9 @@ commands:
       behavior:
         - "Run dependency task 'create-doc.md' with the given template file."
   - execute-checklist:
-      description: "Run PO checklist; default to 'workflow/po-master-validation.md' if not specified."
+      description: "Run PO checklist; default to 'workflow-po-master-validation.md' if not specified."
       behavior:
-        - "Load and execute the checklist file: {root}/checklists/workflow/po-master-validation.md (or user-specified checklist)"
+        - "Load and execute the checklist file: {root}/checklists/workflow-po-master-validation.md (or user-specified checklist)"
         - "Workflow checklists are self-contained validation tasks with embedded [[LLM: ]] instructions"
         - "Read the entire checklist file and follow ALL embedded instructions exactly"
         - "Generate the validation report as specified in the checklist"
@@ -162,15 +162,15 @@ dependencies:
     - po-assemble-documents.md
     - po-correct-course.md
     - po-review-tech-proposal.md
-    - utils/classify-change-level.md
+    - util-classify-change-level.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
     - validate-next-story.md
   templates:
     - story-tmpl.yaml
   checklists:
-    - workflow/po-master-validation.md
-    - workflow/change-navigation.md
+    - workflow-po-master-validation.md
+    - workflow-change-navigation.md
   decisions:
     - change-level-classification.yaml
     - po-change-escalation.yaml

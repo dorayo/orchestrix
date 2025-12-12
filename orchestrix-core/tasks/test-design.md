@@ -36,7 +36,7 @@ data:
 
 Execute:
 ```
-{root}/tasks/utils/validate-agent-action.md
+{root}/tasks/util-validate-agent-action.md
 ```
 
 Input:
@@ -124,7 +124,7 @@ QA test-design requires **TWO sequential status updates** per `story-status-tran
 
 **Phase 1: AwaitingTestDesign → TestDesignComplete**
 
-Execute `{root}/tasks/utils/validate-agent-action.md` with:
+Execute `{root}/tasks/util-validate-agent-action.md` with:
 ```yaml
 agent_id: qa
 story_path: {story_path}
@@ -135,7 +135,7 @@ target_status: TestDesignComplete
 
 **Phase 2: TestDesignComplete → Approved (Auto-transition)**
 
-Execute `{root}/tasks/utils/validate-agent-action.md` with:
+Execute `{root}/tasks/util-validate-agent-action.md` with:
 ```yaml
 agent_id: qa
 story_path: {story_path}

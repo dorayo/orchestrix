@@ -107,7 +107,7 @@ dependencies:
   data:
     - technical-preferences.md
   decisions:
-    - qa-post-review-workflow.yaml
+    - decisions-qa-post-review-workflow.yaml
   tasks:
     - finalize-story-commit.md
     - qa-gate.md
@@ -121,4 +121,4 @@ dependencies:
     - qa-gate-tmpl.yaml
     - story-tmpl.yaml
   checklists:
-    - gate/dev-implementation-gate.md
+    - gate-dev-implementation-gate.md

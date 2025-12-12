@@ -110,7 +110,7 @@ commands:
   - story-checklist:
       description: Run comprehensive story quality validation
       behavior:
-        - 'Load and execute: {root}/checklists/scoring/sm-story-quality.md'
+        - 'Load and execute: {root}/checklists/scoring-sm-story-quality.md'
         - This is a scored quality assessment with embedded execution instructions
         - Follow the checklist's scoring logic and return quality_score as defined
   - init-registries:
@@ -124,24 +124,24 @@ dependencies:
     - revise-story-from-architect-feedback.md
     - sm-correct-course.md
     - sm-create-tech-story.md
-    - utils/classify-change-level.md
+    - util-classify-change-level.md
     - frontend-user-confirmation.md
     - make-decision.md
     - init-cumulative-registries.md
-    - utils/load-cumulative-context.md
-    - utils/validate-against-cumulative-context.md
+    - util-load-cumulative-context.md
+    - util-validate-against-cumulative-context.md
   templates:
     - story-tmpl.yaml
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml
     - models-registry-tmpl.yaml
   checklists:
-    - scoring/sm-story-quality.md
-    - gate/sm-story-creation-gate.md
+    - scoring-sm-story-quality.md
+    - gate-sm-story-creation-gate.md
   decisions:
-    - change-level-classification.yaml
-    - sm-change-escalation.yaml
-    - tech-proposal-routing.yaml
+    - decisions-change-level-classification.yaml
+    - decisions-sm-change-escalation.yaml
+    - decisions-tech-proposal-routing.yaml
   data:
     - epic-story-mapping-schema.yaml
 request_resolution:

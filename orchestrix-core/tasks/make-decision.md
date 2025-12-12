@@ -6,7 +6,7 @@ Execute structured decision-making using centralized YAML rules.
 
 ```yaml
 required:
-  decision_type: string  # Maps to {root}/data/decisions/{decision_type}.yaml
+  decision_type: string  # Maps to {root}/data/decisions-{decision_type}.yaml
   context: object        # Decision-specific context data
 
 optional:
@@ -21,8 +21,8 @@ optional:
 
 1. Verify `decision_type` provided and non-empty
 2. Verify `context` provided and is valid object
-3. Check `decision_type` exists in `{root}/data/decisions/`
-4. Load schema from `{root}/data/decisions/{decision_type}.yaml`
+3. Check `decision_type` file exists: `{root}/data/decisions-{decision_type}.yaml`
+4. Load schema from `{root}/data/decisions-{decision_type}.yaml`
 5. Validate `context` contains required fields per schema
 6. Validate field types and value ranges
 
@@ -39,12 +39,12 @@ optional:
 
 **CRITICAL**: Load ONLY the required file, NOT all files in directory.
 
-1. **Construct path**: `{root}/data/decisions/{decision_type}.yaml`
-   - Example: `qa-gate-decision` → `{root}/data/decisions/qa-gate-decision.yaml`
+1. **Construct path**: `{root}/data/decisions-{decision_type}.yaml`
+   - Example: `qa-gate-decision` → `{root}/data/decisions-qa-gate-decision.yaml`
 
 2. **Read ONLY this file**:
    - Use file system API to read target file
-   - Do NOT scan `{root}/data/decisions/` directory
+   - Do NOT scan `{root}/data/` for all decision files
    - Do NOT load other decision files
 
 3. **Parse YAML** and extract:
@@ -141,7 +141,7 @@ next_action: "Provide complete context and retry"
 
 ## Available Decision Types
 
-Located in `{root}/data/decisions/`:
+Located in `{root}/data/` (files with `decisions-` prefix):
 - `sm-story-status` - Final story status after Architect review
 - `sm-architect-review-needed` - Check if Architect review required
 - `sm-test-design-level` - Determine test level (Simple/Standard/Comprehensive)
@@ -199,12 +199,12 @@ next_action: "Request decision from authorized agent"
 - Any agent requiring structured decisions
 
 **Calls To**:
-- Decision rules: `{root}/data/decisions/{decision_type}.yaml`
+- Decision rules: `{root}/data/decisions-{decision_type}.yaml`
 - Agent config: `{root}/agents/{agent-name}.yaml`
 - Decision audit log: `{root}/logs/decisions/` (if configured)
 
 **Data Dependencies**:
-- Decision rules must exist in `{root}/data/decisions/`
+- Decision rules must exist as `{root}/data/decisions-{decision_type}.yaml`
 - Agent permissions in agent YAML files
 - Context data must match decision type schema
 

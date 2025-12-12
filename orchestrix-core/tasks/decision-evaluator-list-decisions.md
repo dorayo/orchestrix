@@ -14,7 +14,7 @@
 
 ### Step 1: List All Decision Files
 
-Scan `{root}/data/decisions/` directory for all `.yaml` files.
+Scan `{root}/data/` directory for all files matching pattern `decisions-*.yaml`.
 
 ### Step 2: Display Decision Catalog
 
@@ -24,7 +24,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 ## SM (Scrum Master) Decisions
 
 ### 1. sm-story-status
-**File**: sm-story-status.yaml
+**File**: decisions-sm-story-status.yaml
 **Purpose**: Determine final story status after quality assessment and architect review
 **Required Context**:
 - `architect_review_result`: (enum) REQUIRED | NOT_REQUIRED | APPROVED | ESCALATED
@@ -37,7 +37,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 ---
 
 ### 2. sm-architect-review-needed
-**File**: sm-architect-review-needed.yaml
+**File**: decisions-sm-architect-review-needed.yaml
 **Purpose**: Determine if story requires architect review based on quality and complexity
 **Required Context**:
 - `quality_score`: (number 0-10) Overall quality score
@@ -50,7 +50,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 ---
 
 ### 3. sm-test-design-level
-**File**: sm-test-design-level.yaml
+**File**: decisions-sm-test-design-level.yaml
 **Purpose**: Determine required test design level based on complexity and security
 **Required Context**:
 - `complexity_indicators`: (number 0-7) Count of complexity indicators
@@ -66,7 +66,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 ## Architect Decisions
 
 ### 4. architect-review-result
-**File**: architect-review-result.yaml
+**File**: decisions-architect-review-result.yaml
 **Purpose**: Determine review outcome based on architecture score and issues
 **Required Context**:
 - `architecture_score`: (number 0-10) Technical architecture score
@@ -82,7 +82,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 ## QA Decisions
 
 ### 5. qa-gate-decision
-**File**: qa-gate-decision.yaml
+**File**: decisions-qa-gate-decision.yaml
 **Purpose**: Determine if story passes QA gate with progressive standards
 **Required Context**:
 - `review_round`: (number) Current QA review iteration
@@ -100,7 +100,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 ---
 
 ### 6. qa-post-review-workflow
-**File**: qa-post-review-workflow.yaml
+**File**: decisions-qa-post-review-workflow.yaml
 **Purpose**: Determine next workflow action after QA review
 **Required Context**:
 - `gate_result`: (enum) PASS | CONCERNS | FAIL | WAIVED
@@ -120,7 +120,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 ## Dev Decisions
 
 ### 7. dev-self-review-decision
-**File**: dev-self-review-decision.yaml
+**File**: decisions-dev-self-review-decision.yaml
 **Purpose**: Determine if implementation is ready for QA review
 **Required Context**:
 - `implementation_gate_score`: (number 0-100) Gate checklist percentage
@@ -160,7 +160,7 @@ Scan `{root}/data/decisions/` directory for all `.yaml` files.
 
 ## Notes
 
-- Decision files are located in `{root}/data/decisions/`
+- Decision files are located in `{root}/data/` with `decisions-` prefix (e.g., `decisions-qa-gate-decision.yaml`)
 - All decisions follow the same rule evaluation pattern
 - Context fields must match exactly (case-sensitive)
 - Enum values must match exactly (case-sensitive)

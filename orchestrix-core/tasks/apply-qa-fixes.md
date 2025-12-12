@@ -34,7 +34,7 @@ optional:
 
 ## Agent Permission Check (MANDATORY)
 
-**Execute**: `{root}/tasks/utils/validate-agent-action.md`
+**Execute**: `{root}/tasks/util-validate-agent-action.md`
 
 **Input**:
 ```yaml

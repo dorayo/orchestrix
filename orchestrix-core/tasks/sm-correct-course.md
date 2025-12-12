@@ -16,7 +16,7 @@ Escalate to higher layers if cross-story or architectural impact detected.
 
 ### Step 1: Classify Change Level
 
-Execute: `tasks/utils/classify-change-level.md`
+Execute: `tasks/util-classify-change-level.md`
 
 ```yaml
 Input:
@@ -116,7 +116,7 @@ Analyze `change_description` to identify action:
 
 ### Step 5: Validate Quality
 
-For each affected story, execute: `checklists/scoring/sm-story-quality.md`
+For each affected story, execute: `checklists/scoring-sm-story-quality.md`
 
 - IF any score < 6.0: Return to Step 4, continue revision
 - IF all scores >= 6.0: Proceed to Step 6
@@ -133,7 +133,7 @@ analysis_result:
   action_type: "{action_type}"
 ```
 
-Execute: `data/decisions/sm-change-escalation.yaml`
+Execute: `data/decisions-sm-change-escalation.yaml`
 
 - **HANDLE_IN_STORY**: Proceed to Step 7
 - **ESCALATE_TO_EPIC**: Output HANDOFF to PO and **HALT**

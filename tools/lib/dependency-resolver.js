@@ -7,7 +7,6 @@ class DependencyResolver {
   constructor(rootDir) {
     this.rootDir = rootDir;
     this.orchestrixCore = path.join(rootDir, 'orchestrix-core');
-    this.common = path.join(rootDir, 'common');
     this.cache = new Map();
   }
 
@@ -52,7 +51,8 @@ class DependencyResolver {
     // Personas are now embedded in agent configs, no need to resolve separately
 
     // Resolve other dependencies
-    const depTypes = ['tasks', 'templates', 'checklists', 'data', 'utils'];
+    // Note: 'utils' removed as utils tasks are now flattened into tasks/ with 'util-' prefix
+    const depTypes = ['tasks', 'templates', 'checklists', 'data'];
     for (const depType of depTypes) {
       const deps = agentConfig.dependencies?.[depType] || [];
       for (const depId of deps) {
@@ -135,18 +135,12 @@ class DependencyResolver {
       let content = null;
       let filePath = null;
 
-      // First try orchestrix-core
+      // Load from orchestrix-core
       try {
         filePath = path.join(this.orchestrixCore, type, id);
         content = await fs.readFile(filePath, 'utf8');
       } catch (e) {
-        // If not found in orchestrix-core, try common folder
-        try {
-          filePath = path.join(this.common, type, id);
-          content = await fs.readFile(filePath, 'utf8');
-        } catch (e2) {
-          // File not found in either location
-        }
+        // File not found
       }
 
       if (!content) {

@@ -145,7 +145,7 @@ This task is triggered when QA sets Story Status to `Escalated` with `architectu
 
 **Execute status transition validation**:
 
-Execute `{root}/tasks/utils/validate-agent-action.md`:
+Execute `{root}/tasks/util-validate-agent-action.md`:
 
 ```yaml
 agent_id: architect

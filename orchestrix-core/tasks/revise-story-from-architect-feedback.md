@@ -10,7 +10,7 @@
 
 Execute:
 ```
-{root}/tasks/utils/validate-agent-action.md
+{root}/tasks/util-validate-agent-action.md
 ```
 
 **Input**:
@@ -96,7 +96,7 @@ Low Fixed: [...]
 
 Execute:
 ```
-checklists/gate/sm-story-creation-gate.md
+checklists/gate-sm-story-creation-gate.md
 ```
 
 **Input**:
@@ -421,7 +421,7 @@ blocked_reason: "{reason}"
 
 Execute status transition validation:
 ```
-{root}/tasks/utils/validate-agent-action.md
+{root}/tasks/util-validate-agent-action.md
 ```
 
 **Input**:

@@ -190,7 +190,7 @@ commands:
   - execute-checklist:
       description: Run architectural validation checklist
       behavior:
-        - 'Load and execute: {root}/checklists/workflow/architect-validation.md'
+        - 'Load and execute: {root}/checklists/workflow-architect-validation.md'
         - 'This is a self-contained validation workflow with embedded [[LLM: ]] instructions'
         - Follow all validation steps and generate the comprehensive report as specified
   - doc-out:
@@ -203,7 +203,6 @@ commands:
       description: Exit Architect persona
 dependencies:
   tasks:
-    - create-doc-auto.md
     - create-doc.md
     - create-system-architecture.md
     - create-backend-architecture.md
@@ -217,7 +216,7 @@ dependencies:
     - architect-review-story.md
     - review-story-technical-accuracy.md
     - architect-resolve-change.md
-    - utils/classify-change-level.md
+    - util-classify-change-level.md
   templates:
     - architecture-tmpl.yaml
     - front-end-architecture-tmpl.yaml
@@ -226,11 +225,11 @@ dependencies:
     - brownfield-architecture-tmpl.yaml
     - system-architecture-tmpl.yaml
   checklists:
-    - workflow/architect-validation.md
-    - scoring/architect-technical-review.md
+    - workflow-architect-validation.md
+    - scoring-architect-technical-review.md
   decisions:
-    - change-level-classification.yaml
-    - architect-change-escalation.yaml
+    - decisions-change-level-classification.yaml
+    - decisions-architect-change-escalation.yaml
   data:
     - technical-preferences.md
 request_resolution:

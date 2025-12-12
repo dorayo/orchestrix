@@ -281,7 +281,7 @@ result:
 ```markdown
 ## Prerequisites
 
-Execute: `{root}/tasks/utils/validate-agent-action.md`
+Execute: `{root}/tasks/util-validate-agent-action.md`
 
 Input:
 agent_id: dev
@@ -299,7 +299,7 @@ If result.validation = FAIL:
 ```markdown
 ## Validation
 
-Execute: `{root}/tasks/utils/validate-agent-action.md`
+Execute: `{root}/tasks/util-validate-agent-action.md`
 
 Input:
 agent_id: qa

@@ -39,7 +39,7 @@ Extract explicit IDs from change_description:
 
 ### Step 3: Apply Classification Rules
 
-Execute decision: `data/decisions/change-level-classification.yaml`
+Execute decision: `data/decisions-change-level-classification.yaml`
 
 Input:
 ```yaml

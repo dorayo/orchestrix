@@ -45,7 +45,7 @@ Read: `{root}/core-config.yaml`
 **IF epic_id provided**: Use provided value
 **ELSE**: Set `epic_id = "0"` (Technical Debt Epic)
 
-**Execute**: `tasks/utils/resolve-epic-location.md`
+**Execute**: `tasks/util-resolve-epic-location.md`
 
 ```yaml
 Input:
@@ -148,7 +148,7 @@ Write updated Epic file.
 
 ### Step 7: Quality Check
 
-Execute: `checklists/gate/sm-story-creation-gate.md`
+Execute: `checklists/gate-sm-story-creation-gate.md`
 
 **IF gate FAIL**:
 - Update Story.status = Blocked

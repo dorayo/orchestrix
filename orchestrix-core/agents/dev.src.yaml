@@ -75,17 +75,17 @@ dependencies:
     - apply-qa-fixes.md
     - make-decision.md
     - validate-next-story.md
-    - utils/validate-agent-action.md
-    - utils/validate-api-contract.md
-    - utils/update-resumption-guide.md
-    - utils/load-cumulative-context.md
-    - utils/validate-against-cumulative-context.md
-    - utils/update-database-registry.md
-    - utils/update-api-registry.md
-    - utils/parse-legacy-dev-record.md
+    - util-validate-agent-action.md
+    - util-validate-api-contract.md
+    - util-update-resumption-guide.md
+    - util-load-cumulative-context.md
+    - util-validate-against-cumulative-context.md
+    - util-update-database-registry.md
+    - util-update-api-registry.md
+    - util-parse-legacy-dev-record.md
   checklists:
-    - gate/dev-implementation-gate.md
-    - gate/dev-completion-steps.md
+    - gate-dev-implementation-gate.md
+    - gate-dev-completion-steps.md
   templates:
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml

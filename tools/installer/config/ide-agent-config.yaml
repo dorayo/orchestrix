@@ -4,41 +4,41 @@
 # Claude Code automation preferences
 # Agents with auto-task capabilities for enhanced automation
 claude-code-automation:
-  # Core development cycle agents (priority auto-tasks)
+  # Core development cycle agents
   sm:
-    preferred-tasks: ["create-story-auto.md", "create-next-story.md"]
+    preferred-tasks: ["create-next-story.md"]
     automation-level: "high"
     description: "Story creation with automatic context assembly"
   architect:
-    preferred-tasks: ["create-doc-auto.md", "review-story-technical-auto.md", "create-doc.md", "review-story-technical-accuracy.md"]  
+    preferred-tasks: ["create-doc.md", "review-story-technical-accuracy.md"]
     automation-level: "high"
-    description: "Architecture docs and technical review automation"
+    description: "Architecture docs and technical review"
   dev:
-    preferred-tasks: ["implement-story-auto.md"]
+    preferred-tasks: ["develop-story.md"]
     automation-level: "high"
-    description: "Story implementation with automated quality checks"
+    description: "Story implementation with quality checks"
   qa:
-    preferred-tasks: ["review-code-auto.md", "review-story.md", "validate-compilation-auto.md", "validate-container-auto.md", "validate-functional-auto.md"]
-    automation-level: "high" 
-    description: "Code review with comprehensive testing validation and refactoring capabilities"
+    preferred-tasks: ["qa-review-story.md"]
+    automation-level: "high"
+    description: "Code review with comprehensive testing validation"
   po:
-    preferred-tasks: ["shard-doc-auto.md", "shard-doc.md"]
+    preferred-tasks: ["shard-doc.md"]
     automation-level: "medium"
     description: "Document sharding for development phase transition"
-  
-  # Planning phase agents (selective automation)
+
+  # Planning phase agents
   analyst:
-    preferred-tasks: ["create-doc-auto.md", "create-doc.md"]
+    preferred-tasks: ["create-doc.md"]
     automation-level: "medium"
     description: "Project brief and research document generation"
   pm:
-    preferred-tasks: ["create-doc-auto.md", "create-doc.md"]
+    preferred-tasks: ["create-doc.md"]
     automation-level: "medium"
     description: "PRD and requirement document automation"
-    
-  # Orchestration agent (full automation capabilities)
+
+  # Orchestration agent
   orchestrix-orchestrator:
-    preferred-tasks: ["orchestrator-automation.md"]
+    preferred-tasks: []
     automation-level: "maximum"
     description: "Intelligent workflow coordination and agent orchestration"
 

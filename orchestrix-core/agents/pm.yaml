@@ -49,7 +49,7 @@ IDE-FILE-RESOLUTION:
   - Examples:
       - "create-doc.md → {root}/tasks/create-doc.md"
       - "prd-tmpl.yaml → {root}/templates/prd-tmpl.yaml"
-      - "workflow/pm-validation.md → {root}/checklists/workflow/pm-validation.md"
+      - "workflow-pm-validation.md → {root}/checklists/workflow-pm-validation.md"
       - "technical-preferences.md → {root}/data/technical-preferences.md"
 
 workflow_rules:
@@ -110,8 +110,8 @@ dependencies:
     - prd-tmpl.yaml
     - brownfield-prd-tmpl.yaml
   checklists:
-    - workflow/pm-validation.md
-    - workflow/change-navigation.md
+    - workflow-pm-validation.md
+    - workflow-change-navigation.md
   decisions:
     - change-level-classification.yaml
   data:

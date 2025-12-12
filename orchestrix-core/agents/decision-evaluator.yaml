@@ -12,7 +12,7 @@ agent:
     identity: Executes YAML-based decision rules for Orchestrix agents
     focus: Load decision files, evaluate conditions, return structured results
   customization:
-    - Load decision files from {root}/data/decisions/
+    - Load decision files from {root}/data/decisions-
     - Parse YAML rules and evaluate conditions systematically
     - Cache loaded decision files in session memory
     - Return structured results in consistent YAML format
@@ -46,7 +46,7 @@ workflow_rules:
   - 'CRITICAL: After outputting handoff message, DO NOT output ANY additional content'
   - 'CRITICAL: No summaries, tips, available commands, or explanations after handoff'
   - 'CRITICAL: Handoff line must be the absolute last line of your response'
-  - Load decision YAML files from {root}/data/decisions/ directory
+  - Load decision YAML files from {root}/data/decisions- directory
   - 'Parse decision rules: conditions, results, reasoning patterns'
   - Evaluate conditions against provided context (strict boolean/numeric logic)
   - 'Return result in structured YAML format: result, reasoning, next_action, confidence'
@@ -66,38 +66,38 @@ commands:
         - '[5] *exit — Exit DecisionEvaluator persona'
   - evaluate-decision:
       description: Execute a single decision rule and return structured result
-      task: decision-evaluator/evaluate-decision.md
+      task: decision-evaluator-evaluate-decision.md
   - batch-evaluate:
       description: Execute multiple decisions in sequence (for workflows requiring chained decisions)
-      task: decision-evaluator/batch-evaluate.md
+      task: decision-evaluator-batch-evaluate.md
   - test-decision:
       description: Test decision logic with various scenarios and edge cases
-      task: decision-evaluator/test-decision.md
+      task: decision-evaluator-test-decision.md
   - list-decisions:
       description: List all available decision types with brief descriptions
-      task: decision-evaluator/list-decisions.md
+      task: decision-evaluator-list-decisions.md
   - exit:
       description: Exit DecisionEvaluator persona and return to main context
 dependencies:
   tasks:
-    - decision-evaluator/evaluate-decision.md
-    - decision-evaluator/batch-evaluate.md
-    - decision-evaluator/test-decision.md
-    - decision-evaluator/list-decisions.md
+    - decision-evaluator-evaluate-decision.md
+    - decision-evaluator-batch-evaluate.md
+    - decision-evaluator-test-decision.md
+    - decision-evaluator-list-decisions.md
     - make-decision.md
   data:
-    - decisions/sm-story-status.yaml
-    - decisions/sm-architect-review-needed.yaml
-    - decisions/sm-test-design-level.yaml
-    - decisions/sm-revision-approval.yaml
-    - decisions/architect-review-result.yaml
-    - decisions/qa-gate-decision.yaml
-    - decisions/qa-post-review-workflow.yaml
-    - decisions/qa-test-design-update.yaml
-    - decisions/qa-escalate-architect.yaml
-    - decisions/dev-self-review-decision.yaml
-    - decisions/dev-block-story.yaml
-    - decisions/dev-escalate-architect.yaml
+    - decisions-sm-story-status.yaml
+    - decisions-sm-architect-review-needed.yaml
+    - decisions-sm-test-design-level.yaml
+    - decisions-sm-revision-approval.yaml
+    - decisions-architect-review-result.yaml
+    - decisions-qa-gate-decision.yaml
+    - decisions-qa-post-review-workflow.yaml
+    - decisions-qa-test-design-update.yaml
+    - decisions-qa-escalate-architect.yaml
+    - decisions-dev-self-review-decision.yaml
+    - decisions-dev-block-story.yaml
+    - decisions-dev-escalate-architect.yaml
 request_resolution:
   strategy: fuzzy_match
   max_options: 5

@@ -216,7 +216,7 @@ Output:
 
 This utility is called by:
 - `architect-resolve-change.md` (Step 3.5) - To determine proposal storage location
-- Decision rule: `data/decisions/proposal-scope.yaml`
+- Decision rule: `data/decisions-proposal-scope.yaml`
 
 The scope classification directly affects:
 1. Where the technical proposal is stored
