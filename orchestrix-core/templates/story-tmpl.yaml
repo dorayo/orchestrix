@@ -163,6 +163,31 @@ sections:
         title: Technical Constraints
         instruction: Record only constraints unique to this story (performance/security/version limits)
 
+      - id: ui-ux-reference
+        title: UI/UX Specification Reference
+        condition: file_exists('docs/front-end-spec.md')
+        instruction: |
+          List relevant sections from docs/front-end-spec.md for this story.
+          Only populate if front-end-spec.md exists AND story involves UI/UX work.
+
+          Section mapping guide:
+          - Navigation/menu/routing → Information Architecture (IA)
+          - User journey/registration/checkout → User Flows
+          - Page layout/screen design → Wireframes & Mockups
+          - Form/button/input/component → Component Library / Design System
+          - Color/font/icon/spacing → Branding & Style Guide
+          - Keyboard nav/screen reader/WCAG → Accessibility Requirements
+          - Mobile/tablet/breakpoint → Responsiveness Strategy
+          - Animation/transition/feedback → Animation & Micro-interactions
+          - Load time/render perf → Performance Considerations
+
+          Format:
+          | Section | Why Relevant |
+          |---------|--------------|
+          | {Section Title} | {Brief reason for this story} |
+        owner: scrum-master
+        editors: [scrum-master]
+
       - id: accumulated-context
         title: Accumulated Context (From Previous Stories)
         instruction: |

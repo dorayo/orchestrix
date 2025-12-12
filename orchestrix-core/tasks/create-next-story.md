@@ -361,6 +361,46 @@ cumulative_context: {from Step 5.1}
 
 ---
 
+### 5.5. Extract UI/UX References (Conditional)
+
+**Skip if**: `docs/front-end-spec.md` does NOT exist
+
+**If file exists**:
+
+1. **Read** `docs/front-end-spec.md`
+
+2. **Analyze Story Content** for UI/UX relevance:
+   - Story title and description
+   - Acceptance criteria
+   - Tasks involving user-facing features
+
+3. **Match to front-end-spec.md sections** using this mapping:
+
+   | Story Keywords | Relevant Section |
+   |---------------|------------------|
+   | Navigation, menu, routing, sidebar, breadcrumb | Information Architecture (IA) |
+   | User flow, registration, login, checkout, wizard | User Flows |
+   | Page, screen, layout, dashboard, modal | Wireframes & Mockups |
+   | Form, button, input, select, checkbox, component | Component Library / Design System |
+   | Color, font, icon, spacing, theme | Branding & Style Guide |
+   | Keyboard, screen reader, WCAG, a11y | Accessibility Requirements |
+   | Mobile, tablet, responsive, breakpoint | Responsiveness Strategy |
+   | Animation, transition, loading, feedback | Animation & Micro-interactions |
+   | Load time, render, performance, lazy | Performance Considerations |
+
+4. **Generate `ui_ux_references`**:
+   ```yaml
+   ui_ux_references:
+     - section: "{Matched Section Title}"
+       why_relevant: "{Brief reason based on story content}"
+   ```
+
+5. **If no matches found**: Set `ui_ux_references = []` (Story has no UI/UX relevance)
+
+**Output**: `ui_ux_references` list for use in Step 6
+
+---
+
 ### 6. Create Story Document
 
 **Step 6.1: Load Template**
@@ -414,8 +454,15 @@ Story:
 - Fixed Final Verification section
 - Tasks define WHAT to do; Dev Notes define HOW (technical details, patterns, file paths)
 
-**Dev Notes** (following template instructions lines 206-251):
+**Dev Notes** (following template instructions):
 - **Technical Constraints**: Story-specific constraints with doc references `[→ file.md#section]`
+- **UI/UX Specification Reference** (from Step 5.5, if `ui_ux_references` not empty):
+  ```markdown
+  | Section | Why Relevant |
+  |---------|--------------|
+  | {section} | {why_relevant} |
+  ```
+  If `ui_ux_references` is empty or Step 5.5 was skipped: Omit this section entirely
 - **Accumulated Context**: Table format listing relevant resources from cumulative_context
   ```markdown
   | Resource Type | Name | Source Story | Action | Key Info |
