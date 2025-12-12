@@ -1,3 +1,10 @@
+# [13.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.4...v13.4.0) (2025-12-12)
+
+
+### Features
+
+* **sm:** add UI/UX spec reference extraction for story creation ([9494176](https://github.com/dorayo/ORCHESTRIX/commit/9494176701326e062081b4fb958dc4969f529a47))
+
 ## [13.3.4](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.3...v13.3.4) (2025-12-11)
 
 
