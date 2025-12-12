@@ -1,331 +1,195 @@
-# Validate Database Migration (Auto-Execution)
+# Validate Database Migration
 
-## 🤖 AUTO-EXECUTION MODE (Claude Code SubAgent Default)
+## Purpose
 
-**Mission**: Automatically validate database migration scripts and execution status based on schema changes detected in story implementation
+Validate database migration scripts and execution status for schema changes detected in story implementation.
 
-### Immediate Action Protocol:
-1. **Auto-Detect Schema Changes**: Analyze story implementation for database schema modifications
-2. **Auto-Check Migration Scripts**: Verify migration scripts exist for detected schema changes
-3. **Auto-Validate Migration Status**: Confirm migration scripts have been executed
-4. **Auto-Report**: Document migration validation results in QA Results
-5. **Auto-Execute Migration**: Run pending migrations if safe and required
+## Inputs
 
-### Non-Negotiable Requirements:
-- ✅ MUST detect schema changes from story implementation files
-- ✅ MUST check for corresponding migration scripts
-- ✅ MUST validate migration execution status
-- ✅ MUST prevent functional errors due to schema drift
-- ✅ MUST integrate with existing QA validation workflow
-
-### Auto-Halt Conditions:
-- ❌ Schema changes detected but no migration scripts → Report missing migrations, halt
-- ❌ Migration scripts exist but not executed → Report pending migrations, halt
-- ❌ Migration scripts contain errors → Report migration issues, halt
-- ❌ Database connectivity issues → Report connection problems, halt
-
----
-
-## 🎯 AUTOMATED DATABASE MIGRATION VALIDATION ENGINE
-
-### Schema Change Detection Auto-Analysis:
 ```yaml
-schema_detection:
-  file_patterns:
-    - "**/*.sql" - Direct SQL schema files
-    - "**/*.prisma" - Prisma schema files
-    - "**/*.entity.ts" - TypeORM entity files
-    - "**/*.model.ts" - Sequelize model files
-    - "**/migrations/*" - Migration directory files
-    - "**/*.migration.js" - Migration files
-    - "**/schema.rb" - Rails schema file
-    - "**/structure.sql" - Database structure files
-  
-  change_indicators:
-    - CREATE TABLE statements
-    - ALTER TABLE statements
-    - DROP TABLE statements
-    - ADD COLUMN statements
-    - MODIFY COLUMN statements
-    - DROP COLUMN statements
-    - ADD INDEX statements
-    - FOREIGN KEY changes
-    - CONSTRAINT changes
-    - ENUM/TYPE changes
+required:
+  - story_id: '{epic}.{story}'
+  - story_path: Path to story file
 
-  detection_strategy:
-    - Parse story File List for database-related files
-    - Analyze git diff for schema changes
-    - Check entity/model file modifications
-    - Validate migration file existence
-    - Cross-reference schema changes with migrations
+optional:
+  - mode: 'full' | 'verify_only'  # Default: 'full'
+    # full: Dev mode - detect, validate, and can execute migrations
+    # verify_only: QA mode - only verify migrations are already executed
 ```
 
-### Migration Script Validation Auto-Process:
+## Process
+
+### Step 1: Load Story Context
+
+Read story file and extract:
+- File List (implementation files)
+- Database-related file patterns
+
+### Step 2: Detect Schema Changes
+
+**File Patterns to Check**:
 ```yaml
-migration_validation:
-  script_existence_check:
-    - Check migrations/ directory for timestamped files
-    - Verify migration file naming conventions
-    - Ensure up/down migration pairs exist
-    - Validate migration file syntax and structure
-    - Confirm migration covers detected schema changes
-
-  execution_status_check:
-    - Check database migration_versions table
-    - Verify migration timestamps in database
-    - Identify pending migrations
-    - Validate migration execution order
-    - Check for failed migrations
-
-  migration_integrity:
-    - Ensure migration scripts match schema changes
-    - Validate migration rollback capability
-    - Check for destructive operations warnings
-    - Verify data migration scripts if needed
-    - Confirm migration compatibility with production
+database_file_patterns:
+  - "**/migrations/**"
+  - "**/*.migration.*"
+  - "**/*.entity.ts"
+  - "**/*.model.ts"
+  - "**/schema.prisma"
+  - "**/schema.rb"
+  - "**/structure.sql"
+  - "**/*.sql"
 ```
 
-### Database-Specific Auto-Detection:
+**Change Indicators**:
+- CREATE TABLE / ALTER TABLE / DROP TABLE
+- ADD COLUMN / MODIFY COLUMN / DROP COLUMN
+- ADD INDEX / DROP INDEX
+- FOREIGN KEY / CONSTRAINT changes
+- Entity/Model field modifications
+
+**If no database files detected**:
+- Return `validation_status: SKIP`
+- Exit early
+
+### Step 3: Validate Migration Scripts
+
+**3.1 Check Migration File Existence**:
+- Verify migrations/ directory contains files for detected changes
+- Check file naming conventions (timestamped format)
+- Ensure up/down migration pairs exist (if applicable)
+
+**3.2 Validate Migration Script Content**:
+- Parse migration files for syntax validity
+- Verify migration covers all detected schema changes
+- Check for destructive operations (DROP TABLE, DROP COLUMN)
+
+**Issue Types**:
 ```yaml
-database_detection:
-  postgresql:
-    - Check for PostgreSQL-specific features
-    - Validate schema.sql compatibility
-    - Check pg_dump schema exports
-    - Verify PostgreSQL extensions usage
+missing_migration:
+  type: CRITICAL
+  description: "Schema changes detected but no migration file found"
+  action_required: "Create migration script for: {changes}"
 
-  mysql:
-    - Check MySQL-specific syntax
-    - Validate schema.rb compatibility
-    - Check for MySQL version compatibility
-    - Verify storage engine changes
+incomplete_migration:
+  type: MAJOR
+  description: "Migration does not cover all schema changes"
+  action_required: "Update migration to include: {missing_changes}"
 
-  sqlite:
-    - Check SQLite limitations compliance
-    - Validate schema compatibility
-    - Check for SQLite-specific features
-    - Verify file-based migration handling
-
-  mongodb:
-    - Check for MongoDB schema changes
-    - Validate migration scripts for NoSQL
-    - Check collection/index changes
-    - Verify document schema migrations
+destructive_operation:
+  type: WARNING
+  description: "Migration contains destructive operation"
+  action_required: "Verify data backup and rollback strategy"
 ```
 
-### Migration Safety Validation:
+### Step 4: Check Migration Execution Status
+
+**Framework-Specific Commands**:
 ```yaml
-migration_safety:
-  destructive_operation_detection:
-    - Identify DROP TABLE operations
-    - Detect DROP COLUMN statements
-    - Check for data loss operations
-    - Identify irreversible migrations
-    - Flag potentially dangerous operations
+prisma:
+  status: "npx prisma migrate status"
+  execute: "npx prisma migrate deploy"
 
-  production_readiness:
-    - Check for concurrent migration safety
-    - Validate migration performance impact
-    - Ensure zero-downtime compatibility
-    - Check for lock table operations
-    - Verify rollback strategy
+typeorm:
+  status: "npx typeorm migration:show"
+  execute: "npx typeorm migration:run"
 
-  data_preservation:
-    - Check for data migration requirements
-    - Validate data transformation scripts
-    - Ensure backup strategy compatibility
-    - Check for data validation post-migration
+sequelize:
+  status: "npx sequelize-cli db:migrate:status"
+  execute: "npx sequelize-cli db:migrate"
+
+rails:
+  status: "rails db:migrate:status"
+  execute: "rails db:migrate"
+
+knex:
+  status: "npx knex migrate:status"
+  execute: "npx knex migrate:latest"
 ```
 
----
+**Execution Status Check**:
+- Query migration status table
+- Identify pending migrations
+- Check for failed migrations
 
-## 🔧 EXECUTION LOGIC
+**If mode = 'verify_only' (QA)**:
+- Only report status, do not execute
+- If pending migrations found, return FAIL
 
-### Auto-Detection Methodology:
+**If mode = 'full' (Dev)**:
+- Report pending migrations
+- Dev should execute before self-review
+
+### Step 5: Schema Consistency Check
+
+- Compare current database schema with expected state
+- Validate migration results match entity/model definitions
+- Check for schema drift
+
+## Output
+
 ```yaml
-detection_workflow:
-  step1_story_analysis:
-    - Load story file and File List
-    - Identify database-related files
-    - Analyze file extensions and patterns
-    - Check for schema change indicators
+migration_result:
+  # Detection
+  schema_changes_detected: true | false
+  database_files_found: [{file_path}]
 
-  step2_schema_change_detection:
-    - Parse entity/model files for changes
-    - Check SQL files for schema modifications
-    - Analyze migration directory for new files
-    - Cross-reference changes with story requirements
+  # Migration Scripts
+  migration_scripts_found: true | false
+  migration_files: [{file_path, timestamp, status}]
 
-  step3_migration_validation:
-    - Check for missing migration scripts
-    - Validate migration file naming conventions
-    - Ensure migration covers detected changes
-    - Verify migration script completeness
+  # Execution Status
+  migrations_executed: true | false
+  pending_migrations: [{name, timestamp}]
+  failed_migrations: [{name, error}]
 
-  step4_execution_check:
-    - Query database for migration status
-    - Identify pending migrations
-    - Check migration execution history
-    - Validate schema consistency
+  # Validation Result
+  validation_status: PASS | FAIL | SKIP
+
+  # Issues (if any)
+  issues:
+    - type: CRITICAL | MAJOR | WARNING
+      category: missing_migration | incomplete_migration | pending_execution | destructive_operation | schema_drift
+      description: "..."
+      action_required: "..."
+
+  # Safety Assessment
+  safety:
+    destructive_operations: [{operation, table, column}]
+    data_loss_risk: none | low | medium | high
+    rollback_available: true | false
 ```
 
-### Auto-Validation Sequence:
-```yaml
-validation_sequence:
-  1. schema_change_detection:
-     - Detect database schema modifications
-     - Identify affected tables/columns
-     - Calculate migration requirements
+## Decision Logic
 
-  2. migration_file_check:
-     - Verify migration script existence
-     - Check file naming conventions
-     - Validate script syntax
-     - Ensure up/down migration pairs
+**PASS**:
+- No schema changes detected (SKIP), OR
+- All schema changes have corresponding migrations, AND
+- All migrations have been executed, AND
+- No critical issues found
 
-  3. migration_execution_check:
-     - Query migration status table
-     - Check for pending migrations
-     - Validate migration order
-     - Ensure no skipped migrations
+**FAIL**:
+- Schema changes detected but missing migrations, OR
+- Pending migrations exist (in verify_only mode), OR
+- Migration script errors, OR
+- Schema drift detected
 
-  4. schema_consistency_check:
-     - Compare current schema with expected
-     - Validate migration results
-     - Check for schema drift
-     - Ensure functional compatibility
-```
+**SKIP**:
+- No database-related files in story implementation
 
----
+## Integration Points
 
-## 📊 AUTOMATED REPORTING
+**Called By**:
+- `dev-self-review.md` (Step 3) - mode: full
+- `qa-review-story.md` (Step 3.5) - mode: verify_only
 
-### Migration Validation Report Template:
-```markdown
-## Database Migration Validation Results
+**Returns**:
+- Structured `migration_result` for caller to process
+- Does not modify story status directly
 
-### Validation Date: {{current_date}}
-### Database Type: {{detected_database}}
-### Schema Changes Detected: {{schema_changes_count}}
+## Key Principles
 
-### Schema Change Analysis
-**Changed Tables**: {{changed_tables}}
-**New Tables**: {{new_tables}}
-**Modified Columns**: {{modified_columns}}
-**Dropped Columns**: {{dropped_columns}}
-**Index Changes**: {{index_changes}}
-
-### Migration Script Status
-**Migration Scripts Found**: {{migration_scripts_count}}
-**Pending Migrations**: {{pending_migrations}}
-**Executed Migrations**: {{executed_migrations}}
-**Failed Migrations**: {{failed_migrations}}
-
-### Safety Assessment
-**Destructive Operations**: {{destructive_ops}}
-**Data Loss Risk**: {{data_loss_risk}}
-**Production Ready**: {{production_ready}}
-**Rollback Available**: {{rollback_available}}
-
-### Validation Status
-{{✅ All migrations valid and executed}} / {{❌ Issues found - see details below}}
-
-**Next Steps**: {{recommended_actions}}
-```
-
----
-
-## ⚡ AUTO-EXECUTION CHECKPOINTS
-
-### Pre-Validation Checks:
-```bash
-✓ Database connection established
-✓ Schema change detection completed
-✓ Migration directory accessible
-✓ Story implementation analyzed
-✓ Previous migrations validated
-```
-
-### During Validation:
-```bash
-✓ Schema changes properly mapped to migrations
-✓ Migration scripts validated for syntax
-✓ Execution status accurately determined
-✓ Safety checks completed
-✓ Rollback strategy verified
-```
-
-### Post-Validation:
-```bash
-✓ Migration status documented
-✓ Schema consistency confirmed
-✓ Functional compatibility ensured
-✓ QA Results updated with findings
-✓ Story status updated appropriately
-```
-
----
-
-## 🛠️ ERROR HANDLING & RECOVERY
-
-### Common Issues and Auto-Resolution:
-```yaml
-issue_handling:
-  missing_migrations:
-    detection: Schema changes detected but no migration files
-    action: Flag for developer attention with specific requirements
-    recommendation: Generate migration scripts for detected changes
-
-  pending_migrations:
-    detection: Migration scripts exist but not executed
-    action: Report pending migrations with execution instructions
-    recommendation: Run migrations before proceeding
-
-  failed_migrations:
-    detection: Previous migrations failed
-    action: Document failure and provide debugging guidance
-    recommendation: Fix migration issues before new deployments
-
-  schema_drift:
-    detection: Database schema doesn't match expected state
-    action: Report schema inconsistencies
-    recommendation: Align schema with migration history
-```
-
-### Recovery Procedures:
-```yaml
-recovery_actions:
-  auto_fix_safe:
-    - Execute pending migrations (if safe)
-    - Generate missing migration templates
-    - Provide migration script examples
-    - Create rollback procedures
-
-  developer_guidance:
-    - Provide specific migration requirements
-    - Generate migration script templates
-    - Include safety warnings
-    - Suggest testing strategies
-```
-
----
-
-## 🎯 SUCCESS INDICATORS
-
-### Validation Success Criteria:
-- ✅ All schema changes have corresponding migrations
-- ✅ All migrations have been successfully executed
-- ✅ No destructive operations without warnings
-- ✅ Database schema matches expected state
-- ✅ Functional tests pass with current schema
-- ✅ Migration rollback capability confirmed
-
-### Integration Success:
-- ✅ Seamless integration with existing QA workflow
-- ✅ Zero false positives for schema changes
-- ✅ Accurate migration status reporting
-- ✅ Comprehensive developer guidance provided
-- ✅ Prevention of functional errors due to schema drift
-
-**Fallback Reference**: Use manual `*validate database-migration` for complex edge cases or when auto-detection encounters ambiguous schema changes.
+- **Detection before validation**: Only validate if schema changes detected
+- **Mode-aware behavior**: Dev can execute, QA only verifies
+- **Structured output**: Machine-readable results for integration
+- **Safety-first**: Flag destructive operations explicitly
+- **Framework-agnostic**: Support common migration frameworks

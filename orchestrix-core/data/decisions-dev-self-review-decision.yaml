@@ -25,6 +25,15 @@ inputs:
     required: true
     enum: [PASS, FAIL]
     description: "Result from gate_result.sections['Test Integrity']"
+  - name: migration_validation
+    type: string
+    required: true
+    enum: [PASS, FAIL, SKIP]
+    description: "Result from validate-database-migration.md Step 3"
+  - name: migration_issues
+    type: array
+    required: false
+    description: "Migration issues if migration_validation == FAIL"
   - name: critical_issues
     type: number
     required: true
@@ -40,7 +49,7 @@ inputs:
 
 rules:
   # PASS: All gates passed, ready for QA
-  - condition: "implementation_gate_score >= 95 AND architecture_compliance == 'PASS' AND (api_contract_compliance == 'PASS' OR api_contract_compliance == 'N_A') AND test_integrity == 'PASS' AND critical_issues == 0"
+  - condition: "implementation_gate_score >= 95 AND architecture_compliance == 'PASS' AND (api_contract_compliance == 'PASS' OR api_contract_compliance == 'N_A') AND test_integrity == 'PASS' AND (migration_validation == 'PASS' OR migration_validation == 'SKIP') AND critical_issues == 0"
     result: PASS
     reasoning: "All quality gates passed - implementation ready for QA review"
     next_status: InProgress
@@ -61,7 +70,7 @@ rules:
       round: "{{implementation_round}}"
 
   # FAIL: Any gate below threshold (consolidated conditions)
-  - condition: "implementation_gate_score < 95 OR architecture_compliance == 'FAIL' OR api_contract_compliance == 'FAIL' OR test_integrity == 'FAIL' OR critical_issues > 0"
+  - condition: "implementation_gate_score < 95 OR architecture_compliance == 'FAIL' OR api_contract_compliance == 'FAIL' OR test_integrity == 'FAIL' OR migration_validation == 'FAIL' OR critical_issues > 0"
     result: FAIL
     reasoning: "One or more quality gates did not meet requirements"
     next_status: InProgress
@@ -83,6 +92,10 @@ rules:
           condition: "test_integrity == 'FAIL'"
           severity: "critical"
           violation_type: "test_weakening"
+        - gate: "migration_validation"
+          condition: "migration_validation == 'FAIL'"
+          severity: "critical"
+          issues: "{{migration_issues}}"
         - gate: "critical_issues"
           condition: "critical_issues > 0"
           issue_count: "{{critical_issues}}"
@@ -106,11 +119,14 @@ output:
       escalation_reason: {type: string}
 
 metadata:
-  version: "2.1.0"
-  last_updated: "2025-11-22"
+  version: "2.2.0"
+  last_updated: "2025-12-12"
   owner: "Dev Agent"
-  related_requirements: ["Priority-1-Improvements", "Dev-Quality-Gates"]
+  related_requirements: ["Priority-1-Improvements", "Dev-Quality-Gates", "Database-Migration-Validation"]
   changelog:
+    - version: "2.2.0"
+      date: "2025-12-12"
+      changes: "Added migration_validation input for database migration validation gate"
     - version: "2.1.0"
       date: "2025-11-22"
       changes: "Removed dod_score input - DoD covered by gate_result Section 9 (Documentation)"
@@ -120,6 +136,7 @@ metadata:
   usage_context: >
     Called by dev-self-review.md after executing dev-implementation-gate.md.
     All quality checks (including documentation) are in gate_result.
+    Migration validation is performed separately via validate-database-migration.md.
     PASS: Proceed to mark story as Review. FAIL: HALT with specific issues to fix.
     ESCALATE: HALT and handoff to Architect due to recurring issues.
 
@@ -129,6 +146,7 @@ examples:
       architecture_compliance: PASS
       api_contract_compliance: PASS
       test_integrity: PASS
+      migration_validation: PASS
       critical_issues: 0
       implementation_round: 1
     output:
@@ -144,6 +162,26 @@ examples:
       architecture_compliance: PASS
       api_contract_compliance: PASS
       test_integrity: PASS
+      migration_validation: SKIP
+      critical_issues: 0
+      implementation_round: 1
+    output:
+      result: FAIL
+      reasoning: "One or more quality gates did not meet requirements"
+      next_action: fix_blocking_issues
+      metadata:
+        quality_level: "insufficient"
+
+  - input:
+      implementation_gate_score: 98
+      architecture_compliance: PASS
+      api_contract_compliance: PASS
+      test_integrity: PASS
+      migration_validation: FAIL
+      migration_issues:
+        - type: CRITICAL
+          category: pending_execution
+          description: "Migration 20250112_add_users_table not executed"
       critical_issues: 0
       implementation_round: 1
     output:
@@ -158,6 +196,7 @@ examples:
       architecture_compliance: PASS
       api_contract_compliance: PASS
       test_integrity: PASS
+      migration_validation: PASS
       critical_issues: 0
       implementation_round: 3
       previous_round_issues: ["api_mismatch", "test_coverage", "api_mismatch"]

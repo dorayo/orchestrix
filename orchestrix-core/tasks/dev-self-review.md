@@ -127,7 +127,53 @@ gate_result:
 
 ---
 
-### 3. Track Implementation Rounds
+### 3. Database Migration Validation (Conditional)
+
+**Purpose**: Verify database migrations are properly created and executed for schema changes.
+
+**Skip Condition**: If no database-related files in story's File List, skip to Step 4.
+
+**Detection**: Check story File List for patterns:
+- `**/migrations/**`
+- `**/*.migration.*`
+- `**/*.entity.ts`
+- `**/*.model.ts`
+- `**/schema.prisma`
+- `**/schema.rb`
+
+**If Database Files Detected**:
+
+Execute: `{root}/tasks/validate-database-migration.md`
+
+Input:
+```yaml
+story_id: {story_id}
+story_path: {story_path}
+```
+
+**Output**: `migration_result`
+```yaml
+migration_result:
+  schema_changes_detected: {true|false}
+  migration_scripts_found: {true|false}
+  migrations_executed: {true|false}
+  pending_migrations: [{migration_name}]
+  validation_status: PASS | FAIL
+  issues: [{type, description, action_required}]
+```
+
+**On FAIL** (`migration_result.validation_status = FAIL`):
+- Log migration issues in Dev Log
+- Store `migration_result` for Step 5 decision
+- Continue to Step 4 (issues will be aggregated in final decision)
+
+**On PASS** or **Skip**:
+- Log result (if executed) in Dev Agent Record
+- Proceed to Step 4
+
+---
+
+### 4. Track Implementation Rounds
 
 **Read Dev Agent Record**: `implementation_rounds` field (default: 0)
 
@@ -153,7 +199,7 @@ previous_rounds_summary:
 
 ---
 
-### 4. Make Self-Review Decision
+### 5. Make Self-Review Decision
 
 **Execute**: `{root}/tasks/make-decision.md`
 
@@ -165,9 +211,11 @@ context:
   architecture_compliance: {PASS if gate_result.sections["Architecture Compliance"].passed else FAIL}
   api_contract_compliance: {PASS if gate_result.sections["API Contract Compliance"].passed else FAIL or N_A}
   test_integrity: {PASS if gate_result.sections["Test Integrity"].passed else FAIL}
+  migration_validation: {from Step 3: PASS | FAIL | SKIP}
+  migration_issues: {from Step 3: migration_result.issues if FAIL, else []}
   critical_issues: {from Step 2: gate_result.total_critical_issues}
-  implementation_round: {from Step 3}
-  previous_round_issues: {from Step 3, if round > 1}
+  implementation_round: {from Step 4}
+  previous_round_issues: {from Step 4, if round > 1}
 ```
 
 **Output**: `decision_result`
@@ -195,17 +243,17 @@ decision_result:
 - `decision_result.result = FAIL`
 - Status remains InProgress
 - HALT - Output detailed gap report
-- DO NOT proceed to Step 6
+- DO NOT proceed
 
 **ESCALATE** (≥3 rounds with recurring issues):
 - `decision_result.result = ESCALATE`
 - Status = Escalated
 - HALT - Output escalation report
-- DO NOT proceed to Step 6
+- DO NOT proceed
 
 ---
 
-### 5. Update Dev Agent Record
+### 6. Update Dev Agent Record
 
 **Only execute if decision_result.result = PASS**
 
@@ -220,14 +268,15 @@ self_review:
   architecture_compliance: {derived from Step 2}
   api_contract_compliance: {derived from Step 2}
   test_integrity: {derived from Step 2}
+  migration_validation: {from Step 3: PASS | SKIP | N_A}
   critical_issues_found: {from Step 2: gate_result.total_critical_issues}
   ready_for_qa: true
-  round: {from Step 3}
+  round: {from Step 4}
 
 decision:
   result: PASS
-  reasoning: {from Step 4}
-  quality_level: {from Step 4}
+  reasoning: {from Step 5}
+  quality_level: {from Step 5}
   timestamp: {timestamp}
 ```
 
@@ -257,6 +306,7 @@ self_review_result:
   architecture_compliance: {PASS|FAIL}
   api_contract_compliance: {PASS|FAIL|N_A}
   test_integrity: {PASS|FAIL}
+  migration_validation: {PASS|SKIP}
   critical_issues_found: 0
   ready_for_qa: true
   round: {N}
@@ -278,12 +328,16 @@ Gate Status: {gate_result.status}
 Overall Score: {gate_result.overall_score}% (Required: ≥95%)
 Critical Items: {critical_items_passed}/7
 Sections Passed: {sections_passed}/10
+Migration Status: {migration_validation}
 
 Failed Critical Items ({count}):
 {list from gate_result.critical_items where status = FAIL}
 
 Failed Sections ({count}):
 {list from gate_result.sections where passed = false}
+
+Migration Issues ({count if migration_validation = FAIL}):
+{list from migration_result.issues with type, description, action_required}
 
 Critical Issues ({count}):
 {list from gate_result.issues.critical with item_id, issue, location, fix}
@@ -292,7 +346,7 @@ Major Issues ({count}):
 {list from gate_result.issues.major with item_id, issue, location, recommendation}
 
 Required Actions (Priority Order):
-{prioritized list derived from critical and major issues}
+{prioritized list derived from all issues including migration}
 
 Estimated Effort to Fix:
 {based on issue count: <1h, 1-4h, >4h}
@@ -310,6 +364,8 @@ gate_result:
   critical_items_passed: {count}/7
   sections_passed: {count}/10
   failed_sections: [{section_name, score, threshold}]
+  migration_validation: {PASS|FAIL|SKIP}
+  migration_issues: [{type, description, action_required}]
   critical_issues: [{issue, location, fix}]
   major_issues: [{issue, location, recommendation}]
 required_actions:
@@ -383,11 +439,12 @@ HALT immediately if:
 
 - Agent permission validated
 - Quality gate validation: PASS with ≥95% score (Step 2)
+- Database migration validation: PASS or SKIP (Step 3)
 - All critical items passed (7/7)
 - All required sections passed thresholds
 - Zero critical issues
-- Decision made: PASS (Step 4)
-- Dev Agent Record updated with self-review results (Step 5)
+- Decision made: PASS (Step 5)
+- Dev Agent Record updated with self-review results (Step 6)
 
 ## Key Principles
 
@@ -404,6 +461,7 @@ HALT immediately if:
 ## References
 
 - `checklists/gate-dev-implementation-gate.md` - Implementation Gate (unified quality validation engine)
+- `tasks/validate-database-migration.md` - Database migration validation
 - `tasks/make-decision.md` - Decision execution framework
 - `data/decisions-dev-self-review-decision.yaml` - Self-review decision rules
 - `data/story-status-transitions.yaml` - Status transition permissions

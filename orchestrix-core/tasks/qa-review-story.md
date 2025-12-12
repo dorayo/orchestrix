@@ -158,6 +158,51 @@ process_ids: [12345]
 
 ---
 
+## Step 3.5: Database Migration Verification (Conditional)
+
+**Purpose**: Verify database migrations are executed before running tests.
+
+**Skip Condition**: If no database-related files in story's File List, skip to Step 4.
+
+**Detection**: Check story File List for patterns:
+- `**/migrations/**`
+- `**/*.migration.*`
+- `**/*.entity.ts`
+- `**/*.model.ts`
+- `**/schema.prisma`
+- `**/schema.rb`
+
+**If Database Files Detected**:
+
+Execute: `{root}/tasks/validate-database-migration.md`
+
+Input:
+```yaml
+story_id: {story_id}
+story_path: {story_path}
+mode: verify_only  # QA does not execute migrations, only verifies status
+```
+
+**Store result**:
+```yaml
+migration_verification:
+  schema_changes_detected: true | false
+  migrations_executed: true | false
+  pending_migrations: []
+  verification_status: PASS | FAIL
+```
+
+**On FAIL** (`migration_verification.verification_status = FAIL`):
+- Record as HIGH severity issue
+- Log: `Pending migrations detected: {pending_migrations}`
+- Skip to Step 8 (Environment Cleanup)
+- Gate will be set to FAIL in Step 7
+
+**On PASS** or **Skip**:
+- Proceed to Step 4
+
+---
+
 ## Step 4: Automated Testing
 
 **Purpose**: Run existing automated tests (unit, integration, e2e)
@@ -638,7 +683,7 @@ After outputting the handoff message, you MUST NOT output any of the following:
 
 ---
 
-## Summary of New Workflow
+## Summary of Workflow
 
 | Step | Name | Purpose |
 |------|------|---------|
@@ -646,6 +691,7 @@ After outputting the handoff message, you MUST NOT output any of the following:
 | 1 | Risk Assessment | Determine testing depth |
 | 2 | Project Type Detection | Choose testing tools |
 | 3 | Environment Setup | Start application |
+| 3.5 | Migration Verification | Verify DB migrations executed |
 | 4 | Automated Testing | Run npm test |
 | 5 | E2E Testing | Execute user flows |
 | 6 | Evidence Collection | Capture screenshots/logs |
