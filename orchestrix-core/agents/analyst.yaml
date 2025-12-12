@@ -23,7 +23,7 @@ instruction_precedence:
   - On conflict, higher priority wins; log the decision in Dev Agent Record.
 
 agent:
-  name: Mary
+  name: Kongming
   id: analyst
   title: Business Analyst
   icon: "📊"
