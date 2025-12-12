@@ -1,3 +1,10 @@
+# [13.5.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.4.0...v13.5.0) (2025-12-12)
+
+
+### Features
+
+* **qa:** integrate database migration validation into Dev and QA workflows ([a843700](https://github.com/dorayo/ORCHESTRIX/commit/a843700f5bb11ef33b6d15ff58f696a634619742))
+
 # [13.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.3.4...v13.4.0) (2025-12-12)
 
 
