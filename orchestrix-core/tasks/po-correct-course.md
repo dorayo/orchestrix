@@ -135,7 +135,7 @@ Analyze `change_description` to identify action:
 5. Update PRD epic list reference (or note for PM)
 6. Output downstream HANDOFF to SM for story creation
 
-**重要**：PO 只负责 Epic 结构定义，**不生成任何 Story 内容**。Story 的创建、分解和模板填充由 SM 负责。
+**IMPORTANT**: PO is only responsible for Epic structure definition, **not generating any Story content**. Story creation, decomposition, and template population are SM's responsibility.
 
 #### IF SPLIT_EPIC:
 
@@ -242,24 +242,36 @@ Execute: `data/decisions-po-change-escalation.yaml`
 
 ### Step 7a: Finalize - Direct to Dev (if ROUTE_TO_DEV)
 
-适用条件：所有变更都是对已存在Story的AC修改（增加/修改/删除），无需创建新Story或重构Story结构。
+**Applicable when**: All changes are AC modifications (add/modify/delete) to existing Stories, no new Story creation or restructuring required.
 
 1. Present Sprint Change Proposal to user
 2. Request explicit approval
 3. IF approved:
-   - Apply approved changes to story files
+   - **Read `templates/story-tmpl.yaml` to ensure format compliance**
+   - Apply approved changes to story files **following template structure**:
+     - AC format: Clear success criteria with Given/When/Then or measurable outcomes
+     - Tasks: Maintain TDD cycle structure per AC (Write test → Implement → Verify)
+     - Dev Notes: If AC involves DB writes, ensure Data Synchronization Requirements section exists and is populated
+   - **Template Compliance Checklist**:
+     | Check | Description |
+     |-------|-------------|
+     | AC ID Format | Use `AC{N}:` prefix (e.g., `AC4:`) |
+     | AC Structure | Include clear success criteria |
+     | Task Update | Add corresponding task with TDD subtasks for new AC |
+     | Dev Notes | If AC involves DB writes → add/update Data Sync Requirements |
+     | Section Order | Maintain order per template: Story → Requirements → AC → Tasks → Dev Notes |
    - Set affected stories status to `Approved`
    - Determine implementation order based on story dependencies
 4. Output HANDOFF directly to Dev
 
-**实现顺序判定**：
-- 检查Story间的依赖关系（如Story A的AC引用Story B的输出）
-- 无依赖时按Story ID升序
-- 有依赖时按依赖拓扑排序
+**Implementation Order Determination**:
+- Check dependencies between Stories (e.g., Story A's AC references Story B's output)
+- If no dependencies: order by Story ID ascending
+- If dependencies exist: order by dependency topological sort
 
 ### Step 7b: Finalize - Via SM (if HANDLE_IN_EPIC)
 
-适用条件：需要创建新Story，或Story需要重新分解/重构。
+**Applicable when**: New Story creation required, or Story needs decomposition/restructuring.
 
 1. Present Sprint Change Proposal to user
 2. Request explicit approval
@@ -294,25 +306,25 @@ args: {first_story_id}
 
 🎯 HANDOFF TO DEV: *develop-story {first_story_id}
 
-## 变更上下文
-- 来源: PRD修订 → Epic {epic_id} 影响
-- 变更类型: Story AC修改
+## Change Context
+- Source: PRD revision → Epic {epic_id} impact
+- Change type: Story AC modification
 
-## 受影响的Stories（按实现顺序）
+## Affected Stories (in implementation order)
 1. Story {story_id_1}:
-   - 新增AC: AC-{n}: {description}
-   - 修改AC: AC-{m}: {old_description} → {new_description}
-   - 删除AC: AC-{k}: {description} (已移除)
+   - Added AC: AC-{n}: {description}
+   - Modified AC: AC-{m}: {old_description} → {new_description}
+   - Removed AC: AC-{k}: {description} (removed)
 
-2. Story {story_id_2}: (依赖 Story {story_id_1})
-   - 新增AC: ...
+2. Story {story_id_2}: (depends on Story {story_id_1})
+   - Added AC: ...
 
-## 实现顺序
+## Implementation Order
 {story_id_1} → {story_id_2} → ...
-依赖说明: {dependency_notes}
+Dependency notes: {dependency_notes}
 
 ---
-请先实现 Story {first_story_id}，完成后继续下一个。
+Please implement Story {first_story_id} first, then continue with the next one.
 ```
 
 ---
