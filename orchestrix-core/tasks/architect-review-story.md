@@ -81,7 +81,7 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
   ```
   **HALT: Story blocked ⛔**
 
-**If status in ["AwaitingArchReview", "RequiresRevision"]**:
+**If status in ["Draft", "AwaitingArchReview", "RequiresRevision"]**:
 - ✅ Log: "Idempotency check passed - proceeding with review"
 - Continue to Execution Steps
 

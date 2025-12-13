@@ -3,6 +3,12 @@ version: "1.0.0"
 
 # Status Definitions
 statuses:
+  Draft:
+    desc: "Story created, recommended for Architect review"
+    agent: SM
+    actions: ["SM validates quality", "Request Architect review"]
+    to: [AwaitingArchReview, Approved, Blocked]
+
   Blocked:
     desc: "Quality insufficient, needs SM revision"
     agent: SM
@@ -65,6 +71,36 @@ statuses:
 
 # Transition Rules
 transitions:
+  # Draft transitions (new story, quality 6.0-7.9)
+  Draft_to_AwaitingArchReview:
+    from: Draft
+    to: AwaitingArchReview
+    agent: SM
+    prereq:
+      struct_valid: true
+      tech_extract: "≥80%"
+      quality_score: "6.0-7.9"
+    desc: "Draft story with medium quality, needs Architect review"
+
+  Draft_to_Approved:
+    from: Draft
+    to: Approved
+    agent: SM
+    prereq:
+      struct_valid: true
+      tech_extract: "≥80%"
+      quality_score: "≥8.0"
+      complexity: "0-1"
+    desc: "Draft story with high quality, direct approval"
+
+  Draft_to_Blocked:
+    from: Draft
+    to: Blocked
+    agent: SM
+    prereq:
+      quality_low: true
+    desc: "Draft story quality too low, needs revision"
+
   # SM transitions
   Blocked_to_AwaitingArchReview:
     from: Blocked
@@ -145,7 +181,49 @@ transitions:
       arch_not_needed: true
     desc: "Revision done, needs QA test (no Architect)"
   
-  # Architect transitions
+  # Architect transitions (including Draft review)
+  Draft_to_Approved_by_Architect:
+    from: Draft
+    to: Approved
+    agent: Architect
+    prereq:
+      review_done: true
+      score: "≥7"
+      no_critical: true
+      test_level: "Simple"
+    desc: "Architect approves Draft story (simple test)"
+
+  Draft_to_AwaitingTestDesign_by_Architect:
+    from: Draft
+    to: AwaitingTestDesign
+    agent: Architect
+    prereq:
+      review_done: true
+      score: "≥7"
+      no_critical: true
+      test_level: "Std/Comp"
+    desc: "Architect approves Draft, needs QA test"
+
+  Draft_to_RequiresRevision:
+    from: Draft
+    to: RequiresRevision
+    agent: Architect
+    prereq:
+      review_done: true
+    cond:
+      score: "<7"
+      or_critical: true
+    desc: "Architect found issues in Draft"
+
+  Draft_to_Escalated:
+    from: Draft
+    to: Escalated
+    agent: Architect
+    prereq:
+      review_done: true
+      human_needed: true
+    desc: "Complex issues in Draft need human"
+
   AwaitingArchReview_to_Approved:
     from: AwaitingArchReview
     to: Approved
@@ -409,10 +487,14 @@ permissions:
       - Any -> Escalated (via change_escalation)
   
   Architect:
-    modify: [AwaitingArchReview, Escalated]
+    modify: [Draft, AwaitingArchReview, Escalated]
     create: false
     init_status: false
     changes:
+      - Draft -> Approved
+      - Draft -> AwaitingTestDesign
+      - Draft -> RequiresRevision
+      - Draft -> Escalated
       - AwaitingArchReview -> Approved
       - AwaitingArchReview -> AwaitingTestDesign
       - AwaitingArchReview -> RequiresRevision
