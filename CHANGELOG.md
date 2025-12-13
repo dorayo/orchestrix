@@ -1,3 +1,10 @@
+# [13.8.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.7.1...v13.8.0) (2025-12-13)
+
+
+### Features
+
+* **handoff:** add Layer 3 Dev default fallback with story ID tracking ([61c8e5c](https://github.com/dorayo/ORCHESTRIX/commit/61c8e5c24fc2ba8f18880973e1919e170f93c381))
+
 ## [13.7.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.7.0...v13.7.1) (2025-12-13)
 
 
