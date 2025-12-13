@@ -1,3 +1,10 @@
+## [13.7.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.7.0...v13.7.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* **agents:** correct decisions path mapping in ide_file_resolution ([f7f5eda](https://github.com/dorayo/ORCHESTRIX/commit/f7f5eda080e0bbd50e1596849369bbd49bead18a))
+
 # [13.7.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.6.0...v13.7.0) (2025-12-13)
 
 
