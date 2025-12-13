@@ -1,3 +1,10 @@
+# [13.6.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.5.0...v13.6.0) (2025-12-13)
+
+
+### Features
+
+* **sm:** add Data Synchronization Analysis mechanism ([4f8ae3c](https://github.com/dorayo/ORCHESTRIX/commit/4f8ae3c5173f04ff3acb44ed7d5ebe6a9da25e18)), closes [#8](https://github.com/dorayo/ORCHESTRIX/issues/8)
+
 # [13.5.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.4.0...v13.5.0) (2025-12-12)
 
 
