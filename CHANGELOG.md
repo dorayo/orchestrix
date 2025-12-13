@@ -1,3 +1,11 @@
+# [13.7.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.6.0...v13.7.0) (2025-12-13)
+
+
+### Features
+
+* **architect:** allow Draft status stories to enter architecture review ([d4feebf](https://github.com/dorayo/ORCHESTRIX/commit/d4feebf880e2e7cd0cd1570ff021901e00cf6d4e))
+* **po:** add story template reference in course correction workflow ([52908b5](https://github.com/dorayo/ORCHESTRIX/commit/52908b557153ebb6e8ff4412972249532ec1c0d6))
+
 # [13.6.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.5.0...v13.6.0) (2025-12-13)
 
 
