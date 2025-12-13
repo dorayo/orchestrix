@@ -185,6 +185,79 @@
 
 ---
 
+### Rule Category 4: Data Synchronization Risks (WARN Level with Required Acknowledgment)
+
+**Purpose**: Based on cumulative context, detect if current Story's write operations may need synchronization with other tables.
+
+#### Rule 4.1: Related Status/Expiry Fields Detection
+
+**Severity**: WARN (but requires explicit acknowledgment in Data Sync Requirements section)
+
+**Check Logic**:
+1. Extract write operations from current Story's Dev Notes
+2. In `cumulative_context.database.tables` search for:
+   - Other tables sharing the same entity (user_id, entity_id, etc.)
+   - Status/expiry/sync type fields in those tables
+3. If potential relationships found, emit warning
+
+**LLM Reasoning Execution**:
+
+```
+FOR each write_operation in current_story.db_writes:
+  table = write_operation.table
+  fields = write_operation.fields
+
+  IF fields contains status/expires/sync type field:
+    related_tables = find_tables_with_same_entity_id(table, cumulative_context)
+
+    FOR each related_table:
+      related_fields = find_status_expires_sync_fields(related_table)
+
+      IF related_fields is not empty:
+        EMIT WARNING with:
+          - source: {table}.{field}
+          - related: {related_table}.{related_field}
+          - reasoning: "Both tables share {entity_id} and have status/expires fields"
+          - required_action: "Verify if sync is needed in Data Sync Requirements"
+```
+
+**Example Warning**:
+```
+⚠️ DATA SYNC WARNING: Potential synchronization required!
+
+Current Story updates: subscriptions.current_period_end (UPDATE)
+Related field detected: license_keys.expires_at
+
+🔍 Detection reason:
+   - Both tables share 'user_id' as entity identifier
+   - 'current_period_end' is an expiration-type field
+   - 'expires_at' is an expiration-type field in related table
+
+📋 REQUIRED ACTION:
+   Verify in Story's "Data Synchronization Requirements" section:
+   1. Is this relationship already analyzed?
+   2. Is sync needed? If YES, is it covered by an AC?
+   3. If sync not needed, is the reason documented?
+
+✅ This warning can be dismissed if properly addressed in Data Sync Requirements.
+```
+
+**Field Type Detection Patterns**:
+- **Status fields**: status, state, is_active, enabled, verified, is_valid
+- **Expiry fields**: expires_at, valid_until, period_end, expiry_date, expire_time
+- **Sync fields**: synced_at, last_updated, updated_at, last_synced
+
+**Related Table Detection**:
+- Tables sharing user_id, account_id, customer_id, organization_id
+- Tables with foreign key relationships to same parent
+- Tables in same business domain (subscription/license, payment/order, user/profile)
+
+**Warning Handling**:
+- **If addressed in Data Sync Requirements**: Log warning but allow proceed
+- **If NOT addressed**: Log warning and flag for SM review (does not HALT, but logged in validation_result)
+
+---
+
 ## Validation Process
 
 ### Step 1: Parse Current Story's Planned Changes
@@ -400,6 +473,18 @@ validation_result = {
       duplicate_models: [],
       similar_models: [{...}],
       naming_warnings: [...]
+    },
+    data_sync: {
+      potential_sync_required: [{
+        source_table: "subscriptions",
+        source_field: "current_period_end",
+        related_table: "license_keys",
+        related_field: "expires_at",
+        shared_entity: "user_id",
+        reasoning: "Both are expiry fields for same user",
+        addressed_in_story: true/false
+      }],
+      unaddressed_warnings: [...]
     }
   },
   report_markdown: "{full validation report}"

@@ -184,7 +184,7 @@ quality_score:
 
 **Purpose**: Identify complexity indicators for downstream decision-making (Architect review, Test design level).
 
-**7 Complexity Indicators**:
+**8 Complexity Indicators**:
 
 | # | Indicator | Detection Pattern | Detected |
 |---|-----------|-------------------|----------|
@@ -195,6 +195,7 @@ quality_score:
 | 5 | **Security** | Keywords: auth, encryption, permissions, PII, security, vulnerability | [ ] |
 | 6 | **Performance** | Keywords: optimization, caching, real-time, performance, latency, throughput | [ ] |
 | 7 | **Core Docs** | Modifies: data-models.md, rest-api-spec.md, database-schema.md, components.md | [ ] |
+| 8 | **Data Sync** | Story involves DB write operations (INSERT/UPDATE/DELETE) | [ ] |
 
 **Detection Method**:
 1. Read entire story content (all sections)
@@ -212,9 +213,64 @@ complexity_indicators:
   security: true/false
   performance: true/false
   core_docs: true/false
-  total_count: 0-7
+  data_sync: true/false
+  total_count: 0-8
   security_sensitive: true/false  # true if security=true
 ```
+
+---
+
+### Phase 5: Data Synchronization Analysis (GATE - Conditional)
+
+**Trigger Condition**: `complexity_indicators.data_sync = true` (Story involves DB write operations)
+
+**Purpose**: Ensure Stories with database writes have completed data synchronization analysis to prevent missing cross-table sync requirements.
+
+**Hard Gate Items (100% Required when triggered)**:
+
+| ID | Item | Pass Criteria |
+|----|------|---------------|
+| D1 | Write operations inventory complete | Dev Notes "Data Synchronization Requirements" section has "Write Operations Inventory" filled with all DB write operations |
+| D2 | Status/expiry fields checked | Listed all status/expiry/sync type fields in involved tables (if any) |
+| D3 | Related field analysis complete | "Related Field Synchronization Analysis" table filled with LLM reasoning results |
+| D4 | Sync requirements handled | All "Sync Needed = YES" items have AC coverage, OR documented as "Known Gap" with explicit reason |
+
+**Scoring**: ___/4 items
+
+**LLM Execution Guidelines**:
+
+When executing D3, LLM should reason based on these dimensions:
+
+1. **Entity Relationship**: Does the same user_id/entity_id have status/expiry fields in different tables?
+2. **Business Dependency**: Does table A's status change affect table B's behavior in business logic?
+3. **Access Control**: Are permission/License/access control tables related to subscription/payment tables?
+4. **Data Consistency**: Are there cache/redundant fields that need synchronization?
+
+**Result**:
+```yaml
+data_sync_analysis:
+  triggered: true/false  # Based on data_sync indicator
+  passed: true/false
+  items_total: 4
+  items_passed: X
+  uncovered_sync_requirements:
+    - source_field: {table.field}
+      related_field: {table.field}
+      reasoning: {why sync is needed}
+      ac_coverage: NONE
+      acknowledged_gap: true/false
+      gap_reason: {if acknowledged}
+  failed_items:
+    - id: D{N}
+      check: {description}
+      issue: {what's missing}
+      fix: {how to fix}
+```
+
+**Decision**:
+- **PASS**: All D1-D4 passed → Continue to Output
+- **FAIL**: Any D1-D4 failed → **HALT**, set Status=Blocked, return failure report with specific gaps
+- **SKIP**: `data_sync = false` → Not triggered, continue to Output
 
 ---
 
@@ -272,8 +328,18 @@ gate_result:
     security: true/false
     performance: true/false
     core_docs: true/false
-    total_count: 0-7
+    data_sync: true/false
+    total_count: 0-8
     security_sensitive: true/false
+
+  # Phase 5: Data Sync Analysis
+  data_sync_analysis:
+    triggered: true/false
+    passed: true/false
+    items_total: 4
+    items_passed: X
+    uncovered_sync_requirements: [...]
+    failed_items: [...]
 
   # Summary
   blocking: true/false
@@ -287,11 +353,13 @@ gate_result:
 - `structure_validation.passed = true` (12/12 items, 100%)
 - `technical_quality.s2_score ≥ 80%` (Technical Extraction hard requirement)
 - `technical_quality.passed_threshold = true`
+- `data_sync_analysis.triggered = false` OR `data_sync_analysis.passed = true`
 
 **FAIL** (Story not ready, must be revised):
 - `structure_validation.passed = false` (< 12/12 items) OR
 - `technical_quality.s2_score < 80%` OR
-- `technical_quality.passed_threshold = false`
+- `technical_quality.passed_threshold = false` OR
+- `data_sync_analysis.triggered = true AND data_sync_analysis.passed = false`
 
 **Overall Score Calculation** (for reference only, not used for PASS/FAIL):
 - If PASS: `(structure_score + ((s2_score + s3_score) / 2)) / 2`

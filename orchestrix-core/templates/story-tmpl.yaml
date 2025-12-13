@@ -207,6 +207,54 @@ sections:
         title: Database Design
         instruction: Describe design decisions for tables/indexes/FKs; full schema must be referenced via migration files
 
+      - id: data-sync-requirements
+        title: Data Synchronization Requirements
+        condition: story_involves_db_write
+        instruction: |
+          **CRITICAL - Data Synchronization Analysis (Required for all Stories with DB writes)**
+
+          ### 1. Write Operations Inventory
+          List all database write operations in this Story:
+
+          | Table | Operation | Key Fields | Trigger Condition |
+          |-------|-----------|------------|-------------------|
+          | {table} | INSERT/UPDATE/DELETE | {fields} | {when this operation happens} |
+
+          ### 2. Status/Expiry/Sync Field Check
+          For each table involved, check for the following field types:
+          - Status fields (status, state, is_active, enabled, verified)
+          - Expiry fields (expires_at, valid_until, period_end, expiry_date)
+          - Sync fields (synced_at, last_updated, updated_at)
+
+          If present, list them:
+          | Table | Field | Field Type | Current Value Source |
+          |-------|-------|------------|---------------------|
+
+          ### 3. Related Field Synchronization Analysis (LLM Reasoning)
+          **Key Question**: Based on business logic reasoning, when this Story updates a field, are there other tables' fields that need to be synchronized?
+
+          **Reasoning Guidelines**:
+          - Does the same user/entity have related status in different tables?
+          - Do payment/subscription status changes affect permissions/access control?
+          - Do master table status changes need to cascade to dependent tables?
+          - Are there cache/redundant fields that need synchronization?
+
+          **Analysis Result**:
+          | This Story Updates | Potentially Related Field | Sync Needed? | Reasoning | AC Coverage |
+          |--------------------|--------------------------|--------------|-----------|-------------|
+          | {table.field} | {related.field} | YES/NO | {reasoning} | AC{N} / None |
+
+          ### 4. Uncovered Sync Requirements Handling
+          If "Sync Needed = YES" but "AC Coverage = None":
+          - [ ] Added AC to cover this sync requirement
+          - [ ] Documented as "Known Gap" with reason: _______________
+          - [ ] Escalated to Architect for discussion
+
+          **If no sync requirements exist**:
+          - [x] After analysis, this Story has no cross-table data synchronization requirements
+        owner: scrum-master
+        editors: [scrum-master]
+
       - id: data-models
         title: Data Models
         instruction: Describe model contracts, key fields, validation rules; full types referenced via code paths

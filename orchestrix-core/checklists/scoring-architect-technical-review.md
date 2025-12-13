@@ -14,7 +14,7 @@ metadata:
 
 **Execution:**
 1. Complete Prerequisites
-2. Score 5 Architecture Review categories (0-10 total)
+2. Score 6 Architecture Review categories (0-11 total)
 3. Count critical issues
 4. Use make-decision.md with architect-review-result decision type
 5. Document Findings
@@ -37,7 +37,7 @@ metadata:
 
 ---
 
-# ARCHITECTURE REVIEW (10 Points)
+# ARCHITECTURE REVIEW (11 Points)
 
 ## 1. Pattern Compliance (3 pts)
 
@@ -104,9 +104,36 @@ metadata:
 
 ---
 
+## 6. Data Consistency & Synchronization (1 pt)
+
+**Purpose**: Review whether Story has hidden cross-table data synchronization requirements
+
+| Item | Status |
+|------|--------|
+| SM completed data sync analysis | [ ] |
+| Cross-table sync relationships correctly identified | [ ] |
+| Sync responsibility clearly defined (which service/operation is responsible) | [ ] |
+| No missing status/expiry field dependencies | [ ] |
+
+**Architect Review Guidelines**:
+
+1. **Validate SM Analysis**: Check if Dev Notes "Data Synchronization Requirements" section is complete
+2. **Supplemental Identification**: Based on architecture knowledge, are there sync requirements SM missed?
+3. **Sync Timing**: Is sync executed synchronously or asynchronously? How are failures handled?
+4. **Consistency Guarantee**: If sync fails, what state will the system be in? Is it acceptable?
+
+**Typical Problem Patterns**:
+- Payment success updates subscription status but License expiry not synced
+- User status change but associated permissions/roles not updated
+- Master table soft delete but dependent table data not cascaded
+
+**Score:** ___/1 | **Issues:** ___
+
+---
+
 # REVIEW SUMMARY
 
-**Arch Review Score:** ___/10  
+**Arch Review Score:** ___/11
 **Critical Issues Count:** ___  
 **Review Round:** ___
 
