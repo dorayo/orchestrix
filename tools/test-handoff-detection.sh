@@ -21,7 +21,7 @@ total_tests=0
 # Paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-HOOK_SCRIPT="$PROJECT_ROOT/.claude/hooks/handoff-detector.sh"
+HOOK_SCRIPT="$PROJECT_ROOT/common/hooks/handoff-detector.sh"
 TEST_LOG="/tmp/orchestrix-handoff-test-$(date +%s).log"
 
 # =============================================================================
@@ -348,6 +348,117 @@ args: 3.1
 🎯 HANDOFF TO qa: *finalize-commit 3.1" \
 "qa" "finalize-commit 3.1" \
 "Finalize commit handoff"
+
+    # -------------------------------------------------------------------------
+    # Layer 3: Dev Default Fallback Tests
+    # -------------------------------------------------------------------------
+    print_header "Layer 3: Dev Default Fallback Tests"
+
+    # Test 15: Dev fallback with Chinese status message
+    test_dev_fallback "Dev fallback - Chinese status message" \
+"实现完成，所有测试通过。
+
+Story 1.3 状态已更新为 Review，等待 QA 验收" \
+"qa" "review 1.3" \
+"Dev fallback should extract story ID from 'Story X.Y' pattern"
+
+    # Test 16: Dev fallback with story_id: format
+    test_dev_fallback "Dev fallback - story_id format" \
+"任务完成。
+story_id: 2.5
+代码已提交。" \
+"qa" "review 2.5" \
+"Dev fallback should extract story ID from 'story_id:' pattern"
+
+    # Test 17: Dev fallback with standalone story ID
+    test_dev_fallback "Dev fallback - standalone story ID" \
+"开发任务 3.2 已完成，所有测试通过。" \
+"qa" "review 3.2" \
+"Dev fallback should extract standalone story ID"
+
+    # Test 18: Dev fallback without any story ID (uses recorded or empty)
+    test_dev_fallback "Dev fallback - no story ID" \
+"任务完成，代码已提交，准备进入下一阶段。" \
+"qa" "review" \
+"Dev fallback should send review without story_id if not found"
+}
+
+# Test function for Layer 3 Dev fallback scenarios
+test_dev_fallback() {
+    local name="$1"
+    local input="$2"
+    local expected_target="$3"
+    local expected_command="$4"
+    local description="$5"
+
+    ((total_tests++))
+
+    echo -e "  ${YELLOW}Test $total_tests:${NC} $name"
+    if [[ -n "$description" ]]; then
+        echo -e "    ${BLUE}Description:${NC} $description"
+    fi
+
+    local result_target=""
+    local result_command=""
+    local detection_layer=""
+
+    # Simulate Layer 3: Dev Default Fallback
+    # This simulates current_agent=dev and no Layer 0-2 matches
+    local fallback_story_id=""
+
+    # Pattern 1: Story X.Y format
+    if [[ "$input" =~ Story[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+        fallback_story_id="${BASH_REMATCH[1]}"
+    # Pattern 2: story_id: X.Y format
+    elif [[ "$input" =~ story_id:[[:space:]]*([0-9]+\.[0-9]+) ]]; then
+        fallback_story_id="${BASH_REMATCH[1]}"
+    # Pattern 3: Standalone X.Y at word boundary (last occurrence)
+    else
+        local all_ids
+        all_ids=$(echo "$input" | grep -oE '\b[0-9]+\.[0-9]+\b' | tail -1)
+        if [[ -n "$all_ids" ]]; then
+            fallback_story_id="$all_ids"
+        fi
+    fi
+
+    result_target="qa"
+    if [[ -n "$fallback_story_id" ]]; then
+        result_command="review $fallback_story_id"
+    else
+        result_command="review"
+    fi
+    detection_layer="Layer 3 (Dev Fallback)"
+
+    # Verify results
+    local target_match=false
+    local command_match=false
+
+    if [[ "$result_target" == "$expected_target" ]]; then
+        target_match=true
+    fi
+
+    # Normalize commands for comparison
+    local norm_result norm_expected
+    norm_result=$(echo "$result_command" | tr -s ' ')
+    norm_expected=$(echo "$expected_command" | tr -s ' ')
+
+    if [[ "$norm_result" == "$norm_expected" ]]; then
+        command_match=true
+    fi
+
+    # Output result
+    if $target_match && $command_match; then
+        echo -e "    ${GREEN}✓ PASSED${NC} - Detected via $detection_layer"
+        echo -e "      Target: $result_target | Command: $result_command"
+        ((pass_count++))
+    else
+        echo -e "    ${RED}✗ FAILED${NC}"
+        echo -e "      Expected: target='$expected_target', command='$expected_command'"
+        echo -e "      Got:      target='$result_target', command='$result_command'"
+        echo -e "      Layer:    $detection_layer"
+        ((fail_count++))
+    fi
+    echo ""
 }
 
 # =============================================================================

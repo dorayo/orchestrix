@@ -15,6 +15,9 @@
 SESSION_NAME="${ORCHESTRIX_SESSION:-orchestrix}"
 LOG_FILE="${ORCHESTRIX_LOG:-/tmp/orchestrix-handoff.log}"
 
+# Story ID tracking file (per-session)
+STORY_ID_FILE="${ORCHESTRIX_STORY_ID_FILE:-/tmp/orchestrix-current-story-${SESSION_NAME}.txt}"
+
 # Agent to window mapping (Bash 3.2 compatible)
 get_agent_window() {
     local agent="$1"
@@ -45,6 +48,24 @@ get_agent_command() {
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$SESSION_NAME] $*" >> "$LOG_FILE"
+}
+
+# Function to save current story ID
+save_current_story_id() {
+    local story_id="$1"
+    if [[ -n "$story_id" ]]; then
+        echo "$story_id" > "$STORY_ID_FILE"
+        log "Saved current story ID: $story_id"
+    fi
+}
+
+# Function to get last known story ID
+get_last_story_id() {
+    if [[ -f "$STORY_ID_FILE" ]]; then
+        cat "$STORY_ID_FILE"
+    else
+        echo ""
+    fi
 }
 
 # Get current agent ID
@@ -381,6 +402,50 @@ if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ -n "${last_10_lines// /}"
     fi
 fi
 
+# ========== LAYER 3: Dev Default Fallback ==========
+# When Dev completes work but no explicit HANDOFF detected,
+# default to QA review (the only logical next step after Dev)
+if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev" ]]; then
+    log "Layer 3: Dev agent without explicit HANDOFF, applying default fallback to QA"
+
+    # Try to extract story ID from pane output
+    fallback_story_id=""
+
+    # Pattern 1: Story X.Y format
+    if [[ "$pane_output" =~ Story[[:space:]]+([0-9]+\.[0-9]+) ]]; then
+        fallback_story_id="${BASH_REMATCH[1]}"
+        log "Found story ID via 'Story X.Y' pattern: $fallback_story_id"
+    # Pattern 2: story_id: X.Y format
+    elif [[ "$pane_output" =~ story_id:[[:space:]]*([0-9]+\.[0-9]+) ]]; then
+        fallback_story_id="${BASH_REMATCH[1]}"
+        log "Found story ID via 'story_id:' pattern: $fallback_story_id"
+    # Pattern 3: Standalone X.Y at word boundary (last occurrence)
+    else
+        all_ids=$(echo "$pane_output" | grep -oE '\b[0-9]+\.[0-9]+\b' | tail -1)
+        if [[ -n "$all_ids" ]]; then
+            fallback_story_id="$all_ids"
+            log "Found story ID via standalone pattern: $fallback_story_id"
+        fi
+    fi
+
+    # Fallback: Use last recorded story ID if extraction failed
+    if [[ -z "$fallback_story_id" ]]; then
+        fallback_story_id=$(get_last_story_id)
+        if [[ -n "$fallback_story_id" ]]; then
+            log "Using last recorded story ID: $fallback_story_id"
+        fi
+    fi
+
+    target_agent="qa"
+    if [[ -n "$fallback_story_id" ]]; then
+        raw_command="review $fallback_story_id"
+    else
+        raw_command="review"
+        log "WARNING: No story ID found (neither in output nor in record)"
+    fi
+    log "✓ Layer 3 (Dev Fallback): target=qa, command=$raw_command"
+fi
+
 if [[ -n "$target_agent" && -n "$raw_command" ]]; then
 
     # Normalize target_agent to lowercase (defensive, already done in patterns)
@@ -405,6 +470,12 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
     log "✓ HANDOFF detected: $current_agent → $target_agent"
     log "  Raw command: $raw_command"
     log "  Final command: $command"
+
+    # Extract and save story ID for future reference
+    if [[ "$raw_command" =~ ([0-9]+\.[0-9]+) ]]; then
+        detected_story_for_record="${BASH_REMATCH[1]}"
+        save_current_story_id "$detected_story_for_record"
+    fi
 
     # Find target window
     target_window=$(get_agent_window "$target_agent")
