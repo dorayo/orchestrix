@@ -249,7 +249,7 @@ ide_file_resolution:
     checklists: checklists
     data: data
     utils: utils
-    decisions: data/decisions
+    decisions: data
   path_pattern: '{root}/{type}/{name}'
   behavior:
     - Use after user selects command/task
