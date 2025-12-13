@@ -1,3 +1,10 @@
+## [13.8.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.0...v13.8.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* fix common ide resolution for decision ([51bf28d](https://github.com/dorayo/ORCHESTRIX/commit/51bf28d4e9d8825e02757c7c3f9d1b4b465fa888))
+
 # [13.8.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.7.1...v13.8.0) (2025-12-13)
 
 
