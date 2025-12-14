@@ -205,9 +205,12 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
         last_10_lines=$(echo "$last_10_lines_raw" | grep -v -E \
             -e '请输入命令编号' \
             -e '请输入编号' \
+            -e '请输入命令' \
             -e '可用命令' \
             -e '以下是我可以执行的命令' \
             -e '如 \*[a-z]' \
+            -e '（如 ' \
+            -e '例如' \
             -e '\{story_id\}' \
             -e '\{template\}' \
             -e '\{topic\}' \
@@ -217,6 +220,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]]; then
             -e '^[[:space:]]*---[[:space:]]*$' \
             -e '请选择需要执行的命令' \
             -e '来开始工作' \
+            -e '来开始' \
             -e '来继续' \
             -e '配置已加载' \
             -e '项目模式' \
@@ -406,42 +410,21 @@ fi
 # When Dev completes work but no explicit HANDOFF detected,
 # default to QA review (the only logical next step after Dev)
 #
-# IMPORTANT: Must distinguish between:
-# - Agent just loaded (showing menu) → NO fallback
-# - Agent completed real work → Apply fallback
-if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev" ]]; then
-    log "Layer 3: Dev agent without explicit HANDOFF, checking if this is agent load message..."
+# IMPORTANT: Skip if agent just loaded (detected by menu prompt + empty input line)
+# This prevents false handoff when dev is reloaded by background process
 
-    # Detect agent load message patterns (should NOT trigger fallback)
-    is_agent_load_message=false
-
-    # Pattern 1: Contains menu/load indicators
-    if echo "$pane_output" | grep -qE '(配置已加载|项目模式|可用命令|请输入命令编号|请输入编号|来开始工作|Dev Agent|---AGENT-LOADED---)' 2>/dev/null; then
-        # Check if there's NO work completion indicator
-        if ! echo "$pane_output" | grep -qE '(IMPLEMENTATION COMPLETE|Dev Log:|Status: Review|Gate:.*%|Implementation Gate)' 2>/dev/null; then
-            is_agent_load_message=true
-            log "Detected agent load message (has menu content, no work completion)"
-        fi
+# Check if agent just loaded (menu prompt present + empty input line)
+is_just_menu=false
+if echo "$pane_output" | grep -qE '请输入命令|Please enter command|开始工作' 2>/dev/null; then
+    # Check if input line is empty ("> " with nothing after, allowing leading spaces)
+    if echo "$pane_output" | tail -20 | grep -qE '^[[:space:]]*>[[:space:]]*$' 2>/dev/null; then
+        is_just_menu=true
+        log "Layer 3: Detected menu prompt with empty input - agent just loaded, skipping fallback"
     fi
+fi
 
-    # Pattern 2: Output too small (likely just menu, no real work)
-    if [[ ${#pane_output} -lt 3000 ]]; then
-        is_agent_load_message=true
-        log "Detected agent load message (output too small: ${#pane_output} bytes < 3000)"
-    fi
-
-    # Pattern 3: Check for explicit work completion markers
-    has_work_completion=false
-    if echo "$pane_output" | grep -qE '(IMPLEMENTATION COMPLETE|✅ Implementation Gate|GATE 2.*100%|Status: Review)' 2>/dev/null; then
-        has_work_completion=true
-        log "Found work completion markers"
-    fi
-
-    # Skip fallback if this is just agent load, not work completion
-    if [[ "$is_agent_load_message" == "true" && "$has_work_completion" == "false" ]]; then
-        log "Layer 3: Skipping fallback - detected agent load message, not work completion"
-    else
-        log "Layer 3: Applying default fallback to QA (not agent load, or has work completion)"
+if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev" ]] && [[ "$is_just_menu" == "false" ]]; then
+    log "Layer 3: Dev agent without explicit HANDOFF, applying default fallback to QA"
 
     # Try to extract story ID from pane output
     fallback_story_id=""
@@ -455,8 +438,13 @@ if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev"
         fallback_story_id="${BASH_REMATCH[1]}"
         log "Found story ID via 'story_id:' pattern: $fallback_story_id"
     # Pattern 3: Standalone X.Y at word boundary (last occurrence)
+    # IMPORTANT: Filter out version numbers - any "EnglishWord X.Y" pattern is likely a version
+    # This catches: "Opus 4.5", "Claude 4.5", "Sonnet 3.5", "GPT 4.0", "v4.5", etc.
     else
-        all_ids=$(echo "$pane_output" | grep -oE '\b[0-9]+\.[0-9]+\b' | tail -1)
+        # Remove any pattern where an English word is followed by X.Y (version number pattern)
+        # Pattern: [A-Za-z]+ followed by optional space and digits.digits
+        filtered_output=$(echo "$pane_output" | sed -E 's/[A-Za-z]+[[:space:]]*[0-9]+\.[0-9]+//g')
+        all_ids=$(echo "$filtered_output" | grep -oE '\b[0-9]+\.[0-9]+\b' | tail -1)
         if [[ -n "$all_ids" ]]; then
             fallback_story_id="$all_ids"
             log "Found story ID via standalone pattern: $fallback_story_id"
@@ -479,7 +467,6 @@ if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev"
         log "WARNING: No story ID found (neither in output nor in record)"
     fi
     log "✓ Layer 3 (Dev Fallback): target=qa, command=$raw_command"
-    fi  # End of is_agent_load_message check
 fi
 
 if [[ -n "$target_agent" && -n "$raw_command" ]]; then
