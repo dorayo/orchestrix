@@ -405,8 +405,43 @@ fi
 # ========== LAYER 3: Dev Default Fallback ==========
 # When Dev completes work but no explicit HANDOFF detected,
 # default to QA review (the only logical next step after Dev)
+#
+# IMPORTANT: Must distinguish between:
+# - Agent just loaded (showing menu) → NO fallback
+# - Agent completed real work → Apply fallback
 if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev" ]]; then
-    log "Layer 3: Dev agent without explicit HANDOFF, applying default fallback to QA"
+    log "Layer 3: Dev agent without explicit HANDOFF, checking if this is agent load message..."
+
+    # Detect agent load message patterns (should NOT trigger fallback)
+    is_agent_load_message=false
+
+    # Pattern 1: Contains menu/load indicators
+    if echo "$pane_output" | grep -qE '(配置已加载|项目模式|可用命令|请输入命令编号|请输入编号|来开始工作|Dev Agent|---AGENT-LOADED---)' 2>/dev/null; then
+        # Check if there's NO work completion indicator
+        if ! echo "$pane_output" | grep -qE '(IMPLEMENTATION COMPLETE|Dev Log:|Status: Review|Gate:.*%|Implementation Gate)' 2>/dev/null; then
+            is_agent_load_message=true
+            log "Detected agent load message (has menu content, no work completion)"
+        fi
+    fi
+
+    # Pattern 2: Output too small (likely just menu, no real work)
+    if [[ ${#pane_output} -lt 3000 ]]; then
+        is_agent_load_message=true
+        log "Detected agent load message (output too small: ${#pane_output} bytes < 3000)"
+    fi
+
+    # Pattern 3: Check for explicit work completion markers
+    has_work_completion=false
+    if echo "$pane_output" | grep -qE '(IMPLEMENTATION COMPLETE|✅ Implementation Gate|GATE 2.*100%|Status: Review)' 2>/dev/null; then
+        has_work_completion=true
+        log "Found work completion markers"
+    fi
+
+    # Skip fallback if this is just agent load, not work completion
+    if [[ "$is_agent_load_message" == "true" && "$has_work_completion" == "false" ]]; then
+        log "Layer 3: Skipping fallback - detected agent load message, not work completion"
+    else
+        log "Layer 3: Applying default fallback to QA (not agent load, or has work completion)"
 
     # Try to extract story ID from pane output
     fallback_story_id=""
@@ -444,6 +479,7 @@ if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev"
         log "WARNING: No story ID found (neither in output nor in record)"
     fi
     log "✓ Layer 3 (Dev Fallback): target=qa, command=$raw_command"
+    fi  # End of is_agent_load_message check
 fi
 
 if [[ -n "$target_agent" && -n "$raw_command" ]]; then
