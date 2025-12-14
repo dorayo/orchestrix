@@ -1,3 +1,10 @@
+## [13.8.3](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.2...v13.8.3) (2025-12-14)
+
+
+### Bug Fixes
+
+* **handoff:** sync bug fixes from orchestrix-mcp-server ([fbc9ad3](https://github.com/dorayo/ORCHESTRIX/commit/fbc9ad39c6d59bcbac27171f029f1b06465ff7be))
+
 ## [13.8.2](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.1...v13.8.2) (2025-12-14)
 
 
