@@ -1,3 +1,10 @@
+## [13.8.2](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.1...v13.8.2) (2025-12-14)
+
+
+### Bug Fixes
+
+* **handoff:** skip Layer 3 fallback for dev agent load messages ([583ade4](https://github.com/dorayo/ORCHESTRIX/commit/583ade44bbf01d82ad828929af052a0c6de1cbc3))
+
 ## [13.8.1](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.0...v13.8.1) (2025-12-13)
 
 
