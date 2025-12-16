@@ -630,30 +630,28 @@ checklists/gate-sm-story-completion-gate.md
 
 ---
 
-### 10. Final Handoff (MANDATORY LAST OUTPUT)
+### 10. Final Handoff (MANDATORY)
 
-**CRITICAL**: This handoff MUST be the absolute last line. Do NOT add any content after it.
+---
 
-Based on `next_action` from Step 8C:
+### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
+
+**CRITICAL**: This step is NON-NEGOTIABLE. You MUST complete BOTH sub-steps:
+1. Output human-readable handoff message
+2. Execute the handoff skill
+
+---
+
+### Step 10.1: Output Human-Readable Handoff Message
+
+Based on `next_action` from Step 8C, output ONE of the following:
 
 **If next_action = handoff_to_architect**:
 ```
 ✅ STORY CREATED - ARCHITECT REVIEW REQUIRED
 Story: {epic}.{story} - {title}
 Status: AwaitingArchReview
-
-Quality Metrics:
-- Quality Score: {score}/10
-- Complexity: {count}/7 indicators ({list})
-- Test Design Level: {level} (deferred until after review)
-
-Architect Review Reason: {reasoning from Decision 8A}
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: architect
-command: review
-args: {epic}.{story}
----ORCHESTRIX-HANDOFF-END---
+Quality: {score}/10 | Complexity: {count}/7
 
 🎯 HANDOFF TO architect: *review {epic}.{story}
 ```
@@ -663,17 +661,7 @@ args: {epic}.{story}
 ✅ STORY CREATED - READY FOR DEVELOPMENT
 Story: {epic}.{story} - {title}
 Status: TestDesignComplete
-
-Quality Metrics:
-- Quality Score: {score}/10
-- Complexity: {count}/7 indicators ({list})
-- Test Design: Simple (unit tests only)
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: dev
-command: develop-story
-args: {epic}.{story}
----ORCHESTRIX-HANDOFF-END---
+Quality: {score}/10 | Test Design: Simple
 
 🎯 HANDOFF TO dev: *develop-story {epic}.{story}
 ```
@@ -683,19 +671,28 @@ args: {epic}.{story}
 ✅ STORY CREATED - TEST DESIGN REQUIRED
 Story: {epic}.{story} - {title}
 Status: AwaitingTestDesign
-
-Quality Metrics:
-- Quality Score: {score}/10
-- Complexity: {count}/7 indicators ({list})
-- Test Design Level: {Standard | Comprehensive}
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: qa
-command: test-design
-args: {epic}.{story}
----ORCHESTRIX-HANDOFF-END---
+Quality: {score}/10 | Test Design: {Standard | Comprehensive}
 
 🎯 HANDOFF TO qa: *test-design {epic}.{story}
 ```
 
-**STOP HERE** - End task execution
+---
+
+### Step 10.2: Execute Handoff Skill (MANDATORY - tmux Automation)
+
+**CRITICAL**: After outputting the message above, you MUST invoke the `handoff` skill.
+
+**USE the `handoff` skill** with parameters based on next_action:
+
+| next_action | Target Agent | Command |
+|-------------|--------------|---------|
+| handoff_to_architect | architect | `*review {epic}.{story}` |
+| handoff_to_dev | dev | `*develop-story {epic}.{story}` |
+| handoff_to_qa_test_design | qa | `*test-design {epic}.{story}` |
+
+The skill will automatically:
+1. Send the command to target agent's tmux window
+2. Clear your current context
+3. Reload your agent for the next task
+
+**STOP**: After skill execution completes, your response is complete. No additional output.

@@ -450,19 +450,21 @@ This task will:
 - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
 - If failed: `commit_error`
 
-### 9.7 OUTPUT HANDOFF MESSAGE (REQUIRED - MUST BE FINAL OUTPUT)
+### 9.7 OUTPUT HANDOFF MESSAGE AND EXECUTE SKILL (REQUIRED)
 
 ---
 
-### MANDATORY HANDOFF - DO NOT SKIP
+### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
 
-**CRITICAL**: This step is NON-NEGOTIABLE. You MUST output a handoff message as the FINAL output of this task. The handoff command MUST be the absolute last line - no summaries, tips, or explanations after it.
+**CRITICAL**: This step is NON-NEGOTIABLE. You MUST complete BOTH sub-steps:
+1. Output human-readable handoff message
+2. Execute the handoff skill
 
 ---
 
 ### Pre-Handoff Verification
 
-Before outputting handoff message, verify Step 9.6 was executed:
+Before proceeding, verify Step 9.6 was executed:
 
 - **Check commit_result exists** (not empty)
   - If `commit_result` is empty/missing:
@@ -470,216 +472,77 @@ Before outputting handoff message, verify Step 9.6 was executed:
     - Go back to Step 9.6 and execute finalize-story-commit.md
     - Do NOT proceed until commit_result is populated
 
-- **If decision.requires_git_commit = true AND commit_result.skip_reason exists**:
-  - WARNING: Commit was expected but skipped
-  - Log skip reason in handoff message
-  - Suggest manual retry: `*finalize-commit {story_id}`
-
 ---
 
-### Handoff Message Selection
+### Step 9.7.1: Output Human-Readable Handoff Message
 
 Based on workflow state, output ONE of the following messages:
 
----
-
-#### Scenario A: Architecture Escalation (Step 3.1 triggered)
-
+#### Scenario A: Architecture Escalation
 ```
-ARCHITECTURE ESCALATION REQUIRED
+🚨 ARCHITECTURE ESCALATION REQUIRED
+Story: {story_id} | Status: Escalated
+Issues: {architecture_issues}
 
-Story: {story_id}
-Status: Escalated
-Review Round: {review_round}
-
-Critical architecture concerns detected during QA review.
-
-Issues Found:
-{architecture_issues}
-
-Escalation Reason:
-{escalation_reason}
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: architect
-command: review-escalation
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
-
-HANDOFF TO architect: *review-escalation {story_id}
+🎯 HANDOFF TO architect: *review-escalation {story_id}
 ```
-
-**STOP HERE**: Handoff message must be the last line. No additional output allowed.
-
----
 
 #### Scenario B: Gate PASS + Status Done + Commit Success
-
 ```
-STORY {story_id} DONE - COMMITTED AND READY FOR DEPLOYMENT
+✅ STORY {story_id} DONE
+Gate: PASS | Commit: {commit_hash}
+Tests: {pass_rate}% passed
 
-Story: {story_id}
-Status: Done
-Review Round: {review_round}
-Risk Level: {risk_level}
-Review Mode: {review_mode}
-Gate Result: PASS
-Quality Score: {quality_score}/100
-
-All quality checks passed. Code committed successfully.
-
-Test Results:
-- Automated: {passed}/{total} passed ({pass_rate}%)
-- E2E: {e2e_passed}/{e2e_tested} scenarios passed
-- Console Errors: None
-- Network Errors: None
-
-Git Commit: {commit_hash}
-Gate File: {gate_file_path}
-
-Total Issues Found: {total_issues}
-- Critical: {critical_count}
-- High: {high_count}
-- Medium: {medium_count}
-- Low: {low_count}
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: sm
-command: draft
-args:
----ORCHESTRIX-HANDOFF-END---
-
-HANDOFF TO sm: *draft
+🎯 HANDOFF TO sm: *draft
 ```
-
-**STOP HERE**: Handoff message must be the last line. No additional output allowed.
-
----
 
 #### Scenario C: Gate PASS + Status Done + Commit Failed
-
 ```
-STORY {story_id} PASSED QA - COMMIT FAILED
-
-Story: {story_id}
-Status: Done
-Gate Result: PASS
-Commit Status: FAILED
-
-Quality gate passed, but git commit failed.
-
+⚠️ STORY {story_id} PASSED QA - COMMIT FAILED
 Error: {commit_error}
 
-Quality Summary:
-- Gate: PASS
-- Quality Score: {quality_score}/100
-
-Manual commit retry needed.
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: qa
-command: finalize-commit
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
-
-HANDOFF TO qa: *finalize-commit {story_id}
+🎯 HANDOFF TO qa: *finalize-commit {story_id}
 ```
-
-**STOP HERE**: Handoff message must be the last line. No additional output allowed.
-
----
 
 #### Scenario D: Gate CONCERNS or FAIL (Issues Found)
-
 ```
-QA REVIEW COMPLETE - ISSUES FOUND
+❌ QA REVIEW - ISSUES FOUND
+Story: {story_id} | Gate: {gate_result}
+Issues: {critical_count} critical / {high_count} high
 
-Story: {story_id}
-Status: {status}
-Review Round: {review_round}
-Risk Level: {risk_level}
-Review Mode: {review_mode}
-Gate Result: {gate_result}
-Quality Score: {quality_score}/100
-
-Issues detected during QA testing. Dev action required.
-
-Test Results:
-- Automated: {passed}/{total} passed ({pass_rate}%)
-- E2E: {e2e_passed}/{e2e_tested} scenarios passed
-- Console Errors: {console_errors_found}
-- Network Errors: {network_errors_found}
-
-Gate File: {gate_file_path}
-Evidence: docs/qa/evidence/{story_id}/
-
-Issues Breakdown:
-- Critical: {critical_count}
-- High: {high_count}
-- Medium: {medium_count}
-- Low: {low_count}
-
-Top Priority Fixes:
-{top_issues_summary}
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: dev
-command: apply-qa-fixes
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
-
-HANDOFF TO dev: *apply-qa-fixes {story_id}
+🎯 HANDOFF TO dev: *apply-qa-fixes {story_id}
 ```
-
-**STOP HERE**: Handoff message must be the last line. No additional output allowed.
-
----
 
 #### Scenario E: Low Risk - Automated Only Pass
-
 ```
-STORY {story_id} DONE - LOW RISK REVIEW COMPLETE
+✅ STORY {story_id} DONE (Low Risk)
+Gate: PASS | Tests: {pass_rate}%
 
-Story: {story_id}
-Status: Done
-Review Round: {review_round}
-Risk Level: LOW
-Review Mode: automated_only
-Gate Result: PASS
-
-Test Results:
-- Automated: {passed}/{total} passed ({pass_rate}%)
-- E2E: Skipped (low risk story)
-
-All automated tests passed. Story approved for low-risk fast-track.
-
-Git Commit: {commit_hash}
-Gate File: {gate_file_path}
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: sm
-command: draft
-args:
----ORCHESTRIX-HANDOFF-END---
-
-HANDOFF TO sm: *draft
+🎯 HANDOFF TO sm: *draft
 ```
-
-**STOP HERE**: Handoff message must be the last line. No additional output allowed.
 
 ---
 
-### FORBIDDEN After Handoff
+### Step 9.7.2: Execute Handoff Skill (MANDATORY - tmux Automation)
 
-After outputting the handoff message, you MUST NOT output any of the following:
-- Summaries or recaps
-- Tips or recommendations
-- Questions to the user
-- Explanations of what was done
-- Suggestions for next steps (beyond the handoff)
-- Any text whatsoever
+**CRITICAL**: After outputting the message above, you MUST invoke the `handoff` skill.
 
-**The handoff command (`HANDOFF TO...`) is your FINAL output. STOP IMMEDIATELY after it.**
+**USE the `handoff` skill** with parameters based on scenario:
+
+| Scenario | Target Agent | Command |
+|----------|--------------|---------|
+| A (Escalation) | architect | `*review-escalation {story_id}` |
+| B (Done + Commit OK) | sm | `*draft` |
+| C (Commit Failed) | qa | `*finalize-commit {story_id}` |
+| D (Issues Found) | dev | `*apply-qa-fixes {story_id}` |
+| E (Low Risk Done) | sm | `*draft` |
+
+The skill will automatically:
+1. Send the command to target agent's tmux window
+2. Clear your current context
+3. Reload your agent for the next task
+
+**STOP**: After skill execution completes, your response is complete. No additional output.
 
 ---
 

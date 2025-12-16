@@ -284,30 +284,39 @@ Checklist verifies (externally defined):
 
 ### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
 
-**CRITICAL**: This step is NON-NEGOTIABLE. You MUST output the complete handoff message as the FINAL output of this task. The handoff command MUST be the absolute last line - no summaries, tips, or explanations after it.
+**CRITICAL**: This step is NON-NEGOTIABLE. You MUST complete BOTH sub-steps below.
 
 ---
 
-### Handoff Message Generation
+### Step 11.1: Output Human-Readable Handoff Message
 
 Generate handoff message using template:
-
 ```
 {root}/templates/dev-handoff-message-tmpl.md
 ```
 
-### Required Output Format
-
-The message MUST end with BOTH blocks (for tmux automation hook detection):
-
+**Required format** (for human visibility and logging):
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: qa
-command: review
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
+✅ IMPLEMENTATION COMPLETE
+Story: {story_id}
+Status: Review
 
 🎯 HANDOFF TO qa: *review {story_id}
 ```
 
-**STOP HERE**: Handoff message must be the last line. No additional output allowed.
+---
+
+### Step 11.2: Execute Handoff Skill (MANDATORY - tmux Automation)
+
+**CRITICAL**: After outputting the message above, you MUST invoke the `handoff` skill.
+
+**USE the `handoff` skill** with these parameters:
+- **Target Agent**: qa
+- **Command**: `*review {story_id}`
+
+The skill will automatically:
+1. Send the command to QA agent's tmux window
+2. Clear your current context
+3. Reload your agent for the next task
+
+**STOP**: After skill execution completes, your response is complete. No additional output.

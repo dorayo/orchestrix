@@ -543,24 +543,27 @@ Add entry:
 | {{date}} {{time}} | Architect | AwaitingArchReview → {{next_status}} | Score: {{score}}/10, {{critical_count}} critical / {{major_count}} major issues |
 ```
 
-### Output 3: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
+### Output 3: Handoff Message and Skill Execution (REQUIRED)
 
-**CRITICAL**: The handoff message below MUST be the absolute last line of your output. Do NOT add any summaries, recommendations, tips, or explanations after the handoff.
+---
 
-Based on decision, output the appropriate handoff using exact format:
+### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
+
+**CRITICAL**: This step is NON-NEGOTIABLE. You MUST complete BOTH sub-steps:
+1. Output human-readable handoff message
+2. Execute the handoff skill
+
+---
+
+### Step 3.1: Output Human-Readable Handoff Message
+
+Based on decision, output ONE of the following messages:
 
 #### If Approved + Test Design Needed:
 ```
 ✅ ARCHITECT REVIEW COMPLETE
 Story: {story_id} → Status: AwaitingTestDesign
-Score: {score}/10 | Decision: Approved
-Test Design Level: {test_design_level}
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: qa
-command: test-design
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
+Score: {score}/10 | Test Design: {test_design_level}
 
 🎯 HANDOFF TO qa: *test-design {story_id}
 ```
@@ -569,33 +572,19 @@ args: {story_id}
 ```
 ✅ ARCHITECT REVIEW COMPLETE
 Story: {story_id} → Status: Approved
-Score: {score}/10 | Decision: Approved
-
----ORCHESTRIX-HANDOFF-BEGIN---
-target: dev
-command: develop-story
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
+Score: {score}/10 | Ready for Dev
 
 🎯 HANDOFF TO dev: *develop-story {story_id}
 ```
 
 #### If Requires Revision:
 ```
-⚠️ ARCHITECT REVIEW COMPLETE - REVISION REQUIRED
+⚠️ ARCHITECT REVIEW - REVISION REQUIRED
 Story: {story_id} → Status: RequiresRevision
 Score: {score}/10 | Critical: {critical_count} | Major: {major_count}
 
----ORCHESTRIX-HANDOFF-BEGIN---
-target: sm
-command: revise-story
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
-
 🎯 HANDOFF TO sm: *revise-story {story_id}
 ```
-
-**STOP HERE**: Handoff message must be the last line. No additional output allowed.
 
 #### If Escalated:
 ```
@@ -603,10 +592,30 @@ args: {story_id}
 Story: {story_id} → Status: Escalated
 Reason: {escalation_reason}
 
-⚠️ Requires human intervention
+⚠️ Requires human intervention (No automated handoff)
 ```
 
-**CRITICAL**: The handoff command (e.g., `*test-design {story_id}`) MUST be clearly visible as the final line of your output.
+---
+
+### Step 3.2: Execute Handoff Skill (MANDATORY - tmux Automation)
+
+**CRITICAL**: After outputting the message above, you MUST invoke the `handoff` skill (except for Escalated status).
+
+**USE the `handoff` skill** with parameters based on decision:
+
+| Decision | Target Agent | Command |
+|----------|--------------|---------|
+| Approved + Test Design | qa | `*test-design {story_id}` |
+| Approved + Simple | dev | `*develop-story {story_id}` |
+| Requires Revision | sm | `*revise-story {story_id}` |
+| Escalated | (none) | No skill execution - human intervention |
+
+The skill will automatically:
+1. Send the command to target agent's tmux window
+2. Clear your current context
+3. Reload your agent for the next task
+
+**STOP**: After skill execution completes, your response is complete. No additional output.
 
 ---
 
