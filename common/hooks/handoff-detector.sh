@@ -1,646 +1,162 @@
 #!/bin/bash
-# Claude Code Stop Hook - HANDOFF Detector
-# Uses tmux capture-pane to read Claude's output
-# Supports multi-repo: Reads session name from ORCHESTRIX_SESSION environment variable
+# Orchestrix HANDOFF Detector - tmux Automation Hook
+# Triggers on Claude Code Stop event, detects HANDOFF and routes to target agent
+#
+# Design principles:
+# - mkdir atomic lock prevents race conditions
+# - Lock held through entire cycle (HANDOFF → clear → reload)
+# - Background process handles cleanup and lock release
 
-# Note: No 'set -e' to avoid hook failure on non-critical errors
-# We handle errors explicitly where needed
+set +e  # Don't exit on errors
 
 # ============================================
-# Configuration (Multi-Repo Support)
+# Configuration
 # ============================================
-# Priority: Environment variable > Default
-# ORCHESTRIX_SESSION and ORCHESTRIX_LOG are set by start-tmux-session.sh
-
 SESSION_NAME="${ORCHESTRIX_SESSION:-orchestrix}"
-LOG_FILE="${ORCHESTRIX_LOG:-/tmp/orchestrix-handoff.log}"
+LOG_FILE="${ORCHESTRIX_LOG:-/tmp/orchestrix-${SESSION_NAME}-handoff.log}"
+LOCK_TIMEOUT=60  # seconds before considering lock stale
 
-# Story ID tracking file (per-session)
-STORY_ID_FILE="${ORCHESTRIX_STORY_ID_FILE:-/tmp/orchestrix-current-story-${SESSION_NAME}.txt}"
-
-# Lock file to prevent duplicate hook triggers (per-agent)
-# When /clear is sent, it triggers Stop hook again - we need to prevent infinite loop
-LOCK_TIMEOUT=30  # seconds
-
-# Agent to window mapping (Bash 3.2 compatible)
-get_agent_window() {
-    local agent="$1"
-    case "$agent" in
+# Agent mappings
+get_window() {
+    case "$1" in
         architect) echo "0" ;;
         sm) echo "1" ;;
         dev) echo "2" ;;
         qa) echo "3" ;;
-        orchestrix-orchestrator) echo "0" ;;
-        ux-expert) echo "0" ;;
         *) echo "" ;;
     esac
 }
 
-# Get agent startup command
 get_agent_command() {
-    local agent="$1"
-    case "$agent" in
+    case "$1" in
         architect) echo "/Orchestrix:agents:architect" ;;
         sm) echo "/Orchestrix:agents:sm" ;;
         dev) echo "/Orchestrix:agents:dev" ;;
         qa) echo "/Orchestrix:agents:qa" ;;
-        orchestrix-orchestrator) echo "/Orchestrix:agents:orchestrix-orchestrator" ;;
-        ux-expert) echo "/Orchestrix:agents:ux-expert" ;;
         *) echo "" ;;
     esac
 }
 
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$SESSION_NAME] $*" >> "$LOG_FILE"
-}
-
-# Function to save current story ID
-save_current_story_id() {
-    local story_id="$1"
-    if [[ -n "$story_id" ]]; then
-        echo "$story_id" > "$STORY_ID_FILE"
-        log "Saved current story ID: $story_id"
-    fi
-}
-
-# Function to get last known story ID
-get_last_story_id() {
-    if [[ -f "$STORY_ID_FILE" ]]; then
-        cat "$STORY_ID_FILE"
-    else
-        echo ""
-    fi
-}
-
-# Get current agent ID
-current_agent="${AGENT_ID:-unknown}"
-log "========== Hook triggered for agent: $current_agent =========="
-
-# Get current window from agent mapping
-current_window=$(get_agent_window "$current_agent")
-
-if [ -z "$current_window" ]; then
-    log "ERROR: Unknown current agent '$current_agent'"
-    exit 0
-fi
-
-log "Current agent: $current_agent (window $current_window)"
+log() { echo "[$(date '+%H:%M:%S')] $*" >> "$LOG_FILE"; }
 
 # ============================================
-# Lock mechanism to prevent duplicate triggers
+# Initialize
 # ============================================
-# When background process sends /clear, it triggers Stop hook again
-# We use a lock file with timestamp to prevent processing within LOCK_TIMEOUT seconds
-
-LOCK_FILE="/tmp/orchestrix-${SESSION_NAME}-${current_window}.lock"
-
-# Check if lock exists and is recent
-if [[ -f "$LOCK_FILE" ]]; then
-    lock_time=$(cat "$LOCK_FILE" 2>/dev/null || echo "0")
-    current_time=$(date +%s)
-    time_diff=$((current_time - lock_time))
-
-    if [[ $time_diff -lt $LOCK_TIMEOUT ]]; then
-        log "SKIP: Lock active (${time_diff}s < ${LOCK_TIMEOUT}s timeout) - this is likely a /clear trigger, ignoring"
-        exit 0
-    else
-        log "Lock expired (${time_diff}s >= ${LOCK_TIMEOUT}s), proceeding"
-    fi
-fi
-
-# Check if tmux session exists
-if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-    log "ERROR: tmux session '$SESSION_NAME' not found"
-    exit 0
-fi
-
-# Capture the pane output (last 300 lines to ensure we catch HANDOFF even with extra content)
-pane_output=$(tmux capture-pane -t "$SESSION_NAME:$current_window" -p -S -300 2>/dev/null || echo "")
-
-if [ -z "$pane_output" ]; then
-    log "ERROR: Could not capture pane output"
-    exit 0
-fi
-
-log "Captured pane output: ${#pane_output} bytes"
-
-# Extract last 2000 characters for reference
-last_output="${pane_output: -2000}"
-log "Captured ${#pane_output} bytes total, examining full output for HANDOFF pattern"
-
-# DEBUG: Log last 500 chars to help diagnose issues
-log "DEBUG: Last 500 chars of output:"
-echo "---START-OUTPUT---" >> "$LOG_FILE"
-echo "${pane_output: -500}" >> "$LOG_FILE"
-echo "---END-OUTPUT---" >> "$LOG_FILE"
-
-# HANDOFF pattern matching (three-layer strategy)
-# Layer 0: Structured Termination Block (STB) - most reliable, pure ASCII
-# Layer 1: Explicit HANDOFF detection (grep-based)
-# Layer 2: Implicit command detection (fallback)
-
-target_agent=""
-raw_command=""
-
-# ========== LAYER 0: Structured Termination Block (STB) Detection ==========
-# Priority: STB is parsed FIRST because it's pure ASCII and most reliable
-# Format:
-# ---ORCHESTRIX-HANDOFF-BEGIN---
-# target: <agent>
-# command: <cmd>
-# args: <optional args>
-# ---ORCHESTRIX-HANDOFF-END---
-
-if echo "$pane_output" | grep -q -- '---ORCHESTRIX-HANDOFF-BEGIN---' 2>/dev/null; then
-    log "Found STB marker, attempting to parse..."
-
-    # Extract the LAST STB block using awk (handles multiple blocks)
-    stb_block=$(echo "$pane_output" | awk '
-        /---ORCHESTRIX-HANDOFF-BEGIN---/ { found=1; block="" }
-        found { block = block $0 "\n" }
-        /---ORCHESTRIX-HANDOFF-END---/ { if(found) last=block; found=0 }
-        END { printf "%s", last }
-    ')
-
-    if [[ -n "$stb_block" ]]; then
-        # Parse fields from STB block
-        stb_target=$(echo "$stb_block" | grep -E '^[[:space:]]*target:' | head -1 | sed 's/^[[:space:]]*target:[[:space:]]*//' | tr -d '[:space:]')
-        stb_cmd=$(echo "$stb_block" | grep -E '^[[:space:]]*command:' | head -1 | sed 's/^[[:space:]]*command:[[:space:]]*//' | tr -d '[:space:]')
-        stb_args=$(echo "$stb_block" | grep -E '^[[:space:]]*args:' | head -1 | sed 's/^[[:space:]]*args:[[:space:]]*//' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-
-        log "STB parsed - target: '$stb_target', command: '$stb_cmd', args: '$stb_args'"
-
-        if [[ -n "$stb_target" && -n "$stb_cmd" ]]; then
-            target_agent=$(echo "$stb_target" | tr '[:upper:]' '[:lower:]')
-            if [[ -n "$stb_args" ]]; then
-                raw_command="$stb_cmd $stb_args"
-            else
-                raw_command="$stb_cmd"
-            fi
-            log "✓ Layer 0 (STB): target=$target_agent, command=$raw_command"
-        fi
-    fi
-fi
-
-# ========== LAYER 1: Explicit HANDOFF Detection ==========
-# Only run if Layer 0 didn't find a valid handoff
-if [[ -z "$target_agent" || -z "$raw_command" ]]; then
-    # Extract the handoff line if it exists
-    handoff_line=$(echo "$pane_output" | grep -E '🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO' | tail -1)
-
-    if [[ -n "$handoff_line" ]]; then
-        log "Found HANDOFF line: $handoff_line"
-
-        # Pattern 1: HANDOFF with story ID (e.g., 🎯 HANDOFF TO dev: *review 5.3)
-        if [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
-            target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-            raw_command="${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
-            log "Matched Pattern 1: HANDOFF with story ID"
-
-        # Pattern 0: HANDOFF without story ID (e.g., 🎯 HANDOFF TO sm: *draft)
-        elif [[ "$handoff_line" =~ 🎯[[:space:]]*\*?HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+) ]]; then
-            target_agent=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-            raw_command="${BASH_REMATCH[2]}"
-            log "Matched Pattern 0: HANDOFF without story ID"
-        fi
-    fi
-fi
-
-# ========== LAYER 2: Implicit Command Detection ==========
-# Pattern 6: Implicit command detection - check last 10 lines for command patterns
-# This catches cases where agent outputs command without explicit "HANDOFF TO" marker
-# Note: We check last 10 lines because Claude Code UI may add separator lines after the command
-# IMPORTANT: Use line-by-line matching because $ in bash regex matches end of STRING, not end of LINE
-
-# Initialize last_10_lines to empty (will be set if conditions are met)
-last_10_lines=""
-
-if [[ -z "$target_agent" || -z "$raw_command" ]]; then
-    log "No explicit HANDOFF found, checking last 10 lines for implicit commands..."
-
-    # Pre-condition: Skip implicit detection if output is too small (likely just menu)
-    # Agent completing real work typically produces >2000 bytes
-    if [[ ${#pane_output} -lt 2000 ]]; then
-        log "Output too small (${#pane_output} bytes < 2000), likely just menu - skipping implicit detection"
-    else
-        # Extract last 10 lines from pane output, then filter out menu/help lines
-        last_10_lines_raw=$(echo "$pane_output" | tail -10)
-
-        # Filter out lines that are part of help menu or examples
-        # These patterns indicate help/menu content, not actual output
-        last_10_lines=$(echo "$last_10_lines_raw" | grep -v -E \
-            -e '请输入命令编号' \
-            -e '请输入编号' \
-            -e '请输入命令' \
-            -e '可用命令' \
-            -e '以下是我可以执行的命令' \
-            -e '如 \*[a-z]' \
-            -e '（如 ' \
-            -e '例如' \
-            -e '\{story_id\}' \
-            -e '\{template\}' \
-            -e '\{topic\}' \
-            -e '\{proposal_path\}' \
-            -e '\{checklist\}' \
-            -e '^\[[0-9]+\]' \
-            -e '^[[:space:]]*---[[:space:]]*$' \
-            -e '请选择需要执行的命令' \
-            -e '来开始工作' \
-            -e '来开始' \
-            -e '来继续' \
-            -e '配置已加载' \
-            -e '项目模式' \
-            2>/dev/null || echo "")
-
-        log "Filtered last 10 lines (removed menu items): $last_10_lines"
-
-        # If all lines were filtered out, skip implicit detection
-        if [[ -z "${last_10_lines// /}" ]]; then
-            log "All lines filtered out (only menu content) - skipping implicit detection"
-        fi
-    fi
-fi
-
-# Only proceed with implicit pattern matching if we have valid filtered content
-# This check ensures we don't match on empty/menu-only content
-if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ -n "${last_10_lines// /}" ]] && [[ ${#pane_output} -ge 2000 ]]; then
-
-    # Function to map command + current_agent → target_agent
-    get_target_from_command() {
-        local cmd="$1"
-        local current="$2"
-
-        case "$current" in
-            sm)
-                case "$cmd" in
-                    review) echo "architect" ;;
-                    develop-story) echo "dev" ;;
-                    test-design) echo "qa" ;;
-                    *) echo "" ;;
-                esac
-                ;;
-            architect)
-                case "$cmd" in
-                    develop-story) echo "dev" ;;
-                    test-design) echo "qa" ;;
-                    revise-story|revise) echo "sm" ;;
-                    review-escalation) echo "architect" ;;
-                    *) echo "" ;;
-                esac
-                ;;
-            dev)
-                case "$cmd" in
-                    review) echo "qa" ;;
-                    review-escalation) echo "architect" ;;
-                    apply-qa-fixes) echo "qa" ;;
-                    *) echo "" ;;
-                esac
-                ;;
-            qa)
-                case "$cmd" in
-                    apply-qa-fixes) echo "dev" ;;
-                    develop-story) echo "dev" ;;
-                    review) echo "architect" ;;
-                    review-escalation) echo "architect" ;;
-                    test-design) echo "qa" ;;
-                    draft) echo "sm" ;;
-                    *) echo "" ;;
-                esac
-                ;;
-            *)
-                echo ""
-                ;;
-        esac
-    }
-
-    # Pattern A: Command WITH story ID (*review 5.3) - non-anchored, works on multi-line
-    if [[ "$last_10_lines" =~ \*([a-z0-9-]+)[[:space:]]+([0-9]+\.[0-9]+) ]]; then
-        detected_command="${BASH_REMATCH[1]}"
-        detected_story_id="${BASH_REMATCH[2]}"
-
-        log "Detected implicit command with story ID: *$detected_command $detected_story_id"
-
-        # Get target agent based on command + current agent
-        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-        if [[ -n "$implicit_target" ]]; then
-            target_agent="$implicit_target"
-            raw_command="${detected_command} ${detected_story_id}"
-            log "✓ Matched Pattern A: Implicit command with story ID → $implicit_target"
-        else
-            log "Command '$detected_command' from agent '$current_agent' has no known target"
-        fi
-
-    # Pattern C: NEXT STEP format (🎯 NEXT STEP: ... *command)
-    # Used to match QA completion prompt format
-    elif [[ "$last_10_lines" =~ 🎯[[:space:]]*NEXT[[:space:]]+STEP:.*\*([a-z0-9-]+) ]]; then
-        detected_command="${BASH_REMATCH[1]}"
-
-        log "Detected NEXT STEP format: *$detected_command"
-
-        # Get target agent based on command + current agent
-        implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-        if [[ -n "$implicit_target" ]]; then
-            target_agent="$implicit_target"
-            raw_command="$detected_command"
-            log "✓ Matched Pattern C: NEXT STEP format → $implicit_target"
-        else
-            log "Command '$detected_command' from agent '$current_agent' has no known target"
-        fi
-
-    else
-        # ========== LINE-BY-LINE MATCHING ==========
-        # For patterns that need end-of-line anchoring, we must iterate line by line
-        # because bash regex $ matches end of STRING, not end of LINE
-        log "Checking line-by-line for plain command patterns..."
-
-        # Use reverse order to get the most recent command first
-        while IFS= read -r line; do
-            # Skip empty lines and lines with only whitespace
-            [[ -z "${line// /}" ]] && continue
-
-            # Skip Claude Code UI elements (spinner, prompt lines, etc.)
-            [[ "$line" =~ ^[·✽✳●○◐◑◒◓▸▹►▻] ]] && continue
-            [[ "$line" =~ ^[─━═┈┉┄┅] ]] && continue
-            [[ "$line" =~ "INSERT" ]] && continue
-            [[ "$line" =~ "bypass permissions" ]] && continue
-            [[ "$line" =~ "esc to interrupt" ]] && continue
-            [[ "$line" =~ "running stop hooks" ]] && continue
-
-            # Pattern D: Plain command with story ID (review 3.3)
-            # Must be on its own line, with optional leading/trailing whitespace
-            if [[ "$line" =~ ^[[:space:]]*(draft|review|develop-story|revise-story|revise|test-design|apply-qa-fixes)[[:space:]]+([0-9]+\.[0-9]+)[[:space:]]*$ ]]; then
-                detected_command="${BASH_REMATCH[1]}"
-                detected_story_id="${BASH_REMATCH[2]}"
-
-                log "Detected plain command with story ID: $detected_command $detected_story_id"
-
-                # Get target agent based on command + current agent
-                implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-                if [[ -n "$implicit_target" ]]; then
-                    target_agent="$implicit_target"
-                    raw_command="${detected_command} ${detected_story_id}"
-                    log "✓ Matched Pattern D: Plain command with story ID → $implicit_target"
-                    break
-                else
-                    log "Command '$detected_command' from agent '$current_agent' has no known target"
-                fi
-
-            # Pattern E: Plain command without story ID (draft, review)
-            elif [[ "$line" =~ ^[[:space:]]*(draft|review|develop-story|revise-story|revise|test-design|apply-qa-fixes)[[:space:]]*$ ]]; then
-                detected_command="${BASH_REMATCH[1]}"
-
-                log "Detected plain command without story ID: $detected_command"
-
-                # Get target agent based on command + current agent
-                implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-                if [[ -n "$implicit_target" ]]; then
-                    target_agent="$implicit_target"
-                    raw_command="$detected_command"
-                    log "✓ Matched Pattern E: Plain command without story ID → $implicit_target"
-                    break
-                else
-                    log "Command '$detected_command' from agent '$current_agent' has no known target"
-                fi
-
-            # Pattern B: Command WITHOUT story ID with * prefix (*draft)
-            elif [[ "$line" =~ ^[[:space:]]*\*([a-z0-9-]+)[[:space:]]*$ ]]; then
-                detected_command="${BASH_REMATCH[1]}"
-
-                log "Detected *command without story ID: *$detected_command"
-
-                # Get target agent based on command + current agent
-                implicit_target=$(get_target_from_command "$detected_command" "$current_agent")
-
-                if [[ -n "$implicit_target" ]]; then
-                    target_agent="$implicit_target"
-                    raw_command="$detected_command"
-                    log "✓ Matched Pattern B: *command without story ID → $implicit_target"
-                    break
-                else
-                    log "Command '$detected_command' from agent '$current_agent' has no known target"
-                fi
-            fi
-        done <<< "$last_10_lines"
-
-        if [[ -z "$target_agent" || -z "$raw_command" ]]; then
-            log "No implicit command pattern found in last 10 lines"
-        fi
-    fi
-fi
-
-# ========== LAYER 3: Dev Default Fallback ==========
-# When Dev completes work but no explicit HANDOFF detected,
-# default to QA review (the only logical next step after Dev)
-#
-# IMPORTANT: Skip if agent just loaded (detected by menu prompt + empty input line)
-# This prevents false handoff when dev is reloaded by background process
-
-# Check if agent just loaded (menu prompt present + empty input line)
-is_just_menu=false
-if echo "$pane_output" | grep -qE '请输入命令|Please enter command|开始工作' 2>/dev/null; then
-    # Check if input line is empty ("> " with nothing after, allowing leading spaces)
-    if echo "$pane_output" | tail -20 | grep -qE '^[[:space:]]*>[[:space:]]*$' 2>/dev/null; then
-        is_just_menu=true
-        log "Layer 3: Detected menu prompt with empty input - agent just loaded, skipping fallback"
-    fi
-fi
-
-if [[ -z "$target_agent" || -z "$raw_command" ]] && [[ "$current_agent" == "dev" ]] && [[ "$is_just_menu" == "false" ]]; then
-    log "Layer 3: Dev agent without explicit HANDOFF, applying default fallback to QA"
-
-    # Try to extract story ID from pane output
-    fallback_story_id=""
-
-    # Pattern 1: Story X.Y format
-    if [[ "$pane_output" =~ Story[[:space:]]+([0-9]+\.[0-9]+) ]]; then
-        fallback_story_id="${BASH_REMATCH[1]}"
-        log "Found story ID via 'Story X.Y' pattern: $fallback_story_id"
-    # Pattern 2: story_id: X.Y format
-    elif [[ "$pane_output" =~ story_id:[[:space:]]*([0-9]+\.[0-9]+) ]]; then
-        fallback_story_id="${BASH_REMATCH[1]}"
-        log "Found story ID via 'story_id:' pattern: $fallback_story_id"
-    # Pattern 3: Standalone X.Y at word boundary (last occurrence)
-    # IMPORTANT: Filter out version numbers - any "EnglishWord X.Y" pattern is likely a version
-    # This catches: "Opus 4.5", "Claude 4.5", "Sonnet 3.5", "GPT 4.0", "v4.5", etc.
-    else
-        # Remove any pattern where an English word is followed by X.Y (version number pattern)
-        # Pattern: [A-Za-z]+ followed by optional space and digits.digits
-        filtered_output=$(echo "$pane_output" | sed -E 's/[A-Za-z]+[[:space:]]*[0-9]+\.[0-9]+//g')
-        all_ids=$(echo "$filtered_output" | grep -oE '\b[0-9]+\.[0-9]+\b' | tail -1)
-        if [[ -n "$all_ids" ]]; then
-            fallback_story_id="$all_ids"
-            log "Found story ID via standalone pattern: $fallback_story_id"
-        fi
-    fi
-
-    # Fallback: Use last recorded story ID if extraction failed
-    if [[ -z "$fallback_story_id" ]]; then
-        fallback_story_id=$(get_last_story_id)
-        if [[ -n "$fallback_story_id" ]]; then
-            log "Using last recorded story ID: $fallback_story_id"
-        fi
-    fi
-
-    target_agent="qa"
-    if [[ -n "$fallback_story_id" ]]; then
-        raw_command="review $fallback_story_id"
-    else
-        raw_command="review"
-        log "WARNING: No story ID found (neither in output nor in record)"
-    fi
-    log "✓ Layer 3 (Dev Fallback): target=qa, command=$raw_command"
-fi
-
-if [[ -n "$target_agent" && -n "$raw_command" ]]; then
-
-    # Normalize target_agent to lowercase (defensive, already done in patterns)
-    target_agent=$(echo "$target_agent" | tr '[:upper:]' '[:lower:]')
-
-    # Clean up command: remove ALL whitespace/newlines, ensure it starts with *
-    # Remove newlines, carriage returns, and extra spaces
-    raw_command=$(echo "$raw_command" | tr -d '\n\r' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-
-    # Remove Unicode symbols and non-ASCII characters, keep only alphanumeric, dots, spaces, asterisks, and hyphens
-    raw_command=$(echo "$raw_command" | LC_ALL=C sed 's/[^a-zA-Z0-9. *-]//g')
-
-    # Clean up any extra spaces that might have been introduced
-    raw_command=$(echo "$raw_command" | tr -s ' ' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-
-    if [[ "$raw_command" != \** ]]; then
-        command="*${raw_command}"
-    else
-        command="$raw_command"
-    fi
-
-    log "✓ HANDOFF detected: $current_agent → $target_agent"
-    log "  Raw command: $raw_command"
-    log "  Final command: $command"
-
-    # Extract and save story ID for future reference
-    if [[ "$raw_command" =~ ([0-9]+\.[0-9]+) ]]; then
-        detected_story_for_record="${BASH_REMATCH[1]}"
-        save_current_story_id "$detected_story_for_record"
-    fi
-
-    # Find target window
-    target_window=$(get_agent_window "$target_agent")
-
-    if [ -z "$target_window" ]; then
-        log "ERROR: Unknown target agent '$target_agent' (supported: architect, sm, dev, qa)"
-        echo "❌ Unknown agent: $target_agent (supported: architect, sm, dev, qa)" >&2
-        exit 0
-    fi
-
-    # Prevent sending to same window
-    if [ "$target_window" = "$current_window" ]; then
-        log "WARNING: Target window is same as current window, skipping"
-        exit 0
-    fi
-
-    # ========== Create lock to prevent duplicate triggers ==========
-    # This prevents the /clear command from triggering another HANDOFF detection
-    log "Creating lock file: $LOCK_FILE"
-    date +%s > "$LOCK_FILE"
-
-    # ========== STEP 1: Send command to target window (immediate) ==========
-    log "Step 1: Sending command to target agent ($target_agent) in window $target_window"
-    log "  Command: $command"
-
-    # Send command text first
-    if tmux send-keys -t "$SESSION_NAME:$target_window" "$command" 2>/dev/null; then
-        # Wait for Claude Code input box to stabilize (prevent race condition)
-        sleep 1
-
-        # Send Enter key to execute command
-        if tmux send-keys -t "$SESSION_NAME:$target_window" "Enter" 2>/dev/null; then
-            log "✓ SUCCESS: Command sent to $target_agent"
-            echo "✅ HANDOFF: $current_agent → $target_agent" >&2
-        else
-            log "ERROR: Failed to send Enter key"
-            echo "❌ Failed to send Enter" >&2
+AGENT="${AGENT_ID:-unknown}"
+WINDOW=$(get_window "$AGENT")
+
+[[ -z "$WINDOW" ]] && exit 0
+tmux has-session -t "$SESSION_NAME" 2>/dev/null || exit 0
+
+log "=== $AGENT (win $WINDOW) ==="
+
+# ============================================
+# Atomic Lock (mkdir is atomic)
+# ============================================
+LOCK="/tmp/orchestrix-${SESSION_NAME}-${WINDOW}.lock"
+
+if ! mkdir "$LOCK" 2>/dev/null; then
+    # Lock exists - check if stale
+    if [[ -f "$LOCK/ts" ]]; then
+        ts=$(cat "$LOCK/ts" 2>/dev/null || echo 0)
+        now=$(date +%s)
+        age=$((now - ts))
+        if [[ $age -lt $LOCK_TIMEOUT ]]; then
+            log "SKIP: locked (${age}s ago)"
             exit 0
         fi
-    else
-        log "ERROR: Failed to send command text"
-        echo "❌ Failed to send command" >&2
-        exit 0
+        log "Stale lock (${age}s), cleaning"
     fi
+    rm -rf "$LOCK" 2>/dev/null
+    mkdir "$LOCK" 2>/dev/null || { log "SKIP: lock race"; exit 0; }
+fi
+date +%s > "$LOCK/ts"
+log "Lock acquired"
 
-    # ========== STEP 2: Launch background process to clear & reload current agent ==========
-    log "Step 2: Launching background process to clear and reload current agent"
+# ============================================
+# Capture & Parse HANDOFF
+# ============================================
+OUTPUT=$(tmux capture-pane -t "$SESSION_NAME:$WINDOW" -p -S -200 2>/dev/null)
+[[ -z "$OUTPUT" ]] && { log "No output"; rm -rf "$LOCK"; exit 0; }
 
-    # Get agent command before launching background process
-    current_agent_cmd=$(get_agent_command "$current_agent")
+TARGET=""
+CMD=""
 
-    # Launch background process (will run independently after hook exits)
-    (
-        # Log to the same file
-        log() {
-            echo "[$(date '+%Y-%m-%d %H:%M:%S')] [BG] $*" >> "$LOG_FILE"
-        }
-
-        log "Background process started for $current_agent (window $current_window)"
-
-        # Wait for hook to exit and agent to be ready
-        log "Waiting 2s for hook to exit..."
-        sleep 2
-
-        # Clear current agent context
-        log "Sending /clear to $current_agent..."
-        if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null; then
-            sleep 1  # Wait for input to stabilize before Enter
-            if tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
-                log "✓ Clear command sent"
-            else
-                log "ERROR: Failed to send Enter for /clear"
-            fi
-        else
-            log "ERROR: Failed to send /clear"
-        fi
-
-        # Wait for clear to complete
-        log "Waiting 5s for clear to complete..."
-        sleep 5
-
-        # Reload agent
-        if [ -n "$current_agent_cmd" ]; then
-            log "Reloading $current_agent with command: $current_agent_cmd"
-            if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" 2>/dev/null; then
-                sleep 1  # Wait for input to stabilize before Enter
-                if tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
-                    log "✓ Reload command sent"
-                else
-                    log "ERROR: Failed to send Enter for reload"
-                fi
-            else
-                log "ERROR: Failed to send reload command"
-            fi
-
-            log "Waiting 15s for agent to load..."
-            sleep 15
-            log "✓ Agent reload complete"
-        else
-            log "WARNING: No reload command found for $current_agent"
-        fi
-
-        # Clean up lock file
-        if [[ -f "$LOCK_FILE" ]]; then
-            rm -f "$LOCK_FILE"
-            log "✓ Lock file removed: $LOCK_FILE"
-        fi
-
-        log "Background process complete"
-    ) >> "$LOG_FILE" 2>&1 &  # Run in background, redirect to log file
-
-    bg_pid=$!
-    log "✓ Background process launched (PID: $bg_pid) - will clear & reload after hook exits"
-else
-    log "No HANDOFF pattern found in pane output"
+# Method 1: STB (Structured Termination Block)
+if echo "$OUTPUT" | grep -q '---ORCHESTRIX-HANDOFF-BEGIN---'; then
+    STB=$(echo "$OUTPUT" | awk '/---ORCHESTRIX-HANDOFF-BEGIN---/{f=1;b=""} f{b=b$0"\n"} /---ORCHESTRIX-HANDOFF-END---/{if(f)l=b;f=0} END{printf "%s",l}')
+    TARGET=$(echo "$STB" | grep -E '^[[:space:]]*target:' | sed 's/.*://' | tr -d ' \t' | tr '[:upper:]' '[:lower:]')
+    C=$(echo "$STB" | grep -E '^[[:space:]]*command:' | sed 's/.*://' | tr -d ' \t')
+    A=$(echo "$STB" | grep -E '^[[:space:]]*args:' | sed 's/.*args://' | sed 's/^[ \t]*//')
+    [[ -n "$TARGET" && -n "$C" ]] && CMD="*$C${A:+ $A}"
 fi
 
-log "========== Hook complete =========="
+# Method 2: Emoji pattern
+if [[ -z "$TARGET" ]]; then
+    LINE=$(echo "$OUTPUT" | grep -E '🎯.*HANDOFF.*TO' | tail -1)
+    if [[ "$LINE" =~ HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)([[:space:]]+([0-9]+\.[0-9]+))? ]]; then
+        TARGET=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+        CMD="*${BASH_REMATCH[2]}${BASH_REMATCH[4]:+ ${BASH_REMATCH[4]}}"
+    fi
+fi
+
+# No HANDOFF
+if [[ -z "$TARGET" || -z "$CMD" ]]; then
+    log "No HANDOFF"
+    rm -rf "$LOCK"
+    exit 0
+fi
+
+# Validate target
+TARGET_WIN=$(get_window "$TARGET")
+[[ -z "$TARGET_WIN" ]] && { log "Unknown target: $TARGET"; rm -rf "$LOCK"; exit 0; }
+[[ "$TARGET_WIN" == "$WINDOW" ]] && { log "Same window"; rm -rf "$LOCK"; exit 0; }
+
+log "HANDOFF: $AGENT -> $TARGET ($CMD)"
+
+# ============================================
+# Send to Target
+# ============================================
+if tmux send-keys -t "$SESSION_NAME:$TARGET_WIN" "$CMD" 2>/dev/null; then
+    sleep 0.5
+    tmux send-keys -t "$SESSION_NAME:$TARGET_WIN" Enter
+    log "Sent to $TARGET"
+else
+    log "ERROR: send failed"
+    rm -rf "$LOCK"
+    exit 0
+fi
+
+# ============================================
+# Background: Clear & Reload Current Agent
+# ============================================
+RELOAD_CMD=$(get_agent_command "$AGENT")
+
+(
+    log "[BG] Start"
+    sleep 2
+
+    # Clear
+    tmux send-keys -t "$SESSION_NAME:$WINDOW" "/clear" 2>/dev/null
+    sleep 0.5
+    tmux send-keys -t "$SESSION_NAME:$WINDOW" Enter
+    log "[BG] /clear sent"
+
+    sleep 5
+
+    # Reload
+    if [[ -n "$RELOAD_CMD" ]]; then
+        tmux send-keys -t "$SESSION_NAME:$WINDOW" "$RELOAD_CMD" 2>/dev/null
+        sleep 0.5
+        tmux send-keys -t "$SESSION_NAME:$WINDOW" Enter
+        log "[BG] Reload: $RELOAD_CMD"
+        sleep 15
+    fi
+
+    # Release lock
+    rm -rf "$LOCK"
+    log "[BG] Done, lock released"
+) >> "$LOG_FILE" 2>&1 &
+
+log "BG started (PID $!)"
 exit 0
