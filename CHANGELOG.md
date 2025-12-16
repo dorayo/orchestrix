@@ -1,3 +1,10 @@
+## [14.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.0...v14.0.1) (2025-12-16)
+
+
+### Bug Fixes
+
+* **handoff:** enforce mandatory fallback file creation in Step 0 ([102bd9f](https://github.com/dorayo/ORCHESTRIX/commit/102bd9fcdc978ca1442954f1b358616b04b8647d))
+
 # [14.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.9.0...v14.0.0) (2025-12-16)
 
 
