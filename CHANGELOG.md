@@ -1,3 +1,42 @@
+# [14.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.9.0...v14.0.0) (2025-12-16)
+
+
+### Bug Fixes
+
+* **story:** ensure Dev loads UI/UX spec when referenced in story ([34a97ec](https://github.com/dorayo/ORCHESTRIX/commit/34a97ecbf316a1295efa9f37a9517e034a57fed0))
+
+
+### Code Refactoring
+
+* **handoff:** switch from skill-based to pure hook-based handoff ([6420f31](https://github.com/dorayo/ORCHESTRIX/commit/6420f31f424feb10276292a1efc2a7101d3c198c))
+
+
+### Features
+
+* **handoff:** add fallback recovery for context compression scenarios ([edf13ae](https://github.com/dorayo/ORCHESTRIX/commit/edf13aefb773337d3ccca23b518ec11037ae244c))
+
+
+### BREAKING CHANGES
+
+* **handoff:** Remove handoff skill, use hook-only mechanism
+
+- Remove handoff skill (common/skills/handoff/SKILL.md)
+- Rewrite hook script to be environment-variable independent
+- Hook now scans all tmux windows for HANDOFF messages
+- Add hash-based deduplication to prevent re-processing
+- Update all task files to remove skill invocation steps
+- Update workflow rules to emphasize HANDOFF as last line output
+- Remove skill copy logic from installer
+
+Design improvements:
+- No dependency on AGENT_ID environment variable
+- Auto-detect orchestrix session from tmux
+- More robust error handling and logging
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 # [13.9.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.3...v13.9.0) (2025-12-16)
 
 
