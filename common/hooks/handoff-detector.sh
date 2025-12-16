@@ -3,8 +3,9 @@
 # Triggers on Claude Code Stop event, detects HANDOFF and routes to target agent
 #
 # Design principles:
-# - mkdir atomic lock prevents race conditions
-# - Lock held through entire cycle (HANDOFF → clear → reload)
+# - NO dependency on environment variables (robust)
+# - Scans ALL tmux windows to find HANDOFF message
+# - Uses hash-based deduplication to prevent re-processing
 # - Background process handles cleanup and lock release
 
 set +e  # Don't exit on errors
@@ -12,12 +13,22 @@ set +e  # Don't exit on errors
 # ============================================
 # Configuration
 # ============================================
-SESSION_NAME="${ORCHESTRIX_SESSION:-orchestrix}"
-LOG_FILE="${ORCHESTRIX_LOG:-/tmp/orchestrix-${SESSION_NAME}-handoff.log}"
-LOCK_TIMEOUT=60  # seconds before considering lock stale
+# Try to get session from env, otherwise scan for orchestrix sessions
+SESSION_NAME="${ORCHESTRIX_SESSION:-}"
+LOG_FILE="/tmp/orchestrix-handoff.log"
 
 # Agent mappings
-get_window() {
+get_agent_name() {
+    case "$1" in
+        0) echo "architect" ;;
+        1) echo "sm" ;;
+        2) echo "dev" ;;
+        3) echo "qa" ;;
+        *) echo "" ;;
+    esac
+}
+
+get_window_num() {
     case "$1" in
         architect) echo "0" ;;
         sm) echo "1" ;;
@@ -37,32 +48,113 @@ get_agent_command() {
     esac
 }
 
-log() { echo "[$(date '+%H:%M:%S')] $*" >> "$LOG_FILE"; }
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
 
 # ============================================
-# Initialize
+# Find Orchestrix Session
 # ============================================
-AGENT="${AGENT_ID:-unknown}"
-WINDOW=$(get_window "$AGENT")
+log "========== Hook triggered =========="
 
-[[ -z "$WINDOW" ]] && exit 0
-tmux has-session -t "$SESSION_NAME" 2>/dev/null || exit 0
+# If SESSION_NAME not set, find orchestrix session
+if [[ -z "$SESSION_NAME" ]]; then
+    SESSION_NAME=$(tmux list-sessions -F '#{session_name}' 2>/dev/null | grep -E '^orchestrix' | head -1)
+fi
 
-log "=== $AGENT (win $WINDOW) ==="
+if [[ -z "$SESSION_NAME" ]]; then
+    log "EXIT: No orchestrix session found"
+    exit 0
+fi
+
+if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    log "EXIT: Session '$SESSION_NAME' not found"
+    exit 0
+fi
+
+# Update log file path with session name
+LOG_FILE="/tmp/orchestrix-${SESSION_NAME}-handoff.log"
+log "Session: $SESSION_NAME"
 
 # ============================================
-# Atomic Lock (mkdir is atomic)
+# Scan All Windows for HANDOFF
 # ============================================
-LOCK="/tmp/orchestrix-${SESSION_NAME}-${WINDOW}.lock"
+PROCESSED_FILE="/tmp/orchestrix-${SESSION_NAME}-processed.txt"
+touch "$PROCESSED_FILE"
+
+SOURCE_WIN=""
+TARGET=""
+CMD=""
+HANDOFF_HASH=""
+
+for win in 0 1 2 3; do
+    OUTPUT=$(tmux capture-pane -t "$SESSION_NAME:$win" -p -S -100 2>/dev/null)
+    [[ -z "$OUTPUT" ]] && continue
+
+    # Look for HANDOFF pattern
+    LINE=$(echo "$OUTPUT" | grep -E '🎯.*HANDOFF.*TO' | tail -1)
+    [[ -z "$LINE" ]] && continue
+
+    # Calculate hash to avoid re-processing
+    HASH=$(echo "$LINE" | md5 2>/dev/null || echo "$LINE" | md5sum 2>/dev/null | cut -d' ' -f1)
+
+    # Skip if already processed
+    if grep -q "$HASH" "$PROCESSED_FILE" 2>/dev/null; then
+        continue
+    fi
+
+    # Parse HANDOFF message
+    if [[ "$LINE" =~ HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)([[:space:]]+([0-9]+\.[0-9]+))? ]]; then
+        SOURCE_WIN=$win
+        TARGET=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+        CMD="*${BASH_REMATCH[2]}${BASH_REMATCH[4]:+ ${BASH_REMATCH[4]}}"
+        HANDOFF_HASH=$HASH
+        log "Found HANDOFF in window $win: $LINE"
+        break
+    fi
+done
+
+# No HANDOFF found
+if [[ -z "$TARGET" || -z "$CMD" ]]; then
+    log "No new HANDOFF found"
+    exit 0
+fi
+
+# Mark as processed
+echo "$HANDOFF_HASH" >> "$PROCESSED_FILE"
+
+# Keep processed file small (last 100 entries)
+tail -100 "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp" 2>/dev/null && mv "$PROCESSED_FILE.tmp" "$PROCESSED_FILE"
+
+# Get source agent name
+SOURCE_AGENT=$(get_agent_name "$SOURCE_WIN")
+TARGET_WIN=$(get_window_num "$TARGET")
+
+# Validate
+if [[ -z "$TARGET_WIN" ]]; then
+    log "ERROR: Unknown target agent '$TARGET'"
+    exit 0
+fi
+
+if [[ "$TARGET_WIN" == "$SOURCE_WIN" ]]; then
+    log "ERROR: Source and target are same window"
+    exit 0
+fi
+
+log "HANDOFF: $SOURCE_AGENT (win $SOURCE_WIN) -> $TARGET (win $TARGET_WIN)"
+log "Command: $CMD"
+
+# ============================================
+# Atomic Lock
+# ============================================
+LOCK="/tmp/orchestrix-${SESSION_NAME}-${SOURCE_WIN}.lock"
+LOCK_TIMEOUT=60
 
 if ! mkdir "$LOCK" 2>/dev/null; then
-    # Lock exists - check if stale
     if [[ -f "$LOCK/ts" ]]; then
         ts=$(cat "$LOCK/ts" 2>/dev/null || echo 0)
         now=$(date +%s)
         age=$((now - ts))
         if [[ $age -lt $LOCK_TIMEOUT ]]; then
-            log "SKIP: locked (${age}s ago)"
+            log "SKIP: Window $SOURCE_WIN locked (${age}s ago)"
             exit 0
         fi
         log "Stale lock (${age}s), cleaning"
@@ -71,92 +163,53 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     mkdir "$LOCK" 2>/dev/null || { log "SKIP: lock race"; exit 0; }
 fi
 date +%s > "$LOCK/ts"
-log "Lock acquired"
-
-# ============================================
-# Capture & Parse HANDOFF
-# ============================================
-OUTPUT=$(tmux capture-pane -t "$SESSION_NAME:$WINDOW" -p -S -200 2>/dev/null)
-[[ -z "$OUTPUT" ]] && { log "No output"; rm -rf "$LOCK"; exit 0; }
-
-TARGET=""
-CMD=""
-
-# Method 1: STB (Structured Termination Block)
-if echo "$OUTPUT" | grep -q '---ORCHESTRIX-HANDOFF-BEGIN---'; then
-    STB=$(echo "$OUTPUT" | awk '/---ORCHESTRIX-HANDOFF-BEGIN---/{f=1;b=""} f{b=b$0"\n"} /---ORCHESTRIX-HANDOFF-END---/{if(f)l=b;f=0} END{printf "%s",l}')
-    TARGET=$(echo "$STB" | grep -E '^[[:space:]]*target:' | sed 's/.*://' | tr -d ' \t' | tr '[:upper:]' '[:lower:]')
-    C=$(echo "$STB" | grep -E '^[[:space:]]*command:' | sed 's/.*://' | tr -d ' \t')
-    A=$(echo "$STB" | grep -E '^[[:space:]]*args:' | sed 's/.*args://' | sed 's/^[ \t]*//')
-    [[ -n "$TARGET" && -n "$C" ]] && CMD="*$C${A:+ $A}"
-fi
-
-# Method 2: Emoji pattern
-if [[ -z "$TARGET" ]]; then
-    LINE=$(echo "$OUTPUT" | grep -E '🎯.*HANDOFF.*TO' | tail -1)
-    if [[ "$LINE" =~ HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)([[:space:]]+([0-9]+\.[0-9]+))? ]]; then
-        TARGET=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-        CMD="*${BASH_REMATCH[2]}${BASH_REMATCH[4]:+ ${BASH_REMATCH[4]}}"
-    fi
-fi
-
-# No HANDOFF
-if [[ -z "$TARGET" || -z "$CMD" ]]; then
-    log "No HANDOFF"
-    rm -rf "$LOCK"
-    exit 0
-fi
-
-# Validate target
-TARGET_WIN=$(get_window "$TARGET")
-[[ -z "$TARGET_WIN" ]] && { log "Unknown target: $TARGET"; rm -rf "$LOCK"; exit 0; }
-[[ "$TARGET_WIN" == "$WINDOW" ]] && { log "Same window"; rm -rf "$LOCK"; exit 0; }
-
-log "HANDOFF: $AGENT -> $TARGET ($CMD)"
 
 # ============================================
 # Send to Target
 # ============================================
+log "Sending '$CMD' to $TARGET (window $TARGET_WIN)..."
+
 if tmux send-keys -t "$SESSION_NAME:$TARGET_WIN" "$CMD" 2>/dev/null; then
     sleep 0.5
     tmux send-keys -t "$SESSION_NAME:$TARGET_WIN" Enter
-    log "Sent to $TARGET"
+    log "SUCCESS: Command sent to $TARGET"
 else
-    log "ERROR: send failed"
+    log "ERROR: Failed to send command"
     rm -rf "$LOCK"
     exit 0
 fi
 
 # ============================================
-# Background: Clear & Reload Current Agent
+# Background: Clear & Reload Source Agent
 # ============================================
-RELOAD_CMD=$(get_agent_command "$AGENT")
+RELOAD_CMD=$(get_agent_command "$SOURCE_AGENT")
 
 (
-    log "[BG] Start"
+    log "[BG] Starting cleanup for $SOURCE_AGENT (window $SOURCE_WIN)"
     sleep 2
 
     # Clear
-    tmux send-keys -t "$SESSION_NAME:$WINDOW" "/clear" 2>/dev/null
+    tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" "/clear" 2>/dev/null
     sleep 0.5
-    tmux send-keys -t "$SESSION_NAME:$WINDOW" Enter
-    log "[BG] /clear sent"
+    tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" Enter
+    log "[BG] /clear sent to $SOURCE_AGENT"
 
     sleep 5
 
     # Reload
     if [[ -n "$RELOAD_CMD" ]]; then
-        tmux send-keys -t "$SESSION_NAME:$WINDOW" "$RELOAD_CMD" 2>/dev/null
+        tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" "$RELOAD_CMD" 2>/dev/null
         sleep 0.5
-        tmux send-keys -t "$SESSION_NAME:$WINDOW" Enter
-        log "[BG] Reload: $RELOAD_CMD"
+        tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" Enter
+        log "[BG] Reload sent: $RELOAD_CMD"
         sleep 15
     fi
 
     # Release lock
     rm -rf "$LOCK"
-    log "[BG] Done, lock released"
+    log "[BG] Cleanup complete, lock released"
 ) >> "$LOG_FILE" 2>&1 &
 
-log "BG started (PID $!)"
+log "Background process started (PID $!)"
+log "========== Hook complete =========="
 exit 0

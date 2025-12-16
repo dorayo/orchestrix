@@ -450,15 +450,14 @@ This task will:
 - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
 - If failed: `commit_error`
 
-### 9.7 OUTPUT HANDOFF MESSAGE AND EXECUTE SKILL (REQUIRED)
+### 9.7 OUTPUT HANDOFF MESSAGE (REQUIRED)
 
 ---
 
 ### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
 
-**CRITICAL**: This step is NON-NEGOTIABLE. You MUST complete BOTH sub-steps:
-1. Output human-readable handoff message
-2. Execute the handoff skill
+**CRITICAL**: Output the HANDOFF message as the **LAST LINE** of your response.
+The hook script will automatically detect it and route to the target agent.
 
 ---
 
@@ -521,28 +520,7 @@ Gate: PASS | Tests: {pass_rate}%
 🎯 HANDOFF TO sm: *draft
 ```
 
----
-
-### Step 9.7.2: Execute Handoff Skill (MANDATORY - tmux Automation)
-
-**CRITICAL**: After outputting the message above, you MUST invoke the `handoff` skill.
-
-**USE the `handoff` skill** with parameters based on scenario:
-
-| Scenario | Target Agent | Command |
-|----------|--------------|---------|
-| A (Escalation) | architect | `*review-escalation {story_id}` |
-| B (Done + Commit OK) | sm | `*draft` |
-| C (Commit Failed) | qa | `*finalize-commit {story_id}` |
-| D (Issues Found) | dev | `*apply-qa-fixes {story_id}` |
-| E (Low Risk Done) | sm | `*draft` |
-
-The skill will automatically:
-1. Send the command to target agent's tmux window
-2. Clear your current context
-3. Reload your agent for the next task
-
-**STOP**: After skill execution completes, your response is complete. No additional output.
+**STOP**: The `🎯 HANDOFF TO` line must be your FINAL output. Hook handles the rest.
 
 ---
 

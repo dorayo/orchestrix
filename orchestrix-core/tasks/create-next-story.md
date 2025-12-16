@@ -636,13 +636,8 @@ checklists/gate-sm-story-completion-gate.md
 
 ### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
 
-**CRITICAL**: This step is NON-NEGOTIABLE. You MUST complete BOTH sub-steps:
-1. Output human-readable handoff message
-2. Execute the handoff skill
-
----
-
-### Step 10.1: Output Human-Readable Handoff Message
+**CRITICAL**: Output the HANDOFF message as the **LAST LINE** of your response.
+The hook script will automatically detect it and route to the target agent.
 
 Based on `next_action` from Step 8C, output ONE of the following:
 
@@ -676,23 +671,4 @@ Quality: {score}/10 | Test Design: {Standard | Comprehensive}
 🎯 HANDOFF TO qa: *test-design {epic}.{story}
 ```
 
----
-
-### Step 10.2: Execute Handoff Skill (MANDATORY - tmux Automation)
-
-**CRITICAL**: After outputting the message above, you MUST invoke the `handoff` skill.
-
-**USE the `handoff` skill** with parameters based on next_action:
-
-| next_action | Target Agent | Command |
-|-------------|--------------|---------|
-| handoff_to_architect | architect | `*review {epic}.{story}` |
-| handoff_to_dev | dev | `*develop-story {epic}.{story}` |
-| handoff_to_qa_test_design | qa | `*test-design {epic}.{story}` |
-
-The skill will automatically:
-1. Send the command to target agent's tmux window
-2. Clear your current context
-3. Reload your agent for the next task
-
-**STOP**: After skill execution completes, your response is complete. No additional output.
+**STOP**: The `🎯 HANDOFF TO` line must be your FINAL output. Hook handles the rest.
