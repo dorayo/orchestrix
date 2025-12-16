@@ -104,6 +104,35 @@ input:
 
 **DO NOT** directly read files like `docs/architecture/coding-standards.md` - use the utility.
 
+### 3.2.5 UI/UX Specification (Conditional - MANDATORY when referenced)
+
+**Check**: Look for "UI/UX Specification Reference" section in the loaded story file (from Step 3.1).
+
+**If UI/UX references exist** (section contains `📐 Reference File` or has a table of sections):
+
+1. **Extract the file path** from the story (typically `docs/front-end-spec.md`)
+2. **Read the entire file**: `docs/front-end-spec.md`
+3. **Extract relevant sections** based on the table in the story:
+   - For each row in the UI/UX reference table, locate and extract that section from front-end-spec.md
+   - Store as `ui_ux_context` containing the actual spec content
+
+**Example**:
+```yaml
+# If story has:
+# | Section | Why Relevant |
+# | Component Library | Form inputs needed |
+# | User Flows | Login flow reference |
+
+# Then extract from front-end-spec.md:
+ui_ux_context:
+  component_library: {extracted content}
+  user_flows: {extracted content}
+```
+
+**If UI/UX references NOT present**: Skip this step, set `ui_ux_context = null`
+
+**CRITICAL**: This step is NON-OPTIONAL when UI/UX references are present. Failure to load UI/UX specs when referenced will result in implementation that doesn't match design requirements.
+
 ### 3.3 QA Test Design (if present)
 
 **Search for test design file**:

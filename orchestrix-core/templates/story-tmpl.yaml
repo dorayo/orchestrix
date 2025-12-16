@@ -181,7 +181,11 @@ sections:
           - Animation/transition/feedback → Animation & Micro-interactions
           - Load time/render perf → Performance Considerations
 
+          **IMPORTANT**: Always include the file path header so Dev knows where to read from.
+
           Format:
+          **📐 Reference File**: `docs/front-end-spec.md`
+
           | Section | Why Relevant |
           |---------|--------------|
           | {Section Title} | {Brief reason for this story} |

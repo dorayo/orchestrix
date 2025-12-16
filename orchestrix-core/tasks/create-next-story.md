@@ -458,10 +458,13 @@ Story:
 - **Technical Constraints**: Story-specific constraints with doc references `[→ file.md#section]`
 - **UI/UX Specification Reference** (from Step 5.5, if `ui_ux_references` not empty):
   ```markdown
+  **📐 Reference File**: `docs/front-end-spec.md`
+
   | Section | Why Relevant |
   |---------|--------------|
   | {section} | {why_relevant} |
   ```
+  **IMPORTANT**: The file path header is mandatory - Dev agent must know where to read UI/UX specs.
   If `ui_ux_references` is empty or Step 5.5 was skipped: Omit this section entirely
 - **Accumulated Context**: Table format listing relevant resources from cumulative_context
   ```markdown
