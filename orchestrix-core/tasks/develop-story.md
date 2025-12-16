@@ -7,25 +7,48 @@ Example: `{root}/tasks/util-load-architecture-context.md` → `.orchestrix-core/
 
 ---
 
-## 0. Register Pending HANDOFF (Fallback Safety Net)
+## 0. ⚠️ MANDATORY: Register Pending HANDOFF (Fallback Safety Net)
 
-**Purpose**: Register handoff information BEFORE starting the task. This ensures the hook can recover the handoff even if context compression causes the agent to forget.
+> **CRITICAL**: This step MUST be executed FIRST before ANY other work. DO NOT SKIP.
+> Context compression during long tasks may cause you to forget the final HANDOFF.
+> This file is your safety net - without it, the workflow will break.
 
-Execute:
+### Step 0.1: Create the fallback file
+
+**Action**: Use the Write tool to create this file:
+
+**File path**: `{root}/runtime/pending-handoff.json`
+
+**Content** (copy exactly, replace `{story_id}` with actual value):
+```json
+{
+  "source_agent": "dev",
+  "target_agent": "qa",
+  "command": "*review {story_id}",
+  "story_id": "{story_id}",
+  "task_description": "Story {story_id} implementation",
+  "registered_at": "{current_ISO_timestamp}",
+  "status": "pending"
+}
 ```
-{root}/tasks/util-register-pending-handoff.md
+
+### Step 0.2: Verify file creation
+
+**Action**: Use the Read tool to verify the file exists and contains correct data.
+
+**Expected output after verification**:
+```
+[HANDOFF-REGISTERED] dev -> qa: *review {story_id}
 ```
 
-Input:
-```yaml
-source_agent: dev
-target_agent: qa
-command: "*review"
-story_id: "{story_id}"
-task_description: "Story {story_id} implementation"
-```
+### Step 0.3: Gate Check
 
-**Output**: `[HANDOFF-REGISTERED] dev -> qa: *review {story_id}`
+⛔ **HALT if**:
+- File was not created
+- File content is incorrect
+- Verification failed
+
+✅ **Continue only if** you see your own output: `[HANDOFF-REGISTERED] dev -> qa: *review {story_id}`
 
 ---
 
