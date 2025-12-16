@@ -387,6 +387,45 @@ next_status: Done | InProgress | Escalated
 next_action: "mark_story_complete" | "handoff_to_dev_fix" | etc.
 ```
 
+### 7.3 ⚠️ MANDATORY: Register Pending HANDOFF
+
+> **CRITICAL**: This step MUST be executed immediately after Gate Decision.
+> Context compression may cause you to forget the final HANDOFF message.
+> This fallback file ensures workflow continuity.
+
+**Determine HANDOFF target based on gate_result**:
+
+| gate_result | next_status | target_agent | command |
+|-------------|-------------|--------------|---------|
+| PASS | Done | sm | *draft |
+| FAIL/CONCERNS | InProgress | dev | *apply-qa-fixes {story_id} |
+| any | Escalated | architect | *review-escalation {story_id} |
+
+**Action**: Use Write tool to create file:
+
+**File path**: `{root}/runtime/pending-handoff.json`
+
+**Content** (replace placeholders with actual values):
+```json
+{
+  "source_agent": "qa",
+  "target_agent": "{determined_target}",
+  "command": "{determined_command}",
+  "story_id": "{story_id}",
+  "task_description": "QA review for Story {story_id}",
+  "gate_result": "{gate_result}",
+  "registered_at": "{current_ISO_timestamp}",
+  "status": "pending"
+}
+```
+
+**Verify**: Read file to confirm creation, then output:
+```
+[HANDOFF-REGISTERED] qa -> {target_agent}: {command}
+```
+
+⛔ **HALT if file creation fails** - workflow cannot continue without fallback.
+
 ---
 
 ## Step 8: Environment Cleanup
