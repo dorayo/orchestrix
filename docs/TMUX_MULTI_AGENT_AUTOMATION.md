@@ -338,6 +338,16 @@ fi
 echo "$HASH" >> "$PROCESSED_FILE"
 ```
 
+**Hash 自动清理**: 为防止相同消息（如连续的 `*draft`）被跳过，清理完成后自动移除该 hash：
+
+```bash
+# 在后台清理进程中，释放锁之前
+if [[ -n "$HANDOFF_HASH" && -f "$PROCESSED_FILE" ]]; then
+    grep -v "^${HANDOFF_HASH}$" "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp" && mv -f "$PROCESSED_FILE.tmp" "$PROCESSED_FILE"
+    log "[BG] Hash removed from processed file: $HANDOFF_HASH"
+fi
+```
+
 ### 4.4 锁机制
 
 使用目录锁防止并发问题:
@@ -398,25 +408,64 @@ rm -rf "$LOCK"
 
 ### 5.3 Layer 1: Pending Handoff 注册
 
-**实现位置**: `develop-story.md` Step 0
+**实现位置**:
+
+- `develop-story.md` Step 0 (Dev 任务)
+- `qa-review-story.md` Step 7.3 (QA 任务)
+
+#### Dev 任务 (静态目标)
 
 ```markdown
-## 0. Register Pending HANDOFF (Fallback Safety Net)
+## 0. ⚠️ MANDATORY: Register Pending HANDOFF (Fallback Safety Net)
 
-Execute:
-{root}/tasks/util-register-pending-handoff.md
+> **CRITICAL**: This step MUST be executed FIRST before ANY other work. DO NOT SKIP.
 
-Input:
-source_agent: dev
-target_agent: qa
-command: "\*review"
-story_id: "{story_id}"
+### Step 0.1: Create the fallback file
+
+**Action**: Use Write tool to create: `{root}/runtime/pending-handoff.json`
+
+**Content**:
+{
+"source_agent": "dev",
+"target_agent": "qa",
+"command": "\*review {story_id}",
+"story_id": "{story_id}",
+"status": "pending"
+}
+
+### Step 0.2: Verify file creation
+
+**Action**: Use Read tool to verify, then output:
+[HANDOFF-REGISTERED] dev -> qa: \*review {story_id}
+
+### Step 0.3: Gate Check
+
+⛔ **HALT if** file creation fails
+```
+
+#### QA 任务 (动态目标)
+
+```markdown
+### 7.3 ⚠️ MANDATORY: Register Pending HANDOFF
+
+> **CRITICAL**: Execute immediately after Gate Decision.
+
+**Determine target based on gate_result**:
+
+| gate_result   | target_agent | command                        |
+| ------------- | ------------ | ------------------------------ |
+| PASS          | sm           | \*draft                        |
+| FAIL/CONCERNS | dev          | \*apply-qa-fixes {story_id}    |
+| Escalated     | architect    | \*review-escalation {story_id} |
+
+**Action**: Write to `{root}/runtime/pending-handoff.json` with determined values
 ```
 
 **输出**:
 
 ```
 [HANDOFF-REGISTERED] dev -> qa: *review 9.4
+[HANDOFF-REGISTERED] qa -> sm: *draft
 ```
 
 ### 5.4 Layer 2: Hook Fallback
@@ -760,7 +809,10 @@ echo '{"status": "completed"}' > .orchestrix-core/runtime/pending-handoff.json
 
 ## 更新日志
 
-| 日期       | 版本  | 变更                         |
-| ---------- | ----- | ---------------------------- |
-| 2025-12-16 | 1.0.0 | 初始版本                     |
-| 2025-12-16 | 1.1.0 | 添加故障恢复机制 (Layer 1-3) |
+| 日期       | 版本  | 变更                                                 |
+| ---------- | ----- | ---------------------------------------------------- |
+| 2025-12-16 | 1.0.0 | 初始版本                                             |
+| 2025-12-16 | 1.1.0 | 添加故障恢复机制 (Layer 1-3)                         |
+| 2025-12-16 | 1.2.0 | 强制 Step 0 fallback 注册，添加验证和 HALT 条件      |
+| 2025-12-16 | 1.3.0 | QA Step 7.3 动态注册 pending-handoff，支持多目标场景 |
+| 2025-12-16 | 1.4.0 | Hash 自动清理机制，修复连续相同消息被跳过的问题      |

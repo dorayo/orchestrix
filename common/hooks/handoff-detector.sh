@@ -281,6 +281,13 @@ RELOAD_CMD=$(get_agent_command "$SOURCE_AGENT")
         sleep 15
     fi
 
+    # Remove hash from processed file to allow future same-message HANDOFF
+    # This fixes the issue where repeated identical messages (e.g., "*draft") are skipped
+    if [[ -n "$HANDOFF_HASH" && -f "$PROCESSED_FILE" ]]; then
+        grep -v "^${HANDOFF_HASH}$" "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp" 2>/dev/null && mv -f "$PROCESSED_FILE.tmp" "$PROCESSED_FILE"
+        log "[BG] Hash removed from processed file: $HANDOFF_HASH"
+    fi
+
     # Release lock
     rm -rf "$LOCK"
     log "[BG] Cleanup complete, lock released"
