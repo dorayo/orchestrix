@@ -186,7 +186,7 @@ if [[ -z "$TARGET" || -z "$CMD" ]]; then
 
     # Mark the fallback file as completed
     if command -v jq &>/dev/null; then
-        jq '.status = "completed_by_fallback" | .completed_at = now | todate' "$FALLBACK_FILE" > "$FALLBACK_FILE.tmp" 2>/dev/null && mv "$FALLBACK_FILE.tmp" "$FALLBACK_FILE"
+        jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.status = "completed_by_fallback" | .completed_at = $ts' "$FALLBACK_FILE" > "$FALLBACK_FILE.tmp" 2>/dev/null && mv "$FALLBACK_FILE.tmp" "$FALLBACK_FILE"
     else
         sed -i.bak 's/"status"[[:space:]]*:[[:space:]]*"pending"/"status": "completed_by_fallback"/' "$FALLBACK_FILE" 2>/dev/null
     fi
