@@ -7,7 +7,29 @@ Example: `{root}/tasks/util-load-architecture-context.md` → `.orchestrix-core/
 
 ---
 
-## 0. Preconditions
+## 0. Register Pending HANDOFF (Fallback Safety Net)
+
+**Purpose**: Register handoff information BEFORE starting the task. This ensures the hook can recover the handoff even if context compression causes the agent to forget.
+
+Execute:
+```
+{root}/tasks/util-register-pending-handoff.md
+```
+
+Input:
+```yaml
+source_agent: dev
+target_agent: qa
+command: "*review"
+story_id: "{story_id}"
+task_description: "Story {story_id} implementation"
+```
+
+**Output**: `[HANDOFF-REGISTERED] dev -> qa: *review {story_id}`
+
+---
+
+## 0.1. Preconditions
 
 Before execution:
 

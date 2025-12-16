@@ -112,10 +112,84 @@ for win in 0 1 2 3; do
     fi
 done
 
-# No HANDOFF found
+# No HANDOFF found - try fallback from pending-handoff file
 if [[ -z "$TARGET" || -z "$CMD" ]]; then
-    log "No new HANDOFF found"
-    exit 0
+    log "No HANDOFF in terminal output, checking fallback file..."
+
+    # ============================================
+    # Fallback: Check pending-handoff.json
+    # ============================================
+    # Find project root (look for .orchestrix directory)
+    FALLBACK_FILE=""
+    for win in 0 1 2 3; do
+        # Get the pane's current directory
+        PANE_DIR=$(tmux display-message -t "$SESSION_NAME:$win" -p '#{pane_current_path}' 2>/dev/null)
+        if [[ -n "$PANE_DIR" && -f "$PANE_DIR/.orchestrix-core/runtime/pending-handoff.json" ]]; then
+            FALLBACK_FILE="$PANE_DIR/.orchestrix-core/runtime/pending-handoff.json"
+            SOURCE_WIN=$win
+            break
+        fi
+    done
+
+    if [[ -z "$FALLBACK_FILE" ]]; then
+        log "No pending-handoff.json found"
+        exit 0
+    fi
+
+    log "Found fallback file: $FALLBACK_FILE"
+
+    # Read and parse the JSON file
+    if command -v jq &>/dev/null; then
+        # Use jq if available
+        STATUS=$(jq -r '.status // "unknown"' "$FALLBACK_FILE" 2>/dev/null)
+        if [[ "$STATUS" != "pending" ]]; then
+            log "Fallback file status is '$STATUS', not 'pending'. Skipping."
+            exit 0
+        fi
+
+        TARGET=$(jq -r '.target_agent // ""' "$FALLBACK_FILE" 2>/dev/null)
+        CMD=$(jq -r '.command // ""' "$FALLBACK_FILE" 2>/dev/null)
+        STORY_ID=$(jq -r '.story_id // ""' "$FALLBACK_FILE" 2>/dev/null)
+        SOURCE_AGENT=$(jq -r '.source_agent // ""' "$FALLBACK_FILE" 2>/dev/null)
+    else
+        # Fallback to grep/sed parsing
+        STATUS=$(grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' "$FALLBACK_FILE" | sed 's/.*"\([^"]*\)"$/\1/')
+        if [[ "$STATUS" != "pending" ]]; then
+            log "Fallback file status is '$STATUS', not 'pending'. Skipping."
+            exit 0
+        fi
+
+        TARGET=$(grep -o '"target_agent"[[:space:]]*:[[:space:]]*"[^"]*"' "$FALLBACK_FILE" | sed 's/.*"\([^"]*\)"$/\1/')
+        CMD=$(grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' "$FALLBACK_FILE" | sed 's/.*"\([^"]*\)"$/\1/')
+        STORY_ID=$(grep -o '"story_id"[[:space:]]*:[[:space:]]*"[^"]*"' "$FALLBACK_FILE" | sed 's/.*"\([^"]*\)"$/\1/')
+        SOURCE_AGENT=$(grep -o '"source_agent"[[:space:]]*:[[:space:]]*"[^"]*"' "$FALLBACK_FILE" | sed 's/.*"\([^"]*\)"$/\1/')
+    fi
+
+    if [[ -z "$TARGET" || -z "$CMD" ]]; then
+        log "Invalid fallback file content"
+        exit 0
+    fi
+
+    # Create a hash to prevent re-processing
+    HANDOFF_HASH=$(echo "fallback-$SOURCE_AGENT-$TARGET-$CMD" | md5 2>/dev/null || echo "fallback-$SOURCE_AGENT-$TARGET-$CMD" | md5sum 2>/dev/null | cut -d' ' -f1)
+
+    # Skip if already processed
+    if grep -q "$HANDOFF_HASH" "$PROCESSED_FILE" 2>/dev/null; then
+        log "Fallback handoff already processed"
+        exit 0
+    fi
+
+    # Get SOURCE_WIN from SOURCE_AGENT (override the window where file was found)
+    SOURCE_WIN=$(get_window_num "$SOURCE_AGENT")
+
+    log "[FALLBACK] Recovered handoff from file: $SOURCE_AGENT (win $SOURCE_WIN) -> $TARGET: $CMD"
+
+    # Mark the fallback file as completed
+    if command -v jq &>/dev/null; then
+        jq '.status = "completed_by_fallback" | .completed_at = now | todate' "$FALLBACK_FILE" > "$FALLBACK_FILE.tmp" 2>/dev/null && mv "$FALLBACK_FILE.tmp" "$FALLBACK_FILE"
+    else
+        sed -i.bak 's/"status"[[:space:]]*:[[:space:]]*"pending"/"status": "completed_by_fallback"/' "$FALLBACK_FILE" 2>/dev/null
+    fi
 fi
 
 # Mark as processed
@@ -124,8 +198,10 @@ echo "$HANDOFF_HASH" >> "$PROCESSED_FILE"
 # Keep processed file small (last 100 entries)
 tail -100 "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp" 2>/dev/null && mv "$PROCESSED_FILE.tmp" "$PROCESSED_FILE"
 
-# Get source agent name
-SOURCE_AGENT=$(get_agent_name "$SOURCE_WIN")
+# Get source agent name (only if not already set by fallback)
+if [[ -z "$SOURCE_AGENT" ]]; then
+    SOURCE_AGENT=$(get_agent_name "$SOURCE_WIN")
+fi
 TARGET_WIN=$(get_window_num "$TARGET")
 
 # Validate

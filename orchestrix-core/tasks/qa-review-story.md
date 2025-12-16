@@ -35,15 +35,68 @@ required:
 Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
 - **If status = "Done"**: Output `already_done` message -> **HALT**
-- **If status = "Approved"**: Output `not_started` message -> **HALT**
+- **If status = "Approved"**: Execute **Status Auto-Recovery** (see Step 0.5)
+  - If recovery succeeds: Continue to Validation
+  - If recovery fails: Output `not_started` message -> **HALT**
 - **If status = "AwaitingTestDesign"**: Output `needs_test_design` message -> **HALT**
-- **If status = "InProgress"**: Output `in_progress` message -> **HALT**
+- **If status = "InProgress"**: Execute **Status Auto-Recovery** (see below)
+  - If recovery succeeds: Continue to Validation
+  - If recovery fails: Output `in_progress` message -> **HALT**
 - **If status = "AwaitingArchReview"**: Output `needs_arch_review` message -> **HALT**
 - **If status in ["Blocked", "RequiresRevision", "Escalated"]**: Output `blocked_or_revision` message -> **HALT**
 
 **If status = "Review"**:
 - Log: "Idempotency check passed - proceeding with QA review"
 - Continue to Validation
+
+---
+
+## Step 0.5: Status Auto-Recovery (Conditional)
+
+**Purpose**: Recover from context compression scenarios where Dev completed work but forgot to update story status.
+
+**Trigger**: Execute if Step 0 detected status = "InProgress" OR "Approved"
+
+**Note**: Both statuses indicate Dev may have completed work but:
+- "InProgress" = Dev started but forgot to update to Review
+- "Approved" = Dev completed but forgot to update from start (extreme case)
+
+### 0.5.1 Check Dev Completion Indicators
+
+Look for evidence that Dev work is actually complete:
+
+1. **Check Dev Agent Record** in story file:
+   - Has "Final Summary" section? (indicates completion)
+   - Has "Implementation Status: COMPLETE"?
+
+2. **Check Dev Log** at `{devLogsLocation}/{story_id}-dev-log.md`:
+   - Contains "GATE 1: PASS" or "Self-review: PASS"?
+   - Contains "GATE 2: PASS" or "Completion checklist: PASS"?
+
+3. **Check pending-handoff file** at `.orchestrix-core/runtime/pending-handoff.json`:
+   - Exists and status = "pending"?
+   - source_agent = "dev" and target_agent = "qa"?
+
+### 0.5.2 Recovery Decision
+
+**If ANY of the following is true**:
+- Dev Agent Record has Final Summary
+- Dev Log shows both GATEs passed
+- pending-handoff.json indicates dev -> qa handoff pending
+
+**Then AUTO-RECOVER**:
+1. Log: "⚠️ [AUTO-RECOVERY] Dev work appears complete but status not updated. Recovering..."
+2. Update story status: InProgress -> Review
+3. Add Change Log entry:
+   ```
+   | {date} {time} | QA | InProgress -> Review | [AUTO-RECOVERY] Status corrected - Dev work verified complete |
+   ```
+4. Mark pending-handoff.json as "completed_by_auto_recovery" (if exists)
+5. Continue to Validation
+
+**Else**:
+- Log: "Dev work not yet complete - cannot auto-recover"
+- Output `in_progress` message -> **HALT**
 
 ---
 
