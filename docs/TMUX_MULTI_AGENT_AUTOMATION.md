@@ -326,8 +326,11 @@ Agent A 完成任务
 Hook 使用 MD5 hash 防止重复处理同一 HANDOFF:
 
 ```bash
-# 计算 HANDOFF 消息的 hash
+# 终端输出 HANDOFF: 基于完整消息行计算 hash
 HASH=$(echo "$LINE" | md5)
+
+# Fallback HANDOFF: 包含 story_id 以区分不同 story 的相同命令
+HANDOFF_HASH=$(echo "fallback-$SOURCE_AGENT-$TARGET-$CMD-$STORY_ID" | md5)
 
 # 检查是否已处理
 if grep -q "$HASH" "$PROCESSED_FILE"; then
@@ -337,6 +340,8 @@ fi
 # 记录已处理
 echo "$HASH" >> "$PROCESSED_FILE"
 ```
+
+**重要**: Fallback hash 必须包含 `story_id`，否则不同 story 的相同命令（如连续多个 `qa -> sm: *draft`）会被错误跳过。
 
 **Hash 自动清理**: 为防止相同消息（如连续的 `*draft`）被跳过，清理完成后自动移除该 hash：
 
@@ -809,11 +814,12 @@ echo '{"status": "completed"}' > .orchestrix-core/runtime/pending-handoff.json
 
 ## 更新日志
 
-| 日期       | 版本  | 变更                                                      |
-| ---------- | ----- | --------------------------------------------------------- |
-| 2025-12-16 | 1.0.0 | 初始版本                                                  |
-| 2025-12-16 | 1.1.0 | 添加故障恢复机制 (Layer 1-3)                              |
-| 2025-12-16 | 1.2.0 | 强制 Step 0 fallback 注册，添加验证和 HALT 条件           |
-| 2025-12-16 | 1.3.0 | QA Step 7.3 动态注册 pending-handoff，支持多目标场景      |
-| 2025-12-16 | 1.4.0 | Hash 自动清理机制，修复连续相同消息被跳过的问题           |
-| 2025-12-16 | 1.4.1 | 修复 jq 语法错误导致 pending-handoff.json status 更新失败 |
+| 日期       | 版本  | 变更                                                             |
+| ---------- | ----- | ---------------------------------------------------------------- |
+| 2025-12-16 | 1.0.0 | 初始版本                                                         |
+| 2025-12-16 | 1.1.0 | 添加故障恢复机制 (Layer 1-3)                                     |
+| 2025-12-16 | 1.2.0 | 强制 Step 0 fallback 注册，添加验证和 HALT 条件                  |
+| 2025-12-16 | 1.3.0 | QA Step 7.3 动态注册 pending-handoff，支持多目标场景             |
+| 2025-12-16 | 1.4.0 | Hash 自动清理机制，修复连续相同消息被跳过的问题                  |
+| 2025-12-16 | 1.4.1 | 修复 jq 语法错误导致 pending-handoff.json status 更新失败        |
+| 2025-12-16 | 1.4.2 | Fallback hash 包含 story_id，修复不同 story 相同命令被跳过的问题 |

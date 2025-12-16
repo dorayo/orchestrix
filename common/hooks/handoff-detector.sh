@@ -171,7 +171,8 @@ if [[ -z "$TARGET" || -z "$CMD" ]]; then
     fi
 
     # Create a hash to prevent re-processing
-    HANDOFF_HASH=$(echo "fallback-$SOURCE_AGENT-$TARGET-$CMD" | md5 2>/dev/null || echo "fallback-$SOURCE_AGENT-$TARGET-$CMD" | md5sum 2>/dev/null | cut -d' ' -f1)
+    # Include STORY_ID to differentiate handoffs for different stories with same command
+    HANDOFF_HASH=$(echo "fallback-$SOURCE_AGENT-$TARGET-$CMD-$STORY_ID" | md5 2>/dev/null || echo "fallback-$SOURCE_AGENT-$TARGET-$CMD-$STORY_ID" | md5sum 2>/dev/null | cut -d' ' -f1)
 
     # Skip if already processed
     if grep -q "$HANDOFF_HASH" "$PROCESSED_FILE" 2>/dev/null; then
