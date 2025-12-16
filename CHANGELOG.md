@@ -1,3 +1,10 @@
+## [14.0.2](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.1...v14.0.2) (2025-12-16)
+
+
+### Bug Fixes
+
+* **handoff:** add mandatory fallback registration to QA review task ([f53f837](https://github.com/dorayo/ORCHESTRIX/commit/f53f837ea5c522e93804345d803469a190afe118))
+
 ## [14.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.0...v14.0.1) (2025-12-16)
 
 
