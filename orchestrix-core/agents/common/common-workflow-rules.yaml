@@ -23,20 +23,18 @@ workflow_rules:
   - "Load project standards as specified in CONFIG_PATH"
 
   # Handoff protocol (MANDATORY for tmux automation)
-  # PRIMARY: Structured Termination Block (STB) - Most reliable, pure ASCII
-  - "MANDATORY: Output Structured Termination Block (STB) before emoji HANDOFF"
-  - "STB format: ---ORCHESTRIX-HANDOFF-BEGIN---, then YAML fields, then ---ORCHESTRIX-HANDOFF-END---"
-  - "STB fields: target (agent name lowercase), command (without *), args (optional, e.g., story_id)"
-  - "STB uses pure ASCII markers, immune to UTF-8/emoji encoding issues"
-  - "STB Example: target: qa, command: review, args: 1.3"
-  # SECONDARY: Emoji HANDOFF - Human readable fallback
-  - "After STB, still output emoji HANDOFF for human readability: '🎯 HANDOFF TO {agent}: *command {story_id}'"
+  # Use handoff skill to transfer work to another agent
+  - "When task complete and need to hand off: USE the 'handoff' skill"
+  - "Handoff skill will: (1) send command to target agent, (2) clear current context, (3) reload agent"
+  - "Before using skill, determine: target agent (sm/dev/qa/architect) and command (e.g., *review 5.3)"
+  # Human readable output (for logging and visibility)
+  - "Output '🎯 HANDOFF TO {agent}: *command {args}' for human readability"
   - "Examples: '🎯 HANDOFF TO qa: *review 1.3', '🎯 HANDOFF TO dev: *develop-story 1.3'"
-  - "The emoji prefix '🎯 HANDOFF TO' is REQUIRED as fallback for tmux automation"
-  # Common rules
-  - "Handoff (STB + emoji) MUST be the FINAL output, clearly visible to user"
+  # Execution order
+  - "1. Complete your task analysis/work"
+  - "2. Output emoji HANDOFF message for human readability"
+  - "3. Use handoff skill to execute tmux operations"
+  # Terminal states
   - "If task is terminal (story Done), state completion clearly: 'Story {id} DONE ✅'"
-  - "CRITICAL: After outputting handoff message, DO NOT output ANY additional content"
-  - "CRITICAL: No summaries, tips, available commands, or explanations after handoff"
-  - "CRITICAL: Handoff line must be the absolute last line of your response"
+  - "CRITICAL: After handoff skill execution, your response is complete"
 

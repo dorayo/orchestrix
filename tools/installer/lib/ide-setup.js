@@ -456,6 +456,24 @@ class IdeSetup {
       throw new Error(`Missing required file: ${sourceTmuxScript}`);
     }
 
+    // Copy handoff skill to .claude/skills/
+    const skillsDir = path.join(installDir, ".claude", "skills");
+    await fileManager.ensureDirectory(skillsDir);
+
+    const sourceSkillDir = path.join(basePath, "common", "skills", "handoff");
+    const targetSkillDir = path.join(skillsDir, "handoff");
+
+    if (await fileManager.pathExists(sourceSkillDir)) {
+      await fileManager.ensureDirectory(targetSkillDir);
+      const sourceSkillFile = path.join(sourceSkillDir, "SKILL.md");
+      const targetSkillFile = path.join(targetSkillDir, "SKILL.md");
+
+      if (await fileManager.pathExists(sourceSkillFile)) {
+        await fileManager.copyFile(sourceSkillFile, targetSkillFile);
+        this._log(console.log, chalk.green(`   ✅ Handoff Skill: .claude/skills/handoff/SKILL.md`));
+      }
+    }
+
     this._log(console.log, chalk.cyan(`\n   💡 TMUX自动化已安装！使用方法：`));
     this._log(console.log, chalk.dim(`      1. 启动会话: ./.orchestrix-core/utils/start-tmux-session.sh`));
     this._log(console.log, chalk.dim(`      2. 在SM窗口输入 1 开始工作流`));
