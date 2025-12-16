@@ -1,3 +1,16 @@
+# [13.9.0](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.3...v13.9.0) (2025-12-16)
+
+
+### Bug Fixes
+
+* **handoff:** add lock mechanism to prevent duplicate Stop hook triggers ([8f365d6](https://github.com/dorayo/ORCHESTRIX/commit/8f365d667c58f9e1ca2dcd2e88ce45e7b90c9eca))
+
+
+### Features
+
+* **handoff:** add explicit skill invocation to task files ([4008484](https://github.com/dorayo/ORCHESTRIX/commit/400848422891095d9e38c312c356f30ce8dbdf08))
+* **handoff:** add handoff skill for tmux automation ([26d830c](https://github.com/dorayo/ORCHESTRIX/commit/26d830ce762d990c41413b60627096ee0847d8c5))
+
 ## [13.8.3](https://github.com/dorayo/ORCHESTRIX/compare/v13.8.2...v13.8.3) (2025-12-14)
 
 
