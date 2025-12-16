@@ -1,3 +1,11 @@
+## [14.0.3](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.2...v14.0.3) (2025-12-16)
+
+
+### Bug Fixes
+
+* **handoff:** add hash auto-cleanup and update documentation ([0ef7686](https://github.com/dorayo/ORCHESTRIX/commit/0ef7686c6ad650c4900b7119c3892ed64785392d))
+* **handoff:** correct jq syntax for fallback status update ([1ad6b31](https://github.com/dorayo/ORCHESTRIX/commit/1ad6b31bdca3d01df18a50b14f6a1b01c9d34854))
+
 ## [14.0.2](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.1...v14.0.2) (2025-12-16)
 
 
