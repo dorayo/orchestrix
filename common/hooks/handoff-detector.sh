@@ -18,6 +18,10 @@ LOG_FILE="${ORCHESTRIX_LOG:-/tmp/orchestrix-handoff.log}"
 # Story ID tracking file (per-session)
 STORY_ID_FILE="${ORCHESTRIX_STORY_ID_FILE:-/tmp/orchestrix-current-story-${SESSION_NAME}.txt}"
 
+# Lock file to prevent duplicate hook triggers (per-agent)
+# When /clear is sent, it triggers Stop hook again - we need to prevent infinite loop
+LOCK_TIMEOUT=30  # seconds
+
 # Agent to window mapping (Bash 3.2 compatible)
 get_agent_window() {
     local agent="$1"
@@ -81,6 +85,28 @@ if [ -z "$current_window" ]; then
 fi
 
 log "Current agent: $current_agent (window $current_window)"
+
+# ============================================
+# Lock mechanism to prevent duplicate triggers
+# ============================================
+# When background process sends /clear, it triggers Stop hook again
+# We use a lock file with timestamp to prevent processing within LOCK_TIMEOUT seconds
+
+LOCK_FILE="/tmp/orchestrix-${SESSION_NAME}-${current_window}.lock"
+
+# Check if lock exists and is recent
+if [[ -f "$LOCK_FILE" ]]; then
+    lock_time=$(cat "$LOCK_FILE" 2>/dev/null || echo "0")
+    current_time=$(date +%s)
+    time_diff=$((current_time - lock_time))
+
+    if [[ $time_diff -lt $LOCK_TIMEOUT ]]; then
+        log "SKIP: Lock active (${time_diff}s < ${LOCK_TIMEOUT}s timeout) - this is likely a /clear trigger, ignoring"
+        exit 0
+    else
+        log "Lock expired (${time_diff}s >= ${LOCK_TIMEOUT}s), proceeding"
+    fi
+fi
 
 # Check if tmux session exists
 if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
@@ -515,6 +541,11 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         exit 0
     fi
 
+    # ========== Create lock to prevent duplicate triggers ==========
+    # This prevents the /clear command from triggering another HANDOFF detection
+    log "Creating lock file: $LOCK_FILE"
+    date +%s > "$LOCK_FILE"
+
     # ========== STEP 1: Send command to target window (immediate) ==========
     log "Step 1: Sending command to target agent ($target_agent) in window $target_window"
     log "  Command: $command"
@@ -560,9 +591,13 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
 
         # Clear current agent context
         log "Sending /clear to $current_agent..."
-        if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null && \
-           tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
-            log "✓ Clear command sent"
+        if tmux send-keys -t "$SESSION_NAME:$current_window" "/clear" 2>/dev/null; then
+            sleep 1  # Wait for input to stabilize before Enter
+            if tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
+                log "✓ Clear command sent"
+            else
+                log "ERROR: Failed to send Enter for /clear"
+            fi
         else
             log "ERROR: Failed to send /clear"
         fi
@@ -574,11 +609,15 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
         # Reload agent
         if [ -n "$current_agent_cmd" ]; then
             log "Reloading $current_agent with command: $current_agent_cmd"
-            if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" 2>/dev/null && \
-               tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
-                log "✓ Reload command sent"
+            if tmux send-keys -t "$SESSION_NAME:$current_window" "$current_agent_cmd" 2>/dev/null; then
+                sleep 1  # Wait for input to stabilize before Enter
+                if tmux send-keys -t "$SESSION_NAME:$current_window" "Enter" 2>/dev/null; then
+                    log "✓ Reload command sent"
+                else
+                    log "ERROR: Failed to send Enter for reload"
+                fi
             else
-                log "ERROR: Failed to reload agent"
+                log "ERROR: Failed to send reload command"
             fi
 
             log "Waiting 15s for agent to load..."
@@ -586,6 +625,12 @@ if [[ -n "$target_agent" && -n "$raw_command" ]]; then
             log "✓ Agent reload complete"
         else
             log "WARNING: No reload command found for $current_agent"
+        fi
+
+        # Clean up lock file
+        if [[ -f "$LOCK_FILE" ]]; then
+            rm -f "$LOCK_FILE"
+            log "✓ Lock file removed: $LOCK_FILE"
         fi
 
         log "Background process complete"
