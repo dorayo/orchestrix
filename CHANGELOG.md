@@ -1,3 +1,10 @@
+## [14.0.5](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.4...v14.0.5) (2025-12-17)
+
+
+### Bug Fixes
+
+* **tasks:** enforce Glob-first pattern for story file location ([ac6d427](https://github.com/dorayo/ORCHESTRIX/commit/ac6d427bcb671171195d88197d9cf6dd3d0455eb))
+
 ## [14.0.4](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.3...v14.0.4) (2025-12-16)
 
 
