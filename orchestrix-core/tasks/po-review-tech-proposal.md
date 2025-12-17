@@ -163,11 +163,6 @@ tech_proposal_ref: "{proposal_path}"
 
 **HANDOFF**:
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: sm
-command: draft
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO SM: *draft {story_id}
 Context: Tech proposal {proposal_id} added to Epic {target_epic_id}

@@ -298,11 +298,6 @@ change_summary: "{Brief description}"
 
 **Downstream HANDOFF to Dev:**
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: dev
-command: develop-story
-args: {first_story_id}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO DEV: *develop-story {first_story_id}
 
@@ -345,11 +340,6 @@ change_summary: "{Brief description}"
 
 **Downstream HANDOFF to SM (Epic restructure):**
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: sm
-command: correct-course
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO SM: *correct-course
 Context: Epic {epic_id} restructured, stories need alignment
@@ -359,11 +349,6 @@ Action needed: Review and update story references
 
 **Downstream HANDOFF to SM (New epic created):**
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: sm
-command: draft
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO SM: *draft
 Context: New Epic {epic_id} created, requires story creation
@@ -377,11 +362,6 @@ Action needed: Create stories for Epic {epic_id} using templates/story-tmpl.yaml
 
 **Escalate to Architect:**
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: architect
-command: resolve-tech-change
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO ARCHITECT: *resolve-tech-change
 Context: {escalation_context}
@@ -414,11 +394,6 @@ The PRD and Epic definitions are managed in the product repository.
 
 **ELSE** (monolith or product repo):
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: pm
-command: revise-prd
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO PM: *revise-prd
 Context: {escalation_context}

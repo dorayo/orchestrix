@@ -177,11 +177,6 @@ tech_proposal_ref: "{proposal_path}"
 
 **IF complexity = high**:
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: architect
-command: review
-args: {new_story_id}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO architect: *review {new_story_id}
 Context: Tech Story from proposal {proposal_id}
@@ -190,11 +185,6 @@ Complexity: high - requires Architect review
 
 **ELSE**:
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: dev
-command: develop-story
-args: {new_story_id}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO dev: *develop-story {new_story_id}
 Context: Tech Story from proposal {proposal_id}

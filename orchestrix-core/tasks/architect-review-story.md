@@ -24,11 +24,6 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
   Architect review already completed. Story ready for Dev implementation.
 
-  ---ORCHESTRIX-HANDOFF-BEGIN---
-  target: dev
-  command: develop-story
-  args: {story_id}
-  ---ORCHESTRIX-HANDOFF-END---
 
   🎯 HANDOFF TO dev: *develop-story {story_id}
   ```
@@ -43,11 +38,6 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
   Architect review already completed. Forwarding to QA for test design.
 
-  ---ORCHESTRIX-HANDOFF-BEGIN---
-  target: qa
-  command: test-design
-  args: {story_id}
-  ---ORCHESTRIX-HANDOFF-END---
 
   🎯 HANDOFF TO qa: *test-design {story_id}
   ```

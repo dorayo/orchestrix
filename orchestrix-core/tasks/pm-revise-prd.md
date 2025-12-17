@@ -212,22 +212,12 @@ Files modified:
 
 Cascade HANDOFFs required:
 
----ORCHESTRIX-HANDOFF-BEGIN---
-target: architect
-command: resolve-tech-change
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO ARCHITECT: *resolve-tech-change
 Context: PRD updated - {change_summary}
 Sections changed: [{prd_sections}]
 Action needed: Review architecture alignment with updated requirements
 
----ORCHESTRIX-HANDOFF-BEGIN---
-target: po
-command: correct-course
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO PO: *correct-course
 Context: PRD updated - {change_summary}
@@ -264,11 +254,6 @@ next_action: "Revise proposal based on feedback"
 
 **Cascade HANDOFF to Architect:**
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: architect
-command: resolve-tech-change
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO ARCHITECT: *resolve-tech-change
 Context: PRD updated - {change_summary}
@@ -279,11 +264,6 @@ Action needed: Review architecture alignment with updated requirements
 
 **Cascade HANDOFF to PO:**
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: po
-command: correct-course
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO PO: *correct-course
 Context: PRD updated - {change_summary}

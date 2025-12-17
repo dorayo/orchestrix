@@ -19,11 +19,6 @@ Self-Review Results:
 
 ⚠️ Warnings: {list any: open_issues, dev_feedback, minor issues OR "none"}
 
----ORCHESTRIX-HANDOFF-BEGIN---
-target: qa
-command: review
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO qa: *review {story_id}
 ```

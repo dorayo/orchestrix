@@ -304,11 +304,6 @@ Severity: {Critical/High/Medium/Low}
 Architecture Changes Required:
 {brief summary of required changes}
 
----ORCHESTRIX-HANDOFF-BEGIN---
-target: dev
-command: develop-story
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO dev: *develop-story {story_id}
 ```
@@ -324,11 +319,6 @@ Reasoning: {brief explanation}
 
 QA may continue review with architectural clarification provided.
 
----ORCHESTRIX-HANDOFF-BEGIN---
-target: qa
-command: review
-args: {story_id}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO qa: *review {story_id}
 ```

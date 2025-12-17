@@ -31,21 +31,11 @@ Input:
 
 - IF level == STORY or level == EPIC:
   ```
-  ---ORCHESTRIX-HANDOFF-BEGIN---
-  target: {handler}
-  command: {command}
-  args:
-  ---ORCHESTRIX-HANDOFF-END---
 
   🎯 HANDOFF TO {handler}: *{command} - Not architecture scope
   ```
 - IF level == PRODUCT:
   ```
-  ---ORCHESTRIX-HANDOFF-BEGIN---
-  target: pm
-  command: revise-prd
-  args:
-  ---ORCHESTRIX-HANDOFF-END---
 
   🎯 HANDOFF TO PM: *revise-prd - PRD change required
   ```
@@ -314,11 +304,6 @@ routing: PO
 
 **HANDOFF (Large Scope)**:
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: po
-command: review-tech-proposal
-args: {proposal_path}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO PO: *review-tech-proposal {proposal_path}
 Context: Tech proposal requires scope evaluation
@@ -344,11 +329,6 @@ default_epic: "0"
 
 **HANDOFF (Small Scope - LOCAL)**:
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: sm
-command: create-tech-story
-args: {proposal_path}
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO SM: *create-tech-story {proposal_path}
 Context: Small-scope technical improvement
@@ -420,11 +400,6 @@ The PRD and Epic definitions are managed in the product repository.
 
 **ELSE** (monolith or product repo):
 ```
----ORCHESTRIX-HANDOFF-BEGIN---
-target: pm
-command: revise-prd
-args:
----ORCHESTRIX-HANDOFF-END---
 
 🎯 HANDOFF TO PM: *revise-prd
 Context: {escalation_context}
