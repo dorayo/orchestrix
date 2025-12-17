@@ -64,8 +64,11 @@ action: apply_qa_fixes
 ### 0) Load Core Config & Locate Story
 
 - Read `orchestrix/core-config.yaml` and resolve `qa_root` and `story_root`
-- Locate story file in `{story_root}/{epic}.{story}.*.md`
-  - HALT if missing and ask for correct story id/path
+- Locate story file (⚠️ MUST use Glob - filenames include title slug):
+  1. **Use Glob tool FIRST**: `{story_root}/{story_id}.*.md`
+  2. **Then Read** the exact file path returned by Glob
+  > NEVER attempt to Read `{story_id}.md` directly - this will fail
+  - HALT if Glob returns no results and ask for correct story id
 
 ### 1) Collect QA Findings
 

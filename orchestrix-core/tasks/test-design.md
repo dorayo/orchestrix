@@ -53,7 +53,12 @@ action: test_design
 
 ### Step 0: Idempotency Check (MANDATORY - Fast Exit)
 
-**Read Story File**: Use glob pattern `{devStoryLocation}/{story_id}.*.md`
+**Locate Story File** (⚠️ MUST use Glob - filenames include title slug):
+
+> **NEVER** attempt to Read directly with `{story_id}.md` - this will fail.
+
+1. **Use Glob tool FIRST**: `{devStoryLocation}/{story_id}.*.md`
+2. **Then Read** the exact file path returned by Glob
 
 **Extract**: Story.status, QA Test Design Metadata.test_design_status
 

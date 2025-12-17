@@ -58,7 +58,8 @@ else:
 ```
 
 **Load Required Documents**:
-- Story file from `{devStoryLocation}/{epic}.{story}.*.md`
+- Story file: **Use Glob FIRST** with `{devStoryLocation}/{story_id}.*.md`, then Read the returned path
+  > NEVER attempt to Read `{story_id}.md` directly - files include title slug
 - Dev Log from `{devLogLocation}/{story-id}-dev-log.md`
 - Architecture documents: **REUSE from input or load if missing**
 - API contracts (if multi-repo, from product repo)

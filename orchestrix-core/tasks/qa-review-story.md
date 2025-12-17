@@ -22,11 +22,14 @@ required:
 
 **Purpose**: Prevent re-reviewing already passed stories
 
-**Locate Story File**:
+**Locate Story File** (⚠️ MUST use Glob - filenames include title slug):
 
-1. **Use Glob tool** with pattern: `{devStoryLocation}/{story_id}.*.md`
+> **NEVER** attempt to Read directly with `{story_id}.md` - this will fail.
+> Story files are named `{story_id}.{title-slug}.md` (e.g., `3.2.user-login.md`)
+
+1. **Use Glob tool FIRST** with pattern: `{devStoryLocation}/{story_id}.*.md`
    - Example: For story_id `3.2`, pattern is `docs/stories/3.2.*.md`
-2. **Then Read** the file path returned by Glob
+2. **Then Read** the exact file path returned by Glob
 
 **Extract Status**: !include tasks/util-extract-story-status.md
 

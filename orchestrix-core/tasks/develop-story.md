@@ -66,7 +66,14 @@ If any condition fails → **HALT**
 
 ## 1. Idempotency Check (Explicit Gate)
 
-Read file: `{devStoryLocation}/{story_id}.*.md`
+**Locate Story File** (⚠️ MUST use Glob - filenames include title slug):
+
+> **NEVER** attempt to Read directly with `{story_id}.md` - this will fail.
+> Story files are named `{story_id}.{title-slug}.md` (e.g., `3.2.user-login.md`)
+
+1. **Use Glob tool FIRST**: `{devStoryLocation}/{story_id}.*.md`
+2. **Then Read** the exact file path returned by Glob
+
 Extract: `story.status`
 
 **If status = Review:**

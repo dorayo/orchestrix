@@ -27,9 +27,12 @@ This task can be executed by:
 
 ### Step 1: Verify Prerequisites (MANDATORY - DO NOT SKIP)
 
-**1.1. Load Story File**:
+**1.1. Load Story File** (⚠️ MUST use Glob - filenames include title slug):
 
-- Read Story file using glob pattern `{project.storiesLocation}/{story_id}.*.md` (handles both `5.2.md` and `5.2.20241117.md` formats)
+> **NEVER** attempt to Read directly with `{story_id}.md` - this will fail.
+
+1. **Use Glob tool FIRST**: `{devStoryLocation}/{story_id}.*.md`
+2. **Then Read** the exact file path returned by Glob
 - Extract:
   - `story_id`
   - `story_title`
