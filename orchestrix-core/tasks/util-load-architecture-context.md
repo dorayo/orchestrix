@@ -96,14 +96,34 @@ fi
 - Deduplicate common documents (tech-stack, source-tree, coding-standards, testing-strategy, data-models)
 
 **Loading Process:**
+
+> **CRITICAL**: MUST use **Glob tool first**, then **Read tool**. NEVER directly Read hardcoded paths.
+
 1. Build list of required documents based on story_type
 2. For each document pattern in the list:
-   - Use glob to find matching file: `ls $ARCHITECTURE_PATH/*{pattern}` (e.g., `*tech-stack.md`)
+   - **Step A**: Use **Glob tool** to find matching file:
+     ```
+     Glob(pattern: "{ARCHITECTURE_PATH}/*{document-name}.md")
+     ```
+     Example: `Glob(pattern: "docs/architecture/*tech-stack.md")` → returns `["docs/architecture/3-tech-stack.md"]`
+   - **Step B**: Read the **exact path** returned by Glob (NOT the pattern)
    - If exactly one match: Read that file
-   - If multiple matches: Read the first match, log warning about multiple matches
+   - If multiple matches: Read the first match, log warning
    - If no match: Log warning, continue with remaining documents
 3. Track which documents were successfully loaded
 4. Track which documents were missing
+
+**Example Execution Flow**:
+```
+# Correct workflow:
+1. Glob(pattern: "docs/architecture/*coding-standards.md")
+   → Returns: ["docs/architecture/12-coding-standards.md"]
+2. Read("docs/architecture/12-coding-standards.md")
+   → Success!
+
+# WRONG (DO NOT DO THIS):
+Read("docs/architecture/coding-standards.md")  # ❌ Will fail!
+```
 
 ### Step 3: Extract Key Information
 
