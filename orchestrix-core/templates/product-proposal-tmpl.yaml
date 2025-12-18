@@ -1,0 +1,281 @@
+template:
+  id: product-proposal-template-v1
+  name: Product Change Proposal
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/proposals/product/{{proposal_id}}-{{title_slug}}.md
+    title: "{{proposal_id}}: {{title}}"
+
+description: |
+  Template for Product Change Proposals (PCP).
+  Used by PM to document product-level changes requiring PRD modification,
+  MVP scope adjustment, or feature redefinition.
+
+metadata_schema:
+  proposal_id:
+    type: string
+    pattern: "PCP-{YYYY}-{NNN}"
+    description: Auto-incremented proposal identifier
+    example: "PCP-2025-001"
+
+  proposal_type:
+    type: string
+    value: product
+    description: Fixed value for product proposals
+
+  title:
+    type: string
+    description: Brief descriptive title for the change
+    example: "MVP Scope Reduction - Phase 2 Deferred Features"
+
+  status:
+    type: enum
+    values: [draft, applied, superseded]
+    default: draft
+    description: Current proposal status
+
+  created_at:
+    type: date
+    format: "YYYY-MM-DD"
+    description: Proposal creation date
+
+  author:
+    type: string
+    default: PM
+    description: Agent or person who created the proposal
+
+linkage_schema:
+  requires_tech_change:
+    type: boolean
+    default: false
+    description: Whether this product change requires accompanying technical changes
+
+  related_tech_proposal:
+    type: string
+    nullable: true
+    description: |
+      Linked Technical Change Proposal ID.
+      Initially null, filled by Architect after creating TCP.
+    example: "TCP-2025-001"
+
+  triggered_by:
+    type: string
+    nullable: true
+    description: Source that triggered this proposal
+    values: [user_request, drift_detection, architect_escalation, market_feedback]
+
+sections:
+  - id: frontmatter
+    title: YAML Frontmatter
+    type: yaml
+    template: |
+      ---
+      metadata:
+        proposal_id: {{proposal_id}}
+        proposal_type: product
+        title: "{{title}}"
+        status: {{status}}
+        created_at: {{created_at}}
+        author: {{author}}
+
+      linkage:
+        requires_tech_change: {{requires_tech_change}}
+        related_tech_proposal: {{related_tech_proposal}}
+        triggered_by: {{triggered_by}}
+      ---
+
+  - id: header
+    title: Document Header
+    type: markdown
+    template: |
+      # {{proposal_id}}: {{title}}
+
+  - id: change-summary
+    title: Change Summary
+    type: markdown
+    instruction: |
+      Provide a concise summary of the product change (2-3 sentences).
+      Include the primary goal and expected outcome.
+
+  - id: change-background
+    title: Change Background
+    type: markdown
+    template: |
+      ## Change Background
+
+      ### Trigger Reason
+      - [ ] User requirement change
+      - [ ] Market feedback
+      - [ ] Resource constraint
+      - [ ] Technical limitation
+      - [ ] Strategic pivot
+      - [ ] Other: ___
+
+      ### Context
+      {{background_context}}
+
+  - id: prd-changes
+    title: PRD Changes
+    type: markdown
+    template: |
+      ## PRD Changes
+
+      ### Affected PRD Sections
+
+      | Section | Change Type | Impact Level |
+      |---------|-------------|--------------|
+      {{#each affected_sections}}
+      | {{name}} | {{change_type}} | {{impact_level}} |
+      {{/each}}
+
+      ### Detailed Changes
+
+      {{#each section_changes}}
+      #### Section: {{section_name}}
+
+      **Current:**
+      ```
+      {{current_content}}
+      ```
+
+      **Proposed:**
+      ```
+      {{proposed_content}}
+      ```
+
+      {{/each}}
+
+  - id: impact-analysis
+    title: Impact Analysis
+    type: markdown
+    template: |
+      ## Impact Analysis
+
+      ### MVP Scope Impact
+
+      - [ ] Expand scope
+      - [ ] Reduce scope
+      - [ ] Maintain scope with modifications
+
+      **Current MVP:** {{current_mvp_summary}}
+      **Proposed MVP:** {{proposed_mvp_summary}}
+
+      ### Epic Impact
+
+      | Epic ID | Epic Title | Impact Type |
+      |---------|------------|-------------|
+      {{#each affected_epics}}
+      | {{id}} | {{title}} | {{impact_type}} |
+      {{/each}}
+
+      ### Estimated Story Impact
+
+      - New stories: ~{{new_story_count}}
+      - Modified stories: ~{{modified_story_count}}
+      - Removed stories: ~{{removed_story_count}}
+
+  - id: story-requirements
+    title: Story Requirements
+    type: markdown
+    instruction: |
+      This section is consumed by SM when executing *apply-proposal.
+      Define story-level requirements in structured YAML format.
+    template: |
+      ## Story Requirements
+
+      > This section is used by SM when executing `*apply-proposal`
+
+      {{#each story_requirements}}
+      ### Story Requirement {{@index}}
+
+      ```yaml
+      epic_id: {{epic_id}}
+      action: {{action}}  # create | modify | delete
+      {{#if suggested_story_id}}
+      suggested_story_id: {{suggested_story_id}}
+      {{/if}}
+      {{#if target_story_id}}
+      target_story_id: {{target_story_id}}
+      {{/if}}
+      title: "{{title}}"
+      description: |
+        {{description}}
+      acceptance_criteria_hints:
+      {{#each ac_hints}}
+        - {{this}}
+      {{/each}}
+      {{#if complexity_hints}}
+      complexity_hints: "{{complexity_hints}}"
+      {{/if}}
+      ```
+
+      {{/each}}
+
+  - id: tech-change-requirements
+    title: Technical Change Requirements
+    type: markdown
+    template: |
+      ## Technical Change Requirements
+
+      ### Requires Technical Change
+
+      - [{{#if requires_tech_change}}x{{else}} {{/if}}] Yes
+      - [{{#unless requires_tech_change}}x{{else}} {{/unless}}] No
+
+      {{#if requires_tech_change}}
+      ### Technical Change Overview
+
+      ```yaml
+      tech_change_hints:
+      {{#each tech_change_hints}}
+        - "{{this}}"
+      {{/each}}
+      ```
+
+      ### Linked Technical Proposal
+
+      > Populated by Architect after creating TCP
+
+      ```yaml
+      related_tech_proposal: {{related_tech_proposal}}
+      tech_proposal_status: {{tech_proposal_status}}
+      ```
+      {{/if}}
+
+  - id: risk-assessment
+    title: Risk Assessment
+    type: markdown
+    template: |
+      ## Risk Assessment
+
+      | Risk | Severity | Mitigation |
+      |------|----------|------------|
+      {{#each risks}}
+      | {{description}} | {{severity}} | {{mitigation}} |
+      {{/each}}
+
+  - id: approval-record
+    title: Approval Record
+    type: markdown
+    template: |
+      ## Approval Record
+
+      | Date | Approver | Decision | Notes |
+      |------|----------|----------|-------|
+      {{#each approvals}}
+      | {{date}} | {{approver}} | {{decision}} | {{notes}} |
+      {{/each}}
+
+id_generation:
+  description: |
+    Proposal ID generation algorithm:
+    1. Scan docs/proposals/product/ directory
+    2. Filter files matching pattern PCP-{current_year}-*.md
+    3. Extract sequence numbers
+    4. New ID = PCP-{year}-{max_sequence + 1, zero-padded to 3 digits}
+    5. If no existing proposals for current year, start at 001
+
+  example: |
+    Existing files: PCP-2025-001.md, PCP-2025-002.md
+    New ID: PCP-2025-003

@@ -1,0 +1,306 @@
+template:
+  id: tech-proposal-template-v1
+  name: Technical Change Proposal
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/proposals/tech/{{proposal_id}}-{{title_slug}}.md
+    title: "{{proposal_id}}: {{title}}"
+
+description: |
+  Template for Technical Change Proposals (TCP).
+  Used by Architect to document technical changes including
+  API contracts, database schemas, system design, and tech stack modifications.
+
+metadata_schema:
+  proposal_id:
+    type: string
+    pattern: "TCP-{YYYY}-{NNN}"
+    description: Auto-incremented proposal identifier
+    example: "TCP-2025-001"
+
+  proposal_type:
+    type: string
+    value: technical
+    description: Fixed value for technical proposals
+
+  title:
+    type: string
+    description: Brief descriptive title for the technical change
+    example: "Data Export API Design"
+
+  status:
+    type: enum
+    values: [draft, applied, superseded]
+    default: draft
+    description: Current proposal status
+
+  created_at:
+    type: date
+    format: "YYYY-MM-DD"
+    description: Proposal creation date
+
+  author:
+    type: string
+    default: Architect
+    description: Agent or person who created the proposal
+
+linkage_schema:
+  related_product_proposal:
+    type: string
+    nullable: true
+    description: |
+      Linked Product Change Proposal ID if this TCP was triggered by a PCP.
+      Set when creating TCP in response to product change.
+    example: "PCP-2025-001"
+
+  triggered_by:
+    type: string
+    description: Source that triggered this proposal
+    values: [product_change, tech_debt, performance, security, architecture_evolution]
+
+sections:
+  - id: frontmatter
+    title: YAML Frontmatter
+    type: yaml
+    template: |
+      ---
+      metadata:
+        proposal_id: {{proposal_id}}
+        proposal_type: technical
+        title: "{{title}}"
+        status: {{status}}
+        created_at: {{created_at}}
+        author: {{author}}
+
+      linkage:
+        related_product_proposal: {{related_product_proposal}}
+        triggered_by: {{triggered_by}}
+      ---
+
+  - id: header
+    title: Document Header
+    type: markdown
+    template: |
+      # {{proposal_id}}: {{title}}
+
+  - id: change-summary
+    title: Change Summary
+    type: markdown
+    instruction: |
+      Provide a concise summary of the technical change (2-3 sentences).
+      Include the primary technical goal and expected outcome.
+
+  - id: change-background
+    title: Change Background
+    type: markdown
+    template: |
+      ## Change Background
+
+      ### Trigger Reason
+      - [ ] Product requirement driven
+      - [ ] Technical debt cleanup
+      - [ ] Performance optimization
+      - [ ] Security hardening
+      - [ ] Architecture evolution
+      - [ ] Other: ___
+
+      ### Related Product Proposal
+
+      {{#if related_product_proposal}}
+      ```yaml
+      related_product_proposal: {{related_product_proposal}}
+      product_proposal_title: "{{product_proposal_title}}"
+      ```
+      {{else}}
+      No related product proposal (standalone technical change).
+      {{/if}}
+
+      ### Context
+      {{background_context}}
+
+  - id: technical-analysis
+    title: Technical Analysis
+    type: markdown
+    template: |
+      ## Technical Analysis
+
+      ### Current State
+      {{current_state_description}}
+
+      ### Problem Identification
+      {{#each problems}}
+      {{@index}}. {{this}}
+      {{/each}}
+
+      ### Technical Constraints
+      {{#each constraints}}
+      - {{this}}
+      {{/each}}
+
+  - id: proposed-solution
+    title: Proposed Solution
+    type: markdown
+    template: |
+      ## Proposed Solution
+
+      ### Solution Overview
+      {{solution_overview}}
+
+      ### Component Changes
+
+      | Component | Change Type | Description |
+      |-----------|-------------|-------------|
+      {{#each component_changes}}
+      | {{name}} | {{change_type}} | {{description}} |
+      {{/each}}
+
+      {{#if api_design}}
+      ### API Design
+
+      ```yaml
+      {{api_design}}
+      ```
+      {{/if}}
+
+      {{#if database_changes}}
+      ### Database Changes
+
+      ```sql
+      {{database_changes}}
+      ```
+      {{/if}}
+
+      ### Alternative Solutions Considered
+      {{alternative_solutions}}
+
+  - id: impact-analysis
+    title: Impact Analysis
+    type: markdown
+    template: |
+      ## Impact Analysis
+
+      ### Affected Components
+
+      | Layer | Component | Change Type |
+      |-------|-----------|-------------|
+      {{#each affected_components}}
+      | {{layer}} | {{name}} | {{change_type}} |
+      {{/each}}
+
+      ### Dependencies
+      {{#each dependencies}}
+      - {{this}}
+      {{/each}}
+
+      ### Compatibility
+      - [{{#if backward_compatible}}x{{else}} {{/if}}] Backward compatible
+      - [{{#if requires_migration}}x{{else}} {{/if}}] Requires migration
+
+  - id: story-requirements
+    title: Story Requirements
+    type: markdown
+    instruction: |
+      This section is consumed by SM when executing *apply-proposal.
+      Define story-level requirements in structured YAML format.
+    template: |
+      ## Story Requirements
+
+      > This section is used by SM when executing `*apply-proposal`
+
+      {{#each story_requirements}}
+      ### Story Requirement {{@index}}
+
+      ```yaml
+      epic_id: {{epic_id}}
+      action: {{action}}  # create | modify | delete
+      {{#if suggested_story_id}}
+      suggested_story_id: {{suggested_story_id}}
+      {{/if}}
+      {{#if target_story_id}}
+      target_story_id: {{target_story_id}}
+      {{/if}}
+      title: "{{title}}"
+      description: |
+        {{description}}
+      acceptance_criteria_hints:
+      {{#each ac_hints}}
+        - {{this}}
+      {{/each}}
+      technical_notes:
+      {{#each tech_notes}}
+        - {{this}}
+      {{/each}}
+      complexity: {{complexity}}  # low | medium | high
+      ```
+
+      {{/each}}
+
+  - id: implementation-plan
+    title: Implementation Plan
+    type: markdown
+    template: |
+      ## Implementation Plan
+
+      ### Dependency Order
+
+      ```
+      {{dependency_order}}
+      ```
+
+      ### Key Milestones
+      {{#each milestones}}
+      {{@index}}. {{this}}
+      {{/each}}
+
+  - id: risk-assessment
+    title: Risk Assessment
+    type: markdown
+    template: |
+      ## Risk Assessment
+
+      | Risk | Probability | Impact | Mitigation |
+      |------|-------------|--------|------------|
+      {{#each risks}}
+      | {{description}} | {{probability}} | {{impact}} | {{mitigation}} |
+      {{/each}}
+
+  - id: approval-record
+    title: Approval Record
+    type: markdown
+    template: |
+      ## Approval Record
+
+      | Date | Approver | Decision | Notes |
+      |------|----------|----------|-------|
+      {{#each approvals}}
+      | {{date}} | {{approver}} | {{decision}} | {{notes}} |
+      {{/each}}
+
+id_generation:
+  description: |
+    Proposal ID generation algorithm:
+    1. Scan docs/proposals/tech/ directory
+    2. Filter files matching pattern TCP-{current_year}-*.md
+    3. Extract sequence numbers
+    4. New ID = TCP-{year}-{max_sequence + 1, zero-padded to 3 digits}
+    5. If no existing proposals for current year, start at 001
+
+  example: |
+    Existing files: TCP-2025-001.md, TCP-2025-002.md
+    New ID: TCP-2025-003
+
+bidirectional_linkage:
+  description: |
+    When creating a TCP linked to a PCP:
+    1. Set related_product_proposal in TCP frontmatter
+    2. After TCP creation, update the PCP file:
+       - Set linkage.related_tech_proposal to the new TCP ID
+    This ensures bidirectional traceability between proposals.
+
+  example: |
+    # After creating TCP-2025-003 linked to PCP-2025-002:
+    # Update PCP-2025-002 frontmatter:
+    linkage:
+      requires_tech_change: true
+      related_tech_proposal: TCP-2025-003  # <- Add this

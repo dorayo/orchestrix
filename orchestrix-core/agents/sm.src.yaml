@@ -41,11 +41,10 @@ commands:
       output_format:
         - "[1] *draft [{story_id}] — Create next Story (or check specified Story)"
         - "[2] *revise {story_id} — Revise Story based on Architect feedback"
-        - "[3] *correct-course {story_id} — Correct Story direction or issues"
-        - "[4] *create-tech-story {proposal_path} — Create Story from tech proposal"
-        - "[5] *story-checklist {story_id} — Validate Story quality"
-        - "[6] *init-registries — Initialize/refresh cumulative registries"
-        - "[7] *exit — Exit SM mode"
+        - "[3] *apply-proposal [{proposal_id}] — Apply proposal to create/update Stories"
+        - "[4] *story-checklist {story_id} — Validate Story quality"
+        - "[5] *init-registries — Initialize/refresh cumulative registries"
+        - "[6] *exit — Exit SM mode"
 
   - draft:
       description: "Create next story from epic (or create/check specified story if story_id provided)"
@@ -59,24 +58,13 @@ commands:
       description: "Revise story based on architect feedback"
       task: revise-story-from-architect-feedback.md
 
-  - correct-course:
-      description: "Handle Story-level course correction. Supports: modify, create, split, or deprecate stories."
-      task: sm-correct-course.md
+  - apply-proposal:
+      description: "Apply Product or Technical proposal to create/update Stories. Auto-discovers draft proposals if no ID provided."
+      task: sm-apply-proposal.md
       params:
-        - name: story_id
+        - name: proposal_id
           required: false
-          description: "Target story ID if modifying existing (e.g., 5.3)"
-
-  - create-tech-story:
-      description: "Create Story directly from Architect tech proposal for small-scope improvements."
-      task: sm-create-tech-story.md
-      params:
-        - name: proposal_path
-          required: true
-          description: "Path to tech proposal file (e.g., docs/architecture/proposals/xxx.md)"
-        - name: epic_id
-          required: false
-          description: "Target Epic ID. Default: 0 (Technical Debt)"
+          description: "Proposal ID (e.g., PCP-2025-001 or TCP-2025-001). If omitted, auto-discovers latest draft proposals."
 
   - story-checklist:
       description: "Run comprehensive story quality validation"
@@ -96,9 +84,7 @@ dependencies:
   tasks:
     - create-next-story.md
     - revise-story-from-architect-feedback.md
-    - sm-correct-course.md
-    - sm-create-tech-story.md
-    - util-classify-change-level.md
+    - sm-apply-proposal.md
     - frontend-user-confirmation.md
     - make-decision.md
     - init-cumulative-registries.md
@@ -109,12 +95,10 @@ dependencies:
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml
     - models-registry-tmpl.yaml
+    - product-proposal-tmpl.yaml
+    - tech-proposal-tmpl.yaml
   checklists:
     - scoring-sm-story-quality.md
     - gate-sm-story-creation-gate.md
-  decisions:
-    - decisions-change-level-classification.yaml
-    - decisions-sm-change-escalation.yaml
-    - decisions-tech-proposal-routing.yaml
   data:
     - epic-story-mapping-schema.yaml

@@ -70,16 +70,15 @@ commands:
         - "[1] *create-doc {template} — create from template (or list templates)"
         - "[2] *execute-checklist {checklist} — run a checklist (default: workflow-po-master-validation.md)"
         - "[3] *shard — shard PRD and Architecture documents (unified)"
-        - "[4] *correct-course — handle Epic-level course correction"
-        - "[5] *review-tech-proposal {path} — evaluate Architect tech proposal for Epic assignment"
-        - "[6] *create-epic — create brownfield epic"
-        - "[7] *create-story — create user story"
-        - "[8] *validate-story-draft {story} — validate a story file"
-        - "[9] *doc-out — output current document"
-        - "[10] *assemble [prd|architecture|both] — assemble sharded docs for export"
-        - "[11] *yolo — toggle Yolo Mode"
-        - "[12] *explain — explain last action"
-        - "[13] *exit — exit persona"
+        - "[4] *route-change — route change request to PM or Architect"
+        - "[5] *create-epic — create brownfield epic"
+        - "[6] *create-story — create user story"
+        - "[7] *validate-story-draft {story} — validate a story file"
+        - "[8] *doc-out — output current document"
+        - "[9] *assemble [prd|architecture|both] — assemble sharded docs for export"
+        - "[10] *yolo — toggle Yolo Mode"
+        - "[11] *explain — explain last action"
+        - "[12] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -102,26 +101,17 @@ commands:
         - "Uses md-tree CLI tool (@kayvan/markdown-tree-parser) for Architecture sharding when available"
         - "Supports both monolith and multi-repository projects"
         - "Reference: data/epic-story-mapping-schema.yaml for multi-repo epic format"
-  - correct-course:
-      description: "Handle Epic-level course correction. Supports: modify, create, split, merge, or deprecate epics."
+  - route-change:
+      description: "Route change request to appropriate handler (PM for product changes, Architect for technical changes)."
       behavior:
-        - "Run dependency task 'po-correct-course.md'."
+        - "Run dependency task 'po-route-change.md'."
+        - "Analyze change description to determine type (product vs technical)."
+        - "Route to PM for product changes, Architect for technical changes."
+        - "For mixed changes, route to PM first (product-first principle)."
       params:
-        epic_id:
-          required: false
-          description: "Epic ID if known (e.g., 5). Analyzes current context if omitted."
-  - review-tech-proposal:
-      description: "Evaluate Architect's tech proposal and determine Epic assignment for implementation Story."
-      behavior:
-        - "Run dependency task 'po-review-tech-proposal.md'."
-        - "Analyze proposal scope and impact."
-        - "Decide Epic assignment: existing Epic, Epic 0 (tech debt), or create new Epic."
-        - "Update Epic YAML with Story definition."
-        - "HANDOFF to SM for Story creation."
-      params:
-        proposal_path:
+        change_description:
           required: true
-          description: "Path to tech proposal file (e.g., docs/architecture/proposals/xxx.md)"
+          description: "Description of the requested change"
   - create-epic:
       description: "Create epic for brownfield projects."
       behavior:
@@ -160,9 +150,7 @@ dependencies:
   tasks:
     - po-shard-documents.md
     - po-assemble-documents.md
-    - po-correct-course.md
-    - po-review-tech-proposal.md
-    - util-classify-change-level.md
+    - po-route-change.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
     - validate-next-story.md
@@ -171,9 +159,5 @@ dependencies:
   checklists:
     - workflow-po-master-validation.md
     - workflow-change-navigation.md
-  decisions:
-    - change-level-classification.yaml
-    - po-change-escalation.yaml
-    - tech-proposal-routing.yaml
   data:
     - epic-story-mapping-schema.yaml

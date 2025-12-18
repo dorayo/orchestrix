@@ -66,7 +66,7 @@ commands:
         - '[7] *extract-api-contracts — 从后端代码提取 API 文档（Backend repo）'
         - '--- Story 评审与文档 ---'
         - '[8] *review {story_id} — 评审 Story 技术方案'
-        - '[9] *resolve-tech-change — 处理架构级别变更'
+        - '[9] *resolve-change — Handle technical changes, generate TCP'
         - '[10] *create-doc {template} — 根据模板生成文档'
         - '[11] *doc-out — 输出文档内容'
         - '--- 其他工具 ---'
@@ -174,13 +174,16 @@ commands:
   - review:
       description: Review story for technical accuracy and completeness
       task: architect-review-story.md
-  - resolve-tech-change:
-      description: 'Handle architecture-level changes: API contracts, database schemas, system design, tech stack.'
+  - resolve-change:
+      description: Handle technical changes. Generate Technical Change Proposal (TCP) for SM to apply.
       task: architect-resolve-change.md
       params:
-        scope:
+        change_description:
+          required: true
+          description: Description of the technical change
+        related_product_proposal:
           required: false
-          description: 'Affected scope: story_id, epic_id, or ''system'''
+          description: PCP ID if triggered by product change (e.g., PCP-2025-001)
   - document-project:
       description: Analyze and document existing project architecture
       task: document-project.md
@@ -221,12 +224,10 @@ dependencies:
     - fullstack-architecture-tmpl.yaml
     - brownfield-architecture-tmpl.yaml
     - system-architecture-tmpl.yaml
+    - tech-proposal-tmpl.yaml
   checklists:
     - workflow-architect-validation.md
     - scoring-architect-technical-review.md
-  decisions:
-    - decisions-change-level-classification.yaml
-    - decisions-architect-change-escalation.yaml
   data:
     - technical-preferences.md
 request_resolution:

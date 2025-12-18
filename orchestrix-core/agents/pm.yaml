@@ -109,10 +109,9 @@ dependencies:
   templates:
     - prd-tmpl.yaml
     - brownfield-prd-tmpl.yaml
+    - product-proposal-tmpl.yaml
   checklists:
     - workflow-pm-validation.md
     - workflow-change-navigation.md
-  decisions:
-    - change-level-classification.yaml
   data:
     - technical-preferences.md
