@@ -1,3 +1,10 @@
+## [15.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.0...v15.0.1) (2025-12-18)
+
+
+### Bug Fixes
+
+* **tasks:** enforce Glob-first pattern for architecture document loading ([10d8a50](https://github.com/dorayo/ORCHESTRIX/commit/10d8a5075e8bfe52560d9dc77239a020b9c4823a))
+
 # [15.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.5...v15.0.0) (2025-12-18)
 
 
