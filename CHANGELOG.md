@@ -1,3 +1,42 @@
+# [15.0.0](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.5...v15.0.0) (2025-12-18)
+
+
+### Code Refactoring
+
+* **change-handling:** simplify to 2-entry-point proposal-driven system ([0376cef](https://github.com/dorayo/ORCHESTRIX/commit/0376cefcb7aa8b614d28d9de85d69dd76bc5c6f8))
+
+
+### BREAKING CHANGES
+
+* **change-handling:** Replace 4-layer escalation with simplified change handling
+
+New Architecture:
+- Technical changes → Architect (*resolve-change) → TCP
+- Product changes → PM (*revise-prd) → PCP
+- Unclear/mixed → PO (*route-change) for intelligent routing
+- SM (*apply-proposal) applies proposals to create/update Stories
+
+New Files:
+- templates/product-proposal-tmpl.yaml - PCP template
+- templates/tech-proposal-tmpl.yaml - TCP template with bidirectional linkage
+- tasks/po-route-change.md - PO intelligent routing
+- tasks/sm-apply-proposal.md - SM proposal application with auto-discovery
+- docs/08-变更处理系统设计.md - Design documentation
+
+Modified:
+- architect-resolve-change.md - Simplified TCP generation
+- pm-revise-prd.md - Simplified PCP generation
+- Agent configs (architect, sm, po, pm) - Updated commands
+
+Removed (12 files):
+- 4 escalation decision files
+- 6 old task files (correct-course, escalation utilities)
+- po-review-tech-proposal.md
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+
 ## [14.0.5](https://github.com/dorayo/ORCHESTRIX/compare/v14.0.4...v14.0.5) (2025-12-17)
 
 
