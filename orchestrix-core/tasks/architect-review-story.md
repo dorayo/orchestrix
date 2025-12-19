@@ -65,7 +65,7 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 
   Story is blocked. SM needs to resolve blockers first.
 
-  Next action: SM must fix blockers via *correct-course {story_id}
+  Next action: SM must fix blockers via *revise {story_id}
 
   (No HANDOFF - waiting for SM)
   ```

@@ -83,7 +83,16 @@ When processing sections with agent permission fields:
 
 ## YOLO Mode
 
-User can type `#yolo` to toggle to YOLO mode (process all sections at once).
+YOLO mode processes all sections at once without per-section confirmations.
+
+**Activation methods:**
+- Command parameter: `*create-doc {template} --yolo`
+- In-session trigger: Type `#yolo` during document creation
+
+**YOLO mode constraints:**
+- Sections with `elicit: true` still require user interaction (cannot be bypassed)
+- Security/acceptance invariants are always enforced
+- Outputs draft for review after completion
 
 ## CRITICAL REMINDERS
 

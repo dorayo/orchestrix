@@ -76,9 +76,8 @@ commands:
         - "[7] *validate-story-draft {story} — validate a story file"
         - "[8] *doc-out — output current document"
         - "[9] *assemble [prd|architecture|both] — assemble sharded docs for export"
-        - "[10] *yolo — toggle Yolo Mode"
-        - "[11] *explain — explain last action"
-        - "[12] *exit — exit persona"
+        - "[10] *explain — explain last action"
+        - "[11] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -139,8 +138,6 @@ commands:
         - "Source of truth remains in sharded directories"
   - doc-out:
       description: "Output the full document to the current destination file."
-  - yolo:
-      description: "Toggle Yolo Mode (may skip doc section confirmations; may NOT bypass elicitation when elicit=true)."
   - explain:
       description: "Explain the last action (mentor style): approach, key decisions, trade-offs, next steps."
   - exit:

@@ -67,9 +67,8 @@ commands:
         - "[2] *revise-prd — handle PRD-level changes from description"
         - "[3] *start-iteration — start new iteration (post-MVP, requires sharded PRD)"
         - "[4] *doc-out — output current document"
-        - "[5] *yolo — toggle Yolo Mode"
-        - "[6] *explain — explain last action"
-        - "[7] *exit — exit persona"
+        - "[5] *explain — explain last action"
+        - "[6] *exit — exit persona"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -90,8 +89,6 @@ commands:
         - "Generates prompts for Architect (and UX-Expert if UI involved)"
   - doc-out:
       description: "Output the full document to the current destination file."
-  - yolo:
-      description: "Toggle Yolo Mode (faster drafting; never violate sourcing/acceptance invariants)."
   - explain:
       description: "Explain the last action (mentor style): approach, key decisions, trade-offs, next steps."
   - exit:

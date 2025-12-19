@@ -91,8 +91,8 @@ messages:
       Story requires human intervention or SM revision.
 
       Next actions:
-      - If "Blocked": SM must resolve blockers (*correct-course {{story_id}})
-      - If "RequiresRevision": SM must revise story (*revise-story {{story_id}})
+      - If "Blocked": SM must resolve blockers (*revise {{story_id}})
+      - If "RequiresRevision": SM must revise story (*revise {{story_id}})
       - If "Escalated": Wait for Architect decision
     handoff: null
 

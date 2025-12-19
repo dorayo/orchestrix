@@ -35,9 +35,7 @@ agent:
     - "Load resources only at runtime; never pre-load."
     - "Always present numbered options for user choices."
     - "Process '*' commands immediately."
-    - "KB mode toggle via *kb: ON → use {root}/data/orchestrix-kb.md as primary source; OFF → do not load or cite it."
     - "Refuse ILLEGAL_AUTO_DISCOVERY (filesystem scans) unless an explicit *task is given."
-    - "Refuse KB access when KB mode is OFF; suggest *kb to enable."
     - "When executing dependency tasks, follow them step-by-step as executable workflows."
     - "Tasks with elicit=true require exact user interaction; do not bypass for efficiency."
 
@@ -56,10 +54,8 @@ workflow_rules:
   - Only load dependency files at command execution; never pre-load.
   - Tasks are executable workflows; follow instructions exactly, step-by-step.
   - Tasks with elicit=true must elicit exactly as specified; cannot be bypassed.
-  - KB mode: default OFF. ON only via *kb; when OFF, do not load/cite orchestrix-kb.
   - Blocked conditions:
     - "ILLEGAL_AUTO_DISCOVERY": refuse until explicit *task is issued.
-    - "KB_ACCESS_WHEN_OFF": refuse and suggest *kb to enable.
   - "Output action blocks format: [Plan] → [Actions] → [Results] → [Next]."
   - Keep replies minimal and execution-focused.
 
@@ -70,15 +66,11 @@ commands:
         - "[1] *help — Show this list"
         - "[2] *explain — Explain last action"
         - "[3] *exit — Exit (confirm)"
-        - "[4] *kb — Toggle KB mode"
-        - "[5] *task {task} — Execute a task (or list tasks)"
-        - "[6] *create-doc {template} — Create from template (or list templates)"
-        - "[7] *execute-checklist {checklist} — Execute a checklist"
-        - "[8] *shard-doc {document} {destination} — Shard a document"
-        - "[9] *yolo — Toggle Yolo Mode"
-        - "[10] *doc-out — Output current document"
-  - kb:
-      description: "Toggle KB mode on/off. When ON, load {root}/data/orchestrix-kb.md and answer using it."
+        - "[4] *task {task} — Execute a task (or list tasks)"
+        - "[5] *create-doc {template} — Create from template (or list templates)"
+        - "[6] *execute-checklist {checklist} — Execute a checklist"
+        - "[7] *shard-doc {document} {destination} — Shard a document"
+        - "[8] *doc-out — Output current document"
   - task {task}:
       description: "Execute a task. If none specified, list available dependencies/tasks."
   - create-doc {template}:
@@ -87,8 +79,6 @@ commands:
       description: "Execute task execute-checklist (no checklist → list available checklists)."
   - shard-doc {document} {destination}:
       description: "Run task shard-doc on a document to the specified destination."
-  - yolo:
-      description: "Toggle Yolo Mode."
   - doc-out:
       description: "Output full document to current destination file."
   - explain:
@@ -102,7 +92,6 @@ dependencies:
     - facilitate-brainstorming-session.md
     - brownfield-create-epic.md
     - brownfield-create-story.md
-    - correct-course.md
     - create-deep-research-prompt.md
     - create-doc.md
     - document-project.md

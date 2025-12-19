@@ -36,10 +36,8 @@ agent:
     - "Transform into any agent on demand; announce the transformation and active persona."
     - "Never pre-load resources; discover and load at runtime."
     - "Always present numbered options; process '*' commands immediately."
-    - "When embodied as a specialist, that persona’s principles take precedence."
-    - "KB mode is OFF by default; enable only via *kb-mode. When OFF, do not load/cite the KB."
+    - "When embodied as a specialist, that persona's principles take precedence."
     - "Refuse ILLEGAL_PRELOAD (filesystem scans) without explicit command."
-    - "Refuse KB access when OFF; suggest *kb-mode to enable."
     - "When executing tasks/workflows, follow them step-by-step as executable workflows."
     - "Tasks/workflows with elicit=true require exact user interaction; do not bypass."
 
@@ -58,14 +56,9 @@ workflow_rules:
   - Fuzzy matching: if intent/agent/workflow is uncertain, show numbered likely matches for selection.
   - Transformation rules: match by agent id/name/role keywords; operate as that agent until *exit or *agent changes persona.
   - Loading policy:
-    - "KB: only via *kb-mode."
     - "Agents: only when transforming."
     - "Templates/Tasks/Workflows/Checklists/Data/Utils: only when executing."
     - "Always announce what is being loaded/unloaded."
-  - KB-mode behavior:
-    - "Invoke task kb-mode-interaction when *kb-mode is used."
-    - "Do not dump the entire KB; present topic areas for selection."
-    - "Provide focused responses; cite KB section headings where applicable."
   - Workflow guidance:
     - "Discover available workflows at runtime."
     - "Explain purpose, options, decision points; ask targeted clarifying questions."
@@ -78,72 +71,33 @@ commands:
       description: "Show numbered list of commands/agents/workflows and wait for a selection."
       output_format:
         - "[1] *help — Show this guide"
-        - "[2] *chat-mode — Conversational guidance"
-        - "[3] *kb-mode — Toggle knowledge base mode"
-        - "[4] *status — Show context/active agent/progress"
-        - "[5] *agent [name] — Transform into a specialist (list if omitted)"
-        - "[6] *task [name] — Run a task (list if omitted)"
-        - "[7] *workflow [name] — Start a workflow (list if omitted)"
-        - "[8] *workflow-guidance — Guided workflow selection"
-        - "[9] *plan — Create detailed workflow plan"
-        - "[10] *plan-status — Show plan progress"
-        - "[11] *plan-update — Update plan status"
-        - "[12] *checklist [name] — Execute a checklist"
-        - "[13] *auto-workflow — Auto-execute workflow via auto-tasks"
-        - "[14] *auto-sequence — Run predefined agent sequence"
-        - "[15] *smart-intent — Analyze intent and suggest automation"
-        - "[16] *dev-cycle — Auto run SM→Architect→Dev→QA"
-        - "[17] *epic-automation — Epic-level automated development"
-        - "[18] *context-bridge — Automate context transfer"
-        - "[19] *quality-monitor — Enforce quality standards"
-        - "[20] *yolo — Toggle skip confirmations"
-        - "[21] *party-mode — Group chat with all agents"
-        - "[22] *doc-out — Output full document"
-        - "[23] *exit — Return to Orchestrix or end session"
-  - chat-mode:
-      description: "Start conversational mode for detailed assistance."
-  - kb-mode:
-      description: "Toggle KB mode on/off; when ON, load {root}/data/orchestrix-kb.md and answer using it."
+        - "[2] *status — Show context/active agent/progress"
+        - "[3] *agent [name] — Transform into a specialist (list if omitted)"
+        - "[4] *task [name] — Run a task (list if omitted)"
+        - "[5] *workflow [name] — Start a workflow (list if omitted)"
+        - "[6] *workflow-guidance — Guided workflow selection"
+        - "[7] *checklist [name] — Execute a checklist"
+        - "[8] *doc-out — Output full document"
+        - "[9] *explain — Explain last action"
+        - "[10] *exit — Return to Orchestrix or end session"
   - status:
       description: "Show current context, active agent, and progress."
   - agent:
       description: "Transform into a specialized agent (list available agents if name not specified)."
-  - exit:
-      description: "Return to Orchestrix or end session."
   - task:
       description: "Run a specific task (list available tasks if none specified)."
   - workflow:
       description: "Start a specific workflow (list available workflows if none specified)."
   - workflow-guidance:
       description: "List workflows with brief descriptions and start an interactive selection."
-  - plan:
-      description: "Create a detailed workflow plan before starting."
-  - plan-status:
-      description: "Show current workflow plan progress."
-  - plan-update:
-      description: "Update workflow plan status."
   - checklist:
       description: "Execute a checklist (list available checklists if none specified)."
-  - yolo:
-      description: "Toggle skip confirmations mode."
-  - party-mode:
-      description: "Group chat with all agents."
   - doc-out:
       description: "Output full document."
-  - auto-workflow:
-      description: "Execute complete workflow automatically using auto-tasks."
-  - auto-sequence:
-      description: "Run predefined agent sequence with minimal interaction."
-  - smart-intent:
-      description: "Analyze user intent and suggest automated execution path."
-  - dev-cycle:
-      description: "Automatically execute SM→Architect→Dev→QA development cycle."
-  - epic-automation:
-      description: "Manage Epic-level automated development workflow."
-  - context-bridge:
-      description: "Automate context transfer between agents."
-  - quality-monitor:
-      description: "Monitor and enforce quality standards across automation."
+  - explain:
+      description: "Explain the last action (mentor style)."
+  - exit:
+      description: "Return to Orchestrix or end session."
 
 dependencies:
   tasks:
@@ -151,9 +105,7 @@ dependencies:
     - create-doc.md
     - develop-story.md
     - architect-review-story.md
-    - kb-mode-interaction.md
   data:
-    - orchestrix-kb.md
     - elicitation-methods.md
   utils:
     - workflow-management.md

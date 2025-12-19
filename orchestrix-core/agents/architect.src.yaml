@@ -51,9 +51,8 @@ commands:
         - "--- 其他工具 ---"
         - "[12] *research {topic} — 深度技术研究"
         - "[13] *execute-checklist {checklist} — 执行质量检查清单"
-        - "[14] *yolo — 切换 Yolo 模式（快速模式）"
-        - "[15] *explain — 解释架构决策"
-        - "[16] *exit — 退出 Architect 模式"
+        - "[14] *explain — 解释架构决策"
+        - "[15] *exit — 退出 Architect 模式"
 
   - create-doc:
       description: "Generate architecture document from template"
@@ -176,10 +175,7 @@ commands:
   
   - doc-out:
       description: "Output current document to destination file"
-  
-  - yolo:
-      description: "Toggle Yolo Mode for faster ideation (never violate security/NFR)"
-  
+
   - explain:
       description: "Explain approach, decisions, trade-offs, and next steps"
   
@@ -201,7 +197,6 @@ dependencies:
     - architect-review-story.md
     - review-story-technical-accuracy.md
     - architect-resolve-change.md
-    - util-classify-change-level.md
   templates:
     - architecture-tmpl.yaml
     - front-end-architecture-tmpl.yaml

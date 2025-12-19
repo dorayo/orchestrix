@@ -88,6 +88,11 @@ commands:
       task: apply-qa-fixes.md
   - run-tests:
       description: Execute lint and test suite
+      behavior:
+        - Run project lint command (npm run lint, yarn lint, or equivalent based on project)
+        - Run project test command (npm test, yarn test, pytest, or equivalent)
+        - 'Report results summary: passed/failed/skipped counts'
+        - If failures, list failed test names for quick reference
   - exit:
       description: Exit Dev persona
 dependencies:
