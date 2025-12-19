@@ -124,6 +124,14 @@ input:
   story_type: {{detected_story_type}}  # Backend | Frontend | FullStack
 ```
 
+**IMPORTANT**: This utility automatically:
+- Reads `core-config.yaml` for architecture configuration
+- Uses **Glob tool first** to match files with any prefix (e.g., `3-tech-stack.md`, `12-coding-standards.md`)
+- Handles both sharded and monolithic architecture modes
+- Returns structured `architecture_context` with tech_stack, standards, file_structure, etc.
+
+**DO NOT** directly read files like `docs/architecture/tech-stack.md` or `docs/architecture/coding-standards.md` - use the utility which handles file discovery correctly.
+
 **Story Type Detection**:
 - Analyze story content and Dev Notes
 - Backend: API endpoints, database, services mentioned

@@ -69,22 +69,32 @@ This task is triggered when QA sets Story Status to `Escalated` with `architectu
 
 ### Phase 2: Architecture Context Review
 
-4. **Read Relevant Architecture Documents**
+4. **Load Architecture Context**
+
+   Execute `{root}/tasks/util-load-architecture-context.md`:
+
+   ```yaml
+   input:
+     story_type: {{detected_from_escalation_reason}}  # Backend | Frontend | FullStack
    ```
-   Based on the escalation reason, read relevant architecture shards:
-   
-   **Common Documents:**
-   - docs/architecture/tech-stack.md
-   - docs/architecture/backend-architecture.md (if backend concern)
-   - docs/architecture/frontend-architecture.md (if frontend concern)
-   - docs/architecture/database-schema.md (if data concern)
-   - docs/architecture/rest-api-spec.md (if API concern)
-   
-   **Security Concerns:**
-   - docs/architecture/security-architecture.md (if exists)
-   
-   **Performance Concerns:**
-   - docs/architecture/performance-requirements.md (if exists)
+
+   **IMPORTANT**: This utility automatically:
+   - Reads `core-config.yaml` for architecture configuration
+   - Uses **Glob tool first** to match files with any prefix (e.g., `3-tech-stack.md`, `12-coding-standards.md`)
+   - Handles both sharded and monolithic architecture modes
+   - Returns structured `architecture_context`
+
+   **DO NOT** directly read files like `docs/architecture/tech-stack.md` - use the utility which handles file discovery correctly.
+
+   The utility loads:
+   - **Common Documents**: tech-stack, source-tree, coding-standards, testing-strategy
+   - **Backend (if applicable)**: data-models, database-schema, backend-architecture, rest-api-spec, external-apis
+   - **Frontend (if applicable)**: frontend-architecture, components, core-workflows
+
+   For security/performance concerns, use Glob to find additional documents:
+   ```
+   Glob(pattern: "docs/architecture/*security*.md")
+   Glob(pattern: "docs/architecture/*performance*.md")
    ```
 
 5. **Read Story and Implementation**
