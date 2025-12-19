@@ -432,10 +432,26 @@ action: revise_story
 target_status: {next_status from Step 5}
 ```
 
-**On validation PASS**:
-1. Update Story.status field to `{next_status}`
-2. Verify update (re-read Story.status and confirm)
-3. If verification fails: HALT with error
+**On validation PASS - MANDATORY STATUS UPDATE**:
+
+1. **EDIT Story File** (CRITICAL - DO NOT SKIP):
+   - Open: `{story_path}`
+   - Locate the `Status:` field in Story metadata (typically in YAML frontmatter or header)
+   - **Change**: `Status: RequiresRevision` → `Status: {next_status}`
+   - Save file immediately
+
+2. **Verify Update** (MANDATORY):
+   - Re-read `{story_path}`
+   - Extract `Status` field value
+   - **Confirm**: Status field = `{next_status}`
+   - If mismatch: HALT with "ERROR: Status update failed - expected {next_status}, found {actual}"
+
+3. **Log Status Change**:
+   ```
+   ✅ Status Updated: RequiresRevision → {next_status}
+   ```
+
+**CRITICAL**: If you skip this step, the Story will remain in old status and the workflow will break. The status update is NOT automatic - you MUST edit the file.
 
 **On validation FAIL**:
 - HALT with error message
