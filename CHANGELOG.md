@@ -1,3 +1,10 @@
+## [15.0.2](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.1...v15.0.2) (2025-12-19)
+
+
+### Bug Fixes
+
+* **tasks:** add explicit status update instructions in SM revise task ([3ff4850](https://github.com/dorayo/ORCHESTRIX/commit/3ff4850aa535879bc6fa82efe09bacae1ce6dfd7))
+
 ## [15.0.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.0...v15.0.1) (2025-12-18)
 
 

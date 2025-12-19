@@ -1,6 +1,6 @@
 {
   "name": "orchestrix-installer",
-  "version": "15.0.1",
+  "version": "15.0.2",
   "description": "Installer for the Orchestrix Universal AI Agent Framework",
   "main": "lib/installer.js",
   "bin": {
