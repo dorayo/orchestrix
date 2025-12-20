@@ -1,3 +1,11 @@
+## [15.0.3](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.2...v15.0.3) (2025-12-20)
+
+
+### Bug Fixes
+
+* **tasks:** add environment cleanup step to Dev self-review ([5edb51c](https://github.com/dorayo/ORCHESTRIX/commit/5edb51cb45e130394a7d6df52ab9c9ce45fd8ff4))
+* **tasks:** enforce Glob-first pattern in Architect tasks ([56a3da6](https://github.com/dorayo/ORCHESTRIX/commit/56a3da6b6e1424bb6d979a1424f9d112387938d4))
+
 ## [15.0.2](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.1...v15.0.2) (2025-12-19)
 
 
