@@ -418,6 +418,37 @@ handoff_command: "*review-escalation {story_id}"
 
 ---
 
+## Step 7: Environment Cleanup (ALWAYS EXECUTE)
+
+Execute regardless of validation result (PASS/FAIL/ESCALATE).
+
+```bash
+# Check for environment file
+ENV_FILE="/tmp/qa-environment-${STORY_ID}.yaml"
+
+if [ -f "$ENV_FILE" ]; then
+  # File-based cleanup
+  # Execute: {root}/tasks/qa-environment-cleanup.md with story_id
+else
+  # Port-based fallback cleanup
+  for PORT in 3000 3001 5000 5173 8000 8080 8888 9000; do
+    PID=$(lsof -ti :$PORT 2>/dev/null)
+    if [ -n "$PID" ]; then
+      PROC=$(ps -p $PID -o comm= 2>/dev/null)
+      if echo "$PROC" | grep -qE "^(node|npm|bun|deno)$"; then
+        kill -TERM $PID 2>/dev/null
+        sleep 2
+        kill -0 $PID 2>/dev/null && kill -9 $PID 2>/dev/null
+      fi
+    fi
+  done
+fi
+```
+
+On failure: Log warning, DO NOT block workflow.
+
+---
+
 ## Blocking Conditions
 
 HALT immediately if:
@@ -459,6 +490,7 @@ HALT immediately if:
 - `checklists/gate-dev-implementation-gate.md` - Implementation Gate (unified quality validation engine)
 - `tasks/validate-database-migration.md` - Database migration validation
 - `tasks/make-decision.md` - Decision execution framework
+- `tasks/qa-environment-cleanup.md` - Environment cleanup (file-based mode)
 - `data/decisions-dev-self-review-decision.yaml` - Self-review decision rules
 - `data/story-status-transitions.yaml` - Status transition permissions
 
