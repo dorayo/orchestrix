@@ -6,156 +6,130 @@ inputs:
     values: [low, medium, high]
     required: true
 
-  - name: story_title
-    type: string
+  - name: story_content
+    type: object
     required: true
+    properties:
+      title: string
+      acceptance_criteria: array
 
   - name: explicit_tier
     type: enum
     values: [trivial, simple, standard, complex]
     required: false
 
-  - name: keywords_detected
-    type: object
-    required: true
-    properties:
-      has_api_keywords: boolean
-      has_db_keywords: boolean
-      has_security_keywords: boolean
-      has_trivial_keywords: boolean
-      has_simple_keywords: boolean
+llm_analysis:
+  instruction: Analyze story_content semantically to determine tier.
 
-keyword_patterns:
-  trivial:
-    - typo
-    - config
-    - comment
-    - docs
-    - readme
-    - formatting
-    - whitespace
-    - rename
+  involves_db_changes:
+    true_if: Creating/altering tables, columns, indexes, migrations, foreign keys
+    false_if: Read-only queries, connection config, pool settings, ORM usage without schema change
 
-  simple:
-    - fix
-    - patch
-    - minor
-    - adjust
-    - small
-    - bug
-    - hotfix
-    - update
+  involves_security:
+    true_if: Auth/authz logic, password handling, token generation/validation, encryption, permission checks
+    false_if: Auth-related UI styling, error message text, documentation, non-auth "token" usage
 
-  api:
-    - endpoint
-    - route
-    - api
-    - rest
-    - graphql
-    - http
+  actual_complexity:
+    trivial: Typos, comments, formatting, simple config values
+    simple: Localized bug fixes, validation additions, UI tweaks, calls to existing APIs
+    standard: New features across multiple files, new API endpoints, DB schema changes
+    complex: Cross-cutting concerns, security implementations, architectural changes
 
-  database:
-    - table
-    - schema
-    - migration
-    - database
-    - column
-    - index
-
-  security:
-    - auth
-    - token
-    - password
-    - permission
-    - security
-    - encrypt
-    - credential
+  output: |
+    analysis:
+      involves_db_changes: bool
+      involves_security: bool
+      actual_complexity: trivial|simple|standard|complex
+      reasoning: string
 
 rules:
-  - condition: "explicit_tier != null"
+  - id: explicit_override
+    condition: "explicit_tier != null"
     result: "{{explicit_tier}}"
-    reasoning: "Explicit tier override from Epic YAML"
     workflow:
       template: "{{explicit_tier in ['trivial', 'simple'] ? 'story-quick-tmpl.yaml' : 'story-tmpl.yaml'}}"
       sm_task: "{{explicit_tier in ['trivial', 'simple'] ? 'create-quick-story.md' : 'create-next-story.md'}}"
       dev_task: "{{explicit_tier in ['trivial', 'simple'] ? 'quick-develop.md' : 'develop-story.md'}}"
       qa_task: "{{explicit_tier in ['trivial', 'simple'] ? 'quick-verify.md' : 'qa-review-story.md'}}"
 
-  - condition: >
-      estimated_complexity == 'low'
-      AND has_trivial_keywords == true
-      AND has_api_keywords == false
-      AND has_db_keywords == false
-      AND has_security_keywords == false
-    result: trivial
-    reasoning: "Low complexity + trivial keywords + no forbidden keywords"
-    workflow:
-      template: story-quick-tmpl.yaml
-      sm_task: create-quick-story.md
-      dev_task: quick-develop.md
-      qa_task: quick-verify.md
-      skip_architect_review: true
-      skip_test_design: true
-
-  - condition: >
-      estimated_complexity == 'low'
-      AND has_api_keywords == false
-      AND has_db_keywords == false
-      AND has_security_keywords == false
-    result: simple
-    reasoning: "Low complexity + no API/DB/Security keywords"
-    workflow:
-      template: story-quick-tmpl.yaml
-      sm_task: create-quick-story.md
-      dev_task: quick-develop.md
-      qa_task: quick-verify.md
-      skip_architect_review: true
-      skip_test_design: true
-
-  - condition: >
-      estimated_complexity == 'high'
-      OR has_security_keywords == true
+  - id: security_complex
+    condition: "analysis.involves_security == true"
     result: complex
-    reasoning: "High complexity or security-sensitive"
     workflow:
       template: story-tmpl.yaml
       sm_task: create-next-story.md
       dev_task: develop-story.md
       qa_task: qa-review-story.md
       skip_architect_review: false
-      skip_test_design: false
       architect_review_mandatory: true
 
-  - condition: "true"
+  - id: db_standard
+    condition: "analysis.involves_db_changes == true"
     result: standard
-    reasoning: "Default - medium complexity or has API/DB keywords"
     workflow:
       template: story-tmpl.yaml
       sm_task: create-next-story.md
       dev_task: develop-story.md
       qa_task: qa-review-story.md
       skip_architect_review: false
-      skip_test_design: false
+
+  - id: high_complexity
+    condition: "estimated_complexity == 'high' OR analysis.actual_complexity == 'complex'"
+    result: complex
+    workflow:
+      template: story-tmpl.yaml
+      sm_task: create-next-story.md
+      dev_task: develop-story.md
+      qa_task: qa-review-story.md
+      skip_architect_review: false
+      architect_review_mandatory: true
+
+  - id: trivial_quick
+    condition: "analysis.actual_complexity == 'trivial'"
+    result: trivial
+    workflow:
+      template: story-quick-tmpl.yaml
+      sm_task: create-quick-story.md
+      dev_task: quick-develop.md
+      qa_task: quick-verify.md
+      skip_architect_review: true
+
+  - id: simple_quick
+    condition: "estimated_complexity == 'low' AND analysis.actual_complexity in ['trivial', 'simple']"
+    result: simple
+    workflow:
+      template: story-quick-tmpl.yaml
+      sm_task: create-quick-story.md
+      dev_task: quick-develop.md
+      qa_task: quick-verify.md
+      skip_architect_review: true
+
+  - id: default_standard
+    condition: "true"
+    result: standard
+    workflow:
+      template: story-tmpl.yaml
+      sm_task: create-next-story.md
+      dev_task: develop-story.md
+      qa_task: qa-review-story.md
+      skip_architect_review: false
 
 output:
   result:
     type: enum
     values: [trivial, simple, standard, complex]
 
-  reasoning:
-    type: string
+  analysis:
+    type: object
+    properties:
+      involves_db_changes: boolean
+      involves_security: boolean
+      actual_complexity: enum
+      reasoning: string
 
   workflow:
     type: object
-    properties:
-      template: string
-      sm_task: string
-      dev_task: string
-      qa_task: string
-      skip_architect_review: boolean
-      skip_test_design: boolean
-      architect_review_mandatory: boolean
 
 metadata:
-  version: "1.0.0"
+  version: "2.1.0"
   owner: SM

@@ -24,6 +24,7 @@ sections:
         tier: {{tier}}
         status: Approved
         mode: quick
+        repository: {{repository_type}}
       ```
 
   - id: description
@@ -31,6 +32,23 @@ sections:
     type: text
     template: |
       {{story_description}}
+
+  - id: multi-repo-context
+    title: Multi-Repository Context
+    condition: project.mode == 'multi-repo'
+    type: template-text
+    template: |
+      **Repository**: {{repository_name}} | **Platform**: {{target_platform}}
+
+      {{#if provides_apis}}
+      **APIs Provided**: {{#each provides_apis}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}}
+      {{/if}}
+      {{#if consumes_apis}}
+      **APIs Consumed**: {{#each consumes_apis}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}}
+      {{/if}}
+      {{#if cross_repo_dependencies}}
+      **Dependencies**: {{#each cross_repo_dependencies}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+      {{/if}}
 
   - id: acceptance-criteria
     title: Acceptance Criteria

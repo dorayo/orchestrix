@@ -38,9 +38,17 @@ Story:
   tier: {tier_decision.result}
   status: Approved
   mode: quick
+  repository: {story_definition.repository_type}
 ```
 
 **Description**: Extract from `story_definition.acceptance_criteria` or `story_definition.title`.
+
+**Multi-Repo Context** (if `project.mode == 'multi-repo'`):
+- `repository_name`: from `story_definition.repository_type`
+- `target_platform`: from `story_definition.repository_type`
+- `provides_apis`: from `story_definition.provides_apis` (if present)
+- `consumes_apis`: from `story_definition.consumes_apis` (if present)
+- `cross_repo_dependencies`: from `story_definition.dependencies` filtered to cross-repo only
 
 **Acceptance Criteria**:
 - Use `story_definition.acceptance_criteria` if array format
@@ -57,9 +65,14 @@ Story:
 
 - [ ] Story has ≥1 AC
 - [ ] Story has description
-- [ ] No API/DB/Security keywords (re-verify)
+- [ ] Re-verify LLM analysis from tier_decision:
+  - [ ] `analysis.involves_db_changes == false` (no actual DB schema changes)
+  - [ ] `analysis.involves_security == false` (no actual security operations)
 
-If validation fails: HALT, output error.
+If validation fails (e.g., tier_decision was incorrect):
+- Output: "⚠️ Quick workflow validation failed: {reason}"
+- Suggest: "Use standard workflow: *draft {story_id}"
+- **HALT**
 
 ### Step 4: Write File
 
