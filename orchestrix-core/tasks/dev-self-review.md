@@ -20,8 +20,7 @@ required:
   - dev_log_path: Path to dev log
 
 optional:
-  - architecture_context: Pre-loaded context from develop-story.md Step 3.2
-  - cumulative_context: Pre-loaded context from develop-story.md Step 3.4
+  - cumulative_context: Pre-loaded context from develop-story.md Step 3.3
 ```
 
 ## Validation
@@ -43,27 +42,14 @@ action: self_review
 
 ### 1. Load Context
 
-**Context Reuse Protocol**:
-
-```yaml
-if architecture_context provided in inputs:
-  use: inputs.architecture_context
-else:
-  execute: {root}/tasks/util-load-architecture-context.md
-
-if cumulative_context provided in inputs:
-  use: inputs.cumulative_context
-else:
-  execute: {root}/tasks/util-load-cumulative-context.md
-```
-
 **Load Required Documents**:
-- Story file: **Use Glob FIRST** with `{devStoryLocation}/{story_id}.*.md`, then Read the returned path
-  > NEVER attempt to Read `{story_id}.md` directly - files include title slug
-- Dev Log from `{devLogLocation}/{story-id}-dev-log.md`
-- Architecture documents: **REUSE from input or load if missing**
-- API contracts (if multi-repo, from product repo)
-- QA test design (if exists): glob `{qa.qaLocation}/assessments/{story_id}-test-design-*.md`
+
+1. Story file: Glob `{devStoryLocation}/{story_id}.*.md`, then Read
+2. Dev Log: `{devLogLocation}/{story-id}-dev-log.md`
+3. Cumulative context: Use from input OR execute `{root}/tasks/util-load-cumulative-context.md`
+4. QA test design (if exists): Glob `{qa.qaLocation}/assessments/{story_id}-test-design-*.md`
+
+Implementation context from `story.dev_notes`. DO NOT load architecture documents.
 
 ### 2. Execute Implementation Gate
 
@@ -76,7 +62,6 @@ story_path: {story_path}
 dev_log_path: {dev_log_path}
 project_mode: {from core-config.yaml}
 repository_role: {from core-config.yaml}
-architecture_context: {from Step 1}
 ```
 
 **Output**: `gate_result` (complete implementation gate validation)

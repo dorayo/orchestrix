@@ -24,95 +24,71 @@ required:
 optional:
   - project_mode: 'monolith' | 'multi-repo' (from core-config.yaml)
   - repository_role: 'backend' | 'frontend' | 'ios' | 'android' (from core-config.yaml)
-  - architecture_context: Pre-loaded context object from parent task
   - cumulative_context: Pre-loaded cumulative context from parent task
 ```
 
 ## Process
 
-### 1. Architecture Context Resolution
+### 1. Load Story Context
 
-**Context Reuse Protocol**:
+Read story file from `{story_path}`.
 
-```yaml
-if architecture_context provided in inputs:
-  use: inputs.architecture_context
-  proceed_to: Step 2
-else:
-  execute: {root}/tasks/util-load-architecture-context.md
-```
+Extract:
+- `story.dev_notes` → validation reference
+- `story.dev_notes.file_locations` → expected file structure
+- `story.dev_notes.technical_constraints` → standards to enforce
 
-**Full Load Process** (only if no context provided):
-
-**Base Documents** (always load):
-- `docs/architecture/tech-stack.md`
-- `docs/architecture/source-tree.md`
-- `docs/architecture/coding-standards.md`
-- `docs/architecture/testing-strategy.md`
-
-**Story Type Detection**: Analyze story content and implementation files
-
-**Additional Documents** (based on type):
-- Backend: data-models.md, database-schema.md, backend-architecture.md, rest-api-spec.md
-- Frontend: frontend-architecture.md, components.md, core-workflows.md
-- Full-stack: All of the above
+DO NOT load architecture documents. All relevant constraints are in Dev Notes.
 
 ---
 
 ### 2. Architecture Compliance Validation
 
-**Objective**: Validate implementation against architecture standards
+Validate implementation against `story.dev_notes`.
 
 **2.1 Tech Stack Compliance**
 
-Extract technologies/libraries from implementation files and cross-reference with tech-stack.md.
+Cross-reference implementation files with `dev_notes.technical_constraints`.
 
 **Checks**:
 - Unapproved technologies → CRITICAL
 - Wrong versions → MAJOR
 - Deprecated packages → MAJOR
-- Missing dependencies → MINOR
 
 **2.2 Naming Convention Compliance**
 
-Validate against coding-standards.md patterns.
+Validate against patterns in `dev_notes.technical_constraints`.
 
 **Checks**:
-- Incorrect casing (camelCase vs kebab-case vs PascalCase) → MAJOR
+- Incorrect casing → MAJOR
 - Non-standard prefixes/suffixes → MINOR
-- Reserved word usage → MAJOR
 - Inconsistent naming patterns → MINOR
 
 **2.3 File Structure Alignment**
 
-Validate against source-tree.md structure.
+Validate against `dev_notes.file_locations`.
 
 **Checks**:
 - Files in wrong directories → MAJOR
-- Missing required structure → MAJOR
 - Incorrect test file placement → MAJOR
-- Config files misplaced → MINOR
 
 **2.4 API Pattern Consistency** (Backend/Full-stack only)
 
-Validate against rest-api-spec.md.
+Validate against `dev_notes.data_models` and acceptance criteria.
 
 **Checks**:
 - Non-standard endpoints → MAJOR
-- Incorrect HTTP methods → MAJOR
 - Response format violations → MAJOR
-- Missing error handling → MAJOR
 - Auth pattern violations → CRITICAL
 
 **2.5 Data Model Alignment** (Backend/Full-stack only)
 
-Validate against data-models.md.
+Validate against `dev_notes.database_design` and `dev_notes.data_models`.
 
 **Checks**:
 - Model definition mismatches → MAJOR
 - Wrong field types → MAJOR
 - Missing required fields → MAJOR
-- Incorrect relationships → MINOR
 
 **Architecture Compliance Result**:
 ```yaml
@@ -598,9 +574,7 @@ gate_result:
 
 ## References
 
-- `tasks/util-load-architecture-context.md`
-- Architecture documents in `docs/architecture/`
-- API contracts in product repo: `docs/api-contracts.md`
-- Epic YAML in product repo: `docs/prd/epic-{epic_id}-{title-slug}.yaml`
+- Story Dev Notes (primary validation source)
+- API contracts in product repo: `docs/api-contracts.md` (multi-repo only)
+- Epic YAML in product repo: `docs/prd/epic-{epic_id}-{title-slug}.yaml` (multi-repo only)
 - `core-config.yaml` - project configuration
-- `data/technical-preferences.md`

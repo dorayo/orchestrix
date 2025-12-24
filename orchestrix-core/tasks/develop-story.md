@@ -111,78 +111,31 @@ action: implement
 
 ---
 
-## 3. Context Loading (Mandatory Load Order)
-
-Load and parse the following, in this exact order:
+## 3. Context Loading
 
 ### 3.1 Story File
-Read story from `{devStoryLocation}/{story_id}.*.md`, validate status again.
 
-### 3.2 Architecture Context (CRITICAL)
-Execute `{root}/tasks/util-load-architecture-context.md`:
+Read story from `{devStoryLocation}/{story_id}.*.md`.
 
-```yaml
-input:
-  story_type: {{detected_from_story}}  # Backend | Frontend | FullStack
-```
+Extract and store:
+- `story.dev_notes` → primary implementation context
+- `story.tasks` → implementation checklist
+- `story.acceptance_criteria` → validation criteria
 
-**IMPORTANT**: This utility automatically:
-- Reads `core-config.yaml` for architecture configuration
-- Uses glob patterns to match files with any prefix
-- Handles both sharded and monolithic architecture modes
-- Returns structured `architecture_context` with tech_stack, standards, file_structure, etc.
+Dev Notes contains all architecture-relevant information pre-extracted by SM. DO NOT load architecture documents separately.
 
-**DO NOT** directly read files like `docs/architecture/coding-standards.md` - use the utility.
+### 3.2 QA Test Design (Conditional)
 
-### 3.2.5 UI/UX Specification (Conditional - MANDATORY when referenced)
+Glob: `{qa.qaLocation}/assessments/{story_id}-test-design-*.md`
 
-**Check**: Look for "UI/UX Specification Reference" section in the loaded story file (from Step 3.1).
+If found: Load for TDD reference.
+If not found: Skip.
 
-**If UI/UX references exist** (section contains `📐 Reference File` or has a table of sections):
+### 3.3 Cumulative Context
 
-1. **Extract the file path** from the story (typically `docs/front-end-spec.md`)
-2. **Read the entire file**: `docs/front-end-spec.md`
-3. **Extract relevant sections** based on the table in the story:
-   - For each row in the UI/UX reference table, locate and extract that section from front-end-spec.md
-   - Store as `ui_ux_context` containing the actual spec content
+Execute: `{root}/tasks/util-load-cumulative-context.md`
 
-**Example**:
-```yaml
-# If story has:
-# | Section | Why Relevant |
-# | Component Library | Form inputs needed |
-# | User Flows | Login flow reference |
-
-# Then extract from front-end-spec.md:
-ui_ux_context:
-  component_library: {extracted content}
-  user_flows: {extracted content}
-```
-
-**If UI/UX references NOT present**: Skip this step, set `ui_ux_context = null`
-
-**CRITICAL**: This step is NON-OPTIONAL when UI/UX references are present. Failure to load UI/UX specs when referenced will result in implementation that doesn't match design requirements.
-
-### 3.3 QA Test Design (if present)
-
-**Search for test design file**:
-```yaml
-# Use glob pattern to find test design (filename includes date)
-pattern: "{qa.qaLocation}/assessments/{story_id}-test-design-*.md"
-example: "docs/qa/assessments/1.3-test-design-20250115.md"
-
-# If multiple matches, use the most recent (latest date in filename)
-```
-
-Load the matched file if exists. Extract test scenarios for TDD reference.
-
-### 3.4 Cumulative Context
-Execute `{root}/tasks/util-load-cumulative-context.md` to load:
-- Database registry
-- API registry
-- Shared models
-
-Any load failure → **HALT**
+On failure or empty: Log warning, continue with `cumulative_context = null`
 
 ---
 
@@ -284,8 +237,7 @@ Execute:
 story_id: {story_id}
 story_path: {story_path}
 dev_log_path: {dev_log_path}
-architecture_context: {from Step 3.2}
-cumulative_context: {from Step 3.4}
+cumulative_context: {from Step 3.3}
 ```
 
 **Handle return value**:

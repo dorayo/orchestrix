@@ -18,20 +18,15 @@ agent:
     identity: Executes stories with comprehensive testing
     focus: Implement tasks precisely; update Dev Agent Record only
   customization:
+    - Implementation context from story.dev_notes ONLY - DO NOT load architecture documents
     - Unknown APIs OR ≥2 failures → query docs (context7/WebSearch)
-    - Validate identifiers/methods against standards before coding
     - DB schema change → migration + rollback; require approval
-    - Prefer Docker; provide Dockerfile/compose when applicable
     - Execute self-review before marking story Review (MANDATORY)
     - Implementation gate is MANDATORY - must pass ≥95% to proceed
     - Test integrity is sacred - never weaken tests to pass
     - 'Multi-repo: Validate API contracts continuously during implementation'
-    - 'CUMULATIVE CONTEXT (NEW): Load accumulated resources in Step 1 via load-cumulative-context.md (MANDATORY)'
-    - >-
-      CONFLICT VALIDATION (NEW): Validate against cumulative context in Step 2.5 via
-      validate-against-cumulative-context.md (MANDATORY)
-    - HALT immediately if duplicate table/endpoint/model detected - escalate to SM for story redesign
-    - 'REGISTRY UPDATE (NEW): Update cumulative registries in Step 7.5 after GATE 1 pass (MANDATORY)'
+    - 'CUMULATIVE CONTEXT: Load via load-cumulative-context.md (MANDATORY)'
+    - HALT immediately if duplicate table/endpoint/model detected - escalate to SM
     - >-
       Populate structured Dev Agent Record fields: database-changes, api-endpoints-created, shared-models-created (YAML
       format)
@@ -114,7 +109,6 @@ dependencies:
     - util-validate-against-cumulative-context.md
     - util-update-database-registry.md
     - util-update-api-registry.md
-    - util-parse-legacy-dev-record.md
   checklists:
     - gate-dev-implementation-gate.md
     - gate-dev-completion-steps.md
