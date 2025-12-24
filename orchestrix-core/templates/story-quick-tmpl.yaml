@@ -1,0 +1,74 @@
+template:
+  id: story-quick-template-v1
+  name: Quick Story Document
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/stories/{{epic_num}}.{{story_num}}.{{story_title_short}}.md
+
+workflow:
+  mode: quick
+  skip_architect_review: true
+  skip_test_design: true
+  qa_mode: automated_only
+
+sections:
+  - id: story-metadata
+    title: Story
+    type: yaml-block
+    template: |
+      ```yaml
+      Story:
+        id: {{epic_num}}.{{story_num}}
+        title: {{story_title}}
+        tier: {{tier}}
+        status: Approved
+        mode: quick
+      ```
+
+  - id: description
+    title: Description
+    type: text
+    template: |
+      {{story_description}}
+
+  - id: acceptance-criteria
+    title: Acceptance Criteria
+    type: bullet-list
+    template: |
+      {{#each acceptance_criteria}}
+      - [ ] {{this}}
+      {{/each}}
+
+  - id: tasks
+    title: Tasks
+    type: bullet-list
+    template: |
+      - [ ] Implement changes
+      - [ ] Run tests
+      - [ ] Verify
+
+  - id: notes
+    title: Notes
+    type: text
+    required: false
+
+  - id: quick-record
+    title: Quick Record
+    type: table
+    template: |
+      | Field | Value |
+      |-------|-------|
+      | Dev | - |
+      | Files | - |
+      | Tests | - |
+      | QA | - |
+      | Commit | - |
+
+  - id: change-log
+    title: Change Log
+    type: table
+    template: |
+      | Date | Agent | Status | Details |
+      |------|-------|--------|---------|
+      | {{creation_date}} | SM | Approved | Quick story created |

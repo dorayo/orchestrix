@@ -142,10 +142,20 @@ epic:
               User can register with email/password, login to get JWT token,
               and logout to invalidate token. All endpoints follow api-contracts.md.
 
+          tier:
+            type: string
+            enum: [trivial, simple, standard, complex]
+            description: |
+              Story tier for workflow routing (optional override).
+              If set, bypasses automatic tier detection.
+              trivial/simple: Uses quick workflow (story-quick-tmpl, quick-develop, quick-verify)
+              standard/complex: Uses full workflow (story-tmpl, develop-story, qa-review-story)
+            required: false
+
           estimated_complexity:
             type: string
-            enum: [simple, medium, complex]
-            description: Estimated story complexity
+            enum: [low, medium, high]
+            description: Estimated story complexity (used for tier auto-detection if tier not set)
             default: medium
 
           priority:
@@ -231,6 +241,17 @@ example_epic:
         - "AC4: Auth errors handled gracefully with Snackbar feedback"
       estimated_complexity: medium
       priority: P1
+
+    # Quick story example (tier override)
+    - id: "1.5"
+      title: "Fix typo in login error message"
+      repository_type: frontend
+      tier: trivial  # Explicit tier - uses quick workflow
+      dependencies: ["1.2"]
+      acceptance_criteria:
+        - "AC1: Error message displays 'Invalid credentials' instead of 'Invlid credentials'"
+      estimated_complexity: low
+      priority: P3
 
 # Validation Rules
 validation_rules:

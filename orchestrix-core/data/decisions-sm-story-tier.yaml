@@ -1,0 +1,161 @@
+decision_type: sm-story-tier
+
+inputs:
+  - name: estimated_complexity
+    type: enum
+    values: [low, medium, high]
+    required: true
+
+  - name: story_title
+    type: string
+    required: true
+
+  - name: explicit_tier
+    type: enum
+    values: [trivial, simple, standard, complex]
+    required: false
+
+  - name: keywords_detected
+    type: object
+    required: true
+    properties:
+      has_api_keywords: boolean
+      has_db_keywords: boolean
+      has_security_keywords: boolean
+      has_trivial_keywords: boolean
+      has_simple_keywords: boolean
+
+keyword_patterns:
+  trivial:
+    - typo
+    - config
+    - comment
+    - docs
+    - readme
+    - formatting
+    - whitespace
+    - rename
+
+  simple:
+    - fix
+    - patch
+    - minor
+    - adjust
+    - small
+    - bug
+    - hotfix
+    - update
+
+  api:
+    - endpoint
+    - route
+    - api
+    - rest
+    - graphql
+    - http
+
+  database:
+    - table
+    - schema
+    - migration
+    - database
+    - column
+    - index
+
+  security:
+    - auth
+    - token
+    - password
+    - permission
+    - security
+    - encrypt
+    - credential
+
+rules:
+  - condition: "explicit_tier != null"
+    result: "{{explicit_tier}}"
+    reasoning: "Explicit tier override from Epic YAML"
+    workflow:
+      template: "{{explicit_tier in ['trivial', 'simple'] ? 'story-quick-tmpl.yaml' : 'story-tmpl.yaml'}}"
+      sm_task: "{{explicit_tier in ['trivial', 'simple'] ? 'create-quick-story.md' : 'create-next-story.md'}}"
+      dev_task: "{{explicit_tier in ['trivial', 'simple'] ? 'quick-develop.md' : 'develop-story.md'}}"
+      qa_task: "{{explicit_tier in ['trivial', 'simple'] ? 'quick-verify.md' : 'qa-review-story.md'}}"
+
+  - condition: >
+      estimated_complexity == 'low'
+      AND has_trivial_keywords == true
+      AND has_api_keywords == false
+      AND has_db_keywords == false
+      AND has_security_keywords == false
+    result: trivial
+    reasoning: "Low complexity + trivial keywords + no forbidden keywords"
+    workflow:
+      template: story-quick-tmpl.yaml
+      sm_task: create-quick-story.md
+      dev_task: quick-develop.md
+      qa_task: quick-verify.md
+      skip_architect_review: true
+      skip_test_design: true
+
+  - condition: >
+      estimated_complexity == 'low'
+      AND has_api_keywords == false
+      AND has_db_keywords == false
+      AND has_security_keywords == false
+    result: simple
+    reasoning: "Low complexity + no API/DB/Security keywords"
+    workflow:
+      template: story-quick-tmpl.yaml
+      sm_task: create-quick-story.md
+      dev_task: quick-develop.md
+      qa_task: quick-verify.md
+      skip_architect_review: true
+      skip_test_design: true
+
+  - condition: >
+      estimated_complexity == 'high'
+      OR has_security_keywords == true
+    result: complex
+    reasoning: "High complexity or security-sensitive"
+    workflow:
+      template: story-tmpl.yaml
+      sm_task: create-next-story.md
+      dev_task: develop-story.md
+      qa_task: qa-review-story.md
+      skip_architect_review: false
+      skip_test_design: false
+      architect_review_mandatory: true
+
+  - condition: "true"
+    result: standard
+    reasoning: "Default - medium complexity or has API/DB keywords"
+    workflow:
+      template: story-tmpl.yaml
+      sm_task: create-next-story.md
+      dev_task: develop-story.md
+      qa_task: qa-review-story.md
+      skip_architect_review: false
+      skip_test_design: false
+
+output:
+  result:
+    type: enum
+    values: [trivial, simple, standard, complex]
+
+  reasoning:
+    type: string
+
+  workflow:
+    type: object
+    properties:
+      template: string
+      sm_task: string
+      dev_task: string
+      qa_task: string
+      skip_architect_review: boolean
+      skip_test_design: boolean
+      architect_review_mandatory: boolean
+
+metadata:
+  version: "1.0.0"
+  owner: SM

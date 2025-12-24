@@ -247,6 +247,57 @@ Store:
 
 ---
 
+### 2.5. Tier Decision (Early Exit Point)
+
+**Purpose**: Route to quick workflow if story qualifies.
+
+**Detect Keywords**:
+```yaml
+keywords_detected:
+  has_api_keywords: {scan title + ACs for: endpoint, route, api, rest, graphql, http}
+  has_db_keywords: {scan for: table, schema, migration, database, column, index}
+  has_security_keywords: {scan for: auth, token, password, permission, security, encrypt}
+  has_trivial_keywords: {scan for: typo, config, comment, docs, readme, formatting, rename}
+  has_simple_keywords: {scan for: fix, patch, minor, adjust, small, bug, hotfix, update}
+```
+
+**Execute Decision**:
+```
+{root}/tasks/make-decision.md
+```
+
+**Input**:
+```yaml
+decision_type: sm-story-tier
+context:
+  estimated_complexity: {story_definition.estimated_complexity}
+  story_title: {story_definition.title}
+  explicit_tier: {story_definition.tier, if present, else null}
+  keywords_detected: {from above}
+```
+
+**Output**: `tier_decision`
+
+**Routing**:
+
+**If `tier_decision.result` in [trivial, simple]**:
+```
+QUICK STORY DETECTED
+Tier: {tier_decision.result}
+Reason: {tier_decision.reasoning}
+```
+→ **DELEGATE** to `{root}/tasks/create-quick-story.md` with:
+  - story_definition
+  - epic_definition
+  - tier_decision
+→ **EXIT** this task
+
+**If `tier_decision.result` in [standard, complex]**:
+→ Store `tier_decision` for Step 8
+→ Continue to Step 3
+
+---
+
 ### 3. Validate Dependencies (Multi-Repo Only)
 
 **Skip if**: `project.mode = monolith`
