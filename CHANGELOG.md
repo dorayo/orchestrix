@@ -1,3 +1,15 @@
+# [15.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.2.0...v15.3.0) (2025-12-24)
+
+
+### Bug Fixes
+
+* **tasks:** resolve proposal workflow ambiguities and Story ID conflicts ([ea60f8b](https://github.com/dorayo/ORCHESTRIX/commit/ea60f8b1583febdc598c82e9021aef1f786a33b8))
+
+
+### Features
+
+* **architect:** add dynamic test-design-level calculation for proposal-created Stories ([539e061](https://github.com/dorayo/ORCHESTRIX/commit/539e06162bae33e39679416e6b0611086e143d70))
+
 # [15.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.1.0...v15.2.0) (2025-12-24)
 
 
