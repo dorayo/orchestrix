@@ -321,6 +321,58 @@ Update `{devStoryLocation}/{epic}.{story}.*.md`:
 
 **Note**: Story.status field is updated in Output 0, not here. This section only updates metadata.
 
+### Output 3.5: Backfill Test Specs to Story Tasks (Standard/Comprehensive ONLY)
+
+**Skip if**: test_design_level = Simple
+
+**Purpose**: Embed key test scenarios into Story Tasks section for Dev reference.
+
+**Process**:
+
+1. Locate Tasks section in Story file
+2. For each AC task block, insert Test Specs table between AC title and TDD steps
+
+**Before (SM created)**:
+```markdown
+- [ ] AC{N}: {ac_title}
+  - [ ] Write test for AC{N}
+  - [ ] Implement to pass test
+  - [ ] Verify & refactor
+```
+
+**After (QA backfilled)**:
+```markdown
+- [ ] AC{N}: {ac_title}
+
+  **Test Specs** (white-box scenarios from test-design):
+  | Scenario | Input | Expected | Level |
+  |----------|-------|----------|-------|
+  | {success_case} | {valid_input} | {success_result} | unit |
+  | {error_case_1} | {invalid_input} | {error_code} | unit |
+  | {error_case_2} | {edge_condition} | {error_code} | unit |
+  | {integration_case} | {complex_flow} | {expected_state} | integration |
+
+  - [ ] Write tests (cover above scenarios)
+  - [ ] Implement to pass tests
+  - [ ] Verify & refactor
+```
+
+**Table columns**:
+- **Scenario**: Short name (success/error/edge)
+- **Input**: Trigger condition
+- **Expected**: Result or error code
+- **Level**: unit | integration | e2e
+
+**Scenario selection per AC**:
+- Include all P0 scenarios
+- Include P1 scenarios if ≤5 total per AC
+- Omit P2/P3 (reference full doc)
+
+**Validation**:
+- Each AC has ≥1 scenario
+- Table renders correctly in markdown
+- TDD steps preserved below table
+
 ### Output 4: Handoff Message (REQUIRED - MUST BE FINAL OUTPUT)
 
 Use template: `{root}/templates/qa-handoff-message-tmpl.yaml`

@@ -123,10 +123,11 @@ sections:
     title: Tasks / Subtasks
     type: bullet-list
     instruction: |
-      Render the template verbatim. One task per AC with TDD cycle.
-      Tasks define WHAT to do. Dev Notes define HOW (technical details, patterns, file paths).
+      SM: Render basic TDD template per AC.
+      QA: Backfill Test Specs table after test-design (Standard/Comprehensive only).
+      Dev: Execute TDD cycle using Test Specs as test case source.
     owner: scrum-master
-    editors: [scrum-master, dev-agent]
+    editors: [scrum-master, qa-agent, dev-agent]
     template: |
       {{#each acceptance_criteria}}
       - [ ] AC{{@index}}: {{this.title}}
