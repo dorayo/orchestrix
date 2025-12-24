@@ -40,6 +40,34 @@ If linked to a Product Proposal, establish bidirectional linkage.
    - Read the PCP file to understand product context
    - Extract `tech_change_hints` from the proposal
 
+### Step 1b: Load Story Context
+
+Before designing Story requirements, load existing Stories to determine correct IDs:
+
+1. Read `core-config.yaml`:
+   - `devStoryLocation`: Story files directory
+
+2. Identify affected Epic(s) from the change description
+
+3. For each affected Epic, load existing Stories:
+   ```
+   Glob: {devStoryLocation}/{epic_id}.*.md
+   ```
+
+4. Determine `max_story_id` for each affected Epic:
+   ```
+   max_story_id[epic_id] = highest story number found
+   ```
+
+5. Record for use in Step 3:
+   ```yaml
+   story_context:
+     epic_9:
+       existing_stories: [9.1, 9.2, ..., 9.27]
+       max_story_id: 27
+       next_available: 28
+   ```
+
 ### Step 2: Technical Impact Analysis
 
 Parse `change_description` to assess impact across dimensions:
@@ -99,6 +127,13 @@ Based on analysis, produce:
    - Break down into implementable Stories
    - Define acceptance criteria hints
    - Specify technical notes for each Story
+   - **Use `story_context` from Step 1b to assign correct Story IDs**:
+     ```
+     For epic_id N with max_story_id M:
+       First new story: N.(M+1)
+       Second new story: N.(M+2)
+       ...
+     ```
 
 ### Step 4: Generate Proposal ID
 
@@ -288,7 +323,11 @@ This establishes bidirectional linkage between proposals.
    - API changes
    - Database migrations
    - Risk assessment
-3. Request explicit approval
+3. Request explicit approval of the technical design
+
+> **IMPORTANT:** User approval here confirms the TECHNICAL DESIGN is acceptable.
+> This does NOT change the proposal status. Status remains `draft` for SM to process.
+> Do NOT modify the proposal file's status field.
 
 **IF NOT approved:**
 - Note user feedback
@@ -296,7 +335,7 @@ This establishes bidirectional linkage between proposals.
 - Ask clarifying questions if needed
 
 **IF approved:**
-- Proceed to output
+- Proceed to output (proposal status remains `draft`)
 
 ## Output
 

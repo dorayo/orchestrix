@@ -37,6 +37,34 @@ If technical changes are needed, trigger Architect to create linked Technical Pr
 
 5. Understand current MVP scope and priorities
 
+### Step 1b: Load Story Context
+
+Before designing Story requirements, load existing Stories to determine correct IDs:
+
+1. Read `core-config.yaml`:
+   - `devStoryLocation`: Story files directory
+
+2. Identify affected Epic(s) from the change description
+
+3. For each affected Epic, load existing Stories:
+   ```
+   Glob: {devStoryLocation}/{epic_id}.*.md
+   ```
+
+4. Determine `max_story_id` for each affected Epic:
+   ```
+   max_story_id[epic_id] = highest story number found
+   ```
+
+5. Record for use in Step 3:
+   ```yaml
+   story_context:
+     epic_N:
+       existing_stories: [N.1, N.2, ...]
+       max_story_id: {max}
+       next_available: {max + 1}
+   ```
+
 ### Step 2: Product Impact Analysis
 
 Parse `change_description` to assess:
@@ -92,6 +120,13 @@ Based on analysis, produce:
 5. **Story Requirements**
    - Break down into implementable Stories
    - Define acceptance criteria hints
+   - **Use `story_context` from Step 1b to assign correct Story IDs**:
+     ```
+     For epic_id N with max_story_id M:
+       First new story: N.(M+1)
+       Second new story: N.(M+2)
+       ...
+     ```
 
 ### Step 4: Generate Proposal ID
 
@@ -266,7 +301,11 @@ After proposal is created:
    - MVP scope impact
    - Affected epics
    - Required technical changes
-3. Request explicit approval
+3. Request explicit approval of the product change
+
+> **IMPORTANT:** User approval here confirms the PRODUCT CHANGE is acceptable.
+> This does NOT change the proposal status. Status remains `draft` for SM to process.
+> Do NOT modify the proposal file's status field.
 
 **IF NOT approved:**
 - Note user feedback
@@ -274,7 +313,7 @@ After proposal is created:
 - Ask clarifying questions if needed
 
 **IF approved:**
-- Proceed to output based on technical requirements
+- Proceed to output based on technical requirements (proposal status remains `draft`)
 
 ## Output
 
