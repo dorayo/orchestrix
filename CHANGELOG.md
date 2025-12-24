@@ -1,3 +1,10 @@
+## [15.4.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.4.0...v15.4.1) (2025-12-24)
+
+
+### Bug Fixes
+
+* **tasks:** add test runner process lifecycle management ([c2cb922](https://github.com/dorayo/ORCHESTRIX/commit/c2cb9222c2d9d71af8b545fb7a3a9552f4d0279e))
+
 # [15.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.3.0...v15.4.0) (2025-12-24)
 
 
