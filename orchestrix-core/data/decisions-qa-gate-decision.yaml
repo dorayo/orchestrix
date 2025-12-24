@@ -2,9 +2,10 @@
 decision_type: qa-gate-decision
 
 description: >
-  Determine QA Gate result (PASS/FAIL/CONCERNS) based on automated test results
-  and E2E testing outcomes. Focuses on real test execution rather than static
-  code review. Uses progressive standards for re-reviews.
+  Determine QA Gate result (PASS/FAIL/CONCERNS) based on automated test results,
+  E2E testing outcomes, and task checkbox verification. Validates that checked
+  boxes have matching deliverables. Focuses on real test execution rather than
+  static code review. Uses progressive standards for re-reviews.
 
 inputs:
   # Test execution results (primary inputs)
@@ -52,6 +53,27 @@ inputs:
       high: {type: number}
       medium: {type: number}
       low: {type: number}
+
+  # Task checkbox verification (Step 4.5)
+  - name: task_checkbox_completion_rate
+    type: number
+    required: false
+    description: "Percentage of checkboxes marked complete (0-100)"
+
+  - name: task_checkbox_consistency_rate
+    type: number
+    required: false
+    description: "Percentage of checked boxes with matching deliverables (0-100)"
+
+  - name: task_checkbox_unchecked_critical
+    type: number
+    required: false
+    description: "Count of unchecked AC/test/implement checkboxes"
+
+  - name: task_checkbox_mismatches
+    type: number
+    required: false
+    description: "Count of checked boxes without matching deliverables"
 
   # Review context
   - name: review_round
@@ -211,6 +233,49 @@ rules:
       test_based_decision: true
 
   # ============================================
+  # FAIL RULES: Task Checkbox Issues
+  # ============================================
+
+  # FAIL: Unchecked critical checkboxes (AC/test/implement)
+  - id: fail_unchecked_checkboxes
+    priority: 15
+    condition: "task_checkbox_unchecked_critical >= 1"
+    result: FAIL
+    reasoning: "Story has unchecked AC/test/implementation checkboxes. Work incomplete."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "incomplete"
+      expected_effort: "medium"
+      failure_type: "unchecked_checkboxes"
+
+  # FAIL: Multiple checkbox-deliverable mismatches
+  - id: fail_checkbox_mismatches
+    priority: 16
+    condition: "task_checkbox_mismatches >= 3"
+    result: FAIL
+    reasoning: "Multiple checkboxes marked complete but deliverables not found. Dev must verify work."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "integrity_issue"
+      expected_effort: "medium"
+      failure_type: "checkbox_mismatch"
+
+  # FAIL: Low checkbox consistency rate
+  - id: fail_low_consistency
+    priority: 17
+    condition: "task_checkbox_consistency_rate < 80"
+    result: FAIL
+    reasoning: "Less than 80% of checked boxes have matching deliverables. Significant gaps in implementation."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      expected_effort: "high"
+      failure_type: "low_consistency"
+
+  # ============================================
   # CONCERNS RULES: Issues Found but Not Critical
   # ============================================
 
@@ -247,6 +312,23 @@ rules:
       expected_effort: "medium"
       test_based_decision: true
 
+  # CONCERNS: Minor checkbox-deliverable mismatches
+  - id: concerns_checkbox_minor
+    priority: 22
+    condition: >
+      task_checkbox_unchecked_critical == 0 AND
+      task_checkbox_mismatches >= 1 AND
+      task_checkbox_mismatches < 3 AND
+      task_checkbox_consistency_rate >= 80
+    result: CONCERNS
+    reasoning: "Minor checkbox-deliverable mismatches found. Dev should verify and fix."
+    next_status: InProgress
+    next_action: "handoff_to_dev_fix"
+    metadata:
+      quality_level: "needs_improvement"
+      expected_effort: "low"
+      failure_type: "minor_checkbox_issue"
+
   # CONCERNS: Default for borderline cases
   - id: concerns_default
     priority: 99
@@ -281,14 +363,15 @@ output:
       failure_type: {type: string}
 
 metadata:
-  version: "2.0.0"
-  last_updated: "2025-01-15"
+  version: "2.1.0"
+  last_updated: "2025-12-24"
   owner: "QA Agent"
   related_requirements: ["6.2", "6.4", "6.8"]
   usage_context: >
-    Called by QA at end of review-story. Decision based on test execution results
-    rather than static code review. Primary factors: automated test pass/fail,
-    E2E test results, console/network errors. Progressive standards apply to re-reviews.
+    Called by QA at end of review-story. Decision based on test execution results,
+    E2E testing outcomes, and task checkbox verification. Primary factors: automated
+    test pass/fail, E2E test results, console/network errors, checkbox completion
+    and consistency rates. Progressive standards apply to re-reviews.
     PASS: Set Status=Done. FAIL/CONCERNS: Set Status=InProgress, handoff to Dev.
 
 examples:
@@ -347,3 +430,30 @@ examples:
       gate_result: PASS
       next_status: Done
       reasoning: "Re-review with acceptable issues. Progressive standard applied."
+
+  # Unchecked checkboxes - work incomplete
+  - input:
+      automated_tests_passed: true
+      task_checkbox_completion_rate: 80
+      task_checkbox_unchecked_critical: 2
+      task_checkbox_mismatches: 0
+      issues_by_severity: {critical: 0, high: 0, medium: 0, low: 0}
+      review_round: 1
+    output:
+      gate_result: FAIL
+      next_status: InProgress
+      reasoning: "Story has unchecked AC/test/implementation checkboxes. Work incomplete."
+
+  # Checkbox-deliverable mismatch
+  - input:
+      automated_tests_passed: true
+      task_checkbox_completion_rate: 100
+      task_checkbox_consistency_rate: 70
+      task_checkbox_unchecked_critical: 0
+      task_checkbox_mismatches: 4
+      issues_by_severity: {critical: 0, high: 0, medium: 0, low: 0}
+      review_round: 1
+    output:
+      gate_result: FAIL
+      next_status: InProgress
+      reasoning: "Less than 80% of checked boxes have matching deliverables. Significant gaps in implementation."

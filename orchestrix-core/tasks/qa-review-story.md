@@ -315,6 +315,98 @@ automated_tests:
 
 ---
 
+## Step 4.5: Task Checkbox Verification
+
+**Purpose**: Verify all Task/Subtask checkboxes are complete AND match actual deliverables. Detects cases where Dev checked boxes without completing work.
+
+### 4.5.1 Extract Checkbox Status
+
+Parse `## Tasks / Subtasks` section from story file.
+
+Categorize each checkbox:
+```yaml
+checkboxes:
+  - text: '{raw checkbox text}'
+    checked: true | false
+    category: 'ac' | 'write_test' | 'implement' | 'verify' | 'integration' | 'final'
+    ac_ref: '{AC number if applicable}'
+```
+
+### 4.5.2 Verify Checkbox-Deliverable Consistency
+
+For each checkbox where `checked = true`:
+
+**Test Checkboxes** (`category = 'write_test'`):
+1. Extract AC reference from checkbox text
+2. Search test files for test case matching AC keywords
+3. Verify test file exists AND contains relevant assertions
+
+| Finding | Severity | Issue |
+|---------|----------|-------|
+| Test file not found | HIGH | "Checkbox claims test written but no test file found for AC{N}" |
+| Test exists but empty/stub | HIGH | "Test file exists but contains no assertions for AC{N}" |
+| Test exists and valid | - | No issue |
+
+**Implementation Checkboxes** (`category = 'implement'`):
+1. Verify corresponding test passes (from Step 4 evidence)
+2. Check implementation files exist in Dev Agent Record File List
+
+| Finding | Severity | Issue |
+|---------|----------|-------|
+| Test not passing | HIGH | "Checkbox claims implementation complete but test failing for AC{N}" |
+| No implementation files | HIGH | "Checkbox claims implementation complete but no files in File List for AC{N}" |
+
+**Final Verification Checkboxes** (`category = 'final'`):
+1. "All tests passing" → Cross-check with Step 4 automated_tests.passed
+2. "Dev Log complete" → Verify Dev Log has Final Summary section
+
+| Finding | Severity | Issue |
+|---------|----------|-------|
+| Mismatch with test evidence | CRITICAL | "Checkbox claims all tests passing but evidence shows failures" |
+| Dev Log incomplete | MEDIUM | "Checkbox claims Dev Log complete but Final Summary missing" |
+
+### 4.5.3 Check Unchecked Boxes
+
+For each checkbox where `checked = false`:
+
+| Category | Severity | Issue |
+|----------|----------|-------|
+| ac | CRITICAL | "AC{N} marked incomplete - story not ready for review" |
+| write_test | CRITICAL | "Test not written for AC{N} - story not ready for review" |
+| implement | CRITICAL | "Implementation not complete for AC{N} - story not ready for review" |
+| final | HIGH | "Final verification step incomplete" |
+
+### 4.5.4 Calculate Verification Result
+
+```yaml
+task_checkbox_verification:
+  total_checkboxes: {count}
+  checked_count: {count}
+  unchecked_count: {count}
+  completion_rate: {percentage}
+  consistency_checks:
+    total: {count of checked boxes verified}
+    passed: {count matching deliverables}
+    failed: {count mismatched}
+    consistency_rate: {percentage}
+  issues:
+    critical: [{issue, checkbox_text, evidence}]
+    high: [{issue, checkbox_text, evidence}]
+    medium: [{issue, checkbox_text, evidence}]
+```
+
+**Decision**:
+
+| Condition | Action |
+|-----------|--------|
+| Any unchecked AC/test/implement checkbox | Record CRITICAL issue, continue to Step 5 |
+| Any checked box with missing deliverable | Record HIGH issue, continue to Step 5 |
+| All checkboxes complete AND consistent | Continue to Step 5 |
+
+**Note**: Task checkbox issues are aggregated into Step 7 Gate Decision. They do not independently block review but heavily weight FAIL outcome.
+
+---
+
 ## Step 5: E2E Testing (Conditional)
 
 **Purpose**: Execute end-to-end tests based on risk level
@@ -476,6 +568,12 @@ Compile test results:
 automated_tests_passed: {from Step 4}
 automated_tests_evidence_found: {from Step 4}
 
+# Step 4.5: Task Checkbox Verification
+task_checkbox_completion_rate: {from Step 4.5}
+task_checkbox_consistency_rate: {from Step 4.5}
+task_checkbox_unchecked_critical: {count of unchecked AC/test/implement boxes}
+task_checkbox_mismatches: {count of checked boxes without matching deliverables}
+
 # Step 5: E2E Testing
 e2e_tests_passed: {from Step 5, or null if skipped}
 e2e_tests_skipped: {true if review_mode == automated_only}
@@ -487,7 +585,7 @@ blind_spot_coverage_rate: {from Step 5.5}
 blind_spot_missing_code: {count from Step 5.5}
 blind_spot_missing_test: {count from Step 5.5}
 
-# Aggregated Issues
+# Aggregated Issues (includes Step 4.5 issues)
 issues_by_severity:
   critical: {count}
   high: {count}
@@ -805,6 +903,7 @@ Gate: PASS | Tests: {pass_rate}%
 | 3 | Environment Setup | Start application |
 | 3.5 | Migration Verification | Verify DB migrations executed |
 | 4 | Automated Test Evidence | Verify Dev test results (no re-run) |
+| 4.5 | Task Checkbox Verification | Verify checkboxes match deliverables |
 | 5 | E2E Testing | Execute user flows (risk-based) |
 | 5.5 | Blind Spot Verification | Check Dev blind spots coverage |
 | 6 | Evidence Collection | Capture screenshots/logs |
@@ -815,8 +914,9 @@ Gate: PASS | Tests: {pass_rate}%
 ## Key Principles
 
 1. **Trust Dev evidence**: Verify test results exist, do NOT re-run automated tests
-2. **Risk-aware E2E**: Low-risk = skip, Medium = spot check, High = full testing
-3. **Blind spot focus**: QA's unique value is covering what Dev missed
-4. **Evidence-driven**: Issues include screenshots and reproduction steps
-5. **User perspective**: E2E tests verify real user journeys
-6. **Clean environment**: Always cleanup, even on failure
+2. **Checkbox-deliverable consistency**: Verify checked boxes match actual deliverables
+3. **Risk-aware E2E**: Low-risk = skip, Medium = spot check, High = full testing
+4. **Blind spot focus**: QA's unique value is covering what Dev missed
+5. **Evidence-driven**: Issues include screenshots and reproduction steps
+6. **User perspective**: E2E tests verify real user journeys
+7. **Clean environment**: Always cleanup, even on failure

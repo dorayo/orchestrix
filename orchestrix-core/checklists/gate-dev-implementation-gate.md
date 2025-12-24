@@ -42,6 +42,80 @@ DO NOT load architecture documents. All relevant constraints are in Dev Notes.
 
 ---
 
+### 1.5 Task Checkbox Completion Validation
+
+**Objective**: Verify all Tasks/Subtasks checkboxes are marked complete and match actual deliverables.
+
+**1.5.1 Extract Checkbox Status**
+
+Parse `## Tasks / Subtasks` section from story file.
+
+For each line matching `- [ ]` or `- [x]`:
+```yaml
+checkbox_item:
+  raw_text: '{full line text}'
+  checked: true | false
+  type: ac | subtask | integration | final
+  ac_id: '{AC number if applicable}'
+  subtask_type: 'write_test' | 'implement' | 'verify' | 'other'
+```
+
+**1.5.2 Validate Checkbox Completion**
+
+**Checks**:
+
+| Condition | Severity | Issue |
+|-----------|----------|-------|
+| Any AC checkbox unchecked | CRITICAL | "AC{N} not marked complete" |
+| Any "Write test" subtask unchecked | CRITICAL | "Test for AC{N} not marked complete" |
+| Any "Implement" subtask unchecked | CRITICAL | "Implementation for AC{N} not marked complete" |
+| "All tests passing" unchecked | CRITICAL | "Final verification incomplete" |
+| "Dev Log complete" unchecked | MAJOR | "Dev Log not marked complete" |
+
+**1.5.3 Cross-Validate Checkbox vs Deliverables**
+
+For each checked "Write test for AC{N}" subtask:
+1. Extract AC{N} description from Acceptance Criteria section
+2. Search test files for test case matching AC{N} keywords
+3. If no matching test found → CRITICAL: "Checkbox checked but test not found for AC{N}"
+
+For each checked "Implement to pass test" subtask:
+1. Verify corresponding test exists and passes
+2. If test missing or failing → CRITICAL: "Checkbox checked but implementation incomplete for AC{N}"
+
+**1.5.4 Calculate Completion Metrics**
+
+```yaml
+task_completion:
+  total_checkboxes: {count}
+  checked_count: {count}
+  unchecked_count: {count}
+  completion_rate: {percentage}
+  cross_validation:
+    tests_claimed: {count of "Write test" checked}
+    tests_found: {count of matching test files/cases}
+    match_rate: {percentage}
+```
+
+**Task Checkbox Result**:
+```yaml
+task_checkbox_validation:
+  result: PASS | FAIL
+  completion_rate: {percentage}
+  cross_validation_rate: {percentage}
+  unchecked_items: [{item_text, type, ac_id}]
+  mismatches: [{checkbox_text, expected_deliverable, actual_status}]
+  issues:
+    critical: [{issue, checkbox_text, action}]
+    major: [{issue, checkbox_text, action}]
+```
+
+**Decision Logic**:
+- PASS: completion_rate = 100% AND cross_validation_rate >= 90% AND zero critical issues
+- FAIL: Any unchecked critical item OR cross_validation_rate < 90% OR any critical issue
+
+---
+
 ### 2. Architecture Compliance Validation
 
 Validate implementation against `story.dev_notes`.
@@ -348,11 +422,11 @@ gate_result:
   status: {PASS|FAIL}
   overall_score: {percentage}  # Weighted score across all sections
 
-  # Critical Items (7 mandatory items)
+  # Critical Items (8 mandatory items)
   critical_items:
-    total: 7
+    total: 8
     passed: {count}
-    status: {PASS|FAIL}  # PASS only if all 7 pass
+    status: {PASS|FAIL}  # PASS only if all 8 pass
     items:
       - id: C1
         check: "All tests passing"
@@ -382,9 +456,25 @@ gate_result:
         check: "Dev Log complete with Final Summary"
         status: {PASS|FAIL}
         evidence: {dev log file reference}
+      - id: C8
+        check: "All task checkboxes complete and verified"
+        status: {PASS|FAIL}
+        evidence: {checkbox completion rate and cross-validation result}
 
-  # Sections (11 validation sections)
+  # Sections (12 validation sections)
   sections:
+    - name: "Task Checkbox Completion"
+      score: {percentage}
+      threshold: 100%
+      weight: 8%
+      weighted_score: {percentage}
+      passed: {true|false}
+      items_total: {total_checkboxes}
+      items_passed: {checked_count}
+      cross_validation_rate: {percentage}
+      unchecked_items: [{item_text, type, ac_id}]
+      mismatches: [{checkbox_text, expected, actual}]
+
     - name: "Requirements Completeness"
       score: {percentage}
       threshold: 100%
@@ -522,8 +612,8 @@ gate_result:
   total_critical_issues: {count}
   total_major_issues: {count}
   total_minor_issues: {count}
-  sections_passed: {count}/11
-  sections_failed: {count}/11
+  sections_passed: {count}/12
+  sections_failed: {count}/12
 
   # Blocking Status
   blocking: {true if status = FAIL}
@@ -534,7 +624,7 @@ gate_result:
 ## Decision Logic for Overall Result
 
 **PASS** (Implementation ready for QA):
-- `critical_items.status = PASS` (all 7 critical items pass)
+- `critical_items.status = PASS` (all 8 critical items pass)
 - `overall_score ≥ 95%` (weighted score across all sections)
 - All "100% required" sections = 100%
 - All "≥X% required" sections meet threshold

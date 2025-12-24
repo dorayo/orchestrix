@@ -93,8 +93,8 @@ gate_result:
   total_critical_issues: {count}
   total_major_issues: {count}
   total_minor_issues: {count}
-  sections_passed: {count}/10
-  sections_failed: {count}/10
+  sections_passed: {count}/12
+  sections_failed: {count}/12
 
   blocking: {true|false}
   blocking_reason: {summary if blocking}
@@ -275,7 +275,7 @@ decision:
 ```
 ✅ SELF-REVIEW PASSED
 Story: {story_id} ready for QA review
-Implementation Gate: {score}% ({critical_items_passed}/7 critical, {sections_passed}/10 sections)
+Implementation Gate: {score}% ({critical_items_passed}/8 critical, {sections_passed}/12 sections)
 Quality Level: {quality_level}
 Round: {N}
 ```
@@ -287,8 +287,8 @@ result: PASS
 self_review_result:
   date: {timestamp}
   implementation_gate_score: {score}
-  critical_items_passed: {count}/7
-  sections_passed: {count}/10
+  critical_items_passed: {count}/8
+  sections_passed: {count}/12
   architecture_compliance: {PASS|FAIL}
   api_contract_compliance: {PASS|FAIL|N_A}
   test_integrity: {PASS|FAIL}
@@ -312,8 +312,8 @@ Status: InProgress (remains)
 
 Gate Status: {gate_result.status}
 Overall Score: {gate_result.overall_score}% (Required: ≥95%)
-Critical Items: {critical_items_passed}/7
-Sections Passed: {sections_passed}/10
+Critical Items: {critical_items_passed}/8
+Sections Passed: {sections_passed}/12
 Migration Status: {migration_validation}
 
 Failed Critical Items ({count}):
@@ -347,8 +347,8 @@ result: FAIL
 gate_result:
   status: FAIL
   overall_score: {percentage}
-  critical_items_passed: {count}/7
-  sections_passed: {count}/10
+  critical_items_passed: {count}/8
+  sections_passed: {count}/12
   failed_sections: [{section_name, score, threshold}]
   migration_validation: {PASS|FAIL|SKIP}
   migration_issues: [{type, description, action_required}]
@@ -506,7 +506,7 @@ HALT immediately if:
 - Agent permission validated
 - Quality gate validation: PASS with ≥95% score (Step 2)
 - Database migration validation: PASS or SKIP (Step 3)
-- All critical items passed (7/7)
+- All critical items passed (8/8)
 - All required sections passed thresholds
 - Zero critical issues
 - Decision made: PASS (Step 5)
