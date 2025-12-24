@@ -82,9 +82,10 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 2. **Execute `utils/load-architecture-context.md`** to load architecture documents
 3. Validate all technical components against `architecture_context`
 4. Calculate technical accuracy score (0-10 scale)
-5. Determine next status using decision system
-6. Update story Status field with new status
-7. Save Architect Review Results to story file
+5. **Determine test design level** (use existing or calculate dynamically)
+6. Determine next status using decision system
+7. Update story Status field with new status
+8. Save Architect Review Results to story file
 
 ### Requirements:
 - ✅ Load all relevant architecture documents for story type
@@ -92,11 +93,11 @@ Conduct comprehensive technical accuracy review of SM-created story against arch
 - ✅ Generate technical accuracy score (≥7/10 to pass)
 - ✅ Identify critical/major/minor issues with specific locations
 - ✅ Provide actionable recommendations
-- ✅ Check test design level from Story metadata
-- ✅ Determine next status via make-decision.md (Step 5)
-- ✅ Validate status transition via validate-status-transition.md (Step 6)
-- ✅ Update Story.status field directly (Step 6)
-- ✅ Verify status update successful (Step 6)
+- ✅ Determine test design level (use existing OR calculate dynamically) (Step 5)
+- ✅ Determine next status via make-decision.md (Step 6)
+- ✅ Validate status transition via validate-status-transition.md (Step 7)
+- ✅ Update Story.status field directly (Step 7)
+- ✅ Verify status update successful (Step 7)
 
 ### Halt Conditions (ONLY when review cannot proceed):
 - ❌ Story file not found or cannot be read
@@ -324,16 +325,109 @@ issue_classification:
 
 **IMPORTANT**: Missing entities, dependencies, or architecture references should be recorded as Major Issues and reported in the review. The Architect should COMPLETE the review, calculate a score (which will be lower due to issues), and set status to RequiresRevision. NEVER halt the review process for these issues.
 
-### Test Design Level Check:
+### Step 5: Determine Test Design Level
+
+**Purpose**: Determine test design level to route correctly after review passes. This step bridges the gap for Stories created via `*apply-proposal` that bypass SM's quality assessment.
+
+**Step A: Read Existing Test Design Level**
+
+1. Read Story's "QA Test Design Metadata" section
+2. Extract `test_design_level` field
+
+**Step B: Calculate Test Design Level If Not Set**
+
+**IF `test_design_level` is set (Simple/Standard/Comprehensive)**:
+- Use existing value
+- Skip to Step C
+
+**ELSE (test_design_level not set or empty)**:
+
+This happens when Story was created via `*apply-proposal` (skips SM quality assessment).
+
+1. **Extract Complexity Indicators from Story Content**:
+
+   Count the following indicators (0-8):
+   ```yaml
+   complexity_indicators:
+     api_contract_changes: Story mentions new/modified API endpoints
+     db_schema_modifications: Story mentions database schema changes
+     new_arch_patterns: Story introduces new architectural patterns
+     cross_service_deps: Story affects multiple services/modules
+     security_operations: Story involves auth/authz/encryption/access control
+     performance_critical: Story has explicit performance requirements
+     core_doc_modifications: Story requires changes to core documentation
+     data_sync_requirements: Story involves DB writes with cross-table sync needs
+   ```
+
+2. **Determine Security Sensitivity**:
+   ```yaml
+   security_sensitive: true
+   IF Story involves any of:
+     - Authentication/authorization logic
+     - Encryption/decryption operations
+     - Access control modifications
+     - Sensitive data handling (PII, credentials, tokens)
+     - Security audit logging
+   ELSE:
+     security_sensitive: false
+   ```
+
+3. **Map Review Score to Quality Score**:
+   ```yaml
+   quality_score: {{technical_accuracy_score}}  # Use Architect's review score (0-10)
+   ```
+
+4. **Execute Test Design Level Decision**:
+
+   Execute `{root}/tasks/make-decision.md`:
+
+   ```yaml
+   decision_type: sm-test-design-level
+   context:
+     complexity_indicators: {{counted_indicators}}  # Number 0-8
+     quality_score: {{technical_accuracy_score}}    # Number 0-10
+     security_sensitive: {{is_security_sensitive}}  # Boolean
+   ```
+
+   **Decision Output**:
+   ```yaml
+   test_design_level: Simple | Standard | Comprehensive
+   reasoning: "..."
+   metadata:
+     test_design_required: true | false
+     test_levels: [unit, integration, e2e, security]
+   ```
+
+5. **Update Story Metadata**:
+
+   Add or update "QA Test Design Metadata" section in Story:
+   ```markdown
+   ## QA Test Design Metadata
+
+   | Field | Value |
+   |-------|-------|
+   | test_design_level | {{calculated_test_design_level}} |
+   | complexity_indicators | {{counted_indicators}} |
+   | security_sensitive | {{is_security_sensitive}} |
+   | calculated_by | Architect (post-review) |
+   | calculation_date | {{current_date}} |
+   ```
+
+**Step C: Apply Test Design Routing**
+
 ```yaml
-# Check test design level to determine correct status transition
 test_design_routing:
-  1. Read Story's QA Test Design Metadata section
-  2. Extract test_design_level field (Simple/Standard/Comprehensive)
-  3. If review passes (score ≥7 AND no critical issues):
-     - If test_design_level = Simple: Set Status to Approved
-     - If test_design_level ∈ {Standard, Comprehensive}: Set Status to AwaitingTestDesign
-  4. If review fails: Set Status to RequiresRevision or Escalated
+  IF review passes (score ≥7 AND no critical issues):
+    IF test_design_level == Simple:
+      → Set Status to Approved
+      → HANDOFF to Dev
+    IF test_design_level ∈ {Standard, Comprehensive}:
+      → Set Status to AwaitingTestDesign
+      → HANDOFF to QA for test design
+
+  IF review fails:
+    → Set Status to RequiresRevision or Escalated
+    → HANDOFF to SM
 ```
 
 ## Report Generation
@@ -364,7 +458,7 @@ report_generation:
 
 **Execute AFTER report generation, BEFORE saving outputs**
 
-### Step 5: Determine Next Status
+### Step 6: Determine Next Status
 
 Execute `{root}/tasks/make-decision.md`:
 
@@ -381,7 +475,7 @@ result:
   handoff_action: (test-design | develop-story | revise-story | escalate)
 ```
 
-### Step 6: Update Story Status Field
+### Step 7: Update Story Status Field
 
 **CRITICAL**: This step updates the actual Story.status field, not just metadata.
 
@@ -391,7 +485,7 @@ Execute `{root}/tasks/util-validate-agent-action.md`:
 agent_id: architect
 story_path: {{story_file_path}}
 action: update_status
-target_status: {{next_status from Step 5}}
+target_status: {{next_status from Step 6}}
 ```
 
 **On validation PASS**:
@@ -463,10 +557,11 @@ assert verify_status == next_status, "Status update failed"
 ✓ Technical accuracy score calculated correctly
 ✓ All issues classified and documented with locations
 ✓ Recommendations are specific and actionable
-✓ Next status determined via decision system (Step 5)
-✓ Status transition validated via validate-status-transition.md (Step 6)
-✓ Story.status field updated and verified (Step 6)
-✓ Architect Review Results saved to story file (Step 7)
+✓ Test design level determined (existing or calculated) (Step 5)
+✓ Next status determined via decision system (Step 6)
+✓ Status transition validated via validate-status-transition.md (Step 7)
+✓ Story.status field updated and verified (Step 7)
+✓ Architect Review Results saved to story file (Step 8)
 ```
 
 ---
@@ -682,9 +777,10 @@ Return error to user
 - ✅ Technical accuracy score generated with justification
 - ✅ All architecture compliance checks completed
 - ✅ Issues classified with specific locations and recommendations
-- ✅ Next status determined via make-decision.md (Step 5)
-- ✅ Status transition validated (Step 6)
-- ✅ **Story.status field updated and verified** (Step 6 - CRITICAL)
+- ✅ Test design level determined (Step 5)
+- ✅ Next status determined via make-decision.md (Step 6)
+- ✅ Status transition validated (Step 7)
+- ✅ **Story.status field updated and verified** (Step 7 - CRITICAL)
 - ✅ Architect Review Results updated in Story (Output 2)
 - ✅ Actionable feedback provided for next agent
 - ✅ Handoff message with correct next action (Output 3)
