@@ -259,37 +259,59 @@ migration_verification:
 
 ---
 
-## Step 4: Automated Testing
+## Step 4: Automated Test Evidence Verification
 
-**Purpose**: Run existing automated tests (unit, integration, e2e)
+**Purpose**: Verify Dev has executed automated tests successfully. Do NOT re-run tests.
 
-Execute: `{root}/tasks/qa-run-automated-tests.md`
+**Rationale**: Dev has already run unit/integration tests. QA verifies evidence exists rather than duplicating execution.
 
-Input:
+### 4.1 Locate Evidence Sources
+
+Check the following locations for test evidence:
+
 ```yaml
-project_type: {from Step 2}
-story_id: {story_id}
+evidence_sources:
+  - path: '{devLogsLocation}/{story_id}-dev-log.md'
+    section: 'Test Results'
+  - path: '{story_path}'
+    section: 'Dev Agent Record.self_review'
+  - path: 'CI pipeline logs (if available)'
 ```
 
-**Store result**:
+### 4.2 Extract Test Evidence
+
+From Dev Log or Story file, extract:
+
 ```yaml
 automated_tests:
+  evidence_found: true | false
+  source: 'dev-log' | 'story' | 'ci'
   passed: true | false
-  total: 150
-  passed_count: 148
-  failed_count: 2
-  skipped_count: 5
-  pass_rate: 98.7
-  coverage_percentage: 85
-  failed_tests: []
+  total: {from evidence}
+  passed_count: {from evidence}
+  failed_count: {from evidence}
+  pass_rate: {from evidence}
+  coverage_percentage: {from evidence, if available}
+  evidence_timestamp: {when tests were run}
 ```
 
-**Decision point**:
-- If `automated_tests.passed == false`:
-  - Record issues with severity HIGH
-  - Continue to Step 7 (Gate Decision) - skip E2E testing
-- If `automated_tests.passed == true`:
-  - Continue to Step 5
+### 4.3 Evidence Validation
+
+| Condition | Result | Action |
+|-----------|--------|--------|
+| Evidence found AND passed = true | PASS | Continue to Step 5 |
+| Evidence found AND passed = false | FAIL | Record HIGH severity issue, skip to Step 7 |
+| Evidence NOT found | FAIL | Record HIGH severity issue: "No test evidence found", skip to Step 7 |
+
+**Store result for Step 7**:
+```yaml
+automated_tests:
+  verification_method: 'evidence_check'
+  evidence_found: true | false
+  passed: true | false
+  pass_rate: {percentage}
+  issues: [] # populated if evidence missing or tests failed
+```
 
 ---
 
@@ -327,18 +349,109 @@ e2e_tests:
 
 ---
 
+## Step 5.5: Blind Spot Verification
+
+**Purpose**: Verify implementation handles blind spot scenarios identified in test-design. This is QA's unique value - covering Dev's blind spots.
+
+**Load**: `{root}/data/blind-spot-categories.yaml`
+
+### 5.5.1 Load Blind Spot Scenarios from Test Design
+
+**Locate test design file**:
+```
+{qa.qaLocation}/assessments/{story_id}-test-design-*.md
+```
+
+**Extract**: All scenarios with `[BLIND-SPOT]` tag
+
+```yaml
+blind_spot_scenarios:
+  - id: '{story_id}-BLIND-BOUNDARY-001'
+    category: 'BOUNDARY'
+    check_point_ref: 'BOUNDARY-001'
+    description: 'Null email input'
+  - id: '{story_id}-BLIND-ERROR-001'
+    category: 'ERROR'
+    check_point_ref: 'ERROR-001'
+    description: 'API timeout handling'
+```
+
+### 5.5.2 Verify Implementation Coverage
+
+For each blind spot scenario:
+
+**Check 1: Code Handling Exists**
+
+Search implementation files for handling logic:
+
+| Category | Search Patterns |
+|----------|----------------|
+| BOUNDARY | null check, empty check, length validation, type guard |
+| ERROR | try-catch, error handler, timeout config, retry logic |
+| FLOW | cancel handler, duplicate check, session validation |
+| CONCURRENCY | lock, mutex, transaction, optimistic locking |
+| DATA | rollback, cascade, foreign key check |
+| RESOURCE | finally, defer, close(), dispose() |
+
+**Check 2: Test Coverage Exists**
+
+Search test files for corresponding test case:
+
+```
+grep -r "{scenario.description}" {test_files}
+```
+
+### 5.5.3 Record Verification Results
+
+For each blind spot scenario:
+
+```yaml
+blind_spot_verification:
+  scenario_id: '{id}'
+  code_handling_found: true | false
+  code_location: '{file}:{line}' | null
+  test_coverage_found: true | false
+  test_location: '{file}:{line}' | null
+  status: COVERED | MISSING_CODE | MISSING_TEST | MISSING_BOTH
+```
+
+### 5.5.4 Generate Issues
+
+**Issue severity mapping**:
+
+| Status | Severity | Issue Description |
+|--------|----------|-------------------|
+| MISSING_BOTH | HIGH | "Blind spot not handled: {category} - {description}" |
+| MISSING_CODE | HIGH | "No handling logic for: {category} - {description}" |
+| MISSING_TEST | MEDIUM | "No test coverage for: {category} - {description}" |
+| COVERED | - | No issue |
+
+**Store result**:
+```yaml
+blind_spot_verification:
+  total_scenarios: {count}
+  covered: {count}
+  missing_code: {count}
+  missing_test: {count}
+  missing_both: {count}
+  coverage_rate: {percentage}
+  issues: [{severity, category, description, recommendation}]
+```
+
+---
+
 ## Step 6: Evidence Collection
 
 **Purpose**: Organize all test evidence for the Gate file
 
-**Skip condition**: If no issues found, skip to Step 7.
+**Skip condition**: If no issues found in Steps 4, 5, and 5.5, skip to Step 7.
 
 Execute: `{root}/tasks/qa-collect-evidence.md`
 
 Input:
 ```yaml
 story_id: {story_id}
-issues: {collected from Steps 4 and 5}
+issues: {collected from Steps 4, 5, and 5.5}
 ```
 
 **Store result**:
@@ -359,17 +472,28 @@ evidence:
 
 Compile test results:
 ```yaml
+# Step 4: Automated Test Evidence
 automated_tests_passed: {from Step 4}
-automated_tests_metrics: {from Step 4}
+automated_tests_evidence_found: {from Step 4}
+
+# Step 5: E2E Testing
 e2e_tests_passed: {from Step 5, or null if skipped}
 e2e_tests_skipped: {true if review_mode == automated_only}
 console_errors_found: {from Step 5}
 network_errors_found: {from Step 5}
+
+# Step 5.5: Blind Spot Verification
+blind_spot_coverage_rate: {from Step 5.5}
+blind_spot_missing_code: {count from Step 5.5}
+blind_spot_missing_test: {count from Step 5.5}
+
+# Aggregated Issues
 issues_by_severity:
   critical: {count}
   high: {count}
   medium: {count}
   low: {count}
+
 review_round: {current round}
 review_mode: {from Step 1}
 ```
@@ -462,6 +586,7 @@ Update or create `## QA Review` section in Story with minimal info:
 - **Review Mode**: {{review_mode}}
 - **Gate**: {{gate_result}}
 - **Tests**: {{automated_passed}}/{{automated_total}} automated, {{e2e_scenarios_passed}}/{{e2e_scenarios_tested}} E2E
+- **Blind Spots**: {{blind_spot_covered}}/{{blind_spot_total}} covered ({{blind_spot_coverage_rate}}%)
 - **Issues**: {{critical_count}} critical / {{high_count}} high / {{medium_count}} medium
 - **Gate File**: `docs/qa/gates/{{epic}}.{{story}}-{{slug}}.yml`
 - **Evidence**: `docs/qa/evidence/{{story_id}}/` (if issues found)
@@ -628,8 +753,9 @@ Gate: PASS | Tests: {pass_rate}%
 | 2 | Project Type Detection | Choose testing tools |
 | 3 | Environment Setup | Start application |
 | 3.5 | Migration Verification | Verify DB migrations executed |
-| 4 | Automated Testing | Run npm test |
-| 5 | E2E Testing | Execute user flows |
+| 4 | Automated Test Evidence | Verify Dev test results (no re-run) |
+| 5 | E2E Testing | Execute user flows (risk-based) |
+| 5.5 | Blind Spot Verification | Check Dev blind spots coverage |
 | 6 | Evidence Collection | Capture screenshots/logs |
 | 7 | Gate Decision | PASS/FAIL/CONCERNS |
 | 8 | Environment Cleanup | Stop processes |
@@ -637,8 +763,9 @@ Gate: PASS | Tests: {pass_rate}%
 
 ## Key Principles
 
-1. **Test-based decisions**: Gate result based on actual test execution, not code review
-2. **Risk-aware**: Low-risk stories get fast-track review (automated only)
-3. **Evidence-driven**: Issues include screenshots and reproduction steps
-4. **User perspective**: E2E tests verify real user journeys
-5. **Clean environment**: Always cleanup, even on failure
+1. **Trust Dev evidence**: Verify test results exist, do NOT re-run automated tests
+2. **Risk-aware E2E**: Low-risk = skip, Medium = spot check, High = full testing
+3. **Blind spot focus**: QA's unique value is covering what Dev missed
+4. **Evidence-driven**: Issues include screenshots and reproduction steps
+5. **User perspective**: E2E tests verify real user journeys
+6. **Clean environment**: Always cleanup, even on failure

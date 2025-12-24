@@ -1,0 +1,248 @@
+# Blind Spot Categories
+# Reference framework for QA blind spot analysis
+# Used by: test-design.md (design phase), qa-review-story.md (verification phase)
+
+version: "1.0"
+
+categories:
+  - id: BOUNDARY
+    name: Boundary Conditions
+    description: Edge values and limits
+    check_points:
+      - id: BOUNDARY-001
+        name: Null/Empty Input
+        check: "Input accepts null, empty string, empty array, undefined"
+        examples:
+          - "Form field left blank"
+          - "API called with missing required field"
+          - "Array parameter is []"
+      - id: BOUNDARY-002
+        name: Minimum Value
+        check: "Input at minimum allowed value"
+        examples:
+          - "quantity = 0"
+          - "amount = 0.01"
+          - "string length = 1"
+      - id: BOUNDARY-003
+        name: Maximum Value
+        check: "Input at maximum allowed value"
+        examples:
+          - "quantity = MAX_INT"
+          - "string length = max_length"
+          - "file size = upload_limit"
+      - id: BOUNDARY-004
+        name: Just Beyond Limit
+        check: "Input slightly exceeds allowed range"
+        examples:
+          - "max_length + 1 characters"
+          - "max_quantity + 1"
+          - "file size = limit + 1 byte"
+      - id: BOUNDARY-005
+        name: Type Mismatch
+        check: "Input of wrong type"
+        examples:
+          - "String where number expected"
+          - "Object where array expected"
+          - "Negative where positive expected"
+
+  - id: ERROR
+    name: Error Handling
+    description: Exception and failure scenarios
+    check_points:
+      - id: ERROR-001
+        name: Network Failure
+        check: "Behavior when network request fails"
+        examples:
+          - "API timeout"
+          - "DNS resolution failure"
+          - "Connection refused"
+      - id: ERROR-002
+        name: Service Unavailable
+        check: "Behavior when dependent service is down"
+        examples:
+          - "Database connection lost"
+          - "Third-party API returns 503"
+          - "Message queue unavailable"
+      - id: ERROR-003
+        name: Invalid Response
+        check: "Behavior when response format is unexpected"
+        examples:
+          - "API returns malformed JSON"
+          - "Missing expected fields in response"
+          - "Wrong data type in response"
+      - id: ERROR-004
+        name: Partial Failure
+        check: "Behavior when operation partially succeeds"
+        examples:
+          - "Batch operation: 3/10 items fail"
+          - "Multi-step process: step 2 fails after step 1 commits"
+          - "File upload: connection drops at 50%"
+      - id: ERROR-005
+        name: Resource Exhaustion
+        check: "Behavior when resources are exhausted"
+        examples:
+          - "Disk full"
+          - "Memory limit reached"
+          - "Rate limit exceeded"
+
+  - id: FLOW
+    name: Process Flow Details
+    description: Non-happy-path user journeys
+    check_points:
+      - id: FLOW-001
+        name: Cancel Mid-Process
+        check: "User cancels during multi-step operation"
+        examples:
+          - "Cancel during checkout after payment initiated"
+          - "Close browser during file upload"
+          - "Back button during form submission"
+      - id: FLOW-002
+        name: Duplicate Submission
+        check: "User submits same action twice"
+        examples:
+          - "Double-click submit button"
+          - "Retry after timeout (but first request succeeded)"
+          - "Browser refresh on confirmation page"
+      - id: FLOW-003
+        name: Out-of-Order Operations
+        check: "Operations executed in unexpected sequence"
+        examples:
+          - "Step 3 accessed before step 1 completed"
+          - "Delete then update same record"
+          - "Login expired during multi-step wizard"
+      - id: FLOW-004
+        name: Session Expiry
+        check: "Session expires during operation"
+        examples:
+          - "Token expires mid-transaction"
+          - "Idle timeout during form fill"
+          - "Session invalidated by another login"
+      - id: FLOW-005
+        name: Browser Navigation
+        check: "Non-standard navigation patterns"
+        examples:
+          - "Back button after form submission"
+          - "Forward button to completed step"
+          - "Direct URL access to protected page"
+
+  - id: CONCURRENCY
+    name: Concurrency & Race Conditions
+    description: Multi-user and parallel operation scenarios
+    check_points:
+      - id: CONCURRENCY-001
+        name: Simultaneous Edit
+        check: "Multiple users edit same resource"
+        examples:
+          - "Two users update same document"
+          - "Concurrent inventory decrement"
+          - "Parallel status updates"
+      - id: CONCURRENCY-002
+        name: Race Condition
+        check: "Timing-dependent operation outcomes"
+        examples:
+          - "Check-then-act without lock"
+          - "Read-modify-write without atomicity"
+          - "Cache invalidation timing"
+      - id: CONCURRENCY-003
+        name: Deadlock Potential
+        check: "Circular resource dependencies"
+        examples:
+          - "Transaction A waits for B, B waits for A"
+          - "Nested lock acquisition in different order"
+      - id: CONCURRENCY-004
+        name: Stale Data
+        check: "Operating on outdated data"
+        examples:
+          - "UI shows old value after concurrent update"
+          - "Cache not invalidated after write"
+          - "Optimistic lock violation"
+
+  - id: DATA
+    name: Data Consistency
+    description: Cross-module and cross-service data integrity
+    check_points:
+      - id: DATA-001
+        name: Transaction Rollback
+        check: "All changes rolled back on failure"
+        examples:
+          - "Payment failed: order record also removed"
+          - "Multi-table update: partial commit prevented"
+      - id: DATA-002
+        name: Cross-Service Sync
+        check: "Data consistent across services"
+        examples:
+          - "User profile updated in auth service and user service"
+          - "Inventory sync between warehouse and e-commerce"
+      - id: DATA-003
+        name: Cascade Effects
+        check: "Related data updated together"
+        examples:
+          - "Delete user: also delete user's orders, comments"
+          - "Update price: recalculate all cart totals"
+      - id: DATA-004
+        name: Orphan Records
+        check: "No orphan records after operations"
+        examples:
+          - "Foreign key reference to deleted parent"
+          - "File reference to deleted attachment"
+
+  - id: RESOURCE
+    name: Resource Cleanup
+    description: Resource release on all exit paths
+    check_points:
+      - id: RESOURCE-001
+        name: Connection Release
+        check: "Database/HTTP connections properly closed"
+        examples:
+          - "Connection returned to pool after error"
+          - "HTTP client closed on timeout"
+      - id: RESOURCE-002
+        name: Lock Release
+        check: "Locks released on all exit paths"
+        examples:
+          - "Mutex released in finally/defer block"
+          - "Distributed lock released on crash"
+      - id: RESOURCE-003
+        name: Temporary File Cleanup
+        check: "Temp files deleted after use"
+        examples:
+          - "Upload temp file removed after processing"
+          - "Cache files cleaned on error"
+      - id: RESOURCE-004
+        name: Memory Release
+        check: "Large objects dereferenced for GC"
+        examples:
+          - "Stream closed after reading"
+          - "Large buffer cleared after use"
+
+# Usage Instructions
+usage:
+  test_design_phase:
+    purpose: "Ensure test scenarios cover blind spot categories"
+    action: |
+      For each AC, systematically check if blind spot scenarios are needed:
+      1. Identify applicable categories based on AC content
+      2. Generate test scenarios with [BLIND-SPOT] tag
+      3. Assign priority (typically P1 for critical paths, P2 for edge cases)
+
+  qa_review_phase:
+    purpose: "Verify implementation handles blind spot scenarios"
+    action: |
+      For each [BLIND-SPOT] tagged scenario from test-design:
+      1. Check if code has corresponding handling logic
+      2. Check if test case exists for the scenario
+      3. If missing: record as Issue with HIGH severity
+
+# Applicability Matrix
+applicability:
+  backend_api:
+    high_priority: [BOUNDARY, ERROR, CONCURRENCY, DATA, RESOURCE]
+    medium_priority: [FLOW]
+  frontend_ui:
+    high_priority: [BOUNDARY, FLOW, ERROR]
+    medium_priority: [CONCURRENCY, DATA]
+  fullstack:
+    high_priority: [BOUNDARY, ERROR, FLOW, CONCURRENCY, DATA, RESOURCE]
+  library:
+    high_priority: [BOUNDARY, ERROR, RESOURCE]
+    medium_priority: [CONCURRENCY]
