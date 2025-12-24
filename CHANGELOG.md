@@ -1,3 +1,10 @@
+# [15.2.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.1.0...v15.2.0) (2025-12-24)
+
+
+### Features
+
+* **qa:** add Test Specs backfill to Story Tasks section ([4cd2c32](https://github.com/dorayo/ORCHESTRIX/commit/4cd2c3260b8bda02ee08fddfba00245dd2057c8b))
+
 # [15.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.3...v15.1.0) (2025-12-24)
 
 
