@@ -1,48 +1,36 @@
-# QA Risk Level Decision
-#
-# Calculates QA risk level to determine review depth and testing strategy.
-# Higher risk = more thorough testing, lower risk = streamlined review.
-
 decision_type: qa-risk-level
 
 description: >
   Determine QA review mode based on story complexity, security sensitivity,
-  and Dev Gate score. Enables smart simplification for low-risk stories
-  while ensuring thorough testing for high-risk ones.
+  and Dev Gate score. Higher risk = more thorough testing.
 
 inputs:
   - name: complexity_count
     type: number
     range: 0-7
-    source: "Story metadata from SM quality assessment"
-    description: "Count of complexity indicators (API changes, DB schema, etc.)"
+    source: "Story metadata from SM quality assessment (LLM semantic analysis)"
 
   - name: security_sensitive
     type: boolean
-    source: "Story metadata from SM quality assessment"
-    description: "Whether story involves security-related operations"
+    source: "Story metadata from SM quality assessment (LLM semantic analysis)"
 
   - name: dev_gate_score
     type: number
     range: 0-100
     source: "Dev Agent Record self_review.implementation_gate_score"
-    description: "Dev's self-review implementation gate score"
 
   - name: has_ui_changes
     type: boolean
     source: "Detect from story File List (*.tsx, *.jsx, components/, pages/)"
-    description: "Whether story includes UI/frontend changes"
 
   - name: has_api_changes
     type: boolean
     source: "Detect from story File List (routes/, api/, controllers/)"
-    description: "Whether story includes API/backend changes"
 
   - name: test_coverage_level
     type: enum
     values: [high, medium, low, unknown]
     source: "Dev Agent Record or test-design metadata"
-    description: "Level of automated test coverage"
 
 outputs:
   - name: risk_level
@@ -55,15 +43,11 @@ outputs:
 
   - name: skip_e2e
     type: boolean
-    description: "Whether to skip E2E testing entirely"
 
   - name: reasoning
     type: string
-    description: "Explanation for the risk assessment"
 
 rules:
-  # Rule 1: LOW RISK - Minimal review
-  # Conditions: Simple story + High quality Dev Gate + No security concerns
   - id: low_risk_simple
     priority: 1
     condition: |
@@ -75,9 +59,8 @@ rules:
       risk_level: LOW
       review_mode: automated_only
       skip_e2e: true
-      reasoning: "Low complexity, high Dev Gate score (>=98%), good test coverage. Only automated tests needed."
+      reasoning: "Low complexity, high Dev Gate score, good test coverage."
 
-  # Rule 2: LOW RISK - Library/utility changes
   - id: low_risk_library
     priority: 2
     condition: |
@@ -90,9 +73,8 @@ rules:
       risk_level: LOW
       review_mode: automated_only
       skip_e2e: true
-      reasoning: "Internal library/utility change with no user-facing impact. Automated tests sufficient."
+      reasoning: "Internal library/utility change with no user-facing impact."
 
-  # Rule 3: MEDIUM RISK - Standard review
   - id: medium_risk_standard
     priority: 3
     condition: |
@@ -103,9 +85,8 @@ rules:
       risk_level: MEDIUM
       review_mode: automated_plus_spot_check
       skip_e2e: false
-      reasoning: "Moderate complexity, passed Dev Gate. Run automated tests plus spot-check 2-3 key user flows."
+      reasoning: "Moderate complexity, passed Dev Gate."
 
-  # Rule 4: MEDIUM RISK - UI changes only
   - id: medium_risk_ui_only
     priority: 4
     condition: |
@@ -118,53 +99,44 @@ rules:
       risk_level: MEDIUM
       review_mode: automated_plus_spot_check
       skip_e2e: false
-      reasoning: "UI-only changes. Verify visual rendering and user interactions with spot checks."
+      reasoning: "UI-only changes."
 
-  # Rule 5: HIGH RISK - Complex changes
   - id: high_risk_complex
     priority: 5
-    condition: |
-      complexity_count >= 4
+    condition: "complexity_count >= 4"
     result:
       risk_level: HIGH
       review_mode: full_testing
       skip_e2e: false
-      reasoning: "High complexity (4+ indicators). Full E2E testing required for all scenarios."
+      reasoning: "High complexity (4+ indicators)."
 
-  # Rule 6: HIGH RISK - Security sensitive
   - id: high_risk_security
     priority: 6
-    condition: |
-      security_sensitive == true
+    condition: "security_sensitive == true"
     result:
       risk_level: HIGH
       review_mode: full_testing
       skip_e2e: false
-      reasoning: "Security-sensitive story. Full testing required including auth, permissions, and data protection."
+      reasoning: "Security-sensitive story."
 
-  # Rule 7: HIGH RISK - Low Dev Gate score
   - id: high_risk_low_gate
     priority: 7
-    condition: |
-      dev_gate_score < 95
+    condition: "dev_gate_score < 95"
     result:
       risk_level: HIGH
       review_mode: full_testing
       skip_e2e: false
-      reasoning: "Dev Gate score below threshold (<95%). Full verification needed."
+      reasoning: "Dev Gate score below threshold."
 
-  # Rule 8: HIGH RISK - Unknown test coverage
   - id: high_risk_no_tests
     priority: 8
-    condition: |
-      test_coverage_level == 'low' OR test_coverage_level == 'unknown'
+    condition: "test_coverage_level == 'low' OR test_coverage_level == 'unknown'"
     result:
       risk_level: HIGH
       review_mode: full_testing
       skip_e2e: false
-      reasoning: "Insufficient automated test coverage. QA must perform comprehensive E2E testing."
+      reasoning: "Insufficient automated test coverage."
 
-  # Default: MEDIUM RISK
   - id: default_medium
     priority: 99
     condition: "true"
@@ -172,53 +144,53 @@ rules:
       risk_level: MEDIUM
       review_mode: automated_plus_spot_check
       skip_e2e: false
-      reasoning: "Default risk level. Automated tests plus exploratory spot checks."
+      reasoning: "Default risk level."
 
-# Complexity indicators reference (from SM Story Quality assessment)
+# Complexity indicators - LLM semantic analysis definitions
+# Used by SM during story quality assessment to count complexity_count
 complexity_indicators:
-  - id: api_changes
-    patterns: ["endpoint", "REST", "GraphQL", "route", "API"]
-  - id: db_schema
-    patterns: ["schema", "migration", "table", "column", "database"]
-  - id: new_patterns
-    patterns: ["new pattern", "design pattern", "architecture change"]
-  - id: cross_service
-    patterns: ["multiple services", "integration", "microservice"]
-  - id: security
-    patterns: ["auth", "encryption", "permissions", "PII", "token"]
-  - id: performance
-    patterns: ["optimization", "caching", "real-time", "latency"]
-  - id: core_docs
-    patterns: ["data-models.md", "rest-api-spec.md", "architecture"]
+  llm_instruction: |
+    Analyze story content semantically to detect these 7 indicators.
+    Count how many are present (0-7) for complexity_count.
 
-# Review mode descriptions
+  indicators:
+    - id: api_changes
+      true_if: Story creates/modifies API endpoints, changes request/response contracts
+      false_if: Just calls existing APIs, updates API documentation only
+
+    - id: db_schema
+      true_if: Creates/alters tables, columns, indexes, migrations
+      false_if: Read-only queries, connection config, ORM usage without schema change
+
+    - id: new_patterns
+      true_if: Introduces new architectural patterns, design patterns not used before
+      false_if: Uses existing patterns, minor refactoring within existing structure
+
+    - id: cross_service
+      true_if: Changes span multiple services, requires coordination across repos
+      false_if: Changes contained within single service/module
+
+    - id: security
+      true_if: Auth/authz logic, password handling, encryption, permission changes
+      false_if: Auth-related UI styling, error messages, documentation
+
+    - id: performance
+      true_if: Performance-critical paths, caching logic, real-time requirements
+      false_if: General code improvements, non-critical path changes
+
+    - id: core_docs
+      true_if: Changes to data-models.md, rest-api-spec.md, architecture docs
+      false_if: README updates, code comments, inline documentation
+
 review_modes:
   automated_only:
-    description: "Run existing automated tests only. Skip E2E and exploratory testing."
+    description: "Run existing automated tests only."
     time_estimate: "1-2 minutes"
-    actions:
-      - "Run npm test / yarn test"
-      - "Verify all tests pass"
-      - "Check coverage meets threshold"
-      - "Gate decision based on test results"
 
   automated_plus_spot_check:
-    description: "Run automated tests plus 2-3 key user flow spot checks."
+    description: "Automated tests plus 2-3 key user flow spot checks."
     time_estimate: "5-10 minutes"
-    actions:
-      - "Run npm test / yarn test"
-      - "Identify 2-3 most critical user flows from ACs"
-      - "Execute spot checks using Playwright/Bash"
-      - "Collect evidence for any issues found"
-      - "Gate decision based on combined results"
 
   full_testing:
-    description: "Complete E2E testing of all scenarios from test design."
+    description: "Complete E2E testing of all scenarios."
     time_estimate: "15-30 minutes"
-    actions:
-      - "Run npm test / yarn test"
-      - "Execute all P0 and P1 test scenarios"
-      - "Test happy paths and error scenarios"
-      - "Verify edge cases"
-      - "Collect comprehensive evidence"
-      - "Gate decision based on all results"
