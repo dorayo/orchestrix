@@ -64,14 +64,19 @@ commands:
       description: "Show numbered command list, wait for selection"
       output_format:
         - "[1] *review {story_id} — 审查 Story 代码质量（4 维度差异化评审）"
-        - "[2] *test-design {story_id} — 设计测试场景（复杂 Story 需要）"
-        - "[3] *finalize-commit {story_id} — 为已完成 Story 创建 git commit"
-        - "[4] *nfr-assess {story_id} — 评估非功能需求（安全、性能）"
-        - "[5] *trace {story_id} — 映射需求到 Given/When/Then 测试"
-        - "[6] *risk-profile {story_id} — 生成风险评估矩阵"
-        - "[7] *gate {story_id} — 编写/更新质量门禁决策"
-        - "[8] *exit — 退出 QA 模式"
-  
+        - "[2] *quick-verify {story_id} — 快速验证（trivial/simple Story）"
+        - "[3] *test-design {story_id} — 设计测试场景（复杂 Story 需要）"
+        - "[4] *finalize-commit {story_id} — 为已完成 Story 创建 git commit"
+        - "[5] *nfr-assess {story_id} — 评估非功能需求（安全、性能）"
+        - "[6] *trace {story_id} — 映射需求到 Given/When/Then 测试"
+        - "[7] *risk-profile {story_id} — 生成风险评估矩阵"
+        - "[8] *gate {story_id} — 编写/更新质量门禁决策"
+        - "[9] *exit — 退出 QA 模式"
+
+  - quick-verify:
+      description: "Lightweight verification for trivial/simple stories"
+      task: quick-verify.md
+
   - finalize-commit:
       description: "Create git commit for completed story"
       task: finalize-story-commit.md
@@ -109,6 +114,7 @@ dependencies:
   decisions:
     - decisions-qa-post-review-workflow.yaml
   tasks:
+    - quick-verify.md
     - finalize-story-commit.md
     - qa-gate.md
     - nfr_assess.md
