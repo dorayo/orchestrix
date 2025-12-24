@@ -95,7 +95,7 @@ fi
 
 ### Step 3: Run Tests
 
-Execute the test suite:
+Execute the test suite with proper timeout control and process tracking:
 
 ```bash
 # Determine package manager
@@ -109,20 +109,97 @@ else
   PM="npm"
 fi
 
-# Run tests with timeout
-TIMEOUT=300  # 5 minutes
+# Timeout configuration (5 minutes)
+TIMEOUT=300
+
+# Generate unique output file for this run
+OUTPUT_FILE="/tmp/test-output-${STORY_ID:-$$}.log"
+PID_FILE="/tmp/test-runner-${STORY_ID:-$$}.pid"
 
 echo "Running tests with ${PM}..."
 START_TIME=$(date +%s)
 
-# Capture output and exit code
-$PM test 2>&1 | tee /tmp/test-output.log
-TEST_EXIT_CODE=${PIPESTATUS[0]}
+# Run tests in background and track PID
+$PM test > "$OUTPUT_FILE" 2>&1 &
+TEST_PID=$!
+echo $TEST_PID > "$PID_FILE"
+
+echo "Test process started with PID: $TEST_PID"
+echo "Tracking file: $PID_FILE"
+echo "Output file: $OUTPUT_FILE"
+
+# Monitor process with timeout
+ELAPSED=0
+while [ $ELAPSED -lt $TIMEOUT ]; do
+  # Check if process is still running
+  if ! kill -0 $TEST_PID 2>/dev/null; then
+    # Process finished
+    wait $TEST_PID
+    TEST_EXIT_CODE=$?
+    break
+  fi
+
+  sleep 5
+  ELAPSED=$((ELAPSED + 5))
+
+  # Progress indicator every 30 seconds
+  if [ $((ELAPSED % 30)) -eq 0 ]; then
+    echo "  Tests running... ${ELAPSED}s elapsed (timeout: ${TIMEOUT}s)"
+  fi
+done
+
+# Handle timeout
+if kill -0 $TEST_PID 2>/dev/null; then
+  echo "⚠️ Test execution timed out after ${TIMEOUT}s"
+  echo "Terminating test process $TEST_PID..."
+
+  # Graceful shutdown first (SIGTERM)
+  kill -TERM $TEST_PID 2>/dev/null
+
+  # Wait up to 10 seconds for graceful shutdown
+  GRACE_WAIT=0
+  while [ $GRACE_WAIT -lt 10 ]; do
+    if ! kill -0 $TEST_PID 2>/dev/null; then
+      echo "Test process terminated gracefully"
+      break
+    fi
+    sleep 1
+    GRACE_WAIT=$((GRACE_WAIT + 1))
+  done
+
+  # Force kill if still running
+  if kill -0 $TEST_PID 2>/dev/null; then
+    echo "Force killing test process..."
+    kill -9 $TEST_PID 2>/dev/null
+    sleep 1
+
+    # Kill any child processes (vitest workers, etc.)
+    pkill -P $TEST_PID 2>/dev/null || true
+  fi
+
+  TEST_EXIT_CODE=124  # Standard timeout exit code
+  echo "TIMEOUT" >> "$OUTPUT_FILE"
+fi
+
+# Cleanup tracking file
+rm -f "$PID_FILE"
 
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
 
+# Output test log to console (truncated if too long)
+echo ""
+echo "=== Test Output (last 100 lines) ==="
+tail -100 "$OUTPUT_FILE"
+echo "==================================="
+echo ""
+
 echo "Tests completed in ${DURATION}s with exit code ${TEST_EXIT_CODE}"
+
+# Cleanup any orphaned test runner processes
+# Execute util-test-runner-cleanup.md (non-blocking)
+echo "Cleaning up any orphaned test runners..."
+pkill -f "vitest.*--watch" 2>/dev/null || true  # Kill watch mode vitest specifically
 ```
 
 ### Step 4: Parse Test Results

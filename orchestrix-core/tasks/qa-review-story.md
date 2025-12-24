@@ -555,17 +555,68 @@ next_action: "mark_story_complete" | "handoff_to_dev_fix" | etc.
 
 ---
 
-## Step 8: Environment Cleanup
+## Step 8: Environment and Test Runner Cleanup
 
-**Purpose**: Stop any processes started in Step 3
+**Purpose**: Stop any processes started in Step 3 and clean up orphaned test runners
 
 **Always execute** (even if previous steps failed)
+
+### 8.1 Environment Cleanup
 
 Execute: `{root}/tasks/qa-environment-cleanup.md`
 
 Input:
 ```yaml
 story_id: {story_id}
+```
+
+### 8.2 Test Runner Cleanup
+
+Clean up any orphaned test runner processes that may have been left behind:
+
+```bash
+# Test runner cleanup
+echo "Cleaning up test runner processes..."
+
+# Check for story-specific tracking file
+PID_FILE="/tmp/test-runner-${STORY_ID}.pid"
+if [ -f "$PID_FILE" ]; then
+  TRACKED_PID=$(cat "$PID_FILE")
+  if [ -n "$TRACKED_PID" ] && kill -0 "$TRACKED_PID" 2>/dev/null; then
+    echo "  Terminating tracked test process: $TRACKED_PID"
+    kill -TERM $TRACKED_PID 2>/dev/null
+    sleep 2
+    kill -0 $TRACKED_PID 2>/dev/null && kill -9 $TRACKED_PID 2>/dev/null
+  fi
+  rm -f "$PID_FILE"
+fi
+
+# Kill any test runner processes running longer than 10 minutes
+TEST_RUNNERS=("vitest" "jest" "mocha" "playwright" "cypress")
+THRESHOLD=600  # 10 minutes in seconds
+
+for RUNNER in "${TEST_RUNNERS[@]}"; do
+  PIDS=$(pgrep -f "$RUNNER" 2>/dev/null || true)
+  if [ -n "$PIDS" ]; then
+    for PID in $PIDS; do
+      ETIME=$(ps -p $PID -o etimes= 2>/dev/null | tr -d ' ' || echo "0")
+      if [ "$ETIME" -gt "$THRESHOLD" ]; then
+        echo "  Killing long-running $RUNNER process: PID=$PID (${ETIME}s)"
+        kill -TERM $PID 2>/dev/null
+        sleep 1
+        kill -0 $PID 2>/dev/null && kill -9 $PID 2>/dev/null
+        pkill -P $PID 2>/dev/null || true
+      fi
+    done
+  fi
+done
+
+# Cleanup temp files
+rm -f /tmp/test-output-${STORY_ID}*.log 2>/dev/null || true
+rm -f /tmp/vitest-results*.json 2>/dev/null || true
+rm -f /tmp/jest-results*.json 2>/dev/null || true
+
+echo "Test runner cleanup complete"
 ```
 
 Log cleanup result but do not block on failures.

@@ -403,9 +403,11 @@ handoff_command: "*review-escalation {story_id}"
 
 ---
 
-## Step 7: Environment Cleanup (ALWAYS EXECUTE)
+## Step 7: Environment and Test Runner Cleanup (ALWAYS EXECUTE)
 
 Execute regardless of validation result (PASS/FAIL/ESCALATE).
+
+### 7.1 Environment Cleanup
 
 ```bash
 # Check for environment file
@@ -428,6 +430,58 @@ else
     fi
   done
 fi
+```
+
+### 7.2 Test Runner Cleanup (NEW)
+
+Clean up any orphaned test runner processes (vitest, jest, etc.):
+
+```bash
+# Test runner cleanup
+echo "Cleaning up test runner processes..."
+
+# Check for story-specific tracking file
+PID_FILE="/tmp/test-runner-${STORY_ID}.pid"
+if [ -f "$PID_FILE" ]; then
+  TRACKED_PID=$(cat "$PID_FILE")
+  if [ -n "$TRACKED_PID" ] && kill -0 "$TRACKED_PID" 2>/dev/null; then
+    echo "  Terminating tracked test process: $TRACKED_PID"
+    kill -TERM $TRACKED_PID 2>/dev/null
+    sleep 2
+    kill -0 $TRACKED_PID 2>/dev/null && kill -9 $TRACKED_PID 2>/dev/null
+  fi
+  rm -f "$PID_FILE"
+fi
+
+# Kill any vitest processes running longer than 10 minutes
+# This catches watch mode and stuck test runs
+TEST_RUNNERS=("vitest" "jest" "mocha" "playwright" "cypress")
+THRESHOLD=600  # 10 minutes in seconds
+
+for RUNNER in "${TEST_RUNNERS[@]}"; do
+  PIDS=$(pgrep -f "$RUNNER" 2>/dev/null || true)
+  if [ -n "$PIDS" ]; then
+    for PID in $PIDS; do
+      # Get elapsed time in seconds
+      ETIME=$(ps -p $PID -o etimes= 2>/dev/null | tr -d ' ' || echo "0")
+      if [ "$ETIME" -gt "$THRESHOLD" ]; then
+        echo "  Killing long-running $RUNNER process: PID=$PID (${ETIME}s)"
+        kill -TERM $PID 2>/dev/null
+        sleep 1
+        kill -0 $PID 2>/dev/null && kill -9 $PID 2>/dev/null
+        # Also kill child processes (workers)
+        pkill -P $PID 2>/dev/null || true
+      fi
+    done
+  fi
+done
+
+# Cleanup temp files
+rm -f /tmp/test-output-${STORY_ID}*.log 2>/dev/null || true
+rm -f /tmp/vitest-results*.json 2>/dev/null || true
+rm -f /tmp/jest-results*.json 2>/dev/null || true
+
+echo "Test runner cleanup complete"
 ```
 
 On failure: Log warning, DO NOT block workflow.
