@@ -149,9 +149,7 @@ Story: {story_id} - {story_title}
 
 Quality Score: {quality_score}/100
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+🤖 Generated with [Orchestrix](https://orchestrix-mcp.youlidao.ai)
 EOF
 )"
 ```

@@ -88,9 +88,7 @@ git commit -m "feat(story-{story_id}): {story_title}
 
 Quick story implementation.
 
-Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
+🤖 Generated with [Orchestrix](https://orchestrix-mcp.youlidao.ai)"
 ```
 
 **Update Quick Record**: Set Commit = {commit_hash}
