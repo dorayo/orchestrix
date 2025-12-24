@@ -1,3 +1,21 @@
+# [15.4.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.3.0...v15.4.0) (2025-12-24)
+
+
+### Bug Fixes
+
+* **agents:** add missing quick workflow commands to Dev and QA agents ([e07f09a](https://github.com/dorayo/ORCHESTRIX/commit/e07f09a5f76f95c79af0d31e090d0542b22fbcf9))
+* **workflow:** LLM semantic analysis for tier decision + multi-repo support ([1fc5828](https://github.com/dorayo/ORCHESTRIX/commit/1fc5828ec62690d1a28d0596312b58d789ae4c7c))
+
+
+### Features
+
+* **workflow:** add quick story workflow for trivial/simple tier stories ([4c04161](https://github.com/dorayo/ORCHESTRIX/commit/4c0416102a0648ec36c334dc86433d496a3297f5))
+
+
+### Performance Improvements
+
+* **dev:** remove architecture document loading from develop-story ([c211a42](https://github.com/dorayo/ORCHESTRIX/commit/c211a427e06fb59264cf66a7a262c6849e1f38ad))
+
 # [15.3.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.2.0...v15.3.0) (2025-12-24)
 
 
