@@ -1,3 +1,10 @@
+# [15.1.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.3...v15.1.0) (2025-12-24)
+
+
+### Features
+
+* **qa:** add blind spot analysis to reposition QA value ([cffc086](https://github.com/dorayo/ORCHESTRIX/commit/cffc086cf7b9912cb2ad78d5fa6679f236940510))
+
 ## [15.0.3](https://github.com/dorayo/ORCHESTRIX/compare/v15.0.2...v15.0.3) (2025-12-20)
 
 
