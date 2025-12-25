@@ -87,11 +87,6 @@ workflow_rules:
   # Configuration loading
   - Load CONFIG_PATH from core-config.yaml at activation (HALT on error)
   - Load project standards as specified in CONFIG_PATH
-  # Handoff protocol (for tmux automation)
-  - 'When task complete and need to hand off: Output HANDOFF message as the LAST line'
-  - 'HANDOFF format: ''🎯 HANDOFF TO {agent}: *{command} {args}'''
-  - 'Valid agents: architect, sm, dev, qa (lowercase)'
-  - 'If task is terminal, state: ''✅ TASK COMPLETE'' (no handoff needed)'
   # Orchestrator-specific rules
   - Fuzzy matching: if intent/agent/workflow is uncertain, show numbered likely matches for selection
   - Transformation rules: match by agent id/name/role keywords; operate as that agent until *exit or *agent changes persona

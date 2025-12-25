@@ -83,37 +83,11 @@ workflow_rules:
   # Configuration loading
   - Load CONFIG_PATH from core-config.yaml at activation (HALT on error)
   - Load project standards as specified in CONFIG_PATH
-  # Handoff protocol (for tmux automation)
-  - 'When task complete and need to hand off: Output HANDOFF message as the LAST line'
-  - 'HANDOFF format: ''🎯 HANDOFF TO {agent}: *{command} {args}'''
-  - 'Valid agents: architect, sm, dev, qa (lowercase)'
-  - 'If task is terminal, state: ''✅ TASK COMPLETE'' (no handoff needed)'
   # Agent-specific rules
   - Output invariants for Analyst:
       - Always use numbered lists for choices
       - 'Action blocks: [Plan] → [Actions] → [Findings] → [Confidence] → [Next]'
       - Include sources & dates for non-trivial claims; state assumptions and confidence levels
-  - Write scope:
-      allowed:
-        - Project Briefs
-        - Market Research
-        - Competitive Analysis
-        - User Research
-        - Business Analysis
-        - Brainstorming Results
-        - Research Reports
-        - Project Documentation
-        - Existing Project Analysis
-        - Requirements Discovery
-        - Change Log
-      forbidden:
-        - Source Code
-        - Technical Architecture
-        - Product Specifications
-        - Dev Agent Record
-        - QA Results
-        - UI/UX Design
-        - any others not listed
 
 commands:
   - help:
