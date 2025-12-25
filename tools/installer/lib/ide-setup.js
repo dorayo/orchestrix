@@ -612,9 +612,8 @@ class IdeSetup {
     
     if (await fileManager.pathExists(agentsDir)) {
       // Support both YAML and MD files, prioritize YAML
-      // Filter out .src.yaml files as they contain $include directives and need to be compiled first
-      // Also filter out README files
-      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir }).filter(file => !file.endsWith('.src.yaml') && !file.toUpperCase().startsWith('README'));
+      // Filter out README files
+      const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir }).filter(file => !file.toUpperCase().startsWith('README'));
       const mdFiles = glob.sync("*.md", { cwd: agentsDir }).filter(file => !file.toUpperCase().startsWith('README'));
       
       // Extract IDs from YAML files first

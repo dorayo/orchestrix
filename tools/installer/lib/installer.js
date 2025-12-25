@@ -3,7 +3,6 @@ const fileManager = require("./file-manager");
 const configLoader = require("./config-loader");
 const ideSetup = require("./ide-setup");
 const { extractYamlFromAgent, loadAgentYaml, findAgentPath } = require("../../lib/yaml-utils");
-const YamlCompiler = require("../../lib/yaml-compiler");
 
 // Dynamic imports for ES modules
 let chalk, ora, inquirer;
@@ -100,34 +99,6 @@ class Installer {
     } catch (error) {
       this._log(console.warn, chalk.yellow(`警告: 恢复配置文件失败: ${error.message}`));
       this._log(console.warn, chalk.yellow(`备份文件保留在: ${backupPath}`));
-    }
-  }
-
-  async compileAgentConfigurations(spinner) {
-    try {
-      const compiler = new YamlCompiler({ verbose: false });
-      const sourceDir = path.join(__dirname, "../../../orchestrix-core/agents");
-      const outputDir = sourceDir; // Compile in place
-      
-      // Check if there are any .src.yaml files to compile
-      const fs = require("fs-extra");
-      const files = await fs.readdir(sourceDir);
-      const srcFiles = files.filter(f => f.endsWith('.src.yaml'));
-      
-      if (srcFiles.length === 0) {
-        // No source files to compile, skip this step
-        return;
-      }
-      
-      const compiled = await compiler.compileAllAgents(sourceDir, outputDir);
-      
-      if (compiled > 0) {
-        spinner.text = `✓ 编译了 ${compiled} 个代理配置文件`;
-      }
-    } catch (error) {
-      this._log(console.warn, chalk.yellow(`警告: 编译代理配置时出现问题: ${error.message}`));
-      this._log(console.warn, chalk.yellow('将继续使用现有的 .yaml 文件'));
-      // Don't fail installation if compilation fails - existing .yaml files might be sufficient
     }
   }
 
@@ -362,12 +333,6 @@ class Installer {
     // Ensure modules are initialized
     await initializeModules();
     spinner.text = "正在安装 Orchestrix...";
-
-    // Compile .src.yaml files before installation
-    if (config.installType === "full" || config.installType === "single-agent" || config.installType === "team") {
-      spinner.text = "正在编译代理配置文件...";
-      await this.compileAgentConfigurations(spinner);
-    }
 
     let files = [];
 
