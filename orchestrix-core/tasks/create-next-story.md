@@ -699,4 +699,15 @@ Quality: {score}/10 | Test Design: {Standard | Comprehensive}
 🎯 HANDOFF TO qa: *test-design {epic}.{story}
 ```
 
+---
+
+### ❌ PROHIBITED OUTPUT PATTERNS
+
+You MUST NOT:
+- Output anything after `🎯 HANDOFF TO` line
+- Add menu options (e.g., "Would you like me to...")
+- Include free-form explanations in handoff message
+- Change the emoji or format of `🎯 HANDOFF TO`
+- Discuss technical details after handoff message
+
 **STOP**: The `🎯 HANDOFF TO` line must be your FINAL output. Hook handles the rest.
