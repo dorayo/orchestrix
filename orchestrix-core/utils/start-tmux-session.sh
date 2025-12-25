@@ -68,6 +68,18 @@ fi
 echo "🚀 Creating tmux session: $SESSION_NAME"
 tmux new-session -d -s "$SESSION_NAME" -n "Arch" -c "$WORK_DIR"
 
+# ============================================
+# Create tmux automation marker
+# ============================================
+# This file signals to agents that they're running in tmux automation mode
+# Agents check for this file to decide whether to register pending-handoff fallback
+RUNTIME_DIR="$WORK_DIR/.orchestrix-core/runtime"
+TMUX_MARKER="$RUNTIME_DIR/tmux-automation-active"
+
+mkdir -p "$RUNTIME_DIR"
+echo "{\"session\": \"$SESSION_NAME\", \"started_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "$TMUX_MARKER"
+echo "📌 tmux automation marker: $TMUX_MARKER"
+
 # Configure status bar for better display
 tmux set-option -t "$SESSION_NAME" status-left-length 20
 tmux set-option -t "$SESSION_NAME" status-right-length 60

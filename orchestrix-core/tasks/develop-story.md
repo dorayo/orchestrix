@@ -7,19 +7,24 @@ Example: `{root}/tasks/util-load-architecture-context.md` → `.orchestrix-core/
 
 ---
 
-## 0. ⚠️ MANDATORY: Register Pending HANDOFF (Fallback Safety Net)
+## 0. Automation Mode Detection & Conditional HANDOFF Registration
 
-> **CRITICAL**: This step MUST be executed FIRST before ANY other work. DO NOT SKIP.
-> Context compression during long tasks may cause you to forget the final HANDOFF.
-> This file is your safety net - without it, the workflow will break.
+### Step 0.1: Detect Automation Mode
 
-### Step 0.1: Create the fallback file
+**Check for tmux automation marker file**:
 
-**Action**: Use the Write tool to create this file:
+Glob: `{root}/runtime/tmux-automation-active`
 
-**File path**: `{root}/runtime/pending-handoff.json`
+**Decision**:
+- **If file EXISTS** → tmux automation mode → continue to Step 0.2
+- **If file NOT FOUND** → manual mode → **skip to Step 0.3**
 
-**Content** (copy exactly, replace `{story_id}` with actual value):
+### Step 0.2: Register Pending HANDOFF (tmux only)
+
+> Prevents workflow breakage if context compression causes HANDOFF to be forgotten.
+
+**Action**: Write `{root}/runtime/pending-handoff.json`:
+
 ```json
 {
   "source_agent": "dev",
@@ -32,27 +37,13 @@ Example: `{root}/tasks/util-load-architecture-context.md` → `.orchestrix-core/
 }
 ```
 
-### Step 0.2: Verify file creation
+**Verify**: Read file → Output: `[HANDOFF-REGISTERED] dev -> qa: *review {story_id}`
 
-**Action**: Use the Read tool to verify the file exists and contains correct data.
-
-**Expected output after verification**:
-```
-[HANDOFF-REGISTERED] dev -> qa: *review {story_id}
-```
-
-### Step 0.3: Gate Check
-
-⛔ **HALT if**:
-- File was not created
-- File content is incorrect
-- Verification failed
-
-✅ **Continue only if** you see your own output: `[HANDOFF-REGISTERED] dev -> qa: *review {story_id}`
+⛔ **HALT if** file creation failed (tmux mode requires fallback).
 
 ---
 
-## 0.1. Preconditions
+### Step 0.3: Preconditions
 
 Before execution:
 

@@ -612,11 +612,17 @@ next_status: Done | InProgress | Escalated
 next_action: "mark_story_complete" | "handoff_to_dev_fix" | etc.
 ```
 
-### 7.3 ⚠️ MANDATORY: Register Pending HANDOFF
+### 7.3 Register Pending HANDOFF (Conditional - tmux only)
 
-> **CRITICAL**: This step MUST be executed immediately after Gate Decision.
-> Context compression may cause you to forget the final HANDOFF message.
-> This fallback file ensures workflow continuity.
+**Check for tmux automation marker**:
+
+Glob: `{root}/runtime/tmux-automation-active`
+
+**If file NOT FOUND** → **Skip to Step 8**
+
+**If file EXISTS**:
+
+> Prevents workflow breakage if context compression causes HANDOFF to be forgotten.
 
 **Determine HANDOFF target based on gate_result**:
 
@@ -626,11 +632,8 @@ next_action: "mark_story_complete" | "handoff_to_dev_fix" | etc.
 | FAIL/CONCERNS | InProgress | dev | *apply-qa-fixes {story_id} |
 | any | Escalated | architect | *review-escalation {story_id} |
 
-**Action**: Use Write tool to create file:
+**Action**: Write `{root}/runtime/pending-handoff.json`:
 
-**File path**: `{root}/runtime/pending-handoff.json`
-
-**Content** (replace placeholders with actual values):
 ```json
 {
   "source_agent": "qa",
@@ -644,12 +647,9 @@ next_action: "mark_story_complete" | "handoff_to_dev_fix" | etc.
 }
 ```
 
-**Verify**: Read file to confirm creation, then output:
-```
-[HANDOFF-REGISTERED] qa -> {target_agent}: {command}
-```
+**Verify**: Read file → Output: `[HANDOFF-REGISTERED] qa -> {target_agent}: {command}`
 
-⛔ **HALT if file creation fails** - workflow cannot continue without fallback.
+⛔ **HALT if** file creation failed (tmux mode requires fallback).
 
 ---
 
