@@ -19,6 +19,7 @@ Read `{root}/core-config.yaml`:
 
 1. Confirm `prd.prdSharded: true`
 2. Get `prd.prdShardedLocation` (default: `docs/prd`)
+3. Get `dev.devLogLocation` (default: `docs/dev/logs`) → derive `devDocLocation` as parent directory
 
 **IF NOT sharded:**
 
@@ -89,24 +90,128 @@ Next Available Epic ID: {next_epic_id}
 ═══════════════════════════════════════════════════════
 ```
 
+### Step 2.5: Load Technical Context
+
+Load technical context to enable technology-aware requirements discussion.
+
+**2.5.1 Load Cumulative Registries**
+
+Check and read the following files (if exist):
+
+```
+{devDocLocation}/database-registry.md  → Existing tables and fields
+{devDocLocation}/api-registry.md       → Existing API endpoints
+{devDocLocation}/models-registry.md    → Existing models and types
+```
+
+Extract key information:
+- Database: table names, field counts, key entities
+- API: endpoint count, endpoints by resource
+- Models: interface count, key types
+
+**2.5.2 Load Key Architecture Sections**
+
+Read architecture documents for system capabilities:
+
+```
+docs/architecture/3-tech-stack.md      → Available technologies
+docs/architecture/5-components.md      → Existing modules/services
+docs/architecture/8-database-schema.md → Current database structure
+docs/architecture/9-rest-api-spec.md   → Current API endpoints
+```
+
+**2.5.3 Output Technical Overview**
+
+```
+🔧 Technical Context Overview
+═══════════════════════════════════════════════════════
+
+📊 Database:
+   - Tables: {count} ({table_names_summary})
+   - Key entities: {entity_list}
+
+🌐 API Endpoints:
+   - Total: {count} endpoints
+   - By resource: {resource_summary}
+
+🧱 Components:
+   - Backend: {backend_components_list}
+   - Frontend: {frontend_components_list}
+
+═══════════════════════════════════════════════════════
+```
+
+**IF cumulative registries do not exist:**
+- First iteration or first use of enhanced flow
+- Output: "No implementation data yet. Architecture documents available for reference."
+- Continue execution
+
 ### Step 3: Requirements Discussion
 
-Interact with user to collect new iteration information:
+Interact with user to collect new iteration information with technical awareness.
 
-**3.1 Collect New Feature Requirements**
+**3.1 Present System Capabilities**
+
+Before collecting requirements, inform user of current system state:
+
+```
+💡 Current System Capabilities:
+
+Existing Features:
+  ✓ {feature_1} ({implementation_detail})
+  ✓ {feature_2} ({implementation_detail})
+
+Available for Reuse:
+  • {component_1} ({purpose})
+  • {component_2} ({purpose})
+
+Database Ready:
+  • {table_list} tables exist
+  • Can extend existing tables or add new ones
+```
+
+**3.2 Collect New Feature Requirements**
 
 Ask user:
 - What features should this new iteration implement?
 - Please describe the core value and user scenarios for each feature
 
-**3.2 Determine Epic Planning**
+**3.3 Identify Technical Impact**
+
+As requirements are collected, identify technical implications:
+
+| Requirement | Technical Impact | Impact Type |
+|-------------|------------------|-------------|
+| {requirement_1} | {impact_description} | New API / DB Change / New Component |
+
+**3.4 Output Technical Impact Summary**
+
+```
+📋 Technical Impact Summary:
+
+New APIs Required:
+  • {HTTP_METHOD} {endpoint} ({purpose})
+
+Database Changes:
+  • New: {table_name} ({reason})
+  • Modify: {table_name} - add {field} ({reason})
+
+New Components:
+  • Backend: {component_list}
+  • Frontend: {component_list}
+
+Technology Decisions Needed:
+  ⚠️ {decision_point} - {options}
+```
+
+**3.5 Determine Epic Planning**
 
 Based on requirements discussion, determine:
 - How many new Epics to create
 - Title and description for each Epic
 - Story overview for each Epic
 
-**3.3 Ask About Section Updates**
+**3.6 Ask About Section Updates**
 
 Ask user if existing sections need updates:
 
@@ -114,20 +219,9 @@ Ask user if existing sections need updates:
 📋 Do any of the following sections need updates?
 
 [1] Goals and Background Context (1-goals-and-background-context.md)
-    - Have product goals changed?
-    - Does background information need updates?
-
 [2] Requirements (2-requirements.md)
-    - Are there new functional requirements (FR)?
-    - Are there new non-functional requirements (NFR)?
-
 [3] UI Design Goals (3-user-interface-design-goals.md)
-    - Are there new UI/UX goals?
-    - Have core screens changed?
-
 [4] Technical Assumptions (4-technical-assumptions.md)
-    - Are there new technology choices?
-    - Has repository structure changed?
 
 Enter section numbers to update (e.g., 1,2) or "none" to skip:
 ```
@@ -145,6 +239,9 @@ files_to_update:
 
   new_files:  # Need to create
     - "epic-{n}-{title-slug}.yaml"  # One file per new Epic
+
+  new_directories:  # Create if not exist
+    - "docs/front-end-spec/"  # For epic-specific front-end specs
 
   optional:  # Based on user selection
     - "1-goals-and-background-context.md"  # If selected [1]
@@ -198,6 +295,10 @@ stories:
     provides_apis: []    # Backend Story: ["POST /api/xxx"]
     consumes_apis: []    # Frontend/Mobile Story: ["POST /api/xxx"]
     dependencies: []     # Story IDs: ["4.1"]
+    # SM hints - populated by UX-Expert and Architect
+    sm_hints:
+      front_end_spec: null  # UX-Expert fills this
+      architecture: null     # Architect fills this
 
   - id: "{epic_id}.2"
     # ... more Stories
@@ -270,7 +371,15 @@ title-slug rules:
 - Special characters removed
 - Example: "Advanced Search" → "advanced-search"
 
-**6.4 Update Other Sections** (if user selected)
+**6.4 Create Front-End Spec Directory**
+
+If UI Stories exist in new Epics:
+
+```bash
+mkdir -p docs/front-end-spec
+```
+
+**6.5 Update Other Sections** (if user selected)
 
 Based on optional updates list from Step 4:
 - Interact with user to confirm specific update content
@@ -278,99 +387,198 @@ Based on optional updates list from Step 4:
 
 ### Step 7: Generate next-steps.md
 
-**Completely replace** the `8-next-steps.md` file.
+**Completely replace** the `8-next-steps.md` file with enhanced handoff instructions.
 
-**7.1 Determine if UI is Involved**
+**7.1 Determine UI Involvement**
 
 Check `repository_type` of all Stories in new Epics:
-- If contains `frontend`, `ios`, `android`, or `mobile` → UI involved
+- Contains `frontend`, `ios`, `android`, or `mobile` → UI involved
 - Otherwise → No UI involved
 
-**7.2 Analyze Epic Content for Specific Guidance**
+**7.2 Analyze Epic Content**
 
-For each new Epic, analyze its Stories to determine:
-- Which architecture sections need updates (components, API, database, etc.)
-- Specific focus areas based on actual Epic requirements
-- Files that need to be read and updated
+For each new Epic, analyze Stories to determine:
+- Which architecture sections need updates
+- Which front-end components need design
+- Specific focus areas based on requirements
 
-**7.3 Generate New next-steps.md Content**
-
-Use the following standardized HANDOFF format:
+**7.3 Generate Enhanced next-steps.md**
 
 ```markdown
 # Next Steps
 
-This file was auto-generated by PM *start-iteration. Please follow the guidance below.
+Auto-generated by PM *start-iteration. Follow guidance in order.
 
 ---
 
 {IF UI involved:}
 
-
 🎯 HANDOFF TO ux-expert:
 
-Please read the following PRD files and update the frontend design specification:
+## Part 1: Create Epic Front-End Specifications
+
+Create dedicated front-end spec for each UI-involved Epic:
+
+**Output Files:**
+{for each new Epic with UI stories:}
+- `docs/front-end-spec/epic-{N}-front-end-spec.md`
+
+**Document Structure:**
+
+Each spec MUST use this structure for SM traceability:
+
+```
+# Epic {N}: {Title} - Front-End Specification
+
+## Overview
+{Brief overview of UI requirements}
+
+## Story {N}.1: {Story Title}
+### Component Design
+- {Component name and purpose}
+- {Props and state requirements}
+
+### Interaction Patterns
+- {User interactions}
+- {State transitions}
+
+### Responsive Behavior
+- {Breakpoint considerations}
+
+## Story {N}.2: {Story Title}
+...
+```
 
 **Files to Read:**
-- `docs/prd/3-user-interface-design-goals.md` - UI design goals (including {relevant UI sections})
+- `docs/prd/3-user-interface-design-goals.md`
 {for each new Epic:}
-- `docs/prd/epic-{n}-{title-slug}.yaml` - Epic {n}: {Epic Title}
+- `docs/prd/epic-{N}-{title-slug}.yaml`
 
-**Files to Update:**
-- `docs/front-end-spec.md`
+**Focus Areas:**
+{generate 3-5 specific bullet points based on Epic content}
 
-Based on the above PRD files, update front-end-spec.md, focusing on:
-{generate 3-5 specific bullet points based on Epic content, e.g.:}
-- {Component name} component design
-- {Feature} user flow and interaction patterns
-- Responsive design for {specific elements}
-- {State/loading} indicators for {feature}
+---
+
+## Part 2: Update Epic YAML with SM Hints
+
+After completing spec, update Epic YAML to establish SM traceability.
+
+**Files to Modify:**
+{for each new Epic:}
+- `docs/prd/epic-{N}-{title-slug}.yaml`
+
+**For each frontend Story**, populate `sm_hints.front_end_spec`:
+
+```yaml
+sm_hints:
+  front_end_spec:
+    file: "epic-{N}-front-end-spec.md"
+    sections:
+      - "Story {N}.{M}: {Story Title}"
+      - "{Component name}"
+      - "{Pattern name}"
+  architecture: null  # Architect fills this
+```
 
 ---
 
 {ALWAYS:}
 
-
 🎯 HANDOFF TO architect:
 
-Please read the following PRD files and update architecture documents:
+## Part 1: Update Architecture Documents
 
 **Files to Read:**
-- `docs/prd/4-technical-assumptions.md` - Technical assumptions (including {relevant sections})
+- `docs/prd/4-technical-assumptions.md`
 {for each new Epic:}
-- `docs/prd/epic-{n}-{title-slug}.yaml` - Epic {n}: {Epic Title}
+- `docs/prd/epic-{N}-{title-slug}.yaml`
+{if UI involved:}
+- `docs/front-end-spec/epic-{N}-front-end-spec.md`
 
 **Architecture Files to Update:**
-{list ONLY files that actually need updates based on Epic content:}
+{list ONLY files that need updates based on Epic content:}
 - `docs/architecture/{section-file}.md` - {specific reason}
-{examples:}
-- `docs/architecture/3-tech-stack.md` - Add {new dependency} to dependencies
-- `docs/architecture/5-components.md` - Add {ComponentName} component
-- `docs/architecture/8-database-schema.md` - Add {table_name} table, {field} field to {existing_table}
-- `docs/architecture/9-rest-api-spec.md` - Add {HTTP method} {endpoint} endpoint
-- `docs/architecture/11-source-tree.md` - Add {new directories/files}
-- `docs/architecture/14-security.md` - Review {security-related changes}
 
-**After Completion, Update:**
-- `docs/architecture/18-next-steps.md`
+**Focus Areas:**
+{generate 3-5 specific bullet points based on Epic content}
 
-Based on the above PRD files, update architecture documents, focusing on:
-{generate 3-5 specific bullet points based on Epic content, e.g.:}
-- {Library/framework} integration with existing {component}
-- {Data structure} and naming conventions
-- Database schema for {feature}
-- API endpoint specifications for {functionality}
-- Component architecture for {feature} support
+---
+
+## Part 2: Update Cumulative Registries
+
+Pre-register technical elements planned for this iteration:
+
+| Change Type | Registry to Update | Status |
+|-------------|-------------------|--------|
+| New API endpoints | `{devDocLocation}/api-registry.md` | planned |
+| New tables/fields | `{devDocLocation}/database-registry.md` | planned |
+| New models/types | `{devDocLocation}/models-registry.md` | planned |
+
+Mark status as `planned`. Dev updates to `implemented` after completion.
+
+---
+
+## Part 3: Update Epic YAML with SM Hints
+
+After completing architecture updates, update Epic YAML to establish SM traceability.
+
+**Files to Modify:**
+{for each new Epic:}
+- `docs/prd/epic-{N}-{title-slug}.yaml`
+
+**For each Story**, populate `sm_hints.architecture`:
+
+```yaml
+sm_hints:
+  front_end_spec:
+    file: "epic-{N}-front-end-spec.md"  # Already filled by UX-Expert
+    sections:
+      - "Story {N}.{M}: {Story Title}"
+  architecture:
+    files:
+      - "{architecture-file}#{section-anchor}"
+      - "{architecture-file}#{section-anchor}"
 ```
 
-**7.4 Important Format Rules**
+**Mapping Guidelines:**
 
-1. **HANDOFF header**: Always use `🎯 HANDOFF TO {agent}:` format
-2. **Files to Read**: List exact file paths with brief descriptions
-3. **Files to Update**: List exact file paths with specific update reasons
-4. **Focus areas**: Generate 3-5 specific, actionable bullet points based on actual Epic content
-5. **No nested code blocks**: Instructions should be plain text, not wrapped in code fences
-6. **Separator**: Use `---` between UX Expert and Architect sections
+| Story Type | Architecture References |
+|------------|------------------------|
+| Backend API | `9-rest-api-spec.md#endpoint-name`, `5-components.md#ServiceName` |
+| Database ops | `8-database-schema.md#table-name`, `5-components.md#RepositoryName` |
+| Frontend | `5-components.md#ComponentName`, `9-rest-api-spec.md#consumed-endpoints` |
+| Auth-related | `14-security.md#auth-section`, `5-components.md#AuthService` |
+
+---
+
+## Completion Checklist
+
+Before handing off to SM:
+
+- [ ] All Epic front-end specs created (if UI involved)
+- [ ] All Epic YAML files have `sm_hints.front_end_spec` populated (for UI stories)
+- [ ] All architecture documents updated
+- [ ] Cumulative registries updated with planned elements
+- [ ] All Epic YAML files have `sm_hints.architecture` populated
+
+---
+
+🎯 HANDOFF TO sm:
+
+SM can now create Stories with:
+- `sm_hints.front_end_spec` → Precise front-end design references
+- `sm_hints.architecture` → Precise architecture references
+
+Execute: *create-next-story
+```
+
+**7.4 Format Rules**
+
+1. HANDOFF header: Always use `🎯 HANDOFF TO {agent}:` format
+2. Files to Read: List exact file paths
+3. Files to Update: List exact file paths with update reasons
+4. Focus areas: 3-5 specific bullet points based on Epic content
+5. Separator: Use `---` between sections
 
 ### Step 8: Output Summary
 
@@ -401,13 +609,13 @@ Output completion report:
 Please review docs/prd/8-next-steps.md for detailed guidance.
 
 {IF UI involved:}
-1. First: @ux-expert - Read 8-next-steps.md and update front-end-spec.md
-2. Then: @architect - Read 8-next-steps.md and update architecture docs
+1. First: @ux-expert - Create epic front-end specs and update Epic YAML
+2. Then: @architect - Update architecture docs and Epic YAML
 
 {ELSE:}
-Execute: @architect - Read 8-next-steps.md and update architecture docs
+Execute: @architect - Update architecture docs and Epic YAML
 
-After architecture updates are complete, continue with standard development workflow:
+After Epic YAML files have sm_hints populated:
 SM → Dev → QA
 
 ═══════════════════════════════════════════════════════
@@ -417,8 +625,8 @@ SM → Dev → QA
 
 **On Success:**
 - Updated PRD shard files
-- Newly created Epic YAML files
-- Completely replaced 8-next-steps.md
+- Newly created Epic YAML files with `sm_hints` placeholders
+- Completely replaced 8-next-steps.md with enhanced handoff instructions
 
 **On Failure:**
 - Error reason

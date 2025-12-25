@@ -213,6 +213,9 @@ sections:
           provides_apis: []    # Backend: ["POST /api/users", "GET /api/users/:id"]
           consumes_apis: []    # Frontend/Mobile: ["POST /api/auth/login"]
           dependencies: []     # Story IDs: ["1.1", "1.2"]
+          sm_hints:            # Populated by UX-Expert and Architect after PM creates Epic
+            front_end_spec: null
+            architecture: null
       ```
 
       FIELD REQUIREMENTS:
@@ -231,6 +234,13 @@ sections:
          - Format: "METHOD /path" (e.g., "POST /api/users")
 
       4. **dependencies**: Story IDs this depends on (blocking until Done)
+
+      5. **sm_hints** (OPTIONAL - populated post-creation):
+         - `front_end_spec`: Filled by UX-Expert after creating epic front-end spec
+           - `file`: Epic-specific spec filename (e.g., "epic-3-front-end-spec.md")
+           - `sections`: List of relevant sections for this Story
+         - `architecture`: Filled by Architect after updating architecture docs
+           - `files`: List of architecture file references with anchors
 
       EXAMPLE (Multi-repo project):
 
@@ -266,6 +276,13 @@ sections:
             - "GET /api/auth/me"
           consumes_apis: []
           dependencies: []
+          sm_hints:
+            front_end_spec: null  # No frontend for this backend Story
+            architecture:
+              files:
+                - "5-components.md#AuthService"
+                - "8-database-schema.md#users"
+                - "9-rest-api-spec.md#auth-endpoints"
 
         - id: "1.2"
           title: "Frontend - User Registration and Login UI"
@@ -285,6 +302,17 @@ sections:
             - "GET /api/auth/me"
           dependencies:
             - "1.1"
+          sm_hints:
+            front_end_spec:
+              file: "epic-1-front-end-spec.md"
+              sections:
+                - "Story 1.2: User Registration and Login UI"
+                - "LoginForm component"
+                - "RegistrationForm component"
+            architecture:
+              files:
+                - "5-components.md#LoginPage"
+                - "9-rest-api-spec.md#auth-endpoints"
       ```
 
       Now define YAML blocks for ALL epics from your Epic List above.
