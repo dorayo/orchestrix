@@ -335,7 +335,54 @@ This establishes bidirectional linkage between proposals.
 - Ask clarifying questions if needed
 
 **IF approved:**
-- Proceed to output (proposal status remains `draft`)
+- Proceed to commit and output (proposal status remains `draft`)
+
+### Step 7.5: Git Commit
+
+> **Always execute** before HANDOFF to SM.
+> This covers both standalone technical changes and linked product+technical changes.
+
+1. **Identify Changed Files**
+
+   Collect all files modified during this task:
+   ```yaml
+   changed_files:
+     - docs/proposals/tech/{proposal_id}-{slug}.md  # TCP file
+     # If linked to PCP:
+     - docs/proposals/product/{related_product_proposal}-*.md  # Updated PCP with linkage
+     # Architecture documents if modified:
+     - {architecture_files}  # Any architecture docs updated
+   ```
+
+2. **Stage Files**
+   ```bash
+   git add {changed_files}
+   ```
+
+3. **Create Commit**
+
+   Commit message format:
+   ```
+   docs(proposal): {proposal_id} - {title}
+
+   - Created Technical Change Proposal
+   {#if related_product_proposal}
+   - Linked to: {related_product_proposal}
+   - Updated PCP with bidirectional linkage
+   {/if}
+   - Components affected: [{components}]
+   - Stories defined: {count}
+
+   🤖 Generated with Orchestrix
+
+   Co-Authored-By: Architect
+   ```
+
+4. **Handle Commit Result**
+
+   - **Success:** Record commit hash for HANDOFF message
+   - **Failure:** Log warning, do not block HANDOFF
+   - **No changes:** Skip commit, note in output
 
 ## Output
 
@@ -373,6 +420,8 @@ Stories Defined: {count}
 - {story_2_title}
 ...
 
+📦 Git Commit: {commit_hash | "failed: {error}" | "skipped: no changes"}
+
 Action: Apply this proposal to create/update Stories
 ```
 
@@ -386,6 +435,8 @@ If both PCP and TCP are ready:
 Technical Change Proposal Created:
 - Proposal ID: {tcp_id}
 - Linked to: {pcp_id}
+
+📦 Git Commit: {commit_hash | "failed: {error}" | "skipped: no changes"}
 
 Both proposals are now ready for processing.
 SM will process them in order: Product first, then Technical.

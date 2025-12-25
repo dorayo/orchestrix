@@ -313,7 +313,49 @@ After proposal is created:
 - Ask clarifying questions if needed
 
 **IF approved:**
-- Proceed to output based on technical requirements (proposal status remains `draft`)
+- Proceed based on technical requirements (proposal status remains `draft`)
+
+### Step 7.5: Git Commit (Case 1 Only)
+
+> **Condition:** Execute ONLY when `requires_tech_change: false`
+> If `requires_tech_change: true`, skip this step — Architect will commit after creating TCP.
+
+1. **Identify Changed Files**
+
+   Collect all files modified during this task:
+   ```yaml
+   changed_files:
+     - docs/proposals/product/{proposal_id}-{slug}.md  # PCP file
+     - {prd_file_path}  # PRD document (if updated)
+     # Any other files modified during this task
+   ```
+
+2. **Stage Files**
+   ```bash
+   git add {changed_files}
+   ```
+
+3. **Create Commit**
+
+   Commit message format:
+   ```
+   docs(proposal): {proposal_id} - {title}
+
+   - Created Product Change Proposal
+   - Updated PRD: {affected_sections}
+   - MVP scope: {expand | reduce | maintain}
+   - Stories defined: {count}
+
+   🤖 Generated with Orchestrix
+
+   Co-Authored-By: PM
+   ```
+
+4. **Handle Commit Result**
+
+   - **Success:** Record commit hash for HANDOFF message
+   - **Failure:** Log warning, do not block HANDOFF
+   - **No changes:** Skip commit, note in output
 
 ## Output
 
@@ -352,6 +394,8 @@ Stories Defined: {count}
 - {story_1_title}
 - {story_2_title}
 ...
+
+📦 Git Commit: {commit_hash | "failed: {error}" | "skipped: no changes"}
 
 No technical changes required.
 Action: Apply this proposal to create/update Stories
