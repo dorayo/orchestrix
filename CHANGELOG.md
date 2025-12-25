@@ -1,3 +1,10 @@
+## [15.5.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.5.0...v15.5.1) (2025-12-25)
+
+
+### Bug Fixes
+
+* **installer:** filter out legacy .src.yaml files during agent discovery ([46c8513](https://github.com/dorayo/ORCHESTRIX/commit/46c851375f52d4c98c20f64d5bb13a3a1b7252ac))
+
 # [15.5.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.4.1...v15.5.0) (2025-12-25)
 
 
