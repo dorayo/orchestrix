@@ -1,3 +1,12 @@
+# [15.5.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.4.1...v15.5.0) (2025-12-25)
+
+
+### Features
+
+* **agents:** standardize activation output format with markdown tables ([8be8047](https://github.com/dorayo/ORCHESTRIX/commit/8be804716474999a7eca12604abecd2cde5aca18))
+* **qa:** add task checkbox verification to prevent incomplete stories ([3aa8d29](https://github.com/dorayo/ORCHESTRIX/commit/3aa8d29539d8ff243f575c3cbc7935b2f1a13e9d))
+* **tasks:** add git commit step before SM handoff in change workflow ([d38b33d](https://github.com/dorayo/ORCHESTRIX/commit/d38b33d9f69a89725b4fe832ecfcfd26aed3cceb))
+
 ## [15.4.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.4.0...v15.4.1) (2025-12-24)
 
 
