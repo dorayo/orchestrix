@@ -185,9 +185,9 @@ customTechnicalDocuments: null
 # Files that Dev agent should always load on startup
 # Ensures developers have context about standards and project structure
 devLoadAlwaysFiles:
-  - docs/architecture/coding-standards.md
-  - docs/architecture/tech-stack.md
-  - docs/architecture/source-tree.md
+  - docs/architecture/*coding-standards.md
+  - docs/architecture/*tech-stack.md
+  - docs/architecture/*source-tree.md
 
 # --- Debug Log Location ---
 # Where Dev agent writes debug information during development
