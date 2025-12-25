@@ -81,16 +81,18 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Display a numbered list of commands and wait for a selection."
-      output_format:
-        - "[1] *brainstorm {topic} — structured brainstorming"
-        - "[2] *research-prompt {topic} — deep research prompt/plan"
-        - "[3] *create-doc {template} — generate doc via template"
-        - "[4] *document-project — analyze/document existing project"
-        - "[5] *elicit — run advanced elicitation"
-        - "[6] *doc-out — output current document"
-        - "[7] *explain — explain last action"
-        - "[8] *exit — exit persona"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                  | Description                         |
+        |-----|--------------------------|-------------------------------------|
+        | 1   | *brainstorm {topic}      | Structured brainstorming session    |
+        | 2   | *research-prompt {topic} | Deep research prompt/plan           |
+        | 3   | *create-doc {template}   | Generate document via template      |
+        | 4   | *document-project        | Analyze/document existing project   |
+        | 5   | *elicit                  | Run advanced elicitation            |
+        | 6   | *doc-out                 | Output current document             |
+        | 7   | *explain                 | Explain last action                 |
+        | 8   | *exit                    | Exit persona                        |
   - brainstorm:
       description: "Facilitate a structured brainstorming session."
       behavior:

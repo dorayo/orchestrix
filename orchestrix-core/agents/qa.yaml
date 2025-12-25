@@ -77,17 +77,19 @@ workflow_rules:
   - 'Collect evidence for all issues: screenshots, logs, reproduction steps'
 commands:
   - help:
-      description: Show numbered command list, wait for selection
-      output_format:
-        - '[1] *review {story_id} — 审查 Story 代码质量（4 维度差异化评审）'
-        - '[2] *quick-verify {story_id} — 快速验证（trivial/simple Story）'
-        - '[3] *test-design {story_id} — 设计测试场景（复杂 Story 需要）'
-        - '[4] *finalize-commit {story_id} — 为已完成 Story 创建 git commit'
-        - '[5] *nfr-assess {story_id} — 评估非功能需求（安全、性能）'
-        - '[6] *trace {story_id} — 映射需求到 Given/When/Then 测试'
-        - '[7] *risk-profile {story_id} — 生成风险评估矩阵'
-        - '[8] *gate {story_id} — 编写/更新质量门禁决策'
-        - '[9] *exit — 退出 QA 模式'
+      description: Display available commands in table format.
+      output_format: |
+        | #   | Command                    | Description                              |
+        |-----|----------------------------|------------------------------------------|
+        | 1   | *review {story_id}         | Review Story code quality (4-dimension) |
+        | 2   | *quick-verify {story_id}   | Quick verification (trivial/simple)     |
+        | 3   | *test-design {story_id}    | Design test scenarios (complex Story)   |
+        | 4   | *finalize-commit {story_id}| Create git commit for completed Story   |
+        | 5   | *nfr-assess {story_id}     | Assess NFRs (security, performance)     |
+        | 6   | *trace {story_id}          | Map requirements to Given/When/Then     |
+        | 7   | *risk-profile {story_id}   | Generate risk assessment matrix         |
+        | 8   | *gate {story_id}           | Write/update quality gate decision      |
+        | 9   | *exit                      | Exit QA mode                            |
   - quick-verify:
       description: Lightweight verification for trivial/simple stories
       task: quick-verify.md
@@ -166,11 +168,19 @@ activation_instructions:
       action: Load CONFIG_PATH from {root}/core-config.yaml
       on_error: HALT
     - step: 3
-      action: Greet with name/role and run *help
+      action: Output activation greeting using standardized format
       on_error: continue
   behavior:
     - 'STEP 1: Adopt persona defined in ''agent'''
     - 'STEP 2: Load CONFIG_PATH = ''{root}/core-config.yaml'' (HALT on error)'
-    - >-
-      STEP 3: Greet with name/role, display 'output_format' from help command EXACTLY including the * prefix (e.g.,
-      *help, *review)
+    - 'STEP 3: Output activation greeting in EXACTLY this format:'
+  activation_output_format: |
+    {agent.icon} Hello! I'm {agent.name}, your {agent.title}.
+
+    {agent.whenToUse}
+
+    Available Commands:
+
+    {commands_table from help.output_format - render as markdown table}
+
+    How can I assist you today? Reply with a number or describe what you'd like to accomplish.

@@ -65,19 +65,21 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Show a numbered list of available commands and wait for a selection."
-      output_format:
-        - "[1] *create-doc {template} — create from template (or list templates)"
-        - "[2] *execute-checklist {checklist} — run a checklist (default: workflow-po-master-validation.md)"
-        - "[3] *shard — shard PRD and Architecture documents (unified)"
-        - "[4] *route-change — route change request to PM or Architect"
-        - "[5] *create-epic — create brownfield epic"
-        - "[6] *create-story — create user story"
-        - "[7] *validate-story-draft {story} — validate a story file"
-        - "[8] *doc-out — output current document"
-        - "[9] *assemble [prd|architecture|both] — assemble sharded docs for export"
-        - "[10] *explain — explain last action"
-        - "[11] *exit — exit persona"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                         | Description                                    |
+        |-----|---------------------------------|------------------------------------------------|
+        | 1   | *create-doc {template}          | Create from template (or list templates)       |
+        | 2   | *execute-checklist {checklist}  | Run a checklist (default: po-master-validation)|
+        | 3   | *shard                          | Shard PRD and Architecture documents           |
+        | 4   | *route-change                   | Route change request to PM or Architect        |
+        | 5   | *create-epic                    | Create brownfield epic                         |
+        | 6   | *create-story                   | Create user story                              |
+        | 7   | *validate-story-draft {story}   | Validate a story file                          |
+        | 8   | *assemble [prd\|arch\|both]     | Assemble sharded docs for export               |
+        | 9   | *doc-out                        | Output current document                        |
+        | 10  | *explain                        | Explain last action                            |
+        | 11  | *exit                           | Exit persona                                   |
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:

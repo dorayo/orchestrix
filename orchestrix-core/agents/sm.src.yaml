@@ -37,14 +37,16 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Show numbered command list, wait for selection"
-      output_format:
-        - "[1] *draft [{story_id}] — Create next Story (or check specified Story)"
-        - "[2] *revise {story_id} — Revise Story based on Architect feedback"
-        - "[3] *apply-proposal [{proposal_id}] — Apply proposal to create/update Stories"
-        - "[4] *story-checklist {story_id} — Validate Story quality"
-        - "[5] *init-registries — Initialize/refresh cumulative registries"
-        - "[6] *exit — Exit SM mode"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                        | Description                              |
+        |-----|--------------------------------|------------------------------------------|
+        | 1   | *draft [{story_id}]            | Create next Story (or check specified)  |
+        | 2   | *revise {story_id}             | Revise Story based on Architect feedback|
+        | 3   | *apply-proposal [{proposal_id}]| Apply proposal to create/update Stories |
+        | 4   | *story-checklist {story_id}    | Validate Story quality                  |
+        | 5   | *init-registries               | Initialize/refresh cumulative registries|
+        | 6   | *exit                          | Exit SM mode                            |
 
   - draft:
       description: "Create next story from epic (or create/check specified story if story_id provided)"

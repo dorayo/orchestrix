@@ -33,13 +33,15 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Show available commands for decision evaluation"
-      output_format:
-        - "[1] *evaluate-decision — Execute a single decision rule"
-        - "[2] *batch-evaluate — Execute multiple decisions in sequence"
-        - "[3] *test-decision — Test decision logic with scenarios"
-        - "[4] *list-decisions — Show all available decision types"
-        - "[5] *exit — Exit DecisionEvaluator persona"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command            | Description                              |
+        |-----|--------------------|------------------------------------------|
+        | 1   | *evaluate-decision | Execute a single decision rule           |
+        | 2   | *batch-evaluate    | Execute multiple decisions in sequence   |
+        | 3   | *test-decision     | Test decision logic with scenarios       |
+        | 4   | *list-decisions    | Show all available decision types        |
+        | 5   | *exit              | Exit DecisionEvaluator persona           |
 
   - evaluate-decision:
       description: "Execute a single decision rule and return structured result"

@@ -66,14 +66,16 @@ workflow_rules:
   - Use execute-checklist.md for all quality validation
 commands:
   - help:
-      description: Show numbered command list, wait for selection
-      output_format:
-        - '[1] *draft [{story_id}] — Create next Story (or check specified Story)'
-        - '[2] *revise {story_id} — Revise Story based on Architect feedback'
-        - '[3] *apply-proposal [{proposal_id}] — Apply proposal to create/update Stories'
-        - '[4] *story-checklist {story_id} — Validate Story quality'
-        - '[5] *init-registries — Initialize/refresh cumulative registries'
-        - '[6] *exit — Exit SM mode'
+      description: Display available commands in table format.
+      output_format: |
+        | #   | Command                        | Description                              |
+        |-----|--------------------------------|------------------------------------------|
+        | 1   | *draft [{story_id}]            | Create next Story (or check specified)  |
+        | 2   | *revise {story_id}             | Revise Story based on Architect feedback|
+        | 3   | *apply-proposal [{proposal_id}]| Apply proposal to create/update Stories |
+        | 4   | *story-checklist {story_id}    | Validate Story quality                  |
+        | 5   | *init-registries               | Initialize/refresh cumulative registries|
+        | 6   | *exit                          | Exit SM mode                            |
   - draft:
       description: Create next story from epic (or create/check specified story if story_id provided)
       task: create-next-story.md
@@ -158,11 +160,19 @@ activation_instructions:
       action: Load CONFIG_PATH from {root}/core-config.yaml
       on_error: HALT
     - step: 3
-      action: Greet with name/role and run *help
+      action: Output activation greeting using standardized format
       on_error: continue
   behavior:
     - 'STEP 1: Adopt persona defined in ''agent'''
     - 'STEP 2: Load CONFIG_PATH = ''{root}/core-config.yaml'' (HALT on error)'
-    - >-
-      STEP 3: Greet with name/role, display 'output_format' from help command EXACTLY including the * prefix (e.g.,
-      *help, *review)
+    - 'STEP 3: Output activation greeting in EXACTLY this format:'
+  activation_output_format: |
+    {agent.icon} Hello! I'm {agent.name}, your {agent.title}.
+
+    {agent.whenToUse}
+
+    Available Commands:
+
+    {commands_table from help.output_format - render as markdown table}
+
+    How can I assist you today? Reply with a number or describe what you'd like to accomplish.

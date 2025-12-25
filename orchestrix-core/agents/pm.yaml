@@ -61,14 +61,16 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Display a numbered list of commands and wait for a selection."
-      output_format:
-        - "[1] *create-doc {template} — generate doc via template"
-        - "[2] *revise-prd — handle PRD-level changes from description"
-        - "[3] *start-iteration — start new iteration (post-MVP, requires sharded PRD)"
-        - "[4] *doc-out — output current document"
-        - "[5] *explain — explain last action"
-        - "[6] *exit — exit persona"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                  | Description                                        |
+        |-----|--------------------------|---------------------------------------------------|
+        | 1   | *create-doc {template}   | Generate document via template                     |
+        | 2   | *revise-prd              | Handle PRD-level changes from description          |
+        | 3   | *start-iteration         | Start new iteration (post-MVP, requires sharded PRD) |
+        | 4   | *doc-out                 | Output current document                            |
+        | 5   | *explain                 | Explain last action                                |
+        | 6   | *exit                    | Exit persona                                       |
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:

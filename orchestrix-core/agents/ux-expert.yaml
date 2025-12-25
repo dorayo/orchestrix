@@ -70,15 +70,16 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Show numbered list of commands and wait for a selection."
-      output_format:
-        - "[1] *help — Show this list"
-        - "[2] *explain — Explain last action"
-        - "[3] *exit — End persona"
-        - "[4] *create-doc {template} — Create from template (or list templates)"
-        - "[5] *generate-ui-prompt — Craft AI frontend generation prompt"
-        - "[6] *research {topic} — Create deep research prompt"
-        - "[7] *execute-checklist {checklist} — Execute a checklist"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                       | Description                          |
+        |-----|-------------------------------|--------------------------------------|
+        | 1   | *create-doc {template}        | Create from template (or list templates) |
+        | 2   | *generate-ui-prompt           | Craft AI frontend generation prompt  |
+        | 3   | *research {topic}             | Create deep research prompt          |
+        | 4   | *execute-checklist {checklist}| Execute a checklist                  |
+        | 5   | *explain                      | Explain last action                  |
+        | 6   | *exit                         | End persona                          |
   - explain:
       description: "Explain the last action (mentor style)."
   - exit:

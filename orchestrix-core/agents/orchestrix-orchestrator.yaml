@@ -68,18 +68,19 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Show numbered list of commands/agents/workflows and wait for a selection."
-      output_format:
-        - "[1] *help — Show this guide"
-        - "[2] *status — Show context/active agent/progress"
-        - "[3] *agent [name] — Transform into a specialist (list if omitted)"
-        - "[4] *task [name] — Run a task (list if omitted)"
-        - "[5] *workflow [name] — Start a workflow (list if omitted)"
-        - "[6] *workflow-guidance — Guided workflow selection"
-        - "[7] *checklist [name] — Execute a checklist"
-        - "[8] *doc-out — Output full document"
-        - "[9] *explain — Explain last action"
-        - "[10] *exit — Return to Orchestrix or end session"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                  | Description                              |
+        |-----|--------------------------|------------------------------------------|
+        | 1   | *status                  | Show context/active agent/progress       |
+        | 2   | *agent [name]            | Transform into a specialist (list if omitted) |
+        | 3   | *task [name]             | Run a task (list if omitted)             |
+        | 4   | *workflow [name]         | Start a workflow (list if omitted)       |
+        | 5   | *workflow-guidance       | Guided workflow selection                |
+        | 6   | *checklist [name]        | Execute a checklist                      |
+        | 7   | *doc-out                 | Output full document                     |
+        | 8   | *explain                 | Explain last action                      |
+        | 9   | *exit                    | Return to Orchestrix or end session      |
   - status:
       description: "Show current context, active agent, and progress."
   - agent:

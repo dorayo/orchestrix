@@ -34,16 +34,17 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Show numbered command list, wait for selection"
-      output_format:
-        - "[1] *develop-story {story_id} — 实现 Story（TDD 模式）"
-        - "[2] *quick-develop {story_id} — 快速实现（trivial/simple Story）"
-        - "[3] *self-review {story_id} — 自我评审（标记 Review 前必须执行）"
-        - "[4] *apply-qa-fixes {story_id} — 修复 QA 发现的问题"
-        - "[5] *validate-impl {story_id} — 验证架构合规性"
-        - "[6] *run-tests — 执行 lint 和测试套件"
-        - "[7] *explain — 解释实现思路和决策"
-        - "[8] *exit — 退出 Dev 模式"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                    | Description                              |
+        |-----|----------------------------|------------------------------------------|
+        | 1   | *develop-story {story_id}  | Implement Story (TDD mode)               |
+        | 2   | *quick-develop {story_id}  | Quick implementation (trivial/simple)    |
+        | 3   | *self-review {story_id}    | Self-review (required before Review)     |
+        | 4   | *apply-qa-fixes {story_id} | Fix QA-reported issues                   |
+        | 5   | *run-tests                 | Execute lint and test suite              |
+        | 6   | *explain                   | Explain implementation decisions         |
+        | 7   | *exit                      | Exit Dev mode                            |
 
   - develop-story:
       description: "Implement approved story following TDD"

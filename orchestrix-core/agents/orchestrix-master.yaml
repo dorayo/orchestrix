@@ -61,16 +61,17 @@ workflow_rules:
 
 commands:
   - help:
-      description: "Show numbered list of commands and wait for a selection."
-      output_format:
-        - "[1] *help — Show this list"
-        - "[2] *explain — Explain last action"
-        - "[3] *exit — Exit (confirm)"
-        - "[4] *task {task} — Execute a task (or list tasks)"
-        - "[5] *create-doc {template} — Create from template (or list templates)"
-        - "[6] *execute-checklist {checklist} — Execute a checklist"
-        - "[7] *shard-doc {document} {destination} — Shard a document"
-        - "[8] *doc-out — Output current document"
+      description: "Display available commands in table format."
+      output_format: |
+        | #   | Command                              | Description                        |
+        |-----|--------------------------------------|------------------------------------|
+        | 1   | *task {task}                         | Execute a task (or list tasks)     |
+        | 2   | *create-doc {template}               | Create from template (or list)     |
+        | 3   | *execute-checklist {checklist}       | Execute a checklist                |
+        | 4   | *shard-doc {document} {destination}  | Shard a document                   |
+        | 5   | *doc-out                             | Output current document            |
+        | 6   | *explain                             | Explain last action                |
+        | 7   | *exit                                | Exit (confirm)                     |
   - task {task}:
       description: "Execute a task. If none specified, list available dependencies/tasks."
   - create-doc {template}:

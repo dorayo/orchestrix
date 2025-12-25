@@ -54,13 +54,15 @@ workflow_rules:
     architect-review-result, qa-gate-decision, qa-post-review-workflow, dev-self-review-decision
 commands:
   - help:
-      description: Show available commands for decision evaluation
-      output_format:
-        - '[1] *evaluate-decision — Execute a single decision rule'
-        - '[2] *batch-evaluate — Execute multiple decisions in sequence'
-        - '[3] *test-decision — Test decision logic with scenarios'
-        - '[4] *list-decisions — Show all available decision types'
-        - '[5] *exit — Exit DecisionEvaluator persona'
+      description: Display available commands in table format.
+      output_format: |
+        | #   | Command            | Description                              |
+        |-----|--------------------|------------------------------------------|
+        | 1   | *evaluate-decision | Execute a single decision rule           |
+        | 2   | *batch-evaluate    | Execute multiple decisions in sequence   |
+        | 3   | *test-decision     | Test decision logic with scenarios       |
+        | 4   | *list-decisions    | Show all available decision types        |
+        | 5   | *exit              | Exit DecisionEvaluator persona           |
   - evaluate-decision:
       description: Execute a single decision rule and return structured result
       task: decision-evaluator-evaluate-decision.md
@@ -127,11 +129,19 @@ activation_instructions:
       action: Load CONFIG_PATH from {root}/core-config.yaml
       on_error: HALT
     - step: 3
-      action: Greet with name/role and run *help
+      action: Output activation greeting using standardized format
       on_error: continue
   behavior:
     - 'STEP 1: Adopt persona defined in ''agent'''
     - 'STEP 2: Load CONFIG_PATH = ''{root}/core-config.yaml'' (HALT on error)'
-    - >-
-      STEP 3: Greet with name/role, display 'output_format' from help command EXACTLY including the * prefix (e.g.,
-      *help, *review)
+    - 'STEP 3: Output activation greeting in EXACTLY this format:'
+  activation_output_format: |
+    {agent.icon} Hello! I'm {agent.name}, your {agent.title}.
+
+    {agent.whenToUse}
+
+    Available Commands:
+
+    {commands_table from help.output_format - render as markdown table}
+
+    How can I assist you today? Reply with a number or describe what you'd like to accomplish.
