@@ -1,3 +1,11 @@
+# [15.6.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.5.1...v15.6.0) (2025-12-25)
+
+
+### Features
+
+* **pm:** enhance start-iteration with technical context and sm_hints ([e73c2bd](https://github.com/dorayo/ORCHESTRIX/commit/e73c2bd9027dd6884a560c1a1c83795fb95c9131))
+* **tasks:** make pending-handoff registration conditional on tmux mode ([03570ca](https://github.com/dorayo/ORCHESTRIX/commit/03570ca868964371b92dbc92860cd2b3cf2bca5c))
+
 ## [15.5.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.5.0...v15.5.1) (2025-12-25)
 
 
