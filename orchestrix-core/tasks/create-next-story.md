@@ -658,18 +658,9 @@ checklists/gate-sm-story-completion-gate.md
 
 ---
 
-## 🚨🚨🚨 FINAL OUTPUT - HANDOFF MESSAGE 🚨🚨🚨
+## 🚨 FINAL OUTPUT - HANDOFF MESSAGE
 
-### ❌ PROHIBITED - DO NOT DO THESE:
-- ❌ "Next Steps" or "Next Step:" sections
-- ❌ "Key Deliverables" summaries
-- ❌ "Handoff to Architect" (WRONG FORMAT)
-- ❌ Bullet lists of what happens next
-- ❌ ANY text after the HANDOFF line
-
-### ✅ REQUIRED - OUTPUT EXACTLY THIS:
-
-Based on `next_action` from Step 8C, copy-paste ONE block below as your **FINAL OUTPUT**:
+Based on `next_action` from Step 8C, output ONE of the following blocks as your **FINAL OUTPUT**:
 
 ---
 
@@ -705,4 +696,4 @@ Quality: {score}/10 | Test Design: {Standard | Comprehensive}
 
 ---
 
-**🛑 STOP**: After outputting the block above, DO NOT write anything else. No summaries. No next steps. No deliverables list. The `🎯 HANDOFF TO` line triggers automation.
+**🛑 STOP**: The `🎯 HANDOFF TO` line must be your final output.
