@@ -1,3 +1,19 @@
+# [15.7.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.6.0...v15.7.0) (2025-12-26)
+
+
+### Bug Fixes
+
+* **sm:** add stronger transition from Step 9 to Step 10 ([881301c](https://github.com/dorayo/ORCHESTRIX/commit/881301cdd6ba63570003e53e4c159203b3486f77))
+* **sm:** enforce strict handoff message format in create-next-story ([2034f12](https://github.com/dorayo/ORCHESTRIX/commit/2034f126c1cdd7bf5a880d244e7f81f9f9a64809))
+* **tasks:** standardize HANDOFF emoji to 🎯 for tmux hook detection ([e0fd5ea](https://github.com/dorayo/ORCHESTRIX/commit/e0fd5ea82cdd0a18e9d67c3edaf6459376415c4e))
+* **tasks:** strengthen HANDOFF format enforcement in SM and Architect tasks ([af73ea8](https://github.com/dorayo/ORCHESTRIX/commit/af73ea81402df6f82255264a96561bc98e49cb6a))
+
+
+### Features
+
+* **agents:** add mandatory HANDOFF format rules to workflow_rules ([47a735f](https://github.com/dorayo/ORCHESTRIX/commit/47a735ffd5deeda124408404f6f2097b01b87492))
+* **hooks:** add intelligent simplified command detection ([40eb5f1](https://github.com/dorayo/ORCHESTRIX/commit/40eb5f14ede0027f1f9b537ad7d0027da42296ef))
+
 # [15.6.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.5.1...v15.6.0) (2025-12-25)
 
 
