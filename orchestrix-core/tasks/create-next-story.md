@@ -654,11 +654,11 @@ checklists/gate-sm-story-completion-gate.md
 
 **If any item missing**: **HALT** with missing steps report
 
-**If all items complete**: Continue to Step 10
+**If all items complete**: **⚠️ YOU ARE NOT DONE YET** - Continue to Step 10 IMMEDIATELY
 
 ---
 
-### 10. Final Handoff (MANDATORY)
+### 10. Final Handoff (MANDATORY - TASK IS NOT COMPLETE WITHOUT THIS)
 
 ---
 
