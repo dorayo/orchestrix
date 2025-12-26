@@ -1,3 +1,10 @@
+## [15.7.2](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.1...v15.7.2) (2025-12-26)
+
+
+### Bug Fixes
+
+* **sm:** simplify HANDOFF section, remove prohibited list ([f047cae](https://github.com/dorayo/ORCHESTRIX/commit/f047cae180fea033877b176916c9e62905358cba))
+
 ## [15.7.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.0...v15.7.1) (2025-12-26)
 
 
