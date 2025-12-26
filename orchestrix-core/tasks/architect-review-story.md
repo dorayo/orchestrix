@@ -642,10 +642,17 @@ Add entry:
 
 ### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
 
-**CRITICAL**: Output the HANDOFF message as the **LAST LINE** of your response.
-The hook script will automatically detect it and route to the target agent.
+**🚨 CRITICAL - READ CAREFULLY 🚨**
 
-Based on decision, output ONE of the following messages:
+You MUST output the HANDOFF message in the **EXACT FORMAT** shown below.
+- The `🎯 HANDOFF TO` line is parsed by automation scripts
+- Any deviation will break the automation pipeline
+- Do NOT write "Handoff to...", "Next step:", or any other variant
+- Do NOT add explanatory text before or after the handoff block
+
+**OUTPUT EXACTLY ONE OF THESE BLOCKS** (copy format precisely):
+
+Based on decision:
 
 #### If Approved + Test Design Needed:
 ```
@@ -683,7 +690,17 @@ Reason: {escalation_reason}
 ⚠️ Requires human intervention (No automated handoff)
 ```
 
-**STOP**: The `🎯 HANDOFF TO` line must be your FINAL output. Hook handles the rest.
+### ❌ PROHIBITED OUTPUT PATTERNS
+
+You MUST NOT:
+- Write "Handoff to SM" or "Handoff to Dev" (WRONG - use 🎯 HANDOFF TO)
+- Write "Next Step:" or "Next step is..." (WRONG - use exact format above)
+- Add explanatory paragraphs about the review
+- Output a summary table after the handoff block
+- Output anything after `🎯 HANDOFF TO` line
+
+**🛑 STOP HERE**: The `🎯 HANDOFF TO` line must be your ABSOLUTE FINAL output.
+Do not add ANY text after it. The automation hook handles the rest.
 
 ---
 

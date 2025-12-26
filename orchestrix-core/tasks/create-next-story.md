@@ -664,10 +664,17 @@ checklists/gate-sm-story-completion-gate.md
 
 ### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
 
-**CRITICAL**: Output the HANDOFF message as the **LAST LINE** of your response.
-The hook script will automatically detect it and route to the target agent.
+**🚨 CRITICAL - READ CAREFULLY 🚨**
 
-Based on `next_action` from Step 8C, output ONE of the following:
+You MUST output the HANDOFF message in the **EXACT FORMAT** shown below.
+- The `🎯 HANDOFF TO` line is parsed by automation scripts
+- Any deviation will break the automation pipeline
+- Do NOT write "Handoff to...", "Next step:", or any other variant
+- Do NOT add explanatory text before or after the handoff block
+
+**OUTPUT EXACTLY ONE OF THESE BLOCKS** (copy format precisely):
+
+Based on `next_action` from Step 8C:
 
 **If next_action = handoff_to_architect**:
 ```
@@ -704,10 +711,15 @@ Quality: {score}/10 | Test Design: {Standard | Comprehensive}
 ### ❌ PROHIBITED OUTPUT PATTERNS
 
 You MUST NOT:
-- Output anything after `🎯 HANDOFF TO` line
+- Write "Handoff to Architect" or "Handoff to Dev" (WRONG - use 🎯 HANDOFF TO)
+- Write "Next Step:" or "Next step is..." (WRONG - use exact format above)
+- Add explanatory paragraphs about what needs review
+- Output a summary table after the handoff block
 - Add menu options (e.g., "Would you like me to...")
 - Include free-form explanations in handoff message
 - Change the emoji or format of `🎯 HANDOFF TO`
 - Discuss technical details after handoff message
+- Output anything after `🎯 HANDOFF TO` line
 
-**STOP**: The `🎯 HANDOFF TO` line must be your FINAL output. Hook handles the rest.
+**🛑 STOP HERE**: The `🎯 HANDOFF TO` line must be your ABSOLUTE FINAL output.
+Do not add ANY text after it. The automation hook handles the rest.
