@@ -48,6 +48,23 @@ get_agent_command() {
     esac
 }
 
+# Infer target agent from command (for simplified format like "*develop-story 10.4")
+get_target_from_command() {
+    local cmd="$1"
+    case "$cmd" in
+        develop-story|apply-qa-fixes|quick-develop)
+            echo "dev" ;;
+        review|quick-verify|test-design|finalize-commit)
+            echo "qa" ;;
+        draft|revise-story|revise|apply-proposal|create-next-story)
+            echo "sm" ;;
+        review-escalation|resolve-change)
+            echo "architect" ;;
+        *)
+            echo "" ;;
+    esac
+}
+
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
 
 # ============================================
@@ -89,26 +106,73 @@ for win in 0 1 2 3; do
     OUTPUT=$(tmux capture-pane -t "$SESSION_NAME:$win" -p -S -100 2>/dev/null)
     [[ -z "$OUTPUT" ]] && continue
 
-    # Look for HANDOFF pattern
+    # Pattern 1: Standard HANDOFF format (🎯 HANDOFF TO agent: *command args)
     LINE=$(echo "$OUTPUT" | grep -E '🎯.*HANDOFF.*TO' | tail -1)
-    [[ -z "$LINE" ]] && continue
+    if [[ -n "$LINE" ]]; then
+        # Calculate hash to avoid re-processing
+        HASH=$(echo "$LINE" | md5 2>/dev/null || echo "$LINE" | md5sum 2>/dev/null | cut -d' ' -f1)
 
-    # Calculate hash to avoid re-processing
-    HASH=$(echo "$LINE" | md5 2>/dev/null || echo "$LINE" | md5sum 2>/dev/null | cut -d' ' -f1)
+        # Skip if already processed
+        if grep -q "$HASH" "$PROCESSED_FILE" 2>/dev/null; then
+            continue
+        fi
 
-    # Skip if already processed
-    if grep -q "$HASH" "$PROCESSED_FILE" 2>/dev/null; then
-        continue
+        # Parse HANDOFF message
+        if [[ "$LINE" =~ HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)([[:space:]]+([0-9]+\.[0-9]+))? ]]; then
+            SOURCE_WIN=$win
+            TARGET=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
+            CMD="*${BASH_REMATCH[2]}${BASH_REMATCH[4]:+ ${BASH_REMATCH[4]}}"
+            HANDOFF_HASH=$HASH
+            log "Found HANDOFF in window $win: $LINE"
+            break
+        fi
     fi
 
-    # Parse HANDOFF message
-    if [[ "$LINE" =~ HANDOFF[[:space:]]+TO[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\*?([a-z0-9-]+)([[:space:]]+([0-9]+\.[0-9]+))? ]]; then
-        SOURCE_WIN=$win
-        TARGET=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')
-        CMD="*${BASH_REMATCH[2]}${BASH_REMATCH[4]:+ ${BASH_REMATCH[4]}}"
-        HANDOFF_HASH=$HASH
-        log "Found HANDOFF in window $win: $LINE"
-        break
+    # Pattern 2: Simplified format - more flexible detection
+    # Handles: "*develop-story 10.4", "*draft", "* review 10.4", etc.
+    if [[ -z "$TARGET" ]]; then
+        # Search last 30 lines for command patterns (more tolerant)
+        LAST_LINES=$(echo "$OUTPUT" | tail -30)
+
+        # Try multiple patterns in order of specificity
+        # Pattern 2a: *command story_id (e.g., "*develop-story 10.4")
+        SIMPLE_LINE=$(echo "$LAST_LINES" | grep -E '\*[a-z]+-?[a-z-]*\s+[0-9]+\.[0-9]+' | tail -1)
+
+        if [[ -z "$SIMPLE_LINE" ]]; then
+            # Pattern 2b: *command without story_id (e.g., "*draft")
+            SIMPLE_LINE=$(echo "$LAST_LINES" | grep -E '^\s*\*[a-z]+-?[a-z-]*\s*$' | tail -1)
+        fi
+
+        if [[ -n "$SIMPLE_LINE" ]]; then
+            # Extract command and optional story_id
+            # Handle: "*develop-story 10.4", "* review 10.4", "*draft"
+            if [[ "$SIMPLE_LINE" =~ \*[[:space:]]*([a-z][a-z-]*)[[:space:]]*([0-9]+\.[0-9]+)? ]]; then
+                simple_cmd="${BASH_REMATCH[1]}"
+                story_id="${BASH_REMATCH[2]}"
+                inferred_target=$(get_target_from_command "$simple_cmd")
+
+                if [[ -n "$inferred_target" ]]; then
+                    # Calculate hash
+                    HASH=$(echo "$SIMPLE_LINE" | md5 2>/dev/null || echo "$SIMPLE_LINE" | md5sum 2>/dev/null | cut -d' ' -f1)
+
+                    # Skip if already processed
+                    if grep -q "$HASH" "$PROCESSED_FILE" 2>/dev/null; then
+                        continue
+                    fi
+
+                    SOURCE_WIN=$win
+                    TARGET=$inferred_target
+                    if [[ -n "$story_id" ]]; then
+                        CMD="*${simple_cmd} ${story_id}"
+                    else
+                        CMD="*${simple_cmd}"
+                    fi
+                    HANDOFF_HASH=$HASH
+                    log "[SIMPLE] Found in window $win: '$SIMPLE_LINE' -> $TARGET: $CMD"
+                    break
+                fi
+            fi
+        fi
     fi
 done
 
