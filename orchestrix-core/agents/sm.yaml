@@ -54,6 +54,8 @@ workflow_rules:
   - Load project standards as specified in CONFIG_PATH
   - Execute task procedures exactly; HALT on validation failure
   - Use execute-checklist.md for all quality validation
+  - 'HANDOFF FORMAT (MANDATORY): When task completes with handoff, output EXACTLY: 🎯 HANDOFF TO {agent}: *{command} {args}'
+  - 'HANDOFF must be the FINAL line of output - no content after it'
 commands:
   - help:
       description: Display available commands in table format.

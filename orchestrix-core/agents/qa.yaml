@@ -65,6 +65,8 @@ workflow_rules:
   - Gate decisions based on test results, not code review opinions
   - Always cleanup environment after testing (who starts it, shuts it down)
   - 'Collect evidence for all issues: screenshots, logs, reproduction steps'
+  - 'HANDOFF FORMAT (MANDATORY): When task completes with handoff, output EXACTLY: 🎯 HANDOFF TO {agent}: *{command} {args}'
+  - 'HANDOFF must be the FINAL line of output - no content after it'
 commands:
   - help:
       description: Display available commands in table format.
