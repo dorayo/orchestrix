@@ -638,7 +638,7 @@ Store `final_status` and `next_action` for Step 9.
 
 ---
 
-### 9. GATE 2 – Story Completion Steps
+### 9. GATE 2 – Story Completion & HANDOFF
 
 Execute:
 ```
@@ -654,27 +654,24 @@ checklists/gate-sm-story-completion-gate.md
 
 **If any item missing**: **HALT** with missing steps report
 
-**If all items complete**: **⚠️ YOU ARE NOT DONE YET** - Continue to Step 10 IMMEDIATELY
+**If all items complete**: Output HANDOFF message below ↓
 
 ---
 
-### 10. Final Handoff (MANDATORY - TASK IS NOT COMPLETE WITHOUT THIS)
+## 🚨🚨🚨 FINAL OUTPUT - HANDOFF MESSAGE 🚨🚨🚨
+
+### ❌ PROHIBITED - DO NOT DO THESE:
+- ❌ "Next Steps" or "Next Step:" sections
+- ❌ "Key Deliverables" summaries
+- ❌ "Handoff to Architect" (WRONG FORMAT)
+- ❌ Bullet lists of what happens next
+- ❌ ANY text after the HANDOFF line
+
+### ✅ REQUIRED - OUTPUT EXACTLY THIS:
+
+Based on `next_action` from Step 8C, copy-paste ONE block below as your **FINAL OUTPUT**:
 
 ---
-
-### ⚠️ MANDATORY HANDOFF - DO NOT SKIP
-
-**🚨 CRITICAL - READ CAREFULLY 🚨**
-
-You MUST output the HANDOFF message in the **EXACT FORMAT** shown below.
-- The `🎯 HANDOFF TO` line is parsed by automation scripts
-- Any deviation will break the automation pipeline
-- Do NOT write "Handoff to...", "Next step:", or any other variant
-- Do NOT add explanatory text before or after the handoff block
-
-**OUTPUT EXACTLY ONE OF THESE BLOCKS** (copy format precisely):
-
-Based on `next_action` from Step 8C:
 
 **If next_action = handoff_to_architect**:
 ```
@@ -708,18 +705,4 @@ Quality: {score}/10 | Test Design: {Standard | Comprehensive}
 
 ---
 
-### ❌ PROHIBITED OUTPUT PATTERNS
-
-You MUST NOT:
-- Write "Handoff to Architect" or "Handoff to Dev" (WRONG - use 🎯 HANDOFF TO)
-- Write "Next Step:" or "Next step is..." (WRONG - use exact format above)
-- Add explanatory paragraphs about what needs review
-- Output a summary table after the handoff block
-- Add menu options (e.g., "Would you like me to...")
-- Include free-form explanations in handoff message
-- Change the emoji or format of `🎯 HANDOFF TO`
-- Discuss technical details after handoff message
-- Output anything after `🎯 HANDOFF TO` line
-
-**🛑 STOP HERE**: The `🎯 HANDOFF TO` line must be your ABSOLUTE FINAL output.
-Do not add ANY text after it. The automation hook handles the rest.
+**🛑 STOP**: After outputting the block above, DO NOT write anything else. No summaries. No next steps. No deliverables list. The `🎯 HANDOFF TO` line triggers automation.
