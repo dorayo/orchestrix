@@ -56,7 +56,7 @@ npm test  # or project equivalent
   Story: {story_id}
   Issue: Test failures
 
-  HANDOFF TO dev: *quick-develop {story_id}
+  🎯 HANDOFF TO dev: *quick-develop {story_id}
   ```
 - HALT
 
@@ -100,7 +100,7 @@ QUICK STORY DONE
 Story: {story_id}
 Commit: {commit_hash}
 
-HANDOFF TO sm: *draft
+🎯 HANDOFF TO sm: *draft
 ```
 
 ## Skipped (vs qa-review-story)

@@ -85,7 +85,7 @@ QUICK STORY CREATED
 Story: {story_id} | Tier: {tier}
 Status: Approved
 
-HANDOFF TO dev: *quick-develop {story_id}
+🎯 HANDOFF TO dev: *quick-develop {story_id}
 ```
 
 ## Skipped Steps (vs create-next-story)

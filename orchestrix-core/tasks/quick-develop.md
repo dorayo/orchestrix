@@ -96,7 +96,7 @@ Story: {story_id}
 Files: {count} changed
 Tests: Pass
 
-HANDOFF TO qa: *quick-verify {story_id}
+🎯 HANDOFF TO qa: *quick-verify {story_id}
 ```
 
 ## Skipped (vs develop-story)

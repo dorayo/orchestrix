@@ -33,14 +33,14 @@ Set `next_story_id = {story_id}`, continue to Step 1.
 **If story file found**: Extract `Story.status` field, output handoff based on status:
 
 - **Blocked**: `⚠️ STORY BLOCKED - Use: *revise {story_id}` → **HALT**
-- **AwaitingArchReview**: `⏳ HANDOFF TO architect: *review {story_id}` → **HALT**
+- **AwaitingArchReview**: `🎯 HANDOFF TO architect: *review {story_id}` → **HALT**
 - **RequiresRevision**: `✏️ Use: *revise {story_id}` → **HALT**
-- **Approved/TestDesignComplete**: `✅ HANDOFF TO dev: *develop-story {story_id}` → **HALT**
-- **AwaitingTestDesign**: `⏳ HANDOFF TO qa: *test-design {story_id}` → **HALT**
+- **Approved/TestDesignComplete**: `🎯 HANDOFF TO dev: *develop-story {story_id}` → **HALT**
+- **AwaitingTestDesign**: `🎯 HANDOFF TO qa: *test-design {story_id}` → **HALT**
 - **InProgress**: `🔨 STORY IN PROGRESS - No action needed` → **HALT**
-- **Review**: `🔍 HANDOFF TO qa: *review {story_id}` → **HALT**
+- **Review**: `🎯 HANDOFF TO qa: *review {story_id}` → **HALT**
 - **Done**: `✅ STORY COMPLETE - Start next via *draft` → **HALT**
-- **Escalated**: `🚨 HANDOFF TO architect: *review-escalation {story_id}` → **HALT**
+- **Escalated**: `🎯 HANDOFF TO architect: *review-escalation {story_id}` → **HALT**
 
 ---
 
