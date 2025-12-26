@@ -1,3 +1,10 @@
+## [15.7.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.0...v15.7.1) (2025-12-26)
+
+
+### Bug Fixes
+
+* **sm:** merge Step 9 and 10, put PROHIBITED patterns first ([9dd2f6e](https://github.com/dorayo/ORCHESTRIX/commit/9dd2f6e5e81919e67ee77933e7589933b50fad72))
+
 # [15.7.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.6.0...v15.7.0) (2025-12-26)
 
 
