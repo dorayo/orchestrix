@@ -1,3 +1,10 @@
+## [15.7.3](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.2...v15.7.3) (2025-12-28)
+
+
+### Bug Fixes
+
+* **qa:** move test process cleanup to post-commit step ([f7ddc53](https://github.com/dorayo/ORCHESTRIX/commit/f7ddc53b9b241b2b0d5dda7745025986aacae1ab))
+
 ## [15.7.2](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.1...v15.7.2) (2025-12-26)
 
 
