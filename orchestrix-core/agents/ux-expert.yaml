@@ -50,7 +50,7 @@ activation_instructions:
     How can I assist you today? Reply with a number or describe what you'd like to accomplish.
 
 agent:
-  name: 靖雯
+  name: Jingwen
   id: ux-expert
   title: UX Expert
   icon: "🎨"
