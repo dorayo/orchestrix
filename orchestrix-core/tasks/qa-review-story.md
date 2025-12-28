@@ -653,13 +653,11 @@ Glob: `{root}/runtime/tmux-automation-active`
 
 ---
 
-## Step 8: Environment and Test Runner Cleanup
+## Step 8: Environment Cleanup
 
-**Purpose**: Stop any processes started in Step 3 and clean up orphaned test runners
+**Purpose**: Stop application server started in Step 3
 
 **Always execute** (even if previous steps failed)
-
-### 8.1 Environment Cleanup
 
 Execute: `{root}/tasks/qa-environment-cleanup.md`
 
@@ -668,56 +666,7 @@ Input:
 story_id: {story_id}
 ```
 
-### 8.2 Test Runner Cleanup
-
-Clean up any orphaned test runner processes that may have been left behind:
-
-```bash
-# Test runner cleanup
-echo "Cleaning up test runner processes..."
-
-# Check for story-specific tracking file
-PID_FILE="/tmp/test-runner-${STORY_ID}.pid"
-if [ -f "$PID_FILE" ]; then
-  TRACKED_PID=$(cat "$PID_FILE")
-  if [ -n "$TRACKED_PID" ] && kill -0 "$TRACKED_PID" 2>/dev/null; then
-    echo "  Terminating tracked test process: $TRACKED_PID"
-    kill -TERM $TRACKED_PID 2>/dev/null
-    sleep 2
-    kill -0 $TRACKED_PID 2>/dev/null && kill -9 $TRACKED_PID 2>/dev/null
-  fi
-  rm -f "$PID_FILE"
-fi
-
-# Kill any test runner processes running longer than 10 minutes
-TEST_RUNNERS=("vitest" "jest" "mocha" "playwright" "cypress")
-THRESHOLD=600  # 10 minutes in seconds
-
-for RUNNER in "${TEST_RUNNERS[@]}"; do
-  PIDS=$(pgrep -f "$RUNNER" 2>/dev/null || true)
-  if [ -n "$PIDS" ]; then
-    for PID in $PIDS; do
-      ETIME=$(ps -p $PID -o etimes= 2>/dev/null | tr -d ' ' || echo "0")
-      if [ "$ETIME" -gt "$THRESHOLD" ]; then
-        echo "  Killing long-running $RUNNER process: PID=$PID (${ETIME}s)"
-        kill -TERM $PID 2>/dev/null
-        sleep 1
-        kill -0 $PID 2>/dev/null && kill -9 $PID 2>/dev/null
-        pkill -P $PID 2>/dev/null || true
-      fi
-    done
-  fi
-done
-
-# Cleanup temp files
-rm -f /tmp/test-output-${STORY_ID}*.log 2>/dev/null || true
-rm -f /tmp/vitest-results*.json 2>/dev/null || true
-rm -f /tmp/jest-results*.json 2>/dev/null || true
-
-echo "Test runner cleanup complete"
-```
-
-Log cleanup result but do not block on failures.
+Log result. Do not block on failures.
 
 ---
 
@@ -819,6 +768,91 @@ This task will:
 - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
 - If failed: `commit_error`
 
+### 9.6 Final Test Process Cleanup (MANDATORY - Post-Commit)
+
+**Purpose**: Terminate all test runner processes after git operations complete.
+
+**Always execute** - regardless of commit result.
+
+#### 9.6.1 Identify and Kill Test Runner Processes
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+echo "=== Final Test Process Cleanup ==="
+
+TEST_RUNNERS=("vitest" "jest" "mocha" "playwright" "cypress" "tsx" "ts-node")
+KILLED_COUNT=0
+
+for RUNNER in "${TEST_RUNNERS[@]}"; do
+  PIDS=$(pgrep -f "$RUNNER" 2>/dev/null || true)
+  if [ -n "$PIDS" ]; then
+    for PID in $PIDS; do
+      CMD=$(ps -p $PID -o args= 2>/dev/null | head -c 80 || echo "unknown")
+      ETIME=$(ps -p $PID -o etimes= 2>/dev/null | tr -d ' ' || echo "0")
+      echo "Found: PID=$PID RUNNER=$RUNNER RUNTIME=${ETIME}s CMD=$CMD"
+
+      kill -TERM $PID 2>/dev/null || true
+      sleep 1
+
+      if kill -0 $PID 2>/dev/null; then
+        kill -9 $PID 2>/dev/null || true
+        echo "  Force killed: PID=$PID"
+      else
+        echo "  Terminated: PID=$PID"
+      fi
+
+      pkill -P $PID 2>/dev/null || true
+      KILLED_COUNT=$((KILLED_COUNT + 1))
+    done
+  fi
+done
+
+echo "Processes terminated: $KILLED_COUNT"
+```
+
+#### 9.6.2 Cleanup Temporary Files
+
+```bash
+STORY_ID="${STORY_ID}"
+
+rm -f /tmp/test-runner-${STORY_ID}.pid 2>/dev/null || true
+rm -f /tmp/test-output-${STORY_ID}*.log 2>/dev/null || true
+rm -f /tmp/qa-environment-${STORY_ID}.yaml 2>/dev/null || true
+
+find /tmp -name "vitest-*.json" -mmin +30 -delete 2>/dev/null || true
+find /tmp -name "jest-*.json" -mmin +30 -delete 2>/dev/null || true
+find /tmp -name "playwright-*.json" -mmin +30 -delete 2>/dev/null || true
+
+echo "Temporary files cleaned"
+```
+
+#### 9.6.3 Verify Cleanup
+
+```bash
+REMAINING=$(pgrep -f "vitest|jest|mocha|playwright|cypress" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$REMAINING" -gt 0 ]; then
+  echo "Warning: $REMAINING test processes still running"
+  pgrep -f "vitest|jest|mocha|playwright|cypress" -a 2>/dev/null || true
+else
+  echo "All test processes cleaned"
+fi
+```
+
+**Store result**:
+```yaml
+final_cleanup:
+  executed: true
+  processes_killed: {count}
+  temp_files_removed: true
+  orphans_remaining: {count}
+```
+
+Do not block on failures. Proceed to Step 9.7.
+
+---
+
 ### 9.7 OUTPUT HANDOFF MESSAGE (REQUIRED)
 
 ---
@@ -832,13 +866,19 @@ The hook script will automatically detect it and route to the target agent.
 
 ### Pre-Handoff Verification
 
-Before proceeding, verify Step 9.6 was executed:
+Before proceeding, verify Step 9.5.2 and Step 9.6 were executed:
 
-- **Check commit_result exists** (not empty)
-  - If `commit_result` is empty/missing:
-    - ERROR: Step 9.6 was not executed
-    - Go back to Step 9.6 and execute finalize-story-commit.md
-    - Do NOT proceed until commit_result is populated
+1. **Check commit_result exists** (not empty)
+   - If `commit_result` is empty/missing:
+     - ERROR: Step 9.5.2 was not executed
+     - Go back to Step 9.5.2 and execute finalize-story-commit.md
+     - Do NOT proceed until commit_result is populated
+
+2. **Check final_cleanup.executed == true**
+   - If missing or false:
+     - ERROR: Step 9.6 was not executed
+     - Go back to Step 9.6 and execute cleanup
+     - Do NOT proceed until cleanup is complete
 
 ---
 
@@ -908,8 +948,11 @@ Gate: PASS | Tests: {pass_rate}%
 | 5.5 | Blind Spot Verification | Check Dev blind spots coverage |
 | 6 | Evidence Collection | Capture screenshots/logs |
 | 7 | Gate Decision | PASS/FAIL/CONCERNS |
-| 8 | Environment Cleanup | Stop processes |
-| 9 | Output & Handoff | Update story, commit, handoff |
+| 8 | Environment Cleanup | Stop application server |
+| 9.1-9.4 | Story Update | Update QA Review section, gate file, status, change log |
+| 9.5 | Post-Review Workflow | Execute decision and git commit |
+| 9.6 | Final Cleanup | Kill test processes after git commit |
+| 9.7 | Handoff | Output HANDOFF message to next agent |
 
 ## Key Principles
 
