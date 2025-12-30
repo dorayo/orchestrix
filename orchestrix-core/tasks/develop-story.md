@@ -199,7 +199,53 @@ Execute `{root}/tasks/util-update-resumption-guide.md` ONLY when:
 
 ---
 
-## 7. Error Handling (Delegation Only)
+## 7. Database Migration Execution (Conditional)
+
+**Purpose**: Execute pending database migrations BEFORE running tests to ensure schema consistency.
+
+### Step 7.1: Detect Schema Changes
+
+Check if the story involves database changes:
+
+**Detection Signals**:
+- Tasks mentioning: database, schema, migration, table, column, index, constraint
+- Dev Notes containing DB-related keywords
+- Files created/modified in `**/migrations/**`, `**/*.entity.ts`, `**/*.model.ts`, `**/schema.prisma`
+
+**If no database changes detected**: Skip to Step 9 (GATE 1 - Self Review)
+
+### Step 7.2: Check Pending Migrations
+
+Execute: `{root}/tasks/dev-database-migration.md` (Step 1-2 only)
+
+Framework detection and status check are defined in that task.
+
+**If no pending migrations**: Log "✅ Migrations already applied" → Skip to Step 9
+
+### Step 7.3: Execute Migrations
+
+**⚠️ CRITICAL**: Execute migrations BEFORE running any tests.
+
+Execute: `{root}/tasks/dev-database-migration.md` (Step 3-4)
+
+**On Success** (migration_result.status = PASS):
+- Log: "✅ Database migrations executed successfully"
+- Update Dev Log with migration execution record
+- Continue to Step 9
+
+**On Failure** (migration_result.status = FAIL):
+- Log: "❌ Migration execution failed: {migration_result.error}"
+- Update Dev Log with error details
+- Status: Remains InProgress
+- Update Resumption Guide with failure details
+- **HALT** - Dev must fix migration before continuing
+
+**On Skip** (migration_result.status = SKIP):
+- Log reason and continue to Step 9
+
+---
+
+## 8. Error Handling (Delegation Only)
 
 Do not define rules here. Use external decision files:
 
@@ -215,7 +261,7 @@ Before halting:
 
 ---
 
-## 8. GATE 1 – Self Review
+## 9. GATE 1 – Self Review
 
 Execute:
 
@@ -236,7 +282,7 @@ cumulative_context: {from Step 3.3}
 **If result = "PASS"**:
 - Log: "✅ Self-review passed (Gate: {score}%, Round: {N})"
 - Store self_review_result in context
-- Continue to Step 9 (Registry Update)
+- Continue to Step 10 (Registry Update)
 
 **If result = "FAIL"**:
 - Output: Detailed failure report from gate_result
@@ -258,7 +304,7 @@ cumulative_context: {from Step 3.3}
 
 ---
 
-## 9. Registry Update (Cumulative System Sync)
+## 10. Registry Update (Cumulative System Sync)
 
 Only if the story includes DB / API / Model changes:
 
@@ -279,7 +325,7 @@ Failure does **not** halt story completion; log the issue.
 
 ---
 
-## 10. GATE 2 – Completion Checklist
+## 11. GATE 2 – Completion Checklist
 
 Execute:
 
@@ -302,7 +348,7 @@ Checklist verifies (externally defined):
 
 ---
 
-## 11. Final Handoff (REQUIRED - MUST BE FINAL OUTPUT)
+## 12. Final Handoff (REQUIRED - MUST BE FINAL OUTPUT)
 
 ---
 
@@ -312,7 +358,7 @@ Checklist verifies (externally defined):
 
 ---
 
-### Step 11.1: Output Human-Readable Handoff Message
+### Step 12.1: Output Human-Readable Handoff Message
 
 Generate handoff message using template:
 ```
