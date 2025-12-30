@@ -1,3 +1,10 @@
+## [15.7.4](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.3...v15.7.4) (2025-12-30)
+
+
+### Bug Fixes
+
+* **dev:** add database migration execution step to workflow ([7d7ae7b](https://github.com/dorayo/ORCHESTRIX/commit/7d7ae7b8fc81f96f01203716980ae6706d86bfd9))
+
 ## [15.7.3](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.2...v15.7.3) (2025-12-28)
 
 
