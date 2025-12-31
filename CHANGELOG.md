@@ -1,3 +1,10 @@
+## [15.7.5](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.4...v15.7.5) (2025-12-31)
+
+
+### Bug Fixes
+
+* **pm:** clarify next-steps.md generation as executable prompts ([af9a140](https://github.com/dorayo/ORCHESTRIX/commit/af9a1408ccc4b163907d9951d0f1325f24d9e771))
+
 ## [15.7.4](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.3...v15.7.4) (2025-12-30)
 
 
