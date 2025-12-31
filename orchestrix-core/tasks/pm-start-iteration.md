@@ -402,7 +402,11 @@ For each new Epic, analyze Stories to determine:
 - Which front-end components need design
 - Specific focus areas based on requirements
 
-**7.3 Generate Enhanced next-steps.md**
+**7.3 Write next-steps.md**
+
+Generate `8-next-steps.md` as executable prompts for downstream agents. Each `🎯 HANDOFF TO {agent}:` section is a complete prompt that the target agent will execute directly—replace all placeholders with actual values from this iteration.
+
+**Structure**:
 
 ```markdown
 # Next Steps
@@ -571,14 +575,6 @@ SM can now create Stories with:
 
 Execute: *create-next-story
 ```
-
-**7.4 Format Rules**
-
-1. HANDOFF header: Always use `🎯 HANDOFF TO {agent}:` format
-2. Files to Read: List exact file paths
-3. Files to Update: List exact file paths with update reasons
-4. Focus areas: 3-5 specific bullet points based on Epic content
-5. Separator: Use `---` between sections
 
 ### Step 8: Output Summary
 
