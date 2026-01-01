@@ -1,3 +1,10 @@
+# [15.8.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.5...v15.8.0) (2026-01-01)
+
+
+### Features
+
+* **pm:** add planning docs commit step to SM handoff in start-iteration ([9564a2b](https://github.com/dorayo/ORCHESTRIX/commit/9564a2b542e1d68e53c4178ac80ca2530b597fec))
+
 ## [15.7.5](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.4...v15.7.5) (2025-12-31)
 
 
