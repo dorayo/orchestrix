@@ -569,6 +569,17 @@ Before handing off to SM:
 
 🎯 HANDOFF TO sm:
 
+## Step 1: Commit Planning Documents
+
+Before creating stories, commit all planning phase changes:
+
+```bash
+git add docs/prd/ docs/front-end-spec/ docs/architecture/ docs/dev/
+git commit -m "docs(planning): prepare iteration {N} - {Epic titles}"
+```
+
+## Step 2: Create Stories
+
 SM can now create Stories with:
 - `sm_hints.front_end_spec` → Precise front-end design references
 - `sm_hints.architecture` → Precise architecture references
