@@ -1,3 +1,10 @@
+# [15.9.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.8.0...v15.9.0) (2026-01-05)
+
+
+### Features
+
+* **templates:** add Enhanced AC structure for complete requirement specs ([aeaf3c2](https://github.com/dorayo/ORCHESTRIX/commit/aeaf3c28ca0de2d076b2c1adca27bc6feeec756a))
+
 # [15.8.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.7.5...v15.8.0) (2026-01-01)
 
 
