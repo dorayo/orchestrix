@@ -171,28 +171,39 @@ sections:
   - id: epics
     title: Epics
     instruction: |
-      ⚠️  CRITICAL SECTION - This section defines all Epics and Stories for the project.
+      ⚠️ CRITICAL SECTION - Complete requirement specifications for all Epics and Stories.
 
-      After the Epic List is approved, define each Epic with its Stories using structured YAML format.
-      During PO *shard, this PRD will be split into docs/prd/*.md and the YAML blocks
-      will be extracted to docs/prd/epic-{n}-{title}.yaml for SM agents to read.
+      ## Purpose
 
-      CRITICAL STORY SEQUENCING REQUIREMENTS:
+      This section contains COMPLETE requirement details that flow directly to Dev agents.
+      PM MUST define all business rules, validation, error handling here - NOT delegated to SM.
+      SM agents will render this content into Story documents WITHOUT additional analysis.
+
+      ## Story Sequencing Requirements
 
       - Stories within each epic MUST be logically sequential
-      - Each story should be a "vertical slice" delivering complete functionality
-      - No story should depend on work from a later story or epic
-      - Focus on "what" and "why" not "how" (leave technical implementation to Architect)
-      - Size stories for AI agent execution: completable in one focused session
-      - Think "junior developer working for 2-4 hours" - small, focused, self-contained
+      - Each story is a "vertical slice" delivering complete functionality
+      - No story depends on work from a later story or epic
+      - Size for AI agent execution: completable in 2-4 hours focused session
 
-      For EACH epic, create a YAML block using this format:
+      ## Epic Document Format
 
+      For EACH epic, create a YAML block using this EXACT structure:
+
+      ```
       ## Epic {{N}}: {{Epic Title}}
 
       **Epic Summary:** {{2-3 sentence summary}}
 
       **Target Repositories:** {{backend, frontend, ios, android, mobile - as applicable}}
+      ```
+
+      Followed by a YAML code fence with the complete Epic definition.
+
+      ## Enhanced Acceptance Criteria Structure
+
+      CRITICAL: Each AC is a COMPLETE requirement unit. Dev agents will implement directly
+      from this specification without needing to consult PRD or architecture documents.
 
       ```yaml
       epic_id: {{N}}
@@ -204,49 +215,98 @@ sections:
         - id: "{{N}}.1"
           title: "{{Story title}}"
           repository_type: backend | frontend | ios | android | monolith
-          acceptance_criteria:
-            - "AC1: {{Clear, testable criterion}}"
-            - "AC2: {{Another criterion}}"
-            - "AC3: {{And so on}}"
           estimated_complexity: low | medium | high
           priority: P0 | P1 | P2
-          provides_apis: []    # Backend: ["POST /api/users", "GET /api/users/:id"]
-          consumes_apis: []    # Frontend/Mobile: ["POST /api/auth/login"]
-          dependencies: []     # Story IDs: ["1.1", "1.2"]
-          sm_hints:            # Populated by UX-Expert and Architect after PM creates Epic
-            front_end_spec: null
-            architecture: null
+
+          # ============================================================
+          # ENHANCED ACCEPTANCE CRITERIA - Complete Requirement Specs
+          # ============================================================
+          acceptance_criteria:
+            - id: AC1
+              title: "{{Concise AC title}}"
+
+              # REQUIRED: Scenario in GIVEN/WHEN/THEN format
+              scenario:
+                given: "{{Precondition state}}"
+                when: "{{User action or system trigger}}"
+                then:
+                  - "{{Expected outcome 1}}"
+                  - "{{Expected outcome 2}}"
+
+              # REQUIRED: Business rules governing this AC
+              # Minimum 1 rule per AC. Use BR-{ac_num}.{seq} format.
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "{{Business rule description}}"
+                - id: "BR-1.2"
+                  rule: "{{Another rule}}"
+
+              # CONDITIONAL: Required when AC involves form input or API request body
+              # Omit entirely if AC has no data input
+              data_validation:
+                - field: "{{field_name}}"
+                  type: "string | number | boolean | email | date | array | object"
+                  required: true | false
+                  rules: "{{Validation rules - format, length, pattern, range}}"
+                  error_message: "{{User-facing error message}}"
+
+              # REQUIRED: Error scenarios and handling
+              # Minimum 1 error scenario per AC
+              error_handling:
+                - scenario: "{{Error condition description}}"
+                  code: "{{HTTP status or error code}}"
+                  message: "{{User-facing error message}}"
+                  action: "{{System behavior on this error}}"
+
+              # OPTIONAL: UI interaction details
+              # Include ONLY for frontend/mobile stories with UI
+              interaction:
+                - trigger: "{{User action}}"
+                  behavior: "{{UI response - loading states, animations, feedback}}"
+
+              # RECOMMENDED: Concrete examples (Specification by Example)
+              # Helps Dev agents understand expected behavior precisely
+              examples:
+                - input: "{{Example input data}}"
+                  expected: "{{Expected output or behavior}}"
+
+            - id: AC2
+              title: "{{Next AC}}"
+              # ... same structure
+
+          # ============================================================
+          # API & Dependency Tracking
+          # ============================================================
+          provides_apis: []     # Backend: ["POST /api/users", "GET /api/users/:id"]
+          consumes_apis: []     # Frontend/Mobile: ["POST /api/auth/login"]
+          dependencies: []      # Story IDs: ["1.1", "1.2"]
+
+          # ============================================================
+          # SM Hints - Populated by UX-Expert and Architect AFTER PM creates Epic
+          # ============================================================
+          sm_hints:
+            front_end_spec: null   # UX-Expert fills: {file, sections}
+            architecture: null     # Architect fills: {files}
       ```
 
-      FIELD REQUIREMENTS:
+      ## Field Requirements Reference
 
-      1. **repository_type** (MANDATORY): Determines which repo gets each story
-         - backend, frontend, ios, android, flutter, react-native, monolith
+      | Field | Required | Condition | Description |
+      |-------|----------|-----------|-------------|
+      | id | YES | Always | AC identifier: AC1, AC2, etc. |
+      | title | YES | Always | Concise AC title (5-10 words) |
+      | scenario | YES | Always | GIVEN/WHEN/THEN structure |
+      | business_rules | YES | Always | Minimum 1 rule per AC |
+      | data_validation | CONDITIONAL | When AC has form/API input | Field-level validation specs |
+      | error_handling | YES | Always | Minimum 1 error scenario |
+      | interaction | NO | Only for UI stories | UI behavior details |
+      | examples | RECOMMENDED | Always | Specification by Example |
 
-      2. **acceptance_criteria** (MANDATORY): Numbered list of testable criteria
-         - Each starts with "ACn:" prefix
-         - Clear, unambiguous, verifiable
-         - Defines what "done" means from functional perspective
-
-      3. **APIs tracking** (for multi-repo):
-         - Backend: list APIs in `provides_apis`
-         - Frontend/Mobile: list APIs in `consumes_apis`
-         - Format: "METHOD /path" (e.g., "POST /api/users")
-
-      4. **dependencies**: Story IDs this depends on (blocking until Done)
-
-      5. **sm_hints** (OPTIONAL - populated post-creation):
-         - `front_end_spec`: Filled by UX-Expert after creating epic front-end spec
-           - `file`: Epic-specific spec filename (e.g., "epic-3-front-end-spec.md")
-           - `sections`: List of relevant sections for this Story
-         - `architecture`: Filled by Architect after updating architecture docs
-           - `files`: List of architecture file references with anchors
-
-      EXAMPLE (Multi-repo project):
+      ## Complete Example (Multi-repo Project)
 
       ## Epic 1: User Authentication System
 
-      **Epic Summary:** Implement complete user authentication across backend API and frontend UI.
+      **Epic Summary:** Implement secure user authentication with registration, login, and session management. Backend provides REST API endpoints. Frontend provides responsive UI.
 
       **Target Repositories:** backend, frontend
 
@@ -254,30 +314,154 @@ sections:
       epic_id: 1
       title: "User Authentication System"
       description: |
-        Establish foundation and core infrastructure for user authentication.
-        Backend provides secure API endpoints. Frontend provides intuitive UI.
+        Establish foundation for user authentication and authorization.
+        Backend provides secure API endpoints with JWT tokens.
+        Frontend provides intuitive, accessible registration and login UI.
 
       stories:
         - id: "1.1"
-          title: "Backend - User Registration and Login API"
+          title: "Backend - User Registration API"
           repository_type: backend
-          acceptance_criteria:
-            - "AC1: User can register with email and password"
-            - "AC2: Password is hashed using bcrypt before storage"
-            - "AC3: Login returns JWT token on valid credentials"
-            - "AC4: Invalid credentials return 401 with error message"
-            - "AC5: All endpoints return proper HTTP status codes"
           estimated_complexity: medium
           priority: P0
+
+          acceptance_criteria:
+            - id: AC1
+              title: "Successful user registration"
+              scenario:
+                given: "User is not registered in the system"
+                when: "User submits valid registration data via POST /api/users"
+                then:
+                  - "New user record is created in database"
+                  - "Password is hashed using bcrypt with cost factor 12"
+                  - "Response returns 201 with user object (excluding password)"
+                  - "Verification email is queued for sending"
+
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "Email must be unique across all users"
+                - id: "BR-1.2"
+                  rule: "Password must be 8-32 characters with at least one uppercase, one lowercase, and one digit"
+                - id: "BR-1.3"
+                  rule: "Username is optional; if not provided, use email local-part as default"
+                - id: "BR-1.4"
+                  rule: "New accounts are created with status 'pending_verification'"
+
+              data_validation:
+                - field: "email"
+                  type: "email"
+                  required: true
+                  rules: "RFC 5322 compliant, max 255 characters"
+                  error_message: "Please enter a valid email address"
+                - field: "password"
+                  type: "string"
+                  required: true
+                  rules: "8-32 chars, must contain [A-Z], [a-z], [0-9]"
+                  error_message: "Password must be 8-32 characters with uppercase, lowercase, and number"
+                - field: "username"
+                  type: "string"
+                  required: false
+                  rules: "3-20 chars, alphanumeric and underscore only"
+                  error_message: "Username must be 3-20 characters, letters, numbers, and underscore only"
+
+              error_handling:
+                - scenario: "Email already registered"
+                  code: "409"
+                  message: "This email is already registered"
+                  action: "Return error, suggest login or password reset"
+                - scenario: "Password does not meet requirements"
+                  code: "400"
+                  message: "Password does not meet security requirements"
+                  action: "Return validation error with specific requirement failures"
+                - scenario: "Database connection failure"
+                  code: "503"
+                  message: "Service temporarily unavailable"
+                  action: "Log error, do not expose internal details"
+
+              examples:
+                - input: |
+                    POST /api/users
+                    {"email": "newuser@example.com", "password": "SecurePass123"}
+                  expected: |
+                    201 Created
+                    {"id": "uuid", "email": "newuser@example.com", "username": "newuser", "status": "pending_verification", "created_at": "ISO8601"}
+                - input: |
+                    POST /api/users
+                    {"email": "existing@example.com", "password": "SecurePass123"}
+                  expected: |
+                    409 Conflict
+                    {"error": "This email is already registered", "code": "EMAIL_EXISTS"}
+
+            - id: AC2
+              title: "User login with credentials"
+              scenario:
+                given: "User has a verified account"
+                when: "User submits valid credentials via POST /api/auth/login"
+                then:
+                  - "JWT access token is generated (15 min expiry)"
+                  - "JWT refresh token is generated (7 day expiry)"
+                  - "Tokens are returned in response body"
+                  - "Last login timestamp is updated"
+
+              business_rules:
+                - id: "BR-2.1"
+                  rule: "Only verified accounts can login"
+                - id: "BR-2.2"
+                  rule: "Failed login attempts are tracked; lock account after 5 consecutive failures"
+                - id: "BR-2.3"
+                  rule: "Account lockout duration is 15 minutes"
+                - id: "BR-2.4"
+                  rule: "JWT access token contains: user_id, email, roles"
+
+              data_validation:
+                - field: "email"
+                  type: "email"
+                  required: true
+                  rules: "Valid email format"
+                  error_message: "Please enter your email address"
+                - field: "password"
+                  type: "string"
+                  required: true
+                  rules: "Non-empty string"
+                  error_message: "Please enter your password"
+
+              error_handling:
+                - scenario: "Invalid credentials"
+                  code: "401"
+                  message: "Invalid email or password"
+                  action: "Increment failed attempt counter, do not reveal which field is wrong"
+                - scenario: "Account not verified"
+                  code: "403"
+                  message: "Please verify your email before logging in"
+                  action: "Offer to resend verification email"
+                - scenario: "Account locked"
+                  code: "423"
+                  message: "Account temporarily locked due to multiple failed attempts"
+                  action: "Return remaining lockout time"
+
+              examples:
+                - input: |
+                    POST /api/auth/login
+                    {"email": "user@example.com", "password": "SecurePass123"}
+                  expected: |
+                    200 OK
+                    {"access_token": "jwt...", "refresh_token": "jwt...", "expires_in": 900}
+                - input: |
+                    POST /api/auth/login
+                    {"email": "user@example.com", "password": "wrongpassword"}
+                  expected: |
+                    401 Unauthorized
+                    {"error": "Invalid email or password", "attempts_remaining": 4}
+
           provides_apis:
             - "POST /api/users"
             - "POST /api/auth/login"
+            - "POST /api/auth/refresh"
             - "POST /api/auth/logout"
-            - "GET /api/auth/me"
           consumes_apis: []
           dependencies: []
           sm_hints:
-            front_end_spec: null  # No frontend for this backend Story
+            front_end_spec: null
             architecture:
               files:
                 - "5-components.md#AuthService"
@@ -285,35 +469,103 @@ sections:
                 - "9-rest-api-spec.md#auth-endpoints"
 
         - id: "1.2"
-          title: "Frontend - User Registration and Login UI"
+          title: "Frontend - Registration and Login UI"
           repository_type: frontend
-          acceptance_criteria:
-            - "AC1: Registration form with email/password fields and validation"
-            - "AC2: Login form calls backend API on submit"
-            - "AC3: Successful login stores token and redirects to dashboard"
-            - "AC4: Errors are displayed clearly to user"
-            - "AC5: Forms are responsive and accessible (WCAG AA)"
           estimated_complexity: medium
           priority: P0
+
+          acceptance_criteria:
+            - id: AC1
+              title: "Registration form with validation"
+              scenario:
+                given: "User navigates to /register page"
+                when: "User fills and submits registration form"
+                then:
+                  - "Form validates input in real-time"
+                  - "On success, redirect to /login with success message"
+                  - "On error, display error message without clearing form"
+
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "Real-time validation triggers on field blur"
+                - id: "BR-1.2"
+                  rule: "Submit button is disabled until all validations pass"
+                - id: "BR-1.3"
+                  rule: "Password strength indicator shows weak/medium/strong"
+
+              data_validation:
+                - field: "email"
+                  type: "email"
+                  required: true
+                  rules: "Valid email format, validated on blur"
+                  error_message: "Please enter a valid email address"
+                - field: "password"
+                  type: "string"
+                  required: true
+                  rules: "8-32 chars with complexity requirements"
+                  error_message: "Password must meet security requirements"
+                - field: "confirmPassword"
+                  type: "string"
+                  required: true
+                  rules: "Must match password field"
+                  error_message: "Passwords do not match"
+
+              error_handling:
+                - scenario: "API returns 409 (email exists)"
+                  code: "409"
+                  message: "This email is already registered"
+                  action: "Show error below email field, offer login link"
+                - scenario: "Network error"
+                  code: "NETWORK_ERROR"
+                  message: "Unable to connect. Please check your internet connection."
+                  action: "Show retry button, preserve form data"
+
+              interaction:
+                - trigger: "Page load"
+                  behavior: "Focus on email field automatically"
+                - trigger: "Field blur"
+                  behavior: "Validate field, show error if invalid"
+                - trigger: "Submit click"
+                  behavior: "Show loading spinner, disable button"
+                - trigger: "Successful registration"
+                  behavior: "Show success toast, redirect to /login after 2 seconds"
+
+              examples:
+                - input: "User enters 'test@example.com' and valid password"
+                  expected: "Form submits, success message shown, redirect to /login"
+                - input: "User enters password without uppercase"
+                  expected: "Real-time error: 'Password must contain an uppercase letter'"
+
           provides_apis: []
           consumes_apis:
             - "POST /api/users"
             - "POST /api/auth/login"
-            - "GET /api/auth/me"
           dependencies:
             - "1.1"
           sm_hints:
             front_end_spec:
               file: "epic-1-front-end-spec.md"
               sections:
-                - "Story 1.2: User Registration and Login UI"
-                - "LoginForm component"
+                - "Story 1.2: Registration and Login UI"
                 - "RegistrationForm component"
+                - "LoginForm component"
+                - "Form validation patterns"
             architecture:
               files:
-                - "5-components.md#LoginPage"
+                - "5-components.md#AuthPages"
                 - "9-rest-api-spec.md#auth-endpoints"
       ```
+
+      ## Validation Checklist
+
+      Before finalizing each Story, verify:
+
+      - [ ] Every AC has at least 1 business rule
+      - [ ] Every AC with data input has data_validation section
+      - [ ] Every AC has at least 1 error_handling scenario
+      - [ ] Examples cover both success and failure cases
+      - [ ] UI stories have interaction section
+      - [ ] All field error_message values are user-friendly
 
       Now define YAML blocks for ALL epics from your Epic List above.
     elicit: true

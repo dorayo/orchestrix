@@ -446,7 +446,8 @@ Example: "User Authentication API" → `1.3-user-authentication-api.md`
 
 **Step 6.3: Populate Sections**
 
-Follow template instructions (story-tmpl.yaml lines 206-251):
+CRITICAL: This step is RENDER ONLY. All requirement details are already defined in Epic YAML.
+SM does NOT analyze or enrich requirements - just format and render.
 
 **Story Metadata**:
 ```yaml
@@ -468,16 +469,69 @@ Story:
 **Story Deliverables**: {format deliverables as list}
 ```
 
-**Acceptance Criteria**:
-- **PREFERRED**: Use `story_definition.acceptance_criteria` (array format, each item starts with "ACn:")
-- **FALLBACK**: If `acceptance_criteria` not present, parse from `story_definition.acceptance_criteria_summary` (deprecated paragraph format)
+**Acceptance Criteria** (RENDER ONLY):
 
-**Tasks/Subtasks**: Render the template from `story-tmpl.yaml` section `tasks-subtasks` verbatim.
+Render Enhanced AC structure directly from `story_definition.acceptance_criteria`.
+Each AC object contains complete requirement specification - render ALL fields as-is.
 
-- One task per AC with TDD cycle (Write test → Implement → Verify & refactor)
-- Fixed Integration & Edge Cases section
-- Fixed Final Verification section
-- Tasks define WHAT to do; Dev Notes define HOW (technical details, patterns, file paths)
+For each AC in `story_definition.acceptance_criteria`:
+
+```markdown
+### {ac.id}: {ac.title}
+
+**Scenario**
+```gherkin
+GIVEN {ac.scenario.given}
+WHEN {ac.scenario.when}
+THEN {render each item in ac.scenario.then as bullet}
+```
+
+**Business Rules**
+| ID | Rule |
+|----|------|
+{render each item in ac.business_rules as table row}
+
+{IF ac.data_validation exists:}
+**Data Validation**
+| Field | Type | Required | Rules | Error Message |
+|-------|------|----------|-------|---------------|
+{render each item in ac.data_validation as table row}
+
+**Error Handling**
+| Scenario | Code | Message | Action |
+|----------|------|---------|--------|
+{render each item in ac.error_handling as table row}
+
+{IF ac.interaction exists:}
+**UI Interaction**
+| Trigger | Behavior |
+|---------|----------|
+{render each item in ac.interaction as table row}
+
+{IF ac.examples exists:}
+**Examples**
+{render each example as: Input: {input} / Expected: {expected}}
+
+---
+```
+
+**LEGACY FALLBACK** (for old Epic YAML format):
+If `acceptance_criteria` is a string array (old format), render as simple list and log warning:
+```
+⚠️ WARNING: Epic YAML uses legacy AC format (string array).
+   Enhanced AC structure recommended for complete requirement specs.
+   See prd-tmpl.yaml for updated format.
+```
+
+**Tasks/Subtasks**: Render using `story-tmpl.yaml` section `tasks-subtasks` template.
+
+Task structure:
+1. Infrastructure Tasks (T0) - shared across all ACs
+2. Feature Tasks (T1, T2, ...) - one per AC with TDD cycle
+3. Integration Tasks - cross-AC testing
+4. Final Verification - quality checks
+
+AC Coverage Matrix ensures all ACs are covered by tasks.
 
 **Dev Notes** (following template instructions):
 - **Technical Constraints**: Story-specific constraints with doc references `[→ file.md#section]`

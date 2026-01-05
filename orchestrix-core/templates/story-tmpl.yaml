@@ -119,32 +119,140 @@ sections:
     owner: scrum-master
     editors: [scrum-master]
 
+  - id: acceptance-criteria
+    title: Acceptance Criteria
+    type: structured-list
+    instruction: |
+      RENDER ONLY - Do not modify or analyze.
+
+      This section renders the Enhanced AC structure directly from Epic YAML.
+      Each AC is a COMPLETE requirement unit containing:
+      - Scenario (GIVEN/WHEN/THEN)
+      - Business Rules
+      - Data Validation (if applicable)
+      - Error Handling
+      - UI Interaction (if applicable)
+      - Examples
+
+      Dev agents implement directly from this specification.
+      No additional requirement analysis needed.
+    owner: scrum-master
+    editors: [scrum-master]
+    template: |
+      {{#each acceptance_criteria}}
+      ### {{this.id}}: {{this.title}}
+
+      **Scenario**
+      ```gherkin
+      GIVEN {{this.scenario.given}}
+      WHEN {{this.scenario.when}}
+      THEN {{#each this.scenario.then}}
+        - {{this}}{{/each}}
+      ```
+
+      **Business Rules**
+      | ID | Rule |
+      |----|------|
+      {{#each this.business_rules}}
+      | {{this.id}} | {{this.rule}} |
+      {{/each}}
+
+      {{#if this.data_validation}}
+      **Data Validation**
+      | Field | Type | Required | Rules | Error Message |
+      |-------|------|----------|-------|---------------|
+      {{#each this.data_validation}}
+      | {{this.field}} | {{this.type}} | {{this.required}} | {{this.rules}} | {{this.error_message}} |
+      {{/each}}
+      {{/if}}
+
+      **Error Handling**
+      | Scenario | Code | Message | Action |
+      |----------|------|---------|--------|
+      {{#each this.error_handling}}
+      | {{this.scenario}} | {{this.code}} | {{this.message}} | {{this.action}} |
+      {{/each}}
+
+      {{#if this.interaction}}
+      **UI Interaction**
+      | Trigger | Behavior |
+      |---------|----------|
+      {{#each this.interaction}}
+      | {{this.trigger}} | {{this.behavior}} |
+      {{/each}}
+      {{/if}}
+
+      {{#if this.examples}}
+      **Examples**
+      {{#each this.examples}}
+      - **Input**: {{this.input}}
+        **Expected**: {{this.expected}}
+      {{/each}}
+      {{/if}}
+
+      ---
+      {{/each}}
+
   - id: tasks-subtasks
     title: Tasks / Subtasks
-    type: bullet-list
+    type: structured-tasks
     instruction: |
-      SM: Render basic TDD template per AC.
-      QA: Backfill Test Specs table after test-design (Standard/Comprehensive only).
-      Dev: Execute TDD cycle using Test Specs as test case source.
+      Task structure based on "independently completable technical units".
+      Each task is less than 2 hours, can be committed independently.
+
+      Structure:
+      1. Infrastructure Tasks (shared across ACs) - database, base setup
+      2. Feature Tasks (per AC) - with TDD cycle
+      3. Integration Tasks (cross-AC) - E2E testing
+
+      Dev: Execute tasks in order, check off as completed.
+      QA: Backfill Test Specs after test-design (Standard/Comprehensive only).
     owner: scrum-master
     editors: [scrum-master, qa-agent, dev-agent]
     template: |
+      ## Infrastructure Tasks (Shared)
+
+      - [ ] **T0: Database & Base Setup** `[ALL ACs]`
+        - [ ] Create/modify database tables and migrations
+        - [ ] Set up base service/repository structure
+        - [ ] Verify migrations execute successfully
+
+      ## Feature Implementation Tasks
+
       {{#each acceptance_criteria}}
-      - [ ] AC{{@index}}: {{this.title}}
-        - [ ] Write test for AC{{@index}}
-        - [ ] Implement to pass test
-        - [ ] Verify & refactor
+      ### {{this.id}}: {{this.title}}
+
+      - [ ] **T{{add @index 1}}: Implement {{this.title}}** `[{{this.id}}]`
+        - [ ] Write unit tests (cover BR-{{add @index 1}}.x rules)
+        - [ ] Implement core logic
+        {{#if this.data_validation}}- [ ] Implement data validation{{/if}}
+        - [ ] Implement error handling scenarios
+        - [ ] Verify all tests pass
       {{/each}}
 
-      - [ ] Integration & Edge Cases
-        - [ ] Cross-AC integration tests
-        - [ ] Error handling verification
-        - [ ] Edge case coverage
+      ## Integration & Verification Tasks
 
-      - [ ] Final Verification
-        - [ ] All tests passing
-        - [ ] Dev Log complete
+      - [ ] **T{{add acceptance_criteria.length 1}}: Integration Testing** `[ALL ACs]`
+        - [ ] End-to-end flow tests
+        - [ ] Cross-AC integration tests
+        - [ ] Edge case and boundary tests
+
+      - [ ] **T{{add acceptance_criteria.length 2}}: Final Verification** `[ALL ACs]`
+        - [ ] All tests passing (unit + integration)
+        - [ ] No lint errors
+        - [ ] Dev Log complete with implementation summary
         - [ ] Status → Review
+
+      ## AC Coverage Matrix
+
+      | Task | {{#each acceptance_criteria}}{{this.id}} | {{/each}}
+      |------|{{#each acceptance_criteria}}:---:|{{/each}}
+      | T0: Infrastructure | {{#each acceptance_criteria}}✓ | {{/each}}
+      {{#each acceptance_criteria}}
+      | T{{add @index 1}}: {{this.title}} | {{#each ../acceptance_criteria}}{{#if (eq @index @../index)}}✓{{else}} {{/if}} | {{/each}}
+      {{/each}}
+      | T{{add acceptance_criteria.length 1}}: Integration | {{#each acceptance_criteria}}✓ | {{/each}}
+      | T{{add acceptance_criteria.length 2}}: Final | {{#each acceptance_criteria}}✓ | {{/each}}
 
   - id: dev-notes
     title: Dev Notes

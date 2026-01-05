@@ -271,9 +271,12 @@ Continue? [Y/n]
 
 ### Step 5: Create New Epics
 
-Generate YAML format content for each new Epic.
+Generate YAML format content for each new Epic using ENHANCED AC STRUCTURE.
 
-**5.1 Epic YAML Format**
+**5.1 Enhanced Epic YAML Format**
+
+CRITICAL: Each AC must be a COMPLETE requirement unit. Dev agents will implement directly
+from this specification without needing to consult PRD or architecture documents.
 
 Follow the format defined in `prd-tmpl.yaml`:
 
@@ -287,24 +290,89 @@ stories:
   - id: "{epic_id}.1"
     title: "{Story Title}"
     repository_type: backend | frontend | ios | android | mobile | monolith
-    acceptance_criteria:
-      - "AC1: {verifiable acceptance criterion}"
-      - "AC2: {verifiable acceptance criterion}"
     estimated_complexity: low | medium | high
     priority: P0 | P1 | P2
-    provides_apis: []    # Backend Story: ["POST /api/xxx"]
-    consumes_apis: []    # Frontend/Mobile Story: ["POST /api/xxx"]
-    dependencies: []     # Story IDs: ["4.1"]
-    # SM hints - populated by UX-Expert and Architect
+
+    # ============================================================
+    # ENHANCED ACCEPTANCE CRITERIA - Complete Requirement Specs
+    # ============================================================
+    acceptance_criteria:
+      - id: AC1
+        title: "{Concise AC title - 5-10 words}"
+
+        # REQUIRED: Scenario in GIVEN/WHEN/THEN format
+        scenario:
+          given: "{Precondition state}"
+          when: "{User action or system trigger}"
+          then:
+            - "{Expected outcome 1}"
+            - "{Expected outcome 2}"
+
+        # REQUIRED: Business rules governing this AC (minimum 1)
+        business_rules:
+          - id: "BR-1.1"
+            rule: "{Business rule description}"
+
+        # CONDITIONAL: Required when AC involves form input or API request
+        data_validation:
+          - field: "{field_name}"
+            type: "string | number | boolean | email | date | array | object"
+            required: true | false
+            rules: "{Validation rules - format, length, pattern, range}"
+            error_message: "{User-facing error message}"
+
+        # REQUIRED: Error scenarios and handling (minimum 1)
+        error_handling:
+          - scenario: "{Error condition description}"
+            code: "{HTTP status or error code}"
+            message: "{User-facing error message}"
+            action: "{System behavior on this error}"
+
+        # OPTIONAL: UI interaction details (for frontend/mobile only)
+        interaction:
+          - trigger: "{User action}"
+            behavior: "{UI response - loading states, animations, feedback}"
+
+        # RECOMMENDED: Concrete examples (Specification by Example)
+        examples:
+          - input: "{Example input data}"
+            expected: "{Expected output or behavior}"
+
+      - id: AC2
+        # ... same structure
+
+    # ============================================================
+    # API & Dependency Tracking
+    # ============================================================
+    provides_apis: []     # Backend: ["POST /api/xxx", "GET /api/xxx/:id"]
+    consumes_apis: []     # Frontend/Mobile: ["POST /api/xxx"]
+    dependencies: []      # Story IDs: ["4.1"]
+
+    # ============================================================
+    # SM Hints - Populated by UX-Expert and Architect AFTER PM creates Epic
+    # ============================================================
     sm_hints:
-      front_end_spec: null  # UX-Expert fills this
-      architecture: null     # Architect fills this
+      front_end_spec: null  # UX-Expert fills: {file, sections}
+      architecture: null     # Architect fills: {files}
 
   - id: "{epic_id}.2"
-    # ... more Stories
+    # ... more Stories with same structure
 ```
 
-**5.2 Story repository_type Determination**
+**5.2 Field Requirements Reference**
+
+| Field | Required | Condition | Description |
+|-------|----------|-----------|-------------|
+| id | YES | Always | AC identifier: AC1, AC2, etc. |
+| title | YES | Always | Concise AC title (5-10 words) |
+| scenario | YES | Always | GIVEN/WHEN/THEN structure |
+| business_rules | YES | Always | Minimum 1 rule per AC |
+| data_validation | CONDITIONAL | When AC has form/API input | Field-level validation specs |
+| error_handling | YES | Always | Minimum 1 error scenario |
+| interaction | NO | Only for UI stories | UI behavior details |
+| examples | RECOMMENDED | Always | Specification by Example |
+
+**5.3 Story repository_type Determination**
 
 Determine repository_type based on Story content:
 - Involves API, database, backend logic → `backend`
@@ -314,7 +382,18 @@ Determine repository_type based on Story content:
 - Generic mobile → `mobile`
 - Monolithic app → `monolith`
 
-**5.3 Confirm Epic Content with User**
+**5.4 Validation Before Confirmation**
+
+Before presenting to user, verify each Story:
+
+- [ ] Every AC has at least 1 business rule
+- [ ] Every AC with data input has data_validation section
+- [ ] Every AC has at least 1 error_handling scenario
+- [ ] Examples cover both success and failure cases
+- [ ] UI stories have interaction section
+- [ ] All field error_message values are user-friendly
+
+**5.5 Confirm Epic Content with User**
 
 After generating complete YAML for each Epic, present to user for confirmation:
 
@@ -322,7 +401,7 @@ After generating complete YAML for each Epic, present to user for confirmation:
 📋 Epic {n}: {title}
 
 ```yaml
-{complete YAML content}
+{complete YAML content with enhanced AC structure}
 ```
 
 Please confirm or suggest modifications:
