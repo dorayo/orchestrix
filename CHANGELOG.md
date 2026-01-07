@@ -1,3 +1,10 @@
+# [15.10.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.9.0...v15.10.0) (2026-01-07)
+
+
+### Features
+
+* **workflow:** add AC Traceability verification system ([f5b11d6](https://github.com/dorayo/ORCHESTRIX/commit/f5b11d6eeae3888e07395bd2692d9942c8edd6f6))
+
 # [15.9.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.8.0...v15.9.0) (2026-01-05)
 
 
