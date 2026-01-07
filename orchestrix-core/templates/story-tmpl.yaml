@@ -400,6 +400,84 @@ sections:
       | {{date}} | {{agent}} | {{from_status}} → {{to_status}} | {{details}} {{#if link}}[{{link_text}}]({{link}}){{/if}} |
       {{/each}}
 
+  - id: ac-traceability
+    title: AC Traceability Matrix
+    instruction: |
+      **CRITICAL SECTION - MANDATORY FOR DEV SELF-REVIEW**
+
+      This section provides EVIDENCE that each Acceptance Criterion has been implemented.
+      Dev MUST populate this section before marking story as Review.
+      QA will verify each entry during AC Coverage Verification (Step 4.6).
+
+      **Purpose**: Replace subjective "I implemented all ACs" claims with verifiable proof.
+
+      **Rules**:
+      1. EVERY AC must have an entry
+      2. `code_locations` must point to actual implementation (file:line-range)
+      3. `test_locations` must point to actual tests (test_file:test_name)
+      4. Empty entries = Gate FAIL
+      5. Invalid locations = Gate FAIL
+
+      **Format per AC**:
+      ```yaml
+      - ac_id: AC1
+        code_locations:
+          - "src/services/user.service.ts:45-67"       # Main implementation
+          - "src/validators/user.validator.ts:12-25"  # Validation logic
+        test_locations:
+          - "tests/user.service.test.ts:describe('createUser')"
+          - "tests/user.validator.test.ts:it('validates email format')"
+        verification_type: unit_test
+        notes: "Business rules BR-1.1, BR-1.2 implemented in validateUser()"
+      ```
+
+      **Verification Types**:
+      - `unit_test`: Unit tests verify the AC
+      - `integration_test`: Integration tests verify the AC
+      - `e2e_test`: E2E tests verify the AC
+      - `manual`: Requires manual verification (must document steps)
+    owner: dev-agent
+    editors: [dev-agent]
+    required: true
+    format: yaml
+    template: |
+      ## AC Traceability Matrix
+
+      > **Dev**: Fill this section BEFORE self-review. Every AC needs evidence.
+      > **QA**: Verify each entry during AC Coverage Verification.
+
+      {{#each acceptance_criteria}}
+      ### {{this.id}}: {{this.title}}
+
+      ```yaml
+      ac_id: {{this.id}}
+      code_locations:
+        - ""  # TODO: Add file:line-range (e.g., "src/service.ts:45-67")
+      test_locations:
+        - ""  # TODO: Add test_file:test_name (e.g., "tests/service.test.ts:it('should...')")
+      verification_type: unit_test  # unit_test | integration_test | e2e_test | manual
+      aspects_covered:
+        main_scenario: false    # GIVEN/WHEN/THEN flow implemented?
+        business_rules: false   # All BR-{{@index}}.x rules implemented?
+        data_validation: false  # Validation logic implemented? (if applicable)
+        error_handling: false   # Error scenarios handled?
+      notes: ""  # Additional implementation notes
+      ```
+
+      {{/each}}
+
+      ---
+
+      ### Traceability Summary
+
+      | AC | Code Location | Test Location | Type | Status |
+      |----|---------------|---------------|------|--------|
+      {{#each acceptance_criteria}}
+      | {{this.id}} | ⏳ Pending | ⏳ Pending | - | ⏳ |
+      {{/each}}
+
+      **Legend**: ✅ Verified | ⏳ Pending | ❌ Missing
+
   - id: dev-agent-record
     title: Dev Agent Record
     instruction: This section is populated by the development agent during implementation

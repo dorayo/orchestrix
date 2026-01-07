@@ -37,6 +37,8 @@ Extract:
 - `story.dev_notes` → validation reference
 - `story.dev_notes.file_locations` → expected file structure
 - `story.dev_notes.technical_constraints` → standards to enforce
+- `story.acceptance_criteria` → all ACs to verify implementation against
+- `story.ac_traceability` → implementation evidence (if exists)
 
 DO NOT load architecture documents. All relevant constraints are in Dev Notes.
 
@@ -113,6 +115,124 @@ task_checkbox_validation:
 **Decision Logic**:
 - PASS: completion_rate = 100% AND cross_validation_rate >= 90% AND zero critical issues
 - FAIL: Any unchecked critical item OR cross_validation_rate < 90% OR any critical issue
+
+---
+
+### 1.6 AC Traceability Verification (CRITICAL - Evidence-Based)
+
+**Objective**: Verify EVERY Acceptance Criterion has corresponding implementation WITH EVIDENCE. This replaces subjective "I implemented all ACs" claims with verifiable proof.
+
+**1.6.1 Build AC Traceability Matrix**
+
+For EACH AC in `story.acceptance_criteria`:
+
+```yaml
+ac_traceability_entry:
+  ac_id: '{AC number}'
+  ac_description: '{AC title/description}'
+
+  # MANDATORY - Dev must provide these
+  implementation:
+    code_locations: []     # List of "file:line_start-line_end" or "file:function_name"
+    verification_type: 'unit_test' | 'integration_test' | 'e2e_test' | 'manual'
+    test_locations: []     # List of "test_file:test_name" or "test_file:line"
+
+  # Validation results
+  validation:
+    code_exists: true | false
+    code_implements_ac: true | false  # Does the code actually fulfill the AC?
+    test_exists: true | false
+    test_covers_ac: true | false
+    status: VERIFIED | MISSING_CODE | MISSING_TEST | INCOMPLETE | NOT_FOUND
+```
+
+**1.6.2 Verify Each AC Implementation**
+
+For each AC entry:
+
+**Step A: Code Location Verification**
+1. Check if `code_locations` is populated (not empty)
+2. Navigate to each listed location
+3. Read the code at that location
+4. Verify the code actually implements the AC requirement (semantic check)
+
+**Validation Checks**:
+
+| Condition | Severity | Issue |
+|-----------|----------|-------|
+| `code_locations` is empty | CRITICAL | "No implementation location provided for {AC_ID}" |
+| File does not exist | CRITICAL | "Implementation file not found: {file_path} for {AC_ID}" |
+| Code at location is unrelated to AC | CRITICAL | "Code at {location} does not implement {AC_ID}" |
+| Code partially implements AC | MAJOR | "Partial implementation for {AC_ID}: {missing_aspect}" |
+
+**Step B: Test Coverage Verification**
+1. Check if `test_locations` is populated
+2. Navigate to each test location
+3. Verify test actually tests the AC (not just "exists")
+
+**Validation Checks**:
+
+| Condition | Severity | Issue |
+|-----------|----------|-------|
+| `test_locations` is empty | HIGH | "No test location provided for {AC_ID}" |
+| Test file does not exist | HIGH | "Test file not found: {test_file} for {AC_ID}" |
+| Test doesn't assert AC behavior | MAJOR | "Test at {location} doesn't verify {AC_ID} requirements" |
+| Test is stub/empty | CRITICAL | "Test for {AC_ID} is a stub with no assertions" |
+
+**1.6.3 Cross-Reference with AC Requirements**
+
+For each AC, verify ALL aspects are covered:
+
+| AC Aspect | Verification Method |
+|-----------|-------------------|
+| Business Rules (BR-X.x) | Search code for rule implementation |
+| Data Validation | Search for validation logic/schema |
+| Error Handling | Search for error scenarios handling |
+| UI Interaction (if any) | Search for interaction handlers |
+
+**1.6.4 Generate AC Traceability Report**
+
+```yaml
+ac_traceability_result:
+  total_acs: {count}
+  verified: {count}
+  missing_code: {count}
+  missing_test: {count}
+  incomplete: {count}
+
+  coverage_rate: {percentage}  # verified / total_acs
+
+  matrix:
+    - ac_id: AC1
+      description: "..."
+      code_locations: ["src/service.ts:45-67"]
+      test_locations: ["tests/service.test.ts:23"]
+      code_verified: true | false
+      test_verified: true | false
+      status: VERIFIED | MISSING_CODE | MISSING_TEST | INCOMPLETE
+      issues: []
+    # ... repeat for each AC
+
+  issues:
+    critical: [{ac_id, issue, expected, actual}]
+    high: [{ac_id, issue, recommendation}]
+    major: [{ac_id, issue, recommendation}]
+```
+
+**AC Traceability Gate Decision**:
+
+```yaml
+ac_traceability:
+  result: PASS | FAIL
+  coverage_rate: {percentage}
+  acs_verified: {count}/{total}
+```
+
+**Decision Logic**:
+- PASS: coverage_rate = 100% AND zero critical issues AND zero high issues
+- FAIL: coverage_rate < 100% OR any critical issue OR any high issue
+
+**Important**: This is a HARD GATE. A single unverified AC = FAIL.
 
 ---
 
@@ -422,11 +542,11 @@ gate_result:
   status: {PASS|FAIL}
   overall_score: {percentage}  # Weighted score across all sections
 
-  # Critical Items (8 mandatory items)
+  # Critical Items (9 mandatory items)
   critical_items:
-    total: 8
+    total: 9
     passed: {count}
-    status: {PASS|FAIL}  # PASS only if all 8 pass
+    status: {PASS|FAIL}  # PASS only if all 9 pass
     items:
       - id: C1
         check: "All tests passing"
@@ -441,9 +561,9 @@ gate_result:
         status: {PASS|FAIL}
         evidence: {git diff analysis result}
       - id: C4
-        check: "All acceptance criteria implemented"
+        check: "AC Traceability: All ACs have verified implementation evidence"
         status: {PASS|FAIL}
-        evidence: {AC checklist from story}
+        evidence: {ac_traceability_result with coverage_rate and matrix}
       - id: C5
         check: "Security requirements met"
         status: {PASS|FAIL}
@@ -460,13 +580,17 @@ gate_result:
         check: "All task checkboxes complete and verified"
         status: {PASS|FAIL}
         evidence: {checkbox completion rate and cross-validation result}
+      - id: C9
+        check: "AC Traceability Matrix fully populated"
+        status: {PASS|FAIL}
+        evidence: {ac_traceability section in story file}
 
-  # Sections (12 validation sections)
+  # Sections (13 validation sections)
   sections:
     - name: "Task Checkbox Completion"
       score: {percentage}
       threshold: 100%
-      weight: 8%
+      weight: 6%
       weighted_score: {percentage}
       passed: {true|false}
       items_total: {total_checkboxes}
@@ -474,6 +598,24 @@ gate_result:
       cross_validation_rate: {percentage}
       unchecked_items: [{item_text, type, ac_id}]
       mismatches: [{checkbox_text, expected, actual}]
+
+    - name: "AC Traceability"
+      score: {percentage}
+      threshold: 100%
+      weight: 12%
+      weighted_score: {percentage}
+      passed: {true|false}
+      items_total: {total_acs}
+      items_passed: {verified_count}
+      coverage_rate: {percentage}
+      matrix:
+        - ac_id: {id}
+          code_verified: {true|false}
+          test_verified: {true|false}
+          status: {VERIFIED|MISSING_CODE|MISSING_TEST|INCOMPLETE}
+      issues:
+        critical: [{ac_id, issue, expected, actual}]
+        high: [{ac_id, issue, recommendation}]
 
     - name: "Requirements Completeness"
       score: {percentage}

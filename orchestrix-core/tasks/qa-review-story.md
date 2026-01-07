@@ -407,6 +407,173 @@ task_checkbox_verification:
 
 ---
 
+## Step 4.6: AC Coverage Verification (CRITICAL - Before Code Review)
+
+**Purpose**: Verify EVERY Acceptance Criterion has been implemented with traceable evidence. This is QA's primary validation - ensuring Dev claims match actual deliverables.
+
+**Rationale**: QA Report showed 5/6 issues were "AC defined but not implemented". This step catches those before they reach E2E testing.
+
+### 4.6.1 Load AC Traceability Data
+
+**Locate AC Traceability Section** in Story file:
+
+Read from `story.ac_traceability` (populated by Dev during self-review):
+
+```yaml
+expected_structure:
+  - ac_id: '{AC identifier}'
+    code_locations: ['file:line-range', ...]
+    test_locations: ['test_file:test_name', ...]
+    verification_type: 'unit_test' | 'integration_test' | 'e2e_test' | 'manual'
+```
+
+**If `ac_traceability` section is MISSING or EMPTY**:
+- Record CRITICAL issue: "AC Traceability Matrix not populated by Dev"
+- Status: Cannot verify implementation
+- Skip to Step 4.6.5 with FAIL result
+
+### 4.6.2 Verify Each AC Implementation
+
+For EACH AC in `story.acceptance_criteria`:
+
+**A. Check Traceability Entry Exists**
+
+| Condition | Severity | Issue |
+|-----------|----------|-------|
+| No entry for AC in traceability matrix | CRITICAL | "AC{N} has no traceability entry - cannot verify implementation" |
+| Entry exists but `code_locations` empty | CRITICAL | "AC{N} traceability entry has no code locations" |
+| Entry exists but `test_locations` empty | HIGH | "AC{N} traceability entry has no test locations" |
+
+**B. Verify Code Actually Implements AC**
+
+For each AC with populated `code_locations`:
+
+1. Navigate to each listed code location
+2. Read the code at that location
+3. **Semantic verification**: Does this code actually fulfill the AC requirement?
+
+**Verification checklist per AC**:
+
+| AC Aspect | How to Verify | Status |
+|-----------|---------------|--------|
+| Main scenario (GIVEN/WHEN/THEN) | Code handles the flow | [ ] |
+| Business Rules (BR-X.x) | Rules are implemented | [ ] |
+| Data Validation (if any) | Validation logic exists | [ ] |
+| Error Handling | Error scenarios handled | [ ] |
+| UI Interaction (if any) | Interaction logic exists | [ ] |
+
+**Issue Detection**:
+
+| Finding | Severity | Issue |
+|---------|----------|-------|
+| Code location doesn't exist | CRITICAL | "File/line {location} not found for AC{N}" |
+| Code exists but doesn't implement AC | CRITICAL | "Code at {location} does not implement AC{N} requirements" |
+| Business Rule not implemented | HIGH | "BR-{N}.{X} not found in implementation for AC{N}" |
+| Error handling missing | HIGH | "Error scenario '{scenario}' not handled for AC{N}" |
+| Data validation missing | MEDIUM | "Validation for '{field}' not implemented for AC{N}" |
+
+**C. Verify Tests Cover AC Requirements**
+
+For each AC with populated `test_locations`:
+
+1. Navigate to test location
+2. Verify test actually tests the AC behavior (not just "exists")
+3. Check test assertions match AC requirements
+
+| Finding | Severity | Issue |
+|---------|----------|-------|
+| Test location doesn't exist | HIGH | "Test file/line {location} not found for AC{N}" |
+| Test exists but doesn't test AC | HIGH | "Test at {location} doesn't verify AC{N} requirements" |
+| Test is stub/placeholder | CRITICAL | "Test for AC{N} is empty or stub" |
+| Test asserts wrong behavior | CRITICAL | "Test for AC{N} asserts incorrect behavior" |
+
+### 4.6.3 Cross-Reference with Dev Self-Review
+
+Compare QA findings with Dev's self-review claims:
+
+| Dev Claim | QA Finding | Discrepancy |
+|-----------|------------|-------------|
+| "AC1 implemented at service.ts:45" | Code exists but missing error handling | HIGH: "Dev claims complete but error handling missing" |
+| "AC2 tested in service.test.ts" | Test exists but is stub | CRITICAL: "Dev claims tested but test is placeholder" |
+
+**Discrepancy Detection**:
+
+| Condition | Severity | Issue |
+|-----------|----------|-------|
+| Dev claims implemented, QA finds missing | CRITICAL | "Discrepancy: Dev claimed AC{N} complete but implementation missing" |
+| Dev claims tested, QA finds stub | CRITICAL | "Discrepancy: Dev claimed AC{N} tested but test is stub" |
+| Minor gap (partial implementation) | MAJOR | "Partial implementation: AC{N} missing {aspect}" |
+
+### 4.6.4 Generate AC Coverage Report
+
+```yaml
+ac_coverage_verification:
+  story_id: {story_id}
+  verification_date: {timestamp}
+
+  summary:
+    total_acs: {count}
+    fully_verified: {count}
+    partially_verified: {count}
+    not_verified: {count}
+    coverage_rate: {percentage}  # fully_verified / total_acs
+
+  details:
+    - ac_id: AC1
+      traceability_entry_found: true | false
+      code_locations_verified: {count}/{total}
+      test_locations_verified: {count}/{total}
+      aspects_verified:
+        main_scenario: true | false
+        business_rules: {verified}/{total}
+        data_validation: true | false | N_A
+        error_handling: true | false
+        ui_interaction: true | false | N_A
+      status: VERIFIED | PARTIAL | MISSING
+      issues: []
+    # ... repeat for each AC
+
+  discrepancies:
+    - ac_id: AC{N}
+      dev_claim: "..."
+      qa_finding: "..."
+      severity: CRITICAL | HIGH
+
+  issues_by_severity:
+    critical: [{ac_id, issue, evidence}]
+    high: [{ac_id, issue, evidence}]
+    medium: [{ac_id, issue, recommendation}]
+```
+
+### 4.6.5 AC Coverage Decision
+
+```yaml
+ac_coverage_result:
+  result: PASS | FAIL
+  coverage_rate: {percentage}
+  blocking_issues: {count of critical + high}
+```
+
+**Decision Logic**:
+
+| Condition | Result | Action |
+|-----------|--------|--------|
+| coverage_rate = 100% AND zero critical AND zero high | PASS | Continue to Step 5 |
+| coverage_rate ≥ 80% AND zero critical AND ≤2 high | CONCERNS | Continue with issues logged |
+| coverage_rate < 80% OR any critical OR >2 high | FAIL | Skip E2E, go to Step 7 with FAIL |
+
+**Store result for Step 7 Gate Decision**:
+```yaml
+ac_coverage:
+  verification_method: 'traceability_verification'
+  coverage_rate: {percentage}
+  passed: true | false
+  blocking_issues_count: {count}
+  issues: [{ac_id, severity, issue, evidence}]
+```
+
+---
+
 ## Step 5: E2E Testing (Conditional)
 
 **Purpose**: Execute end-to-end tests based on risk level
@@ -574,6 +741,14 @@ task_checkbox_consistency_rate: {from Step 4.5}
 task_checkbox_unchecked_critical: {count of unchecked AC/test/implement boxes}
 task_checkbox_mismatches: {count of checked boxes without matching deliverables}
 
+# Step 4.6: AC Coverage Verification (CRITICAL)
+ac_coverage_rate: {from Step 4.6}
+ac_coverage_passed: {from Step 4.6}
+ac_traceability_found: {true if ac_traceability section exists in story}
+ac_discrepancies_count: {count of dev-claim vs qa-finding mismatches}
+acs_fully_verified: {count from Step 4.6}
+acs_not_verified: {count from Step 4.6}
+
 # Step 5: E2E Testing
 e2e_tests_passed: {from Step 5, or null if skipped}
 e2e_tests_skipped: {true if review_mode == automated_only}
@@ -585,7 +760,7 @@ blind_spot_coverage_rate: {from Step 5.5}
 blind_spot_missing_code: {count from Step 5.5}
 blind_spot_missing_test: {count from Step 5.5}
 
-# Aggregated Issues (includes Step 4.5 issues)
+# Aggregated Issues (includes Step 4.5 and 4.6 issues)
 issues_by_severity:
   critical: {count}
   high: {count}
@@ -944,6 +1119,7 @@ Gate: PASS | Tests: {pass_rate}%
 | 3.5 | Migration Verification | Verify DB migrations executed |
 | 4 | Automated Test Evidence | Verify Dev test results (no re-run) |
 | 4.5 | Task Checkbox Verification | Verify checkboxes match deliverables |
+| **4.6** | **AC Coverage Verification** | **Verify ALL ACs implemented with evidence (CRITICAL)** |
 | 5 | E2E Testing | Execute user flows (risk-based) |
 | 5.5 | Blind Spot Verification | Check Dev blind spots coverage |
 | 6 | Evidence Collection | Capture screenshots/logs |
@@ -958,8 +1134,9 @@ Gate: PASS | Tests: {pass_rate}%
 
 1. **Trust Dev evidence**: Verify test results exist, do NOT re-run automated tests
 2. **Checkbox-deliverable consistency**: Verify checked boxes match actual deliverables
-3. **Risk-aware E2E**: Low-risk = skip, Medium = spot check, High = full testing
-4. **Blind spot focus**: QA's unique value is covering what Dev missed
-5. **Evidence-driven**: Issues include screenshots and reproduction steps
-6. **User perspective**: E2E tests verify real user journeys
-7. **Clean environment**: Always cleanup, even on failure
+3. **AC Traceability verification**: Every AC must have verified code + test locations (CRITICAL)
+4. **Risk-aware E2E**: Low-risk = skip, Medium = spot check, High = full testing
+5. **Blind spot focus**: QA's unique value is covering what Dev missed
+6. **Evidence-driven**: Issues include screenshots and reproduction steps
+7. **User perspective**: E2E tests verify real user journeys
+8. **Clean environment**: Always cleanup, even on failure

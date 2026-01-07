@@ -75,8 +75,48 @@ metadata:
 | | Docs exist/accessible | [ ] |
 | | Sections match claims | [ ] |
 | | No invented details | [ ] |
+| **Type Consistency** | Types match cumulative registry | [ ] |
+| | No invented type names | [ ] |
+| | Enum values match existing | [ ] |
+| | New types explicitly marked | [ ] |
 
 **S2 Score: ___% (Done/Total)** | **HARD REQ:** [ ] PASS (≥80%) | [ ] FAIL → Blocked
+
+### Type Consistency Verification (CRITICAL)
+
+**Purpose**: Prevent type mismatches between Story design and existing codebase.
+
+**Background**: QA Report identified that Epic 12 used `AcpAgentType` while Story 9.7 had already changed the type system to use `architect-planning` and `architect-engineering` instead of simple `'architect'`. This type of mismatch causes runtime errors.
+
+**Verification Steps**:
+
+1. **Load Cumulative Models Registry**:
+   ```
+   docs/cumulative/models-registry.md
+   ```
+
+2. **Extract All Type References from Story**:
+   - Scan AC for type names (e.g., `AgentType`, `StatusEnum`, `IUser`)
+   - Scan Dev Notes for data model references
+   - Scan Tasks for any type-specific implementations
+
+3. **Cross-Reference with Registry**:
+
+   | Story Type Reference | Registry Status | Action |
+   |---------------------|-----------------|--------|
+   | Exists in registry | ✅ Valid | Use as-is |
+   | NOT in registry | ⚠️ Check | Is this NEW or TYPO? |
+   | Different from registry | ❌ Mismatch | Update Story to match registry |
+
+4. **For Each Unmatched Type**:
+   - If genuinely NEW type: Mark explicitly as `[NEW TYPE]` with justification
+   - If TYPO/outdated: Correct to match registry
+   - If MISMATCH with recent change: Check git history for TCPs that modified types
+
+**Scoring Impact**:
+- Unverified type reference: -2 points per instance
+- Type mismatch with registry: -3 points per instance (MAJOR)
+- Using deprecated type: -2 points per instance
 
 ## S3: Implementation Readiness (Weight: 50%)
 
@@ -121,8 +161,9 @@ metadata:
 | 5 | Security | auth, encryption, permissions, PII | [ ] |
 | 6 | Performance | optimization, caching, real-time | [ ] |
 | 7 | Core Docs | modify data-models.md, rest-api-spec.md | [ ] |
+| 8 | Data Sync | DB write ops affecting multiple tables | [ ] |
 
-**Total: ___/7** | **Security Sensitive:** [ ] Yes (if #5) | [ ] No
+**Total: ___/8** | **Security Sensitive:** [ ] Yes (if #5) | [ ] No
 
 ---
 
@@ -134,16 +175,29 @@ This checklist returns the following data for use by the calling task:
 structure_validation:
   passed: true/false
   score_percentage: 0-100
-  
+
 technical_quality:
   section_2_score: 0-100  # Technical Extraction
   section_3_score: 0-100  # Implementation Readiness
   passed_threshold: true/false  # ≥80%
-  
+
+type_consistency:
+  types_referenced: []        # List of type names found in Story
+  types_verified: 0           # Count matching cumulative registry
+  types_unverified: 0         # Count not in registry
+  types_mismatched: 0         # Count conflicting with registry
+  new_types_declared: []      # Types explicitly marked as [NEW TYPE]
+  score_deduction: 0          # Points deducted for type issues
+  issues:
+    - type_name: "..."
+      issue: "not_in_registry | mismatched | deprecated"
+      expected: "..."         # What registry says (if applicable)
+      action: "..."           # Recommended fix
+
 quality_score:
   final_score: 0-10
   calculation: "(S2 × 0.50) + (S3 × 0.50)"
-  
+
 complexity_indicators:
   api_changes: true/false
   db_schema: true/false
@@ -152,7 +206,8 @@ complexity_indicators:
   security: true/false
   performance: true/false
   core_docs: true/false
-  total_count: 0-7
+  data_sync: true/false
+  total_count: 0-8
   security_sensitive: true/false
 ```
 
