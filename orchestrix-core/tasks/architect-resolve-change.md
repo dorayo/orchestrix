@@ -373,9 +373,7 @@ This establishes bidirectional linkage between proposals.
    - Components affected: [{components}]
    - Stories defined: {count}
 
-   🤖 Generated with Orchestrix
-
-   Co-Authored-By: Architect
+   🤖 Generated with [Orchestrix](https://orchestrix-mcp.youlidao.ai)
    ```
 
 4. **Handle Commit Result**

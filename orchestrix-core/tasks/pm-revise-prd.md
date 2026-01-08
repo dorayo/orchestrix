@@ -346,9 +346,7 @@ After proposal is created:
    - MVP scope: {expand | reduce | maintain}
    - Stories defined: {count}
 
-   🤖 Generated with Orchestrix
-
-   Co-Authored-By: PM
+   🤖 Generated with [Orchestrix](https://orchestrix-mcp.youlidao.ai)
    ```
 
 4. **Handle Commit Result**
