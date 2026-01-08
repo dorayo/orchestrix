@@ -1,3 +1,10 @@
+## [15.10.1](https://github.com/dorayo/ORCHESTRIX/compare/v15.10.0...v15.10.1) (2026-01-08)
+
+
+### Bug Fixes
+
+* **tasks:** standardize git commit signature format ([233abe2](https://github.com/dorayo/ORCHESTRIX/commit/233abe2750692385e90cfaff2498ddcaa82ac7f5))
+
 # [15.10.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.9.0...v15.10.0) (2026-01-07)
 
 
