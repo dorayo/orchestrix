@@ -226,9 +226,173 @@ Ask user if existing sections need updates:
 Enter section numbers to update (e.g., 1,2) or "none" to skip:
 ```
 
-### Step 4: Analyze Impact Scope
+### Step 4: Existing Implementation Reusability Analysis
 
-Based on Step 3 discussion results, generate affected files list:
+CRITICAL: Before creating new Epics, perform deep analysis of existing codebase to identify reusable implementations and potential conflicts. This prevents duplicate work and ensures new features integrate properly with existing code.
+
+**4.1 Deep Scan Codebase Structure**
+
+Scan the project source directories to understand existing implementation:
+
+```bash
+# Identify main source directories
+ls -la src/ || ls -la app/ || ls -la lib/
+
+# List all modules/services/components
+find src -type d -name "services" -o -name "modules" -o -name "components" | head -20
+
+# List key implementation files
+find src -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | head -50
+```
+
+For each new requirement from Step 3, identify potentially related existing code:
+
+| Requirement | Search Keywords | Related Directories to Scan |
+|-------------|-----------------|----------------------------|
+| {requirement_1} | {keyword_1}, {keyword_2} | src/services/, src/modules/ |
+
+**4.2 Read Key Implementation Files**
+
+For each requirement, read existing implementations that may be relevant:
+
+1. Search for related service/module files:
+   ```bash
+   grep -r "{keyword}" src/ --include="*.ts" -l | head -10
+   ```
+
+2. Read identified files to understand:
+   - Current implementation approach
+   - Existing interfaces and types
+   - Error handling patterns
+   - Integration points with other modules
+
+**4.3 Classify Existing Implementations**
+
+For each new requirement, classify existing implementations into four categories:
+
+**Category A: Directly Reusable**
+- Existing implementation fully satisfies the requirement
+- No code changes needed, only integration
+
+**Category B: Requires Extension**
+- Existing implementation partially satisfies the requirement
+- Can be extended without breaking existing functionality
+- Document specific extension points
+
+**Category C: Has Conflicts**
+- Existing implementation logic conflicts with new requirement
+- Requires refactoring or architectural decision
+- Document specific conflict points and impact
+
+**Category D: New Implementation**
+- No existing implementation available
+- Must be built from scratch
+- Document suggested location and patterns to follow
+
+**4.4 Generate Reusability Analysis Report**
+
+Output structured analysis report for user review:
+
+```
+═══════════════════════════════════════════════════════
+🔍 EXISTING IMPLEMENTATION REUSABILITY ANALYSIS
+═══════════════════════════════════════════════════════
+
+## Analysis for: {Epic/Requirement Title}
+
+### ✅ Category A: Directly Reusable
+
+| Component | Location | Current Capability | Reuse Strategy |
+|-----------|----------|-------------------|----------------|
+| {component_name} | {file_path} | {what_it_does} | {how_to_reuse} |
+
+**Recommendation**: Reference these in Epic as dependencies, avoid reimplementation.
+
+---
+
+### 🔧 Category B: Requires Extension
+
+| Component | Location | Current Capability | Extension Needed |
+|-----------|----------|-------------------|------------------|
+| {component_name} | {file_path} | {current_feature} | {what_to_add} |
+
+**Recommendation**: Extend existing modules rather than creating new ones.
+
+---
+
+### ⚠️ Category C: Has Conflicts
+
+| Component | Location | Conflict Point | Impact | Resolution Options |
+|-----------|----------|---------------|--------|-------------------|
+| {component_name} | {file_path} | {conflict_desc} | {impact_level} | {option_1}, {option_2} |
+
+**⚠️ ATTENTION REQUIRED**: These conflicts must be resolved before implementation.
+
+**Conflict Details**:
+1. {conflict_1_detailed_explanation}
+   - Current behavior: {current}
+   - Required behavior: {required}
+   - Suggested resolution: {resolution}
+
+---
+
+### 🆕 Category D: New Implementation
+
+| Feature | Reason | Suggested Location | Patterns to Follow |
+|---------|--------|-------------------|-------------------|
+| {feature_name} | {why_new} | {suggested_path} | {existing_pattern_ref} |
+
+**Recommendation**: Follow existing codebase patterns from {reference_file}.
+
+═══════════════════════════════════════════════════════
+
+## 📊 SUMMARY
+
+| Category | Count | Items |
+|----------|-------|-------|
+| Directly Reusable | {n} | {list} |
+| Requires Extension | {n} | {list} |
+| Has Conflicts | {n} | {list} |
+| New Implementation | {n} | {list} |
+
+## ❓ USER DECISION REQUIRED
+
+Based on this analysis:
+
+1. **Adopt reuse recommendations?** (Y/N)
+   - If Y: Epic will reference existing implementations
+   - If N: Please specify which items to override
+
+2. **Conflict resolution approach?**
+   - For each conflict, choose resolution option or provide alternative
+
+3. **Adjust requirements based on findings?**
+   - Some requirements may be simplified by leveraging existing code
+   - Some may need adjustment to avoid major refactoring
+
+Please provide your decisions before proceeding to Epic creation.
+═══════════════════════════════════════════════════════
+```
+
+**4.5 Wait for User Confirmation**
+
+HALT and wait for user to:
+1. Review the reusability analysis report
+2. Confirm or modify reuse recommendations
+3. Decide on conflict resolution approaches
+4. Optionally adjust requirements based on findings
+
+**IF user requests requirement adjustments:**
+- Return to Step 3.5 to update Epic planning
+- Re-run affected parts of Step 4 analysis
+
+**IF user confirms analysis:**
+- Proceed to Step 5 with reuse decisions recorded
+- Reuse analysis will be embedded in Epic YAML
+
+### Step 5: Analyze Impact Scope
+
+Based on Step 3 and Step 4 results, generate affected files list:
 
 ```yaml
 files_to_update:
@@ -269,11 +433,12 @@ Optional Updates:
 Continue? [Y/n]
 ```
 
-### Step 5: Create New Epics
+### Step 6: Create New Epics
 
 Generate YAML format content for each new Epic using ENHANCED AC STRUCTURE.
+Incorporate reusability analysis results from Step 4.
 
-**5.1 Enhanced Epic YAML Format**
+**6.1 Enhanced Epic YAML Format**
 
 CRITICAL: Each AC must be a COMPLETE requirement unit. Dev agents will implement directly
 from this specification without needing to consult PRD or architecture documents.
@@ -285,6 +450,40 @@ epic_id: {next_epic_id}
 title: "{Epic Title}"
 description: |
   {Epic description - 2-3 sentences explaining goals and value}
+
+# ============================================================
+# REUSE ANALYSIS - From Step 4 findings
+# ============================================================
+reuse_analysis:
+  directly_reusable:
+    # Category A items - existing code to reference, not reimplement
+    - component: "{component_name}"
+      location: "{file_path}"
+      capability: "{what_it_does}"
+      usage: "{how_this_epic_uses_it}"
+
+  requires_extension:
+    # Category B items - existing code to extend
+    - component: "{component_name}"
+      location: "{file_path}"
+      current_capability: "{what_it_does_now}"
+      extension_needed: "{what_to_add}"
+      affected_stories: ["{story_id}"]
+
+  conflicts:
+    # Category C items - conflicts requiring resolution
+    - component: "{component_name}"
+      location: "{file_path}"
+      conflict: "{conflict_description}"
+      resolution: "{chosen_resolution}"
+      affected_stories: ["{story_id}"]
+
+  new_implementations:
+    # Category D items - new code to create
+    - feature: "{feature_name}"
+      suggested_location: "{file_path}"
+      pattern_reference: "{existing_file_to_follow}"
+      affected_stories: ["{story_id}"]
 
 stories:
   - id: "{epic_id}.1"
@@ -359,7 +558,7 @@ stories:
     # ... more Stories with same structure
 ```
 
-**5.2 Field Requirements Reference**
+**6.2 Field Requirements Reference**
 
 | Field | Required | Condition | Description |
 |-------|----------|-----------|-------------|
@@ -372,7 +571,7 @@ stories:
 | interaction | NO | Only for UI stories | UI behavior details |
 | examples | RECOMMENDED | Always | Specification by Example |
 
-**5.3 Story repository_type Determination**
+**6.3 Story repository_type Determination**
 
 Determine repository_type based on Story content:
 - Involves API, database, backend logic → `backend`
@@ -382,7 +581,7 @@ Determine repository_type based on Story content:
 - Generic mobile → `mobile`
 - Monolithic app → `monolith`
 
-**5.4 Validation Before Confirmation**
+**6.4 Validation Before Confirmation**
 
 Before presenting to user, verify each Story:
 
@@ -393,7 +592,7 @@ Before presenting to user, verify each Story:
 - [ ] UI stories have interaction section
 - [ ] All field error_message values are user-friendly
 
-**5.5 Confirm Epic Content with User**
+**6.5 Confirm Epic Content with User**
 
 After generating complete YAML for each Epic, present to user for confirmation:
 
@@ -407,11 +606,11 @@ After generating complete YAML for each Epic, present to user for confirmation:
 Please confirm or suggest modifications:
 ```
 
-### Step 6: Update Files
+### Step 7: Update Files
 
 Execute file update operations.
 
-**6.1 Update 5-epic-list.md**
+**7.1 Update 5-epic-list.md**
 
 Append new Epic summary at end of file:
 
@@ -419,7 +618,7 @@ Append new Epic summary at end of file:
 - **Epic {n}: {title}** - {one sentence goal description}
 ```
 
-**6.2 Update 6-epics.md**
+**7.2 Update 6-epics.md**
 
 Append complete Epic definition at end of file (with YAML fence):
 
@@ -436,7 +635,7 @@ Append complete Epic definition at end of file (with YAML fence):
 ```
 ```
 
-**6.3 Create Standalone Epic Files**
+**7.3 Create Standalone Epic Files**
 
 Create a standalone YAML file for each new Epic:
 
@@ -450,7 +649,7 @@ title-slug rules:
 - Special characters removed
 - Example: "Advanced Search" → "advanced-search"
 
-**6.4 Create Front-End Spec Directory**
+**7.4 Create Front-End Spec Directory**
 
 If UI Stories exist in new Epics:
 
@@ -458,30 +657,30 @@ If UI Stories exist in new Epics:
 mkdir -p docs/front-end-spec
 ```
 
-**6.5 Update Other Sections** (if user selected)
+**7.5 Update Other Sections** (if user selected)
 
-Based on optional updates list from Step 4:
+Based on optional updates list from Step 5:
 - Interact with user to confirm specific update content
 - Append or modify corresponding sections
 
-### Step 7: Generate next-steps.md
+### Step 8: Generate next-steps.md
 
 **Completely replace** the `8-next-steps.md` file with enhanced handoff instructions.
 
-**7.1 Determine UI Involvement**
+**8.1 Determine UI Involvement**
 
 Check `repository_type` of all Stories in new Epics:
 - Contains `frontend`, `ios`, `android`, or `mobile` → UI involved
 - Otherwise → No UI involved
 
-**7.2 Analyze Epic Content**
+**8.2 Analyze Epic Content**
 
 For each new Epic, analyze Stories to determine:
 - Which architecture sections need updates
 - Which front-end components need design
 - Specific focus areas based on requirements
 
-**7.3 Write next-steps.md**
+**8.3 Write next-steps.md**
 
 Generate `8-next-steps.md` as executable prompts for downstream agents. Each `🎯 HANDOFF TO {agent}:` section is a complete prompt that the target agent will execute directly—replace all placeholders with actual values from this iteration.
 
@@ -666,7 +865,7 @@ SM can now create Stories with:
 Execute: *create-next-story
 ```
 
-### Step 8: Output Summary
+### Step 9: Output Summary
 
 Output completion report:
 
@@ -678,6 +877,12 @@ Output completion report:
 📋 New Epics Created:
 {for each new Epic:}
    - Epic {n}: {title} ({story_count} stories)
+
+🔍 Reusability Analysis Summary:
+   - Directly Reusable: {count} components
+   - Requires Extension: {count} components
+   - Conflicts Resolved: {count} items
+   - New Implementations: {count} features
 
 📁 Files Updated:
    - docs/prd/5-epic-list.md (appended)

@@ -211,6 +211,41 @@ sections:
       description: |
         {{Epic goal - 2-3 sentences describing objective and value}}
 
+      # ============================================================
+      # REUSE ANALYSIS - From PM *start-iteration Step 4 findings
+      # Records existing implementations to reuse/extend/resolve
+      # ============================================================
+      reuse_analysis:
+        directly_reusable:
+          # Category A: Existing code to reference, NOT reimplement
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            capability: "{{what_it_does}}"
+            usage: "{{how_this_epic_uses_it}}"
+
+        requires_extension:
+          # Category B: Existing code to extend
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            current_capability: "{{what_it_does_now}}"
+            extension_needed: "{{what_to_add}}"
+            affected_stories: ["{{story_id}}"]
+
+        conflicts:
+          # Category C: Conflicts requiring resolution
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            conflict: "{{conflict_description}}"
+            resolution: "{{chosen_resolution}}"
+            affected_stories: ["{{story_id}}"]
+
+        new_implementations:
+          # Category D: New code to create
+          - feature: "{{feature_name}}"
+            suggested_location: "{{file_path}}"
+            pattern_reference: "{{existing_file_to_follow}}"
+            affected_stories: ["{{story_id}}"]
+
       stories:
         - id: "{{N}}.1"
           title: "{{Story title}}"
@@ -290,6 +325,17 @@ sections:
       ```
 
       ## Field Requirements Reference
+
+      **Epic-Level Fields:**
+
+      | Field | Required | Condition | Description |
+      |-------|----------|-----------|-------------|
+      | epic_id | YES | Always | Unique epic identifier |
+      | title | YES | Always | Epic title |
+      | description | YES | Always | 2-3 sentences describing goal and value |
+      | reuse_analysis | CONDITIONAL | Post-MVP iterations | Existing implementation analysis from PM Step 4 |
+
+      **Acceptance Criteria Fields:**
 
       | Field | Required | Condition | Description |
       |-------|----------|-----------|-------------|
