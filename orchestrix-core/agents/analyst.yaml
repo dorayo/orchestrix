@@ -98,11 +98,9 @@ commands:
         | 1   | *brainstorm {topic}      | Structured brainstorming session    |
         | 2   | *research-prompt {topic} | Deep research prompt/plan           |
         | 3   | *create-doc {template}   | Generate document via template      |
-        | 4   | *document-project        | Analyze/document existing project   |
-        | 5   | *elicit                  | Run advanced elicitation            |
-        | 6   | *doc-out                 | Output current document             |
-        | 7   | *explain                 | Explain last action                 |
-        | 8   | *exit                    | Exit persona                        |
+        | 4   | *doc-out                 | Output current document             |
+        | 5   | *explain                 | Explain last action                 |
+        | 6   | *exit                    | Exit persona                        |
   - brainstorm:
       description: "Facilitate a structured brainstorming session."
       behavior:
@@ -115,14 +113,6 @@ commands:
       description: "Execute 'create-doc.md' for the given template; if none specified, list dependencies.templates."
       behavior:
         - "Run dependency task 'create-doc.md' with provided template file."
-  - document-project:
-      description: "Analyze and comprehensively document an existing project."
-      behavior:
-        - "Run dependency task 'document-project.md'."
-  - elicit:
-      description: "Run advanced elicitation (elicit=true)."
-      behavior:
-        - "Run dependency task 'advanced-elicitation.md'."
   - doc-out:
       description: "Output the full document in progress to the current destination file."
   - explain:
@@ -135,8 +125,6 @@ dependencies:
     - facilitate-brainstorming-session.md
     - create-deep-research-prompt.md
     - create-doc.md
-    - advanced-elicitation.md
-    - document-project.md
   templates:
     - project-brief-tmpl.yaml
     - market-research-tmpl.yaml
