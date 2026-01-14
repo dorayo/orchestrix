@@ -1,3 +1,15 @@
+# [15.11.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.10.2...v15.11.0) (2026-01-14)
+
+
+### Bug Fixes
+
+* **agents:** merge architect help tables to prevent rendering issues ([1686487](https://github.com/dorayo/ORCHESTRIX/commit/16864874e649c082c2a48d99ffb563d8bcf5d36b))
+
+
+### Features
+
+* **tasks:** add existing implementation reusability analysis to PM start-iteration ([106b536](https://github.com/dorayo/ORCHESTRIX/commit/106b536482f1f6601f1b45ff3bc82cbba2bab5f3))
+
 ## [15.10.2](https://github.com/dorayo/ORCHESTRIX/compare/v15.10.1...v15.10.2) (2026-01-08)
 
 
