@@ -96,21 +96,13 @@ commands:
       output_format: |
         | #   | Command                         | Description                                    |
         |-----|---------------------------------|------------------------------------------------|
-        | 1   | *create-doc {template}          | Create from template (or list templates)       |
-        | 2   | *execute-checklist {checklist}  | Run a checklist (default: po-master-validation)|
-        | 3   | *shard                          | Shard PRD and Architecture documents           |
-        | 4   | *route-change                   | Route change request to PM or Architect        |
-        | 5   | *create-epic                    | Create brownfield epic                         |
-        | 6   | *create-story                   | Create user story                              |
-        | 7   | *validate-story-draft {story}   | Validate a story file                          |
-        | 8   | *assemble [prd\|arch\|both]     | Assemble sharded docs for export               |
-        | 9   | *doc-out                        | Output current document                        |
-        | 10  | *explain                        | Explain last action                            |
-        | 11  | *exit                           | Exit persona                                   |
-  - create-doc:
-      description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
-      behavior:
-        - "Run dependency task 'create-doc.md' with the given template file."
+        | 1   | *execute-checklist {checklist}  | Run a checklist (default: po-master-validation)|
+        | 2   | *shard                          | Shard PRD and Architecture documents           |
+        | 3   | *route-change                   | Route change request to PM or Architect        |
+        | 4   | *assemble [prd\|arch\|both]     | Assemble sharded docs for export               |
+        | 5   | *doc-out                        | Output current document                        |
+        | 6   | *explain                        | Explain last action                            |
+        | 7   | *exit                           | Exit persona                                   |
   - execute-checklist:
       description: "Run PO checklist; default to 'workflow-po-master-validation.md' if not specified."
       behavior:
@@ -140,18 +132,6 @@ commands:
         change_description:
           required: true
           description: "Description of the requested change"
-  - create-epic:
-      description: "Create epic for brownfield projects."
-      behavior:
-        - "Run dependency task 'brownfield-create-epic.md'."
-  - create-story:
-      description: "Create user story from requirements."
-      behavior:
-        - "Run dependency task 'brownfield-create-story.md'."
-  - validate-story-draft:
-      description: "Validate a provided story file."
-      behavior:
-        - "Run dependency task 'validate-next-story.md' with {story}."
   - assemble:
       description: "Assemble sharded documents into complete files (for export/sharing)."
       behavior:
@@ -177,11 +157,6 @@ dependencies:
     - po-shard-documents.md
     - po-assemble-documents.md
     - po-route-change.md
-    - brownfield-create-epic.md
-    - brownfield-create-story.md
-    - validate-next-story.md
-  templates:
-    - story-tmpl.yaml
   checklists:
     - workflow-po-master-validation.md
     - workflow-change-navigation.md
