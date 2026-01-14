@@ -63,9 +63,8 @@ commands:
         | 11  | *extract-api-contracts         | Extract API docs from backend code       |
         |     | **Other Tools**                |                                          |
         | 12  | *research {topic}              | Deep technical research                  |
-        | 13  | *execute-checklist {checklist} | Execute quality checklist                |
-        | 14  | *explain                       | Explain architecture decisions           |
-        | 15  | *exit                          | Exit Architect mode                      |
+        | 13  | *explain                       | Explain architecture decisions           |
+        | 14  | *exit                          | Exit Architect mode                      |
   - create-doc:
       description: Generate architecture document from template
       task: create-doc.md
@@ -178,12 +177,6 @@ commands:
   - document-project:
       description: Analyze and document existing project architecture
       task: document-project.md
-  - execute-checklist:
-      description: Run architectural validation checklist
-      behavior:
-        - 'Load and execute: {root}/checklists/workflow-architect-validation.md'
-        - 'This is a self-contained validation workflow with embedded [[LLM: ]] instructions'
-        - Follow all validation steps and generate the comprehensive report as specified
   - doc-out:
       description: Output current document to destination file
   - explain:
@@ -214,7 +207,6 @@ dependencies:
     - system-architecture-tmpl.yaml
     - tech-proposal-tmpl.yaml
   checklists:
-    - workflow-architect-validation.md
     - scoring-architect-technical-review.md
   data:
     - technical-preferences.md
