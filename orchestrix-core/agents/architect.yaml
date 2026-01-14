@@ -47,21 +47,17 @@ commands:
       output_format: |
         | #   | Command                        | Description                              |
         |-----|--------------------------------|------------------------------------------|
-        |     | **Story Review & Docs**        |                                          |
         | 1   | *review {story_id}             | Review Story technical solution          |
         | 2   | *create-doc {template}         | Generate document from template          |
         | 3   | *resolve-change                | Handle technical changes, generate TCP   |
         | 4   | *doc-out                       | Output document content                  |
-        |     | **System Architecture**        |                                          |
         | 5   | *create-system-architecture    | Generate system-level architecture       |
         | 6   | *create-backend-architecture   | Generate backend detailed architecture   |
         | 7   | *create-frontend-architecture  | Generate frontend detailed architecture  |
         | 8   | *create-mobile-architecture    | Generate mobile detailed architecture    |
-        |     | **Brownfield Enhancement**     |                                          |
         | 9   | *document-project              | Document existing codebase               |
         | 10  | *aggregate-system-analysis     | Aggregate repo analysis (Product repo)   |
         | 11  | *extract-api-contracts         | Extract API docs from backend code       |
-        |     | **Other Tools**                |                                          |
         | 12  | *research {topic}              | Deep technical research                  |
         | 13  | *explain                       | Explain architecture decisions           |
         | 14  | *exit                          | Exit Architect mode                      |
