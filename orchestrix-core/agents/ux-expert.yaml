@@ -101,10 +101,8 @@ commands:
         |-----|-------------------------------|--------------------------------------|
         | 1   | *create-doc {template}        | Create from template (or list templates) |
         | 2   | *generate-ui-prompt           | Craft AI frontend generation prompt  |
-        | 3   | *research {topic}             | Create deep research prompt          |
-        | 4   | *execute-checklist {checklist}| Execute a checklist                  |
-        | 5   | *explain                      | Explain last action                  |
-        | 6   | *exit                         | End persona                          |
+        | 3   | *explain                      | Explain last action                  |
+        | 4   | *exit                         | End persona                          |
   - explain:
       description: "Explain the last action (mentor style)."
   - exit:
@@ -113,19 +111,12 @@ commands:
       description: "Execute task create-doc (no template → list dependencies.templates)."
   - generate-ui-prompt:
       description: "Execute task generate-ai-frontend-prompt to craft an AI frontend generation prompt."
-  - research {topic}:
-      description: "Execute task create-deep-research-prompt to initiate UX deep research."
-  - execute-checklist {checklist}:
-      description: "Execute task execute-checklist (default → po-master-checklist if available)."
 
 dependencies:
   tasks:
     - generate-ai-frontend-prompt.md
-    - create-deep-research-prompt.md
     - create-doc.md
   templates:
     - front-end-spec-tmpl.yaml
-  checklists:
-    - workflow-po-master-validation.md
   data:
     - technical-preferences.md
