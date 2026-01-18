@@ -1,3 +1,10 @@
+# [15.12.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.11.0...v15.12.0) (2026-01-18)
+
+
+### Features
+
+* **gates:** add deliverable binding verification to prevent orphaned code ([61eaa9b](https://github.com/dorayo/ORCHESTRIX/commit/61eaa9ba5d6d13824481bfee90af7010bcf4d788))
+
 # [15.11.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.10.2...v15.11.0) (2026-01-14)
 
 
