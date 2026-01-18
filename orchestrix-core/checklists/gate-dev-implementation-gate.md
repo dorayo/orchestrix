@@ -525,7 +525,119 @@ implementation_shortcuts:
 
 ---
 
-### 6. Generate Unified Validation Report
+### 6. Deliverable Binding Verification (CRITICAL)
+
+**Objective**: Confirm every new deliverable has verified consumer binding. No orphaned code should pass this gate.
+
+**Purpose**: Prevent "component island" problem where code exists and tests pass but feature is unreachable by users.
+
+**6.1 Load Binding Specifications**
+
+Read `story.deliverable_bindings[]` from story file (under Dev Notes section).
+
+**If empty, missing, or marked "N/A"**:
+1. Scan `story.file_list` for files with status "created" or "new"
+2. If new files exist without bindings defined:
+   - Severity: MAJOR
+   - Issue: "New file {path} has no defined consumer binding"
+3. If no new files detected: SKIP this section, result = N_A
+
+**6.2 Binding Verification Process**
+
+For each entry in `deliverable_bindings[]`:
+
+```yaml
+binding_check:
+  deliverable: {from story}
+  consumer: {from story}
+  binding_type: {from story}
+  verify: {regex pattern from story}
+
+  steps:
+    1. LOCATE consumer file
+       - If file not found: CRITICAL "Consumer file not found: {consumer}"
+
+    2. SEARCH consumer file for verify pattern
+       - Command: grep -E "{verify}" {consumer}
+       - If pattern not matched: CRITICAL "Binding not found: {verify} not in {consumer}"
+
+    3. IF binding_type == "import_usage":
+       - Verify import statement exists (pattern matched in step 2)
+       - Verify actual usage exists (deliverable identifier appears after import line)
+       - If import exists but no usage: MAJOR "Imported but unused: {deliverable}"
+
+    4. IF binding_type == "export_public":
+       - Verify export statement in index/entrypoint file
+       - If not exported: CRITICAL "Deliverable not exported from module entrypoint"
+
+  result:
+    status: PASS | FAIL
+    evidence: "Line {N}: {matching_line}" | "Not found"
+```
+
+**6.3 Detect Unlisted Deliverables**
+
+Cross-reference `story.file_list` (created files) with `deliverable_bindings`:
+
+```
+For each file in file_list where status == "created":
+  If file NOT in any deliverable_bindings[].deliverable:
+    Severity: MAJOR
+    Issue: "New file {path} created but no binding defined"
+    Recommendation: "Add binding entry or confirm file is internal helper"
+```
+
+**6.4 Validation Checks**
+
+| Condition | Severity | Issue |
+|-----------|----------|-------|
+| Consumer file not found | CRITICAL | "Consumer {path} does not exist" |
+| Verify pattern not matched | CRITICAL | "Deliverable not bound: {pattern} not in {consumer}" |
+| Import exists but no usage | MAJOR | "Deliverable imported but never used in {consumer}" |
+| New file without binding entry | MAJOR | "New file {path} has no consumer binding defined" |
+| Export missing from index | CRITICAL | "Deliverable not exported from module entrypoint" |
+
+**6.5 Binding Verification Result**
+
+```yaml
+binding_verification:
+  result: PASS | FAIL | N_A
+  total_bindings: {count}
+  verified: {count}
+  failed: {count}
+  unlisted_new_files: {count}
+
+  details:
+    - deliverable: "{path}"
+      consumer: "{path}"
+      binding_type: "{type}"
+      status: PASS | FAIL
+      evidence: "Line 12: import { Component } from './component'"
+      usage_confirmed: true | false
+
+  issues:
+    critical:
+      - deliverable: "{path}"
+        consumer: "{path}"
+        expected: "{verify pattern}"
+        actual: "not found"
+        fix: "Add import/usage of {deliverable} in {consumer}"
+    major:
+      - deliverable: "{path}"
+        issue: "Imported but unused"
+        recommendation: "Add actual usage or remove import"
+```
+
+**Decision Logic**:
+- PASS: All bindings verified (100% match rate) AND zero unlisted new files
+- FAIL: Any CRITICAL binding failed OR >2 MAJOR issues
+- N_A: No deliverable_bindings defined AND no new files in file_list
+
+**Weight**: 8% of overall gate score
+
+---
+
+### 7. Generate Unified Validation Report
 
 Combine all validation results into a single structured output.
 
@@ -542,11 +654,11 @@ gate_result:
   status: {PASS|FAIL}
   overall_score: {percentage}  # Weighted score across all sections
 
-  # Critical Items (9 mandatory items)
+  # Critical Items (10 mandatory items)
   critical_items:
-    total: 9
+    total: 10
     passed: {count}
-    status: {PASS|FAIL}  # PASS only if all 9 pass
+    status: {PASS|FAIL}  # PASS only if all 10 pass
     items:
       - id: C1
         check: "All tests passing"
@@ -584,8 +696,12 @@ gate_result:
         check: "AC Traceability Matrix fully populated"
         status: {PASS|FAIL}
         evidence: {ac_traceability section in story file}
+      - id: C10
+        check: "Deliverable bindings verified (no orphaned code)"
+        status: {PASS|FAIL|N_A}
+        evidence: {binding_verification result with details}
 
-  # Sections (13 validation sections)
+  # Sections (14 validation sections)
   sections:
     - name: "Task Checkbox Completion"
       score: {percentage}
@@ -724,10 +840,26 @@ gate_result:
         test_integrity: []
         dependency_hygiene: []
 
+    - name: "Deliverable Binding Verification"
+      score: {percentage|N_A}
+      threshold: 100%
+      weight: 8%
+      weighted_score: {percentage}
+      passed: {true|false|N_A}
+      items_total: {total_bindings}
+      items_passed: {verified_count}
+      unlisted_new_files: {count}
+      details:
+        - deliverable: "{path}"
+          consumer: "{path}"
+          binding_type: "{type}"
+          status: PASS | FAIL
+          evidence: "{matching_line}"
+
   # Detailed Issues
   issues:
     critical:
-      - category: {architecture|api_contract|test_integrity|security|build|implementation_shortcuts}
+      - category: {architecture|api_contract|test_integrity|security|build|implementation_shortcuts|binding_verification}
         section: {section_name}
         item_id: {e.g., "2.3", "C1"}
         issue: {description}

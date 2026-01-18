@@ -558,6 +558,28 @@ AC Coverage Matrix ensures all ACs are covered by tasks.
 
 **Key Principle** (from template line 211): "Put enough information so Dev Agent should NEVER need to read architecture documents"
 
+**Deliverable Bindings** (CRITICAL for preventing orphaned code):
+
+Analyze story requirements to identify NEW code units being created:
+1. Scan planned file_locations for files marked as "create" or "new"
+2. For each new code unit, determine its consumer (what existing code will use it)
+3. Select appropriate binding_type from enum
+4. Write regex pattern that will verify binding exists
+
+```yaml
+deliverable_bindings:
+  - deliverable: "{new_file_path}"
+    consumer: "{file_that_will_import_or_call_it}"
+    binding_type: import_usage | route_mount | config_read | cli_register | di_inject | event_subscribe | schema_applied | export_public
+    verify: "{regex_pattern_to_find_in_consumer}"
+```
+
+RULES:
+- Every new file MUST have at least one binding
+- If no consumer identified, question if deliverable should exist
+- "Will be used in future story" = defer deliverable to that story
+- Dev Gate Section 14 will FAIL if bindings not verified
+
 **Agent Records**: Initialize empty structures
 
 **Change Log**: Initialize with creation entry

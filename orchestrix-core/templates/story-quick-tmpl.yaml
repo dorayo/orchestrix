@@ -71,6 +71,18 @@ sections:
     type: text
     required: false
 
+  - id: deliverable-bindings
+    title: Deliverable Bindings
+    type: yaml-block
+    instruction: |
+      For new code units: define consumer binding. Skip if only modifying existing files.
+      Format: deliverable → consumer (binding_type) [verify: regex]
+    required: false
+    template: |
+      ```yaml
+      # deliverable_bindings: []  # Uncomment and populate if creating new files
+      ```
+
   - id: quick-record
     title: Quick Record
     type: table

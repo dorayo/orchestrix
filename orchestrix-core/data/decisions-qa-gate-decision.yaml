@@ -75,6 +75,20 @@ inputs:
     required: false
     description: "Count of checked boxes without matching deliverables"
 
+  # Deliverable context (for E2E requirement)
+  - name: has_user_facing_deliverable
+    type: boolean
+    required: false
+    description: >
+      True if story has deliverables with binding_type in [import_usage, route_mount, cli_register]
+      where consumer is a user-facing file (pages/**, app/**, routes/**).
+      Derived from story.deliverable_bindings[].
+
+  - name: has_new_ui_components
+    type: boolean
+    required: false
+    description: "True if story creates new UI components (from file_list patterns)"
+
   # Review context
   - name: review_round
     type: number
@@ -100,16 +114,34 @@ rules:
   # PRIMARY RULES: Based on Test Execution
   # ============================================
 
-  # PASS: All tests pass, no issues (automated_only mode)
+  # FAIL: E2E skipped but story has user-facing deliverables (NEW - prevents orphaned UI)
+  - id: fail_e2e_skipped_user_facing
+    priority: 0
+    condition: >
+      e2e_tests_skipped == true AND
+      (has_user_facing_deliverable == true OR has_new_ui_components == true)
+    result: FAIL
+    reasoning: "E2E tests skipped but story has user-facing deliverables. E2E required to verify user reachability."
+    next_status: InProgress
+    next_action: "execute_e2e_tests"
+    metadata:
+      quality_level: "incomplete"
+      expected_effort: "medium"
+      failure_type: "e2e_required_for_user_facing"
+      fix_guidance: "Run E2E tests to verify user can access new functionality"
+
+  # PASS: All tests pass, no issues (automated_only mode) - ONLY for non-user-facing stories
   - id: pass_automated_only
     priority: 1
     condition: >
       automated_tests_passed == true AND
       e2e_tests_skipped == true AND
+      has_user_facing_deliverable == false AND
+      has_new_ui_components == false AND
       issues_by_severity.critical == 0 AND
       issues_by_severity.high == 0
     result: PASS
-    reasoning: "All automated tests passed. E2E skipped per low-risk review mode."
+    reasoning: "All automated tests passed. E2E skipped (no user-facing deliverables)."
     next_status: Done
     next_action: "mark_story_complete"
     metadata:

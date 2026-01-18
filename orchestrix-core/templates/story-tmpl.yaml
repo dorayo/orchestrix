@@ -376,6 +376,72 @@ sections:
         title: File Locations
         instruction: List important new/modified files according to project structure
 
+      - id: deliverable-bindings
+        title: Deliverable Bindings
+        instruction: |
+          MANDATORY for stories creating new code units (files, modules, components, endpoints).
+          Each deliverable MUST have at least one consumer. A deliverable without a consumer is orphaned code.
+
+          PURPOSE: Prevent "component island" problem where code exists and tests pass but feature is unreachable.
+
+          DEFINITION:
+          - deliverable: Code unit being created (file path, module, endpoint, command)
+          - consumer: Code unit that will use the deliverable (file path, service, "end_user")
+          - binding_type: How consumer references deliverable (see enum below)
+          - verify: Regex pattern to confirm binding exists in consumer file
+
+          BINDING TYPES (exhaustive enum):
+          - import_usage: Consumer imports and calls/renders deliverable
+          - route_mount: Deliverable registered in routing table (API/page routes)
+          - config_read: Runtime reads deliverable value from config
+          - cli_register: Command registered in CLI entrypoint
+          - di_inject: Service injected via dependency injection container
+          - event_subscribe: Handler subscribed to event emitter
+          - schema_applied: Migration executed against database
+          - export_public: Exported from package/module entrypoint (index file)
+
+          FORMAT:
+          ```yaml
+          deliverable_bindings:
+            - deliverable: "{path_or_identifier}"
+              consumer: "{path_or_identifier}"
+              binding_type: {type_from_enum}
+              verify: "{regex_pattern}"
+          ```
+
+          RULES:
+          - Every NEW file in File List MUST have at least one binding entry
+          - "Will be used later" is NOT acceptable - defer to future story
+          - If deliverable has no consumer, question if it should exist
+          - Dev Gate Section 14 will verify all bindings before QA handoff
+
+          SKIP CONDITION: If story only MODIFIES existing files without creating new code units, this section can be marked N/A.
+        owner: scrum-master
+        editors: [scrum-master]
+        required: true
+        format: yaml
+        template: |
+          ## Deliverable Bindings
+
+          > **SM**: Define binding for each new code unit. Dev Gate will verify these.
+          > **Dev**: Ensure all bindings are implemented before self-review.
+
+          ```yaml
+          deliverable_bindings:
+            # Example entries (delete and replace with actual bindings):
+            # - deliverable: "src/components/NewFeature.tsx"
+            #   consumer: "src/pages/Dashboard.tsx"
+            #   binding_type: import_usage
+            #   verify: "import.*NewFeature"
+            #
+            # - deliverable: "POST /api/v1/items"
+            #   consumer: "src/routes/index.ts"
+            #   binding_type: route_mount
+            #   verify: "router\\.(post|use).*items"
+          ```
+
+          **Binding Status**: ⏳ Pending Dev verification
+
       - id: testing-requirements
         title: Testing Requirements
         instruction: Record test focus areas specific to this story (edge cases, performance, complex validation)
