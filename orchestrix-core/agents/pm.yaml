@@ -97,9 +97,20 @@ commands:
         | 1   | *create-doc {template}   | Generate document via template                     |
         | 2   | *revise-prd              | Handle PRD-level changes from description          |
         | 3   | *start-iteration         | Start new iteration (post-MVP, requires sharded PRD) |
-        | 4   | *doc-out                 | Output current document                            |
-        | 5   | *explain                 | Explain last action                                |
-        | 6   | *exit                    | Exit persona                                       |
+        | 4   | *status [--verbose]      | View project status, health metrics, and recommendations |
+        | 5   | *doc-out                 | Output current document                            |
+        | 6   | *explain                 | Explain last action                                |
+        | 7   | *exit                    | Exit persona                                       |
+  - status:
+      description: "View project status, health metrics, bottlenecks, and planning recommendations."
+      behavior:
+        - "Run dependency task 'pm-status.md'."
+      context:
+        - "Read-only diagnostic command - never modifies files"
+        - "Scans PRD, Epics, Stories, and Proposals for comprehensive status"
+        - "Computes health score and identifies bottlenecks"
+        - "Provides prioritized recommendations with specific handoff commands"
+        - "Use --verbose flag for detailed story-level breakdown"
   - create-doc:
       description: "Execute 'create-doc.md' for the provided template; if none, list dependencies.templates."
       behavior:
@@ -127,6 +138,7 @@ commands:
 
 dependencies:
   tasks:
+    - pm-status.md
     - create-doc.md
     - pm-revise-prd.md
     - pm-start-iteration.md
