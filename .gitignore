@@ -16,7 +16,6 @@ Thumbs.db
 # Environment variables
 .env
 
-CLAUDE.md
 .ai/*
 test-project-install/*
 sample-project/*
