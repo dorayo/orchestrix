@@ -1,3 +1,11 @@
+# [15.13.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.12.0...v15.13.0) (2026-01-21)
+
+
+### Features
+
+* **pm:** add *status command for project health diagnostics ([06bc8cb](https://github.com/dorayo/ORCHESTRIX/commit/06bc8cb61cbde4241c74dc67c51cda5db6a1e257))
+* **qa:** add incremental review mode for Round 2+ re-reviews ([1b4c914](https://github.com/dorayo/ORCHESTRIX/commit/1b4c9146525a743cfa04898aeef20ff5ff5c668c))
+
 # [15.12.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.11.0...v15.12.0) (2026-01-18)
 
 
