@@ -54,6 +54,55 @@ Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
 ---
 
+## Step 0.1: Review Mode Detection (CRITICAL - Token Optimization)
+
+**Purpose**: Detect if this is a re-review (Round >= 2) and switch to incremental mode to save tokens.
+
+### 0.1.1 Load Previous Gate File
+
+**Glob**: `{qa.qaLocation}/gates/{story_id}-*.yml`
+
+**If Gate file NOT found**:
+- Set `review_mode_type: full`
+- Set `review_round: 1`
+- Continue to Step 0.5
+
+**If Gate file found**, extract:
+```yaml
+previous_gate:
+  review_round: {from gate file}
+  risk_level: {from gate file, e.g., LOW/MEDIUM/HIGH}
+  review_mode: {from gate file, e.g., automated_only/full_testing}
+  project_type: {from gate file test_results section}
+  top_issues: [{id, severity, finding}]
+  ac_coverage:
+    failed_acs: [AC IDs that failed verification]
+  blind_spot:
+    missing_scenarios: [{id, category, description}]
+  e2e:
+    failed_scenarios: [{scenario_name, failure_reason}]
+```
+
+### 0.1.2 Determine Review Mode Type
+
+| Condition | Mode | Behavior |
+|-----------|------|----------|
+| `review_round == 0` OR Gate not found | `full` | Execute all steps completely |
+| `review_round >= 1` | `incremental` | Skip/simplify steps, focus on previous failures |
+
+**Set**:
+```yaml
+review_mode_type: full | incremental
+current_round: {previous_round + 1}
+previous_context: {extracted from gate file}
+```
+
+**Log**:
+- If `full`: "Mode: FULL REVIEW (Round 1)"
+- If `incremental`: "Mode: INCREMENTAL REVIEW (Round {current_round}) - {N} previous issues to verify"
+
+---
+
 ## Step 0.5: Status Auto-Recovery (Conditional)
 
 **Purpose**: Recover from context compression scenarios where Dev completed work but forgot to update story status.
@@ -126,6 +175,20 @@ action: review
 
 **Purpose**: Determine testing depth based on story risk level
 
+### INCREMENTAL MODE SKIP
+
+**If `review_mode_type == incremental`**:
+- Use cached values from `previous_context`:
+  ```yaml
+  risk_level: {previous_context.risk_level}
+  review_mode: {previous_context.review_mode}
+  ```
+- Set `review_round: {current_round}` (already incremented in Step 0.1)
+- Log: "⏭️ SKIP: Risk Assessment (using cached: {risk_level}, {review_mode})"
+- **Jump to Step 2**
+
+---
+
 ### 1.1 Load Context for Risk Assessment
 
 Read from Story file:
@@ -170,6 +233,15 @@ skip_e2e: true | false
 ## Step 2: Project Type Detection
 
 **Purpose**: Determine how to test this project (web, CLI, API, etc.)
+
+### INCREMENTAL MODE SKIP
+
+**If `review_mode_type == incremental`**:
+- Use cached values from `previous_context.project_type`
+- Log: "⏭️ SKIP: Project Type Detection (using cached)"
+- **Jump to Step 3**
+
+---
 
 Execute: `{root}/tasks/util-detect-project-type.md`
 
@@ -319,6 +391,15 @@ automated_tests:
 
 **Purpose**: Verify all Task/Subtask checkboxes are complete AND match actual deliverables. Detects cases where Dev checked boxes without completing work.
 
+### INCREMENTAL MODE: Focus on Previous Failures
+
+**If `review_mode_type == incremental`**:
+- Only verify checkboxes that were flagged in `previous_context.top_issues` with `failure_type: checkbox_*`
+- Skip full consistency verification if previous round had no checkbox issues
+- Log: "⚡ INCREMENTAL: Verifying {N} previously flagged checkboxes"
+
+---
+
 ### 4.5.1 Extract Checkbox Status
 
 Parse `## Tasks / Subtasks` section from story file.
@@ -412,6 +493,27 @@ task_checkbox_verification:
 **Purpose**: Verify EVERY Acceptance Criterion has been implemented with traceable evidence. This is QA's primary validation - ensuring Dev claims match actual deliverables.
 
 **Rationale**: QA Report showed 5/6 issues were "AC defined but not implemented". This step catches those before they reach E2E testing.
+
+### INCREMENTAL MODE: Verify Only Failed ACs
+
+**If `review_mode_type == incremental`**:
+
+1. **Load failed ACs from previous round**:
+   ```yaml
+   failed_acs: {previous_context.ac_coverage.failed_acs}
+   ```
+
+2. **If `failed_acs` is empty**:
+   - Log: "⏭️ SKIP: AC Coverage (all ACs passed in previous round)"
+   - Set `ac_coverage_result.result: PASS` (inherited)
+   - **Jump to Step 5**
+
+3. **If `failed_acs` has items**:
+   - Log: "⚡ INCREMENTAL: Verifying {N} previously failed ACs: {ac_ids}"
+   - Execute Steps 4.6.1-4.6.5 ONLY for ACs in `failed_acs` list
+   - Skip verification for ACs not in the list
+
+---
 
 ### 4.6.1 Load AC Traceability Data
 
@@ -580,6 +682,27 @@ ac_coverage:
 
 **Skip condition**: If `review_mode == "automated_only"`, skip to Step 7.
 
+### INCREMENTAL MODE: Test Only Failed Scenarios
+
+**If `review_mode_type == incremental`**:
+
+1. **Load failed scenarios from previous round**:
+   ```yaml
+   failed_scenarios: {previous_context.e2e.failed_scenarios}
+   ```
+
+2. **If `failed_scenarios` is empty AND previous e2e.passed == true**:
+   - Log: "⏭️ SKIP: E2E Testing (all scenarios passed in previous round)"
+   - Set `e2e_tests.passed: true` (inherited)
+   - **Jump to Step 5.5**
+
+3. **If `failed_scenarios` has items**:
+   - Log: "⚡ INCREMENTAL: Re-testing {N} previously failed scenarios"
+   - Execute E2E testing ONLY for scenarios in `failed_scenarios` list
+   - Pass `incremental_scenarios: {failed_scenarios}` to qa-e2e-testing.md
+
+---
+
 Execute: `{root}/tasks/qa-e2e-testing.md`
 
 Input:
@@ -611,6 +734,26 @@ e2e_tests:
 ## Step 5.5: Blind Spot Verification
 
 **Purpose**: Verify implementation handles blind spot scenarios identified in test-design. This is QA's unique value - covering Dev's blind spots.
+
+### INCREMENTAL MODE: Verify Only Missing Scenarios
+
+**If `review_mode_type == incremental`**:
+
+1. **Load missing scenarios from previous round**:
+   ```yaml
+   missing_scenarios: {previous_context.blind_spot.missing_scenarios}
+   ```
+
+2. **If `missing_scenarios` is empty**:
+   - Log: "⏭️ SKIP: Blind Spot Verification (all covered in previous round)"
+   - Set `blind_spot_verification.coverage_rate: 100` (inherited)
+   - **Jump to Step 6**
+
+3. **If `missing_scenarios` has items**:
+   - Log: "⚡ INCREMENTAL: Verifying {N} previously missing blind spots"
+   - Execute Steps 5.5.1-5.5.4 ONLY for scenarios in `missing_scenarios` list
+
+---
 
 **Load**: `{root}/data/blind-spot-categories.yaml`
 
@@ -872,6 +1015,36 @@ Update or create `## QA Review` section in Story with minimal info:
 
 Include all required fields plus new test_results and evidence sections.
 
+**CRITICAL: Populate `incremental_context` for Round 2+ optimization**:
+
+```yaml
+incremental_context:
+  # Cache stable values (never change after Round 1)
+  cached_risk_level: {risk_level from Step 1}
+  cached_review_mode: {review_mode from Step 1}
+  cached_project_type: {project_type.type from Step 2}
+
+  # Failed items for next round (extract from current issues)
+  failed_acs: [
+    # Extract AC IDs from ac_coverage.issues where status != VERIFIED
+    # Example: ["AC1", "AC3"]
+  ]
+  failed_e2e_scenarios: [
+    # Extract from e2e_tests.issues
+    # Example: [{scenario_name: "login_flow", failure_reason: "button unresponsive"}]
+  ]
+  missing_blind_spots: [
+    # Extract from blind_spot_verification where status != COVERED
+    # Example: [{id: "BLIND-001", category: "BOUNDARY", description: "null input"}]
+  ]
+  checkbox_issues: [
+    # Extract from task_checkbox_verification.issues
+    # Example: [{checkbox_text: "Implement AC1", issue_type: "mismatch"}]
+  ]
+```
+
+**Note**: If `gate_result == PASS`, set all failure arrays to empty `[]`.
+
 ### 9.3 Update Story Status
 
 **Validate Status Transition**:
@@ -1110,25 +1283,26 @@ Gate: PASS | Tests: {pass_rate}%
 
 ## Summary of Workflow
 
-| Step | Name | Purpose |
-|------|------|---------|
-| 0 | Idempotency Check | Skip already-done stories |
-| 1 | Risk Assessment | Determine testing depth |
-| 2 | Project Type Detection | Choose testing tools |
-| 3 | Environment Setup | Start application |
-| 3.5 | Migration Verification | Verify DB migrations executed |
-| 4 | Automated Test Evidence | Verify Dev test results (no re-run) |
-| 4.5 | Task Checkbox Verification | Verify checkboxes match deliverables |
-| **4.6** | **AC Coverage Verification** | **Verify ALL ACs implemented with evidence (CRITICAL)** |
-| 5 | E2E Testing | Execute user flows (risk-based) |
-| 5.5 | Blind Spot Verification | Check Dev blind spots coverage |
-| 6 | Evidence Collection | Capture screenshots/logs |
-| 7 | Gate Decision | PASS/FAIL/CONCERNS |
-| 8 | Environment Cleanup | Stop application server |
-| 9.1-9.4 | Story Update | Update QA Review section, gate file, status, change log |
-| 9.5 | Post-Review Workflow | Execute decision and git commit |
-| 9.6 | Final Cleanup | Kill test processes after git commit |
-| 9.7 | Handoff | Output HANDOFF message to next agent |
+| Step | Name | Full Mode | Incremental Mode (Round 2+) |
+|------|------|-----------|----------------------------|
+| 0 | Idempotency Check | Execute | Execute |
+| 0.1 | **Mode Detection** | Set `full` | Set `incremental`, load previous context |
+| 0.5 | Status Auto-Recovery | Execute | Execute |
+| 1 | Risk Assessment | Calculate | ⏭️ **SKIP** (use cached) |
+| 2 | Project Type Detection | Detect | ⏭️ **SKIP** (use cached) |
+| 3 | Environment Setup | Start | Execute |
+| 3.5 | Migration Verification | Verify | Execute |
+| 4 | Automated Test Evidence | Verify | Execute |
+| 4.5 | Task Checkbox Verification | Full scan | ⚡ **FOCUS**: Previous failures only |
+| 4.6 | AC Coverage Verification | Full scan | ⚡ **FOCUS**: Failed ACs only |
+| 5 | E2E Testing | Full scenarios | ⚡ **FOCUS**: Failed scenarios only |
+| 5.5 | Blind Spot Verification | Full scan | ⚡ **FOCUS**: Missing spots only |
+| 6 | Evidence Collection | All issues | New issues only |
+| 7 | Gate Decision | Full context | Full context + populate incremental_context |
+| 8 | Environment Cleanup | Execute | Execute |
+| 9.x | Output & Handoff | Execute | Execute |
+
+**Token Savings**: Incremental mode saves ~50-70% execution time by skipping stable checks.
 
 ## Key Principles
 
@@ -1140,3 +1314,4 @@ Gate: PASS | Tests: {pass_rate}%
 6. **Evidence-driven**: Issues include screenshots and reproduction steps
 7. **User perspective**: E2E tests verify real user journeys
 8. **Clean environment**: Always cleanup, even on failure
+9. **Incremental optimization**: Round 2+ uses cached context, focuses only on previous failures

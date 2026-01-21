@@ -21,9 +21,23 @@ updated: "{{iso_timestamp}}"
 
 # Review round tracking (for progressive standards)
 review_round: 1  # Current review round (1-3)
+review_mode_type: full  # full | incremental (incremental for Round 2+)
 issues_from_previous_round: 0  # Count of issues from previous round (0 if Round 1)
 issues_resolved: 0  # Count of issues resolved since previous round (0 if Round 1)
 improvement_percentage: 0  # Percentage improvement from previous round (0 if Round 1)
+
+# Incremental review context (populated for Round 2+ to enable fast re-review)
+incremental_context:
+  # Cached from Round 1 - skip re-detection in subsequent rounds
+  cached_risk_level: ""  # LOW | MEDIUM | HIGH
+  cached_review_mode: ""  # automated_only | automated_plus_spot_check | full_testing
+  cached_project_type: ""  # web_frontend | web_backend | cli_tool | fullstack | library
+
+  # Failed items to re-verify in next round (empty if PASS)
+  failed_acs: []  # AC IDs that failed verification, e.g., ["AC1", "AC3"]
+  failed_e2e_scenarios: []  # [{scenario_name, failure_reason}]
+  missing_blind_spots: []  # [{id, category, description}]
+  checkbox_issues: []  # [{checkbox_text, issue_type}]
 
 # Always present but only active when WAIVED
 waiver: { active: false }
