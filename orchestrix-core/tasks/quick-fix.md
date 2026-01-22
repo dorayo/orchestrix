@@ -19,7 +19,7 @@ required:
   - bug_description: 'Natural language description of the bug'
 
 optional:
-  - file_hint: 'Suspected file/function location'
+  - files: 'Suspected file paths (comma-separated)'
 ```
 
 ## Execution
@@ -28,7 +28,7 @@ optional:
 
 **1.1 Locate Bug**
 
-Find bug location using `file_hint` or by searching:
+Find bug location using `files` hint or by searching:
 ```bash
 # Search for relevant code
 grep -rn "{keywords}" src/

@@ -100,14 +100,15 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 
 ### SM 🏃
 
-| Command                           | Description                              |
-| --------------------------------- | ---------------------------------------- |
-| `*draft [{story_id}]`             | Create next Story (or check specified)   |
-| `*revise {story_id}`              | Revise Story based on Architect feedback |
-| `*apply-proposal [{proposal_id}]` | Apply proposal to create/update Stories  |
-| `*story-checklist {story_id}`     | Validate Story quality                   |
-| `*init-registries`                | Initialize/refresh cumulative registries |
-| `*exit`                           | Exit SM mode                             |
+| Command                                                       | Description                               |
+| ------------------------------------------------------------- | ----------------------------------------- |
+| `*draft [{story_id}]`                                         | Create next Story (or check specified)    |
+| `*draft-bugfix "{bug}" [--source {story_id}] [--files "..."]` | Create bugfix story (from Dev escalation) |
+| `*revise {story_id}`                                          | Revise Story based on Architect feedback  |
+| `*apply-proposal [{proposal_id}]`                             | Apply proposal to create/update Stories   |
+| `*story-checklist {story_id}`                                 | Validate Story quality                    |
+| `*init-registries`                                            | Initialize/refresh cumulative registries  |
+| `*exit`                                                       | Exit SM mode                              |
 
 **Output**: `docs/stories/{epic}.{story}-{title}.md`
 
@@ -115,15 +116,16 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 
 ### Dev 💻
 
-| Command                      | Description                           |
-| ---------------------------- | ------------------------------------- |
-| `*develop-story {story_id}`  | Implement Story (TDD mode)            |
-| `*quick-develop {story_id}`  | Quick implementation (trivial/simple) |
-| `*self-review {story_id}`    | Self-review (required before QA)      |
-| `*apply-qa-fixes {story_id}` | Fix QA-reported issues                |
-| `*run-tests`                 | Execute lint and test suite           |
-| `*explain`                   | Explain implementation decisions      |
-| `*exit`                      | Exit Dev mode                         |
+| Command                                  | Description                                    |
+| ---------------------------------------- | ---------------------------------------------- |
+| `*develop-story {story_id}`              | Implement Story (TDD mode)                     |
+| `*quick-develop {story_id}`              | Quick implementation (trivial/simple)          |
+| `*quick-fix "{bug}" [--files "{paths}"]` | Lightweight bug fix (no story, scope ≤3 files) |
+| `*self-review {story_id}`                | Self-review (required before QA)               |
+| `*apply-qa-fixes {story_id}`             | Fix QA-reported issues                         |
+| `*run-tests`                             | Execute lint and test suite                    |
+| `*explain`                               | Explain implementation decisions               |
+| `*exit`                                  | Exit Dev mode                                  |
 
 **Output**: Implementation code + Tests
 
@@ -276,18 +278,19 @@ SM *apply-proposal                # Auto-discover draft proposals
 🎯 HANDOFF TO {agent}: *{command} {args}
 ```
 
-| From         | To        | Handoff Example                                  |
-| ------------ | --------- | ------------------------------------------------ |
-| SM           | Architect | `🎯 HANDOFF TO architect: *review 1.1`           |
-| SM           | Dev       | `🎯 HANDOFF TO dev: *develop-story 1.1`          |
-| Architect    | Dev       | `🎯 HANDOFF TO dev: *develop-story 1.1`          |
-| Architect    | SM        | `🎯 HANDOFF TO SM: *revise 1.1`                  |
-| Dev          | QA        | `🎯 HANDOFF TO qa: *review 1.1`                  |
-| QA           | Dev       | `🎯 HANDOFF TO dev: *apply-qa-fixes 1.1`         |
-| QA           | SM        | `🎯 HANDOFF TO sm: *draft`                       |
-| PO           | PM        | `🎯 HANDOFF TO PM: *revise-prd`                  |
-| PO           | Architect | `🎯 HANDOFF TO ARCHITECT: *resolve-change`       |
-| PM/Architect | SM        | `🎯 HANDOFF TO SM: *apply-proposal PCP-2025-001` |
+| From         | To        | Handoff Example                                                                 |
+| ------------ | --------- | ------------------------------------------------------------------------------- |
+| SM           | Architect | `🎯 HANDOFF TO architect: *review 1.1`                                          |
+| SM           | Dev       | `🎯 HANDOFF TO dev: *develop-story 1.1`                                         |
+| Architect    | Dev       | `🎯 HANDOFF TO dev: *develop-story 1.1`                                         |
+| Architect    | SM        | `🎯 HANDOFF TO SM: *revise 1.1`                                                 |
+| Dev          | QA        | `🎯 HANDOFF TO qa: *review 1.1`                                                 |
+| Dev          | SM        | `🎯 HANDOFF TO SM: *draft-bugfix "{bug}" --source {story_id} --files "{files}"` |
+| QA           | Dev       | `🎯 HANDOFF TO dev: *apply-qa-fixes 1.1`                                        |
+| QA           | SM        | `🎯 HANDOFF TO sm: *draft`                                                      |
+| PO           | PM        | `🎯 HANDOFF TO PM: *revise-prd`                                                 |
+| PO           | Architect | `🎯 HANDOFF TO ARCHITECT: *resolve-change`                                      |
+| PM/Architect | SM        | `🎯 HANDOFF TO SM: *apply-proposal PCP-2025-001`                                |
 
 ## Quick Reference
 
@@ -322,4 +325,23 @@ PM *start-iteration → (UX-Expert if UI) → Architect → SM *draft → Dev �
 
 ```
 SM *draft → (Architect *review) → Dev *develop-story → Dev *self-review → QA *review → QA *finalize-commit
+```
+
+### Bug Fix
+
+```
+Dev *quick-fix "{bug}" [--files "{paths}"]
+    ↓
+Phase 1: Context Loading (trace source story via git blame)
+Phase 2: Impact Analysis (list affected files)
+    ↓
+Scope ≤ 3 files? ─── YES → Phase 3-5: Fix & Verify → Done
+    │
+    NO (escalate)
+    ↓
+🎯 HANDOFF TO SM: *draft-bugfix "{bug}" --source {story_id} --files "{files}"
+    ↓
+SM creates bugfix story under source Epic (or Maintenance Epic)
+    ↓
+Dev *quick-develop {bugfix_story_id}
 ```
