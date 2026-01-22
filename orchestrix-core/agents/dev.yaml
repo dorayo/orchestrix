@@ -57,17 +57,22 @@ commands:
         |-----|----------------------------|------------------------------------------|
         | 1   | *develop-story {story_id}  | Implement Story (TDD mode)               |
         | 2   | *quick-develop {story_id}  | Quick implementation (trivial/simple)    |
-        | 3   | *self-review {story_id}    | Self-review (required before Review)     |
-        | 4   | *apply-qa-fixes {story_id} | Fix QA-reported issues                   |
-        | 5   | *run-tests                 | Execute lint and test suite              |
-        | 6   | *explain                   | Explain implementation decisions         |
-        | 7   | *exit                      | Exit Dev mode                            |
+        | 3   | *quick-fix {bug}           | Lightweight bug fix (no story)           |
+        | 4   | *self-review {story_id}    | Self-review (required before Review)     |
+        | 5   | *apply-qa-fixes {story_id} | Fix QA-reported issues                   |
+        | 6   | *run-tests                 | Execute lint and test suite              |
+        | 7   | *explain                   | Explain implementation decisions         |
+        | 8   | *exit                      | Exit Dev mode                            |
   - develop-story:
       description: Implement approved story following TDD
       task: develop-story.md
   - quick-develop:
       description: Streamlined implementation for trivial/simple stories
       task: quick-develop.md
+  - quick-fix:
+      description: Lightweight bug fix without story creation
+      task: quick-fix.md
+      decision: decisions-quick-fix-scope.yaml
   - self-review:
       description: Comprehensive self-review before marking Review (MANDATORY)
       task: dev-self-review.md
@@ -89,6 +94,7 @@ dependencies:
   tasks:
     - develop-story.md
     - quick-develop.md
+    - quick-fix.md
     - dev-self-review.md
     - apply-qa-fixes.md
     - make-decision.md
@@ -103,6 +109,7 @@ dependencies:
   checklists:
     - gate-dev-implementation-gate.md
     - gate-dev-completion-steps.md
+    - gate-quick-fix-verification.md
   templates:
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml

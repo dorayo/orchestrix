@@ -1,0 +1,148 @@
+template:
+  id: story-bugfix-template-v1
+  name: Bugfix Story Document
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/stories/{{epic_num}}.{{story_num}}-bugfix-{{bug_slug}}.md
+
+workflow:
+  mode: bugfix
+  skip_architect_review: "{{tier == 'simple'}}"
+  skip_test_design: true
+  qa_mode: automated_with_regression
+
+sections:
+  - id: story-metadata
+    title: Story
+    type: yaml-block
+    template: |
+      ```yaml
+      Story:
+        id: {{epic_num}}.{{story_num}}
+        title: "[Bugfix] {{bug_title}}"
+        tier: {{tier}}
+        status: {{status}}
+        type: bugfix
+        source_story: {{source_story_id}}
+        repository: {{repository_type}}
+      ```
+
+  - id: bug-details
+    title: Bug Details
+    type: yaml-block
+    template: |
+      ```yaml
+      Bug:
+        description: {{bug_description}}
+        root_cause: {{root_cause}}
+        severity: {{severity}}
+        reported_by: {{reported_by}}
+        reported_date: {{reported_date}}
+        affected_files:
+          {{#each affected_files}}
+          - {{this}}
+          {{/each}}
+      ```
+
+  - id: description
+    title: Description
+    type: text
+    template: |
+      **Bug**: {{bug_description}}
+
+      **Impact**: {{bug_impact}}
+
+      {{#if source_story_id}}
+      **Source**: Story {{source_story_id}} - {{source_story_title}}
+      {{/if}}
+
+  - id: acceptance-criteria
+    title: Acceptance Criteria
+    type: bullet-list
+    template: |
+      - [ ] Bug no longer reproduces under original conditions
+      - [ ] No regression in related functionality
+      - [ ] Regression test added to prevent recurrence
+      {{#each additional_acs}}
+      - [ ] {{this}}
+      {{/each}}
+
+  - id: tasks
+    title: Tasks
+    type: bullet-list
+    template: |
+      - [ ] Reproduce and confirm bug
+      - [ ] Analyze root cause (if not done)
+      {{#each affected_files}}
+      - [ ] Fix: {{this}}
+      {{/each}}
+      - [ ] Add regression test
+      - [ ] Run full test suite
+      - [ ] Verify fix in original scenario
+
+  - id: dev-notes
+    title: Dev Notes
+    type: text
+    template: |
+      ## Bug Context
+
+      {{escalation_context}}
+
+      ## Root Cause Analysis
+
+      {{#if root_cause}}
+      **Identified**: {{root_cause}}
+      {{else}}
+      **Status**: To be analyzed during implementation
+      {{/if}}
+
+      ## Affected Files
+
+      {{#each affected_files}}
+      - `{{this}}`
+      {{/each}}
+
+      ## Source Story Reference
+
+      {{#if source_story_id}}
+      - **Story**: {{source_story_id}}
+      - **Title**: {{source_story_title}}
+      - **Epic**: {{epic_num}}
+      {{else}}
+      - **Source**: Unknown (maintenance fix)
+      {{/if}}
+
+      ## Fix Strategy
+
+      {{fix_strategy}}
+
+  - id: deliverable-bindings
+    title: Deliverable Bindings
+    type: yaml-block
+    required: false
+    template: |
+      ```yaml
+      # Usually N/A for bugfix - only if creating new files
+      # deliverable_bindings: []
+      ```
+
+  - id: quick-record
+    title: Quick Record
+    type: table
+    template: |
+      | Field | Value |
+      |-------|-------|
+      | Dev | - |
+      | Files | - |
+      | Tests | - |
+      | QA | - |
+      | Commit | - |
+
+  - id: change-log
+    title: Change Log
+    type: table
+    template: |
+      | Date | Agent | Status | Details |
+      |------|-------|--------|---------|
+      | {{creation_date}} | SM | {{status}} | Bugfix story created from {{source}} |

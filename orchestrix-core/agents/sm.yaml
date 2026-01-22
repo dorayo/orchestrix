@@ -63,11 +63,12 @@ commands:
         | #   | Command                        | Description                              |
         |-----|--------------------------------|------------------------------------------|
         | 1   | *draft [{story_id}]            | Create next Story (or check specified)  |
-        | 2   | *revise {story_id}             | Revise Story based on Architect feedback|
-        | 3   | *apply-proposal [{proposal_id}]| Apply proposal to create/update Stories |
-        | 4   | *story-checklist {story_id}    | Validate Story quality                  |
-        | 5   | *init-registries               | Initialize/refresh cumulative registries|
-        | 6   | *exit                          | Exit SM mode                            |
+        | 2   | *draft-bugfix {bug}            | Create bugfix story (from Dev escalation)|
+        | 3   | *revise {story_id}             | Revise Story based on Architect feedback|
+        | 4   | *apply-proposal [{proposal_id}]| Apply proposal to create/update Stories |
+        | 5   | *story-checklist {story_id}    | Validate Story quality                  |
+        | 6   | *init-registries               | Initialize/refresh cumulative registries|
+        | 7   | *exit                          | Exit SM mode                            |
   - draft:
       description: Create next story from epic (or create/check specified story if story_id provided)
       task: create-next-story.md
@@ -77,6 +78,22 @@ commands:
           description: >-
             Optional story ID (e.g., 5.3). If provided and exists, checks status and outputs handoff. If provided but
             doesn't exist, creates that specific story. If omitted, creates next uncreated story.
+  - draft-bugfix:
+      description: Create bugfix story when bug scope exceeds quick-fix threshold
+      task: create-bugfix-story.md
+      params:
+        - name: bug_description
+          required: true
+          description: Natural language description of the bug
+        - name: source_story_id
+          required: false
+          description: Story ID that introduced the bug (from git blame)
+        - name: affected_files
+          required: false
+          description: Comma-separated list of affected files
+        - name: escalation_context
+          required: false
+          description: Context from Dev quick-fix escalation
   - revise:
       description: Revise story based on architect feedback
       task: revise-story-from-architect-feedback.md
@@ -101,6 +118,7 @@ commands:
 dependencies:
   tasks:
     - create-next-story.md
+    - create-bugfix-story.md
     - revise-story-from-architect-feedback.md
     - sm-apply-proposal.md
     - frontend-user-confirmation.md
@@ -110,6 +128,7 @@ dependencies:
     - util-validate-against-cumulative-context.md
   templates:
     - story-tmpl.yaml
+    - story-bugfix-tmpl.yaml
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml
     - models-registry-tmpl.yaml

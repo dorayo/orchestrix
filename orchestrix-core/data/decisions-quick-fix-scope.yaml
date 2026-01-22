@@ -1,0 +1,169 @@
+decision_type: quick-fix-scope
+
+description: Determine if bug should use quick-fix or require story creation.
+
+inputs:
+  - name: estimated_files
+    type: integer
+    description: Estimated number of files affected
+    required: true
+
+  - name: cause_clarity
+    type: enum
+    values: [clear, unclear, unknown]
+    description: How clear is the root cause?
+    required: true
+
+  - name: design_change
+    type: enum
+    values: [none, minor, major]
+    description: Does fix require design/architecture change?
+    required: true
+
+  - name: security_impact
+    type: boolean
+    description: Does bug have security implications?
+    required: false
+    default: false
+
+  - name: data_impact
+    type: boolean
+    description: Does bug affect data integrity?
+    required: false
+    default: false
+
+rules:
+  # Immediate escalation rules (highest priority)
+  - id: security_escalate
+    condition: "security_impact == true"
+    result: story_required
+    reason: "Security bugs require full story workflow with architect review"
+    workflow:
+      tier: complex
+      architect_review: mandatory
+
+  - id: data_escalate
+    condition: "data_impact == true"
+    result: story_required
+    reason: "Data integrity bugs require full story workflow"
+    workflow:
+      tier: standard
+      architect_review: recommended
+
+  - id: design_change_escalate
+    condition: "design_change == 'major'"
+    result: story_required
+    reason: "Major design changes require architect review"
+    workflow:
+      tier: standard
+      architect_review: mandatory
+
+  # Quick-fix eligible rules
+  - id: quick_fix_ideal
+    condition: >
+      estimated_files <= 2 AND
+      cause_clarity == 'clear' AND
+      design_change == 'none'
+    result: quick_fix
+    confidence: high
+    reason: "Ideal quick-fix candidate: small scope, clear cause, no design change"
+
+  - id: quick_fix_acceptable
+    condition: >
+      estimated_files == 3 AND
+      cause_clarity == 'clear' AND
+      design_change in ['none', 'minor']
+    result: quick_fix
+    confidence: medium
+    reason: "Acceptable quick-fix: slightly larger scope but manageable"
+    warning: "Monitor scope during execution; escalate if expands"
+
+  - id: quick_fix_marginal
+    condition: >
+      estimated_files <= 3 AND
+      cause_clarity == 'unclear' AND
+      design_change == 'none'
+    result: quick_fix_with_caution
+    confidence: low
+    reason: "Marginal: unclear cause may expand scope"
+    warning: "Run Phase 2 (Impact Analysis) first; escalate if scope > 3 files"
+
+  # Story required rules
+  - id: scope_too_large
+    condition: "estimated_files > 3"
+    result: story_required
+    reason: "Scope exceeds quick-fix threshold (>3 files)"
+    workflow:
+      tier: simple
+      template: story-quick-tmpl.yaml
+
+  - id: cause_unknown
+    condition: "cause_clarity == 'unknown'"
+    result: story_required
+    reason: "Unknown cause requires investigation phase"
+    workflow:
+      tier: simple
+      include_investigation: true
+
+  - id: minor_design_change
+    condition: "design_change == 'minor' AND estimated_files > 2"
+    result: story_required
+    reason: "Design change + multi-file scope needs story tracking"
+    workflow:
+      tier: simple
+
+  # Default fallback
+  - id: default_story
+    condition: "true"
+    result: story_recommended
+    reason: "When in doubt, create story for traceability"
+    workflow:
+      tier: simple
+
+output:
+  result:
+    type: enum
+    values:
+      - quick_fix              # Proceed with quick-fix
+      - quick_fix_with_caution # Quick-fix but monitor closely
+      - story_required         # Must create story
+      - story_recommended      # Story recommended but not mandatory
+
+  confidence:
+    type: enum
+    values: [high, medium, low]
+
+  reason:
+    type: string
+
+  warning:
+    type: string
+    optional: true
+
+  workflow:
+    type: object
+    optional: true
+    properties:
+      tier: enum [trivial, simple, standard, complex]
+      template: string
+      architect_review: enum [none, recommended, mandatory]
+
+usage_example: |
+  # In quick-fix.md, before starting:
+
+  EVALUATE decisions-quick-fix-scope.yaml:
+    estimated_files: 2
+    cause_clarity: clear
+    design_change: none
+
+  IF result == 'quick_fix':
+    PROCEED with quick-fix.md
+  ELIF result == 'quick_fix_with_caution':
+    PROCEED but set scope_alert = true
+  ELSE:
+    OUTPUT: "Bug requires story. Run: SM *draft {bug_description}"
+    HALT
+
+metadata:
+  version: "1.0.0"
+  owner: Dev
