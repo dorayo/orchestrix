@@ -108,7 +108,7 @@ commands:
   - exit:
       description: "Say goodbye and end persona."
   - create-doc {template}:
-      description: "Execute task create-doc (no template → list dependencies.templates)."
+      description: "Execute task create-doc. No template arg: auto-select if single template exists, else list options."
   - generate-ui-prompt:
       description: "Execute task generate-ai-frontend-prompt to craft an AI frontend generation prompt."
 
