@@ -60,9 +60,9 @@ commands:
   - help:
       description: Display available commands in table format.
       output_format: |
-        | #   | Command                        | Description                              |
-        |-----|--------------------------------|------------------------------------------|
-        | 1   | *draft [{story_id}]            | Create next Story (or check specified)  |
+        | #   | Command                              | Description                              |
+        |-----|--------------------------------------|------------------------------------------|
+        | 1   | *draft [{story_id}] [--continue]     | Create next Story (or check specified)  |
         | 2   | *draft-bugfix {bug}            | Create bugfix story (from Dev escalation)|
         | 3   | *revise {story_id}             | Revise Story based on Architect feedback|
         | 4   | *apply-proposal [{proposal_id}]| Apply proposal to create/update Stories |
@@ -78,6 +78,12 @@ commands:
           description: >-
             Optional story ID (e.g., 5.3). If provided and exists, checks status and outputs handoff. If provided but
             doesn't exist, creates that specific story. If omitted, creates next uncreated story.
+        - name: continue
+          required: false
+          flag: true
+          description: >-
+            When story file exists, skip status check menu and directly run gates on existing story.
+            Usage: *draft {story_id} --continue
   - draft-bugfix:
       description: Create bugfix story when bug scope exceeds quick-fix threshold
       task: create-bugfix-story.md

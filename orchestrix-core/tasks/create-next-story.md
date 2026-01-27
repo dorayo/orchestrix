@@ -30,7 +30,15 @@ Check if story file exists: `{devStoryLocation}/{story_id}*.md`
 ```
 Set `next_story_id = {story_id}`, continue to Step 1.
 
-**If story file found**: Extract `Story.status` field, output handoff based on status:
+**If story file found AND `--continue` flag provided**:
+```
+🔄 Re-running gates on existing story {story_id}...
+```
+- Read existing story file to extract `story_path`
+- Set `next_story_id = {story_id}`
+- **SKIP to Step 7** (GATE 1 – Story Quality Assessment)
+
+**If story file found (no --continue flag)**: Extract `Story.status` field, output handoff based on status:
 
 - **Blocked**: `⚠️ STORY BLOCKED - Use: *revise {story_id}` → **HALT**
 - **AwaitingArchReview**: `🎯 HANDOFF TO architect: *review {story_id}` → **HALT**
