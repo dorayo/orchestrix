@@ -522,7 +522,7 @@ class Installer {
       for (const ide of ides) {
         spinner.text = `Setting up ${ide} integration...`;
         const preConfiguredSettings = ide === 'github-copilot' ? config.githubCopilotConfig : null;
-        await ideSetup.setup(ide, installDir, config.agent, spinner, preConfiguredSettings, this.quiet);
+        await ideSetup.setup(ide, installDir, config.agent, spinner, preConfiguredSettings, this.quiet, config.language);
       }
     }
 

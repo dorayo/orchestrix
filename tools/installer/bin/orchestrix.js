@@ -53,6 +53,7 @@ program
   .option('-d, --directory <path>', '安装目录')
   .option('--ide <ide...>', '为指定的 IDE 配置 (可指定多个:cursor, claude-code, windsurf, trae, roo, cline, gemini, github-copilot, other)')
   .option('-e, --expansion-packs <packs...>', '安装指定的扩展包 (可指定多个)')
+  .option('-l, --lang <lang>', '设置 Agent 语言 (例如: zh, en，默认为 en)')
   .action(async (options) => {
     try {
       await initializeModules();
@@ -72,7 +73,8 @@ program
           installType,
           directory: options.directory || '.',
           ides: (options.ide || []).filter(ide => ide !== 'other'),
-          expansionPacks: options.expansionPacks || []
+          expansionPacks: options.expansionPacks || [],
+          language: options.lang || 'en'
         };
         await installer.install(config);
       } else {
@@ -96,7 +98,8 @@ program
           webBundlesDirectory: `${options.directory || '.'}/web-bundles`,
           prdSharded: true,
           architectureSharded: true,
-          quiet: true // 默认静默模式
+          quiet: true, // 默认静默模式
+          language: options.lang || 'en'
         };
         await installer.install(config);
 

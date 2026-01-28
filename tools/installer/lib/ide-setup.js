@@ -24,6 +24,7 @@ class IdeSetup {
   constructor() {
     this.ideAgentConfig = null;
     this.quiet = false;
+    this.language = 'en'; // Default language
   }
 
   /**
@@ -54,9 +55,10 @@ class IdeSetup {
     }
   }
 
-  async setup(ide, installDir, selectedAgent = null, spinner = null, preConfiguredSettings = null, quiet = false) {
+  async setup(ide, installDir, selectedAgent = null, spinner = null, preConfiguredSettings = null, quiet = false, language = 'en') {
     await initializeModules();
     this.quiet = quiet; // 设置静默模式
+    this.language = language || 'en'; // 设置语言
 
     const ideConfig = await configLoader.getIdeConfiguration(ide);
 
@@ -567,63 +569,85 @@ class IdeSetup {
   }
 
   async findAgentPath(agentId, installDir) {
-    // Try to find the agent file in various locations, prioritizing YAML files
-    const possiblePaths = [
-      // YAML files (preferred)
-      path.join(installDir, ".orchestrix-core", "agents", `${agentId}.yaml`),
-      path.join(installDir, "orchestrix-core", "agents", `${agentId}.yaml`), // Source directory
-      path.join(installDir, "agents", `${agentId}.yaml`),
-      // MD files (backward compatibility)
-      path.join(installDir, ".orchestrix-core", "agents", `${agentId}.md`),
-      path.join(installDir, "orchestrix-core", "agents", `${agentId}.md`), // Source directory
-      path.join(installDir, "agents", `${agentId}.md`)
+    // Build list of possible paths, prioritizing language-specific files if language is not 'en'
+    const possiblePaths = [];
+    const lang = this.language;
+
+    // Define base directories to search
+    const baseDirs = [
+      path.join(installDir, ".orchestrix-core", "agents"),
+      path.join(installDir, "orchestrix-core", "agents"), // Source directory
+      path.join(installDir, "agents")
     ];
-    
-    // Also check expansion pack directories
+
+    // Add expansion pack directories
     // Exclude IDE configuration directories
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir }).filter(dir => {
       const dirName = path.basename(path.dirname(dir));
       const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
       return !ideConfigDirs.includes(dirName);
     });
-    
+
     for (const expDir of expansionDirs) {
-      possiblePaths.push(path.join(installDir, expDir, `${agentId}.yaml`));
-      possiblePaths.push(path.join(installDir, expDir, `${agentId}.md`));
+      baseDirs.push(path.join(installDir, expDir));
     }
-    
+
+    // For each base directory, add paths in priority order:
+    // 1. Language-specific YAML (if lang != 'en')
+    // 2. Default YAML
+    // 3. Language-specific MD (if lang != 'en')
+    // 4. Default MD
+    for (const baseDir of baseDirs) {
+      if (lang && lang !== 'en') {
+        possiblePaths.push(path.join(baseDir, `${agentId}.${lang}.yaml`));
+      }
+      possiblePaths.push(path.join(baseDir, `${agentId}.yaml`));
+      if (lang && lang !== 'en') {
+        possiblePaths.push(path.join(baseDir, `${agentId}.${lang}.md`));
+      }
+      possiblePaths.push(path.join(baseDir, `${agentId}.md`));
+    }
+
     for (const agentPath of possiblePaths) {
       if (await fileManager.pathExists(agentPath)) {
         return agentPath;
       }
     }
-    
+
     return null;
   }
 
   async getAllAgentIds(installDir) {
     const allAgentIds = [];
-    
+
+    // Helper to extract agent ID from filename, handling language suffixes
+    const extractAgentId = (filename, ext) => {
+      const baseName = path.basename(filename, ext);
+      // Check if this is a language-specific file (e.g., analyst.zh.yaml -> analyst)
+      const langMatch = baseName.match(/^(.+)\.([a-z]{2})$/);
+      return langMatch ? langMatch[1] : baseName;
+    };
+
     // Check core agents in .orchestrix-core or root
     let agentsDir = path.join(installDir, ".orchestrix-core", "agents");
     if (!(await fileManager.pathExists(agentsDir))) {
       agentsDir = path.join(installDir, "agents");
     }
-    
+
     if (await fileManager.pathExists(agentsDir)) {
       // Support both YAML and MD files, prioritize YAML
       // Filter out .src.yaml (legacy) and README files
       const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir }).filter(file => !file.endsWith('.src.yaml') && !file.toUpperCase().startsWith('README'));
       const mdFiles = glob.sync("*.md", { cwd: agentsDir }).filter(file => !file.toUpperCase().startsWith('README'));
 
-      // Extract IDs from YAML files first
-      const yamlIds = yamlFiles.map((file) => path.basename(file, ".yaml"));
-      // Extract IDs from MD files, but exclude those already found in YAML
-      const mdIds = mdFiles.map((file) => path.basename(file, ".md")).filter(id => !yamlIds.includes(id));
-      
+      // Extract IDs from YAML files (removing language suffixes to get unique IDs)
+      const yamlIds = yamlFiles.map((file) => extractAgentId(file, ".yaml"));
+      // Extract IDs from MD files
+      const mdIds = mdFiles.map((file) => extractAgentId(file, ".md")).filter(id => !yamlIds.includes(id));
+
       allAgentIds.push(...yamlIds, ...mdIds);
     }
-    
+
     // Also check for expansion pack agents in dot folders
     // Exclude IDE configuration directories (.claude, .cursor, .windsurf, .trae, etc.)
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir }).filter(dir => {
@@ -631,50 +655,58 @@ class IdeSetup {
       const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
       return !ideConfigDirs.includes(dirName);
     });
-    
+
     for (const expDir of expansionDirs) {
       const fullExpDir = path.join(installDir, expDir);
-      
+
       // Support both YAML and MD files for expansion packs too
       // Filter out .src.yaml (legacy) and README files
       const expYamlFiles = glob.sync("*.yaml", { cwd: fullExpDir }).filter(file => !file.endsWith('.src.yaml') && !file.toUpperCase().startsWith('README'));
       const expMdFiles = glob.sync("*.md", { cwd: fullExpDir }).filter(file => !file.toUpperCase().startsWith('README'));
-      
-      // Extract IDs from YAML files first
-      const expYamlIds = expYamlFiles.map((file) => path.basename(file, ".yaml"));
-      // Extract IDs from MD files, but exclude those already found in YAML
-      const expMdIds = expMdFiles.map((file) => path.basename(file, ".md")).filter(id => !expYamlIds.includes(id));
-      
+
+      // Extract IDs from YAML files (removing language suffixes)
+      const expYamlIds = expYamlFiles.map((file) => extractAgentId(file, ".yaml"));
+      // Extract IDs from MD files
+      const expMdIds = expMdFiles.map((file) => extractAgentId(file, ".md")).filter(id => !expYamlIds.includes(id));
+
       allAgentIds.push(...expYamlIds, ...expMdIds);
     }
-    
+
     // Remove duplicates
     return [...new Set(allAgentIds)];
   }
 
   async getCoreAgentIds(installDir) {
     const allAgentIds = [];
-    
+
+    // Helper to extract agent ID from filename, handling language suffixes
+    const extractAgentId = (filename, ext) => {
+      const baseName = path.basename(filename, ext);
+      // Check if this is a language-specific file (e.g., analyst.zh.yaml -> analyst)
+      const langMatch = baseName.match(/^(.+)\.([a-z]{2})$/);
+      return langMatch ? langMatch[1] : baseName;
+    };
+
     // Check core agents in .orchestrix-core or root only
     let agentsDir = path.join(installDir, ".orchestrix-core", "agents");
     if (!(await fileManager.pathExists(agentsDir))) {
       agentsDir = path.join(installDir, "orchestrix-core", "agents");
     }
-    
+
     if (await fileManager.pathExists(agentsDir)) {
       // Support both YAML and MD files, prioritize YAML
       // Filter out .src.yaml (legacy) and README files
       const yamlFiles = glob.sync("*.yaml", { cwd: agentsDir }).filter(file => !file.endsWith('.src.yaml') && !file.toUpperCase().startsWith('README'));
       const mdFiles = glob.sync("*.md", { cwd: agentsDir }).filter(file => !file.toUpperCase().startsWith('README'));
 
-      // Extract IDs from YAML files first
-      const yamlIds = yamlFiles.map((file) => path.basename(file, ".yaml"));
-      // Extract IDs from MD files, but exclude those already found in YAML
-      const mdIds = mdFiles.map((file) => path.basename(file, ".md")).filter(id => !yamlIds.includes(id));
-      
+      // Extract IDs from YAML files (removing language suffixes to get unique IDs)
+      const yamlIds = yamlFiles.map((file) => extractAgentId(file, ".yaml"));
+      // Extract IDs from MD files
+      const mdIds = mdFiles.map((file) => extractAgentId(file, ".md")).filter(id => !yamlIds.includes(id));
+
       allAgentIds.push(...yamlIds, ...mdIds);
     }
-    
+
     return [...new Set(allAgentIds)];
   }
 

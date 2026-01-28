@@ -28,20 +28,45 @@ class ConfigLoader {
 
   async getAvailableAgents() {
     const agentsDir = path.join(this.getOrchestrixCorePath(), 'agents');
-    
+
+    // Helper to extract agent ID from filename, handling language suffixes
+    const extractAgentId = (filename, ext) => {
+      const baseName = path.basename(filename, ext);
+      // Check if this is a language-specific file (e.g., analyst.zh.yaml -> analyst)
+      const langMatch = baseName.match(/^(.+)\.([a-z]{2})$/);
+      return langMatch ? langMatch[1] : baseName;
+    };
+
+    // Helper to check if file is a language-specific file
+    const isLangSpecificFile = (filename) => {
+      const baseName = path.basename(filename, path.extname(filename));
+      return /\.[a-z]{2}$/.test(baseName);
+    };
+
     try {
       const entries = await fs.readdir(agentsDir, { withFileTypes: true });
-      const agents = [];
-      
+      const agentsMap = new Map(); // Use Map to deduplicate by agent ID
+
       for (const entry of entries) {
         // Support both .yaml and .md files (for backward compatibility)
+        // Skip language-specific files for the listing (only show default versions)
         if (entry.isFile() && (entry.name.endsWith('.yaml') || entry.name.endsWith('.md'))) {
+          // Skip language-specific files
+          if (isLangSpecificFile(entry.name)) {
+            continue;
+          }
+
           const agentPath = path.join(agentsDir, entry.name);
           const agentId = path.basename(entry.name, entry.name.endsWith('.yaml') ? '.yaml' : '.md');
-          
+
+          // Skip if we already have this agent (from YAML, which takes precedence)
+          if (agentsMap.has(agentId)) {
+            continue;
+          }
+
           try {
             let agentConfig = null;
-            
+
             if (entry.name.endsWith('.yaml')) {
               // Direct YAML file loading
               const config = await loadAgentYaml(agentPath);
@@ -62,9 +87,9 @@ class ConfigLoader {
                 agentConfig = yamlContent.agent || {};
               }
             }
-            
+
             if (agentConfig) {
-              agents.push({
+              agentsMap.set(agentId, {
                 id: agentId,
                 name: agentConfig.title || agentConfig.name || agentId,
                 file: `orchestrix-core/agents/${entry.name}`,
@@ -76,10 +101,11 @@ class ConfigLoader {
           }
         }
       }
-      
-      // Sort agents by name for consistent display
+
+      // Convert Map to array and sort by name for consistent display
+      const agents = Array.from(agentsMap.values());
       agents.sort((a, b) => a.name.localeCompare(b.name));
-      
+
       return agents;
     } catch (error) {
       console.warn(`Failed to read agents directory: ${error.message}`);

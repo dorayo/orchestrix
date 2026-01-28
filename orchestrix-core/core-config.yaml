@@ -57,3 +57,16 @@ qa:
         - risk-profile
 slashPrefix: Orchestrix
 version: 15.13.0
+
+# Internationalization (i18n) Configuration
+i18n:
+  # Default language for agents and resources
+  default_language: en
+  # Supported languages (use ISO 639-1 codes)
+  supported_languages:
+    - en
+    - zh
+  # Fallback to default language when translation is missing
+  fallback_to_default: true
+  # File naming convention: {name}.{lang}.{ext} (e.g., analyst.zh.yaml)
+  file_pattern: "{name}.{lang}.{ext}"
