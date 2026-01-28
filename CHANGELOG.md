@@ -1,3 +1,18 @@
+# [15.14.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.13.0...v15.14.0) (2026-01-28)
+
+
+### Bug Fixes
+
+* **ux-expert:** auto-select template when only one available ([5c522dc](https://github.com/dorayo/ORCHESTRIX/commit/5c522dca02d991c5792d7e8c74c3819c83459f1f))
+
+
+### Features
+
+* **dev:** add lightweight quick-fix workflow for bug fixes ([b0a456e](https://github.com/dorayo/ORCHESTRIX/commit/b0a456e1e89d91af9d40d213d18cc36c9382bd73))
+* **i18n:** add Chinese language support for agents ([d91b2dc](https://github.com/dorayo/ORCHESTRIX/commit/d91b2dce1857e4293d8c0a74ecc06f2c6b73bd05))
+* **i18n:** add Chinese templates for medium priority documents ([13503ac](https://github.com/dorayo/ORCHESTRIX/commit/13503ace00198eed3856b41faf976b88b3dcb7a4))
+* **sm:** add --continue flag to *draft command ([0042686](https://github.com/dorayo/ORCHESTRIX/commit/0042686da0da33c64efdfcdfe73b1cf86afca6d9))
+
 # [15.13.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.12.0...v15.13.0) (2026-01-21)
 
 
