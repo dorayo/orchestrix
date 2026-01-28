@@ -1,0 +1,631 @@
+template:
+  id: prd-template-v2
+  name: 产品需求文档
+  version: 2.0
+  output:
+    format: markdown
+    filename: docs/prd.md
+    title: "{{project_name}} 产品需求文档 (PRD)"
+
+workflow:
+  mode: interactive
+  elicitation: advanced-elicitation
+
+sections:
+  - id: goals-context
+    title: 目标与背景
+    instruction: |
+      Ask if Project Brief document is available. If NO Project Brief exists, STRONGLY recommend creating one first using project-brief-tmpl (it provides essential foundation: problem statement, target users, success metrics, MVP scope, constraints). If user insists on PRD without brief, gather this information during Goals section. If Project Brief exists, review and use it to populate Goals (bullet list of desired outcomes) and Background Context (1-2 paragraphs on what this solves and why) so we can determine what is and is not in scope for PRD mvp. Either way this is critical to determine the requirements. Include Change Log table.
+    sections:
+      - id: goals
+        title: 目标
+        type: bullet-list
+        instruction: Bullet list of 1 line desired outcomes the PRD will deliver if successful - user and project desires
+      - id: background
+        title: 背景
+        type: paragraphs
+        instruction: 1-2 short paragraphs summarizing the background context, such as what we learned in the brief without being redundant with the goals, what and why this solves a problem, what the current landscape or need is
+      - id: changelog
+        title: 变更日志
+        type: table
+        columns: [日期, 版本, 描述, 作者]
+        instruction: Track document versions and changes
+
+  - id: requirements
+    title: 需求
+    instruction: Draft the list of functional and non functional requirements under the two child sections
+    elicit: true
+    sections:
+      - id: functional
+        title: 功能性需求
+        type: numbered-list
+        prefix: FR
+        instruction: Each Requirement will be a bullet markdown and an identifier sequence starting with FR
+        examples:
+          - "FR6: The Todo List uses AI to detect and warn against potentially duplicate todo items that are worded differently."
+      - id: non-functional
+        title: 非功能性需求
+        type: numbered-list
+        prefix: NFR
+        instruction: Each Requirement will be a bullet markdown and an identifier sequence starting with NFR
+        examples:
+          - "NFR1: AWS service usage must aim to stay within free-tier limits where feasible."
+
+  - id: ui-goals
+    title: 用户界面设计目标
+    condition: PRD has UX/UI requirements
+    instruction: |
+      Capture high-level UI/UX vision to guide Design Architect and to inform story creation. Steps:
+
+      1. Pre-fill all subsections with educated guesses based on project context
+      2. Present the complete rendered section to user
+      3. Clearly let the user know where assumptions were made
+      4. Ask targeted questions for unclear/missing elements or areas needing more specification
+      5. This is NOT detailed UI spec - focus on product vision and user goals
+    elicit: true
+    choices:
+      accessibility: [无, WCAG AA, WCAG AAA]
+      platforms: [Web 响应式, 仅移动端, 仅桌面端, 跨平台]
+    sections:
+      - id: ux-vision
+        title: 整体 UX 愿景
+      - id: interaction-paradigms
+        title: 核心交互范式
+      - id: core-screens
+        title: 核心页面与视图
+        instruction: From a product perspective, what are the most critical screens or views necessary to deliver the the PRD values and goals? This is meant to be Conceptual High Level to Drive Rough Epic or User Stories
+        examples:
+          - "登录页面"
+          - "主控制台"
+          - "详情页"
+          - "设置页"
+      - id: accessibility
+        title: "无障碍: {无|WCAG AA|WCAG AAA|自定义要求}"
+      - id: branding
+        title: 品牌设计
+        instruction: Any known branding elements or style guides that must be incorporated?
+        examples:
+          - "Replicate the look and feel of early 1900s black and white cinema, including animated effects replicating film damage or projector glitches during page or state transitions."
+          - "Attached is the full color pallet and tokens for our corporate branding."
+      - id: target-platforms
+        title: "目标设备与平台: {Web 响应式|仅移动端|仅桌面端|跨平台}"
+        examples:
+          - "Web 响应式，支持所有移动端平台"
+          - "仅 iPhone"
+          - "ASCII Windows 桌面端"
+
+  - id: technical-assumptions
+    title: 技术假设
+    instruction: |
+      Gather technical decisions that will guide the Architect. Steps:
+
+      1. Check if {root}/data/technical-preferences.yaml or an attached technical-preferences file exists - use it to pre-populate choices
+      2. Ask user about: languages, frameworks, starter templates, libraries, APIs, deployment targets
+      3. For unknowns, offer guidance based on project goals and MVP scope
+      4. Document ALL technical choices with rationale (why this choice fits the project)
+      5. These become constraints for the Architect - be specific and complete
+    elicit: true
+    choices:
+      repository: [Monorepo, Polyrepo]
+      architecture: [单体架构, 微服务, Serverless]
+      testing: [仅单元测试, 单元测试 + 集成测试, 完整测试金字塔]
+    sections:
+      - id: repository-structure
+        title: "仓库结构: {Monorepo|Polyrepo|Multi-repo}"
+      - id: service-architecture
+        title: 服务架构
+        instruction: "CRITICAL DECISION - Document the high-level service architecture (e.g., Monolith, Microservices, Serverless functions within a Monorepo)."
+      - id: testing-requirements
+        title: 测试要求
+        instruction: "CRITICAL DECISION - Document the testing requirements, unit only, integration, e2e, manual, need for manual testing convenience methods)."
+      - id: repository-details
+        title: 仓库详情
+        condition: repository-structure is Polyrepo or Multi-repo
+        instruction: |
+          For multi-repository projects, define all target repositories.
+          This helps coordinate development across multiple teams and codebases.
+
+          **For Monolith Projects**: Skip this section or state "Single repository (monolith architecture)"
+
+          **For Multi-Repo Projects**: List all repositories with:
+          - Repository name (following naming convention: {project}-{type})
+          - Repository type (backend/frontend/ios/android/mobile/shared)
+          - Primary technology (high-level: Node.js, React, Swift, Kotlin, etc.)
+          - Team ownership (Backend Team, Frontend Team, Mobile Team, etc.)
+
+          This information will be used by:
+          - Architect to generate system-architecture.md
+          - PO to map stories to repositories during epic sharding
+          - SM to create stories in correct repositories
+        elicit: true
+        type: table
+        columns: [仓库名称, 类型, 技术栈, 负责团队]
+        examples:
+          - "| my-ecommerce-backend | backend | Node.js + Express | 后端团队 |"
+          - "| my-ecommerce-web | frontend | React + Next.js | 前端团队 |"
+          - "| my-ecommerce-ios | ios | Swift + SwiftUI | 移动端团队 |"
+      - id: additional-assumptions
+        title: 其他技术假设与要求
+        instruction: Throughout the entire process of drafting this document, if any other technical assumptions are raised or discovered appropriate for the architect, add them here as additional bulleted items
+
+  - id: epic-list
+    title: Epic 列表
+    instruction: |
+      Present a high-level list of all epics for user approval. Each epic should have a title and a short (1 sentence) goal statement. This allows the user to review the overall structure before diving into details.
+
+      CRITICAL: Epics MUST be logically sequential following agile best practices:
+
+      - Each epic should deliver a significant, end-to-end, fully deployable increment of testable functionality
+      - Epic 1 must establish foundational project infrastructure (app setup, Git, CI/CD, core services) unless we are adding new functionality to an existing app, while also delivering an initial piece of functionality, even as simple as a health-check route or display of a simple canary page - remember this when we produce the stories for the first epic!
+      - Each subsequent epic builds upon previous epics' functionality delivering major blocks of functionality that provide tangible value to users or business when deployed
+      - Not every project needs multiple epics, an epic needs to deliver value. For example, an API completed can deliver value even if a UI is not complete and planned for a separate epic.
+      - Err on the side of less epics, but let the user know your rationale and offer options for splitting them if it seems some are too large or focused on disparate things.
+      - Cross Cutting Concerns should flow through epics and stories and not be final stories. For example, adding a logging framework as a last story of an epic, or at the end of a project as a final epic or story would be terrible as we would not have logging from the beginning.
+    elicit: true
+    examples:
+      - "Epic 1: 基础设施与核心框架: 建立项目框架、认证体系和基础用户管理"
+      - "Epic 2: 核心业务实体: 创建和管理核心领域对象的 CRUD 操作"
+      - "Epic 3: 用户工作流与交互: 实现关键用户旅程和业务流程"
+      - "Epic 4: 报表与分析: 为用户提供数据洞察和可视化功能"
+
+  - id: epics
+    title: Epics
+    instruction: |
+      ⚠️ CRITICAL SECTION - Complete requirement specifications for all Epics and Stories.
+
+      ## Purpose
+
+      This section contains COMPLETE requirement details that flow directly to Dev agents.
+      PM MUST define all business rules, validation, error handling here - NOT delegated to SM.
+      SM agents will render this content into Story documents WITHOUT additional analysis.
+
+      ## Story Sequencing Requirements
+
+      - Stories within each epic MUST be logically sequential
+      - Each story is a "vertical slice" delivering complete functionality
+      - No story depends on work from a later story or epic
+      - Size for AI agent execution: completable in 2-4 hours focused session
+
+      ## Epic Document Format
+
+      For EACH epic, create a YAML block using this EXACT structure:
+
+      ```
+      ## Epic {{N}}: {{Epic Title}}
+
+      **Epic 概述:** {{2-3 sentence summary}}
+
+      **目标仓库:** {{backend, frontend, ios, android, mobile - as applicable}}
+      ```
+
+      Followed by a YAML code fence with the complete Epic definition.
+
+      ## Enhanced Acceptance Criteria Structure
+
+      CRITICAL: Each AC is a COMPLETE requirement unit. Dev agents will implement directly
+      from this specification without needing to consult PRD or architecture documents.
+
+      ```yaml
+      epic_id: {{N}}
+      title: "{{Epic Title}}"
+      description: |
+        {{Epic goal - 2-3 sentences describing objective and value}}
+
+      # ============================================================
+      # 复用分析 - 来自 PM *start-iteration Step 4 的分析结果
+      # 记录可复用/需扩展/需解决冲突的现有实现
+      # ============================================================
+      reuse_analysis:
+        directly_reusable:
+          # 类别 A: 可直接引用的现有代码，无需重新实现
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            capability: "{{what_it_does}}"
+            usage: "{{how_this_epic_uses_it}}"
+
+        requires_extension:
+          # 类别 B: 需要扩展的现有代码
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            current_capability: "{{what_it_does_now}}"
+            extension_needed: "{{what_to_add}}"
+            affected_stories: ["{{story_id}}"]
+
+        conflicts:
+          # 类别 C: 需要解决的冲突
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            conflict: "{{conflict_description}}"
+            resolution: "{{chosen_resolution}}"
+            affected_stories: ["{{story_id}}"]
+
+        new_implementations:
+          # 类别 D: 需要新建的代码
+          - feature: "{{feature_name}}"
+            suggested_location: "{{file_path}}"
+            pattern_reference: "{{existing_file_to_follow}}"
+            affected_stories: ["{{story_id}}"]
+
+      stories:
+        - id: "{{N}}.1"
+          title: "{{Story title}}"
+          repository_type: backend | frontend | ios | android | monolith
+          estimated_complexity: low | medium | high
+          priority: P0 | P1 | P2
+
+          # ============================================================
+          # 增强型验收标准 - 完整的需求规格
+          # ============================================================
+          acceptance_criteria:
+            - id: AC1
+              title: "{{Concise AC title}}"
+
+              # 必填: GIVEN/WHEN/THEN 格式的场景
+              scenario:
+                given: "{{Precondition state}}"
+                when: "{{User action or system trigger}}"
+                then:
+                  - "{{Expected outcome 1}}"
+                  - "{{Expected outcome 2}}"
+
+              # 必填: 管控此 AC 的业务规则
+              # 每个 AC 至少 1 条规则。使用 BR-{ac_num}.{seq} 格式。
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "{{Business rule description}}"
+                - id: "BR-1.2"
+                  rule: "{{Another rule}}"
+
+              # 条件: 当 AC 涉及表单输入或 API 请求体时必填
+              # 若 AC 无数据输入则完全省略
+              data_validation:
+                - field: "{{field_name}}"
+                  type: "string | number | boolean | email | date | array | object"
+                  required: true | false
+                  rules: "{{Validation rules - format, length, pattern, range}}"
+                  error_message: "{{User-facing error message}}"
+
+              # 必填: 错误场景与处理方式
+              # 每个 AC 至少 1 个错误场景
+              error_handling:
+                - scenario: "{{Error condition description}}"
+                  code: "{{HTTP status or error code}}"
+                  message: "{{User-facing error message}}"
+                  action: "{{System behavior on this error}}"
+
+              # 可选: UI 交互细节
+              # 仅用于有 UI 的 frontend/mobile stories
+              interaction:
+                - trigger: "{{User action}}"
+                  behavior: "{{UI response - loading states, animations, feedback}}"
+
+              # 推荐: 具体示例（实例化规格）
+              # 帮助 Dev agents 精确理解预期行为
+              examples:
+                - input: "{{Example input data}}"
+                  expected: "{{Expected output or behavior}}"
+
+            - id: AC2
+              title: "{{Next AC}}"
+              # ... same structure
+
+          # ============================================================
+          # API 与依赖追踪
+          # ============================================================
+          provides_apis: []     # Backend: ["POST /api/users", "GET /api/users/:id"]
+          consumes_apis: []     # Frontend/Mobile: ["POST /api/auth/login"]
+          dependencies: []      # Story IDs: ["1.1", "1.2"]
+
+          # ============================================================
+          # SM 提示 - 由 UX-Expert 和 Architect 在 PM 创建 Epic 后填充
+          # ============================================================
+          sm_hints:
+            front_end_spec: null   # UX-Expert fills: {file, sections}
+            architecture: null     # Architect fills: {files}
+      ```
+
+      ## 字段要求参考
+
+      **Epic 级别字段:**
+
+      | 字段 | 必填 | 条件 | 描述 |
+      |------|------|------|------|
+      | epic_id | 是 | 始终 | Epic 唯一标识 |
+      | title | 是 | 始终 | Epic 标题 |
+      | description | 是 | 始终 | 2-3 句描述目标和价值 |
+      | reuse_analysis | 条件 | Post-MVP 迭代 | 来自 PM Step 4 的现有实现分析 |
+
+      **验收标准字段:**
+
+      | 字段 | 必填 | 条件 | 描述 |
+      |------|------|------|------|
+      | id | 是 | 始终 | AC 标识符: AC1, AC2 等 |
+      | title | 是 | 始终 | 简洁的 AC 标题 (5-10 词) |
+      | scenario | 是 | 始终 | GIVEN/WHEN/THEN 结构 |
+      | business_rules | 是 | 始终 | 每个 AC 至少 1 条规则 |
+      | data_validation | 条件 | 当 AC 有表单/API 输入时 | 字段级验证规格 |
+      | error_handling | 是 | 始终 | 至少 1 个错误场景 |
+      | interaction | 否 | 仅用于 UI stories | UI 行为细节 |
+      | examples | 推荐 | 始终 | 实例化规格 |
+
+      ## Complete Example (Multi-repo Project)
+
+      ## Epic 1: User Authentication System
+
+      **Epic 概述:** Implement secure user authentication with registration, login, and session management. Backend provides REST API endpoints. Frontend provides responsive UI.
+
+      **目标仓库:** backend, frontend
+
+      ```yaml
+      epic_id: 1
+      title: "User Authentication System"
+      description: |
+        Establish foundation for user authentication and authorization.
+        Backend provides secure API endpoints with JWT tokens.
+        Frontend provides intuitive, accessible registration and login UI.
+
+      stories:
+        - id: "1.1"
+          title: "Backend - User Registration API"
+          repository_type: backend
+          estimated_complexity: medium
+          priority: P0
+
+          acceptance_criteria:
+            - id: AC1
+              title: "Successful user registration"
+              scenario:
+                given: "User is not registered in the system"
+                when: "User submits valid registration data via POST /api/users"
+                then:
+                  - "New user record is created in database"
+                  - "Password is hashed using bcrypt with cost factor 12"
+                  - "Response returns 201 with user object (excluding password)"
+                  - "Verification email is queued for sending"
+
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "Email must be unique across all users"
+                - id: "BR-1.2"
+                  rule: "Password must be 8-32 characters with at least one uppercase, one lowercase, and one digit"
+                - id: "BR-1.3"
+                  rule: "Username is optional; if not provided, use email local-part as default"
+                - id: "BR-1.4"
+                  rule: "New accounts are created with status 'pending_verification'"
+
+              data_validation:
+                - field: "email"
+                  type: "email"
+                  required: true
+                  rules: "RFC 5322 compliant, max 255 characters"
+                  error_message: "请输入有效的邮箱地址"
+                - field: "password"
+                  type: "string"
+                  required: true
+                  rules: "8-32 chars, must contain [A-Z], [a-z], [0-9]"
+                  error_message: "密码须为 8-32 位，包含大写、小写字母和数字"
+                - field: "username"
+                  type: "string"
+                  required: false
+                  rules: "3-20 chars, alphanumeric and underscore only"
+                  error_message: "用户名须为 3-20 位，仅限字母、数字和下划线"
+
+              error_handling:
+                - scenario: "Email already registered"
+                  code: "409"
+                  message: "该邮箱已被注册"
+                  action: "Return error, suggest login or password reset"
+                - scenario: "Password does not meet requirements"
+                  code: "400"
+                  message: "密码不符合安全要求"
+                  action: "Return validation error with specific requirement failures"
+                - scenario: "Database connection failure"
+                  code: "503"
+                  message: "服务暂时不可用"
+                  action: "Log error, do not expose internal details"
+
+              examples:
+                - input: |
+                    POST /api/users
+                    {"email": "newuser@example.com", "password": "SecurePass123"}
+                  expected: |
+                    201 Created
+                    {"id": "uuid", "email": "newuser@example.com", "username": "newuser", "status": "pending_verification", "created_at": "ISO8601"}
+                - input: |
+                    POST /api/users
+                    {"email": "existing@example.com", "password": "SecurePass123"}
+                  expected: |
+                    409 Conflict
+                    {"error": "该邮箱已被注册", "code": "EMAIL_EXISTS"}
+
+            - id: AC2
+              title: "User login with credentials"
+              scenario:
+                given: "User has a verified account"
+                when: "User submits valid credentials via POST /api/auth/login"
+                then:
+                  - "JWT access token is generated (15 min expiry)"
+                  - "JWT refresh token is generated (7 day expiry)"
+                  - "Tokens are returned in response body"
+                  - "Last login timestamp is updated"
+
+              business_rules:
+                - id: "BR-2.1"
+                  rule: "Only verified accounts can login"
+                - id: "BR-2.2"
+                  rule: "Failed login attempts are tracked; lock account after 5 consecutive failures"
+                - id: "BR-2.3"
+                  rule: "Account lockout duration is 15 minutes"
+                - id: "BR-2.4"
+                  rule: "JWT access token contains: user_id, email, roles"
+
+              data_validation:
+                - field: "email"
+                  type: "email"
+                  required: true
+                  rules: "Valid email format"
+                  error_message: "请输入您的邮箱地址"
+                - field: "password"
+                  type: "string"
+                  required: true
+                  rules: "Non-empty string"
+                  error_message: "请输入您的密码"
+
+              error_handling:
+                - scenario: "Invalid credentials"
+                  code: "401"
+                  message: "邮箱或密码错误"
+                  action: "Increment failed attempt counter, do not reveal which field is wrong"
+                - scenario: "Account not verified"
+                  code: "403"
+                  message: "请先验证您的邮箱再登录"
+                  action: "Offer to resend verification email"
+                - scenario: "Account locked"
+                  code: "423"
+                  message: "账户因多次登录失败已被临时锁定"
+                  action: "Return remaining lockout time"
+
+              examples:
+                - input: |
+                    POST /api/auth/login
+                    {"email": "user@example.com", "password": "SecurePass123"}
+                  expected: |
+                    200 OK
+                    {"access_token": "jwt...", "refresh_token": "jwt...", "expires_in": 900}
+                - input: |
+                    POST /api/auth/login
+                    {"email": "user@example.com", "password": "wrongpassword"}
+                  expected: |
+                    401 Unauthorized
+                    {"error": "邮箱或密码错误", "attempts_remaining": 4}
+
+          provides_apis:
+            - "POST /api/users"
+            - "POST /api/auth/login"
+            - "POST /api/auth/refresh"
+            - "POST /api/auth/logout"
+          consumes_apis: []
+          dependencies: []
+          sm_hints:
+            front_end_spec: null
+            architecture:
+              files:
+                - "5-components.md#AuthService"
+                - "8-database-schema.md#users"
+                - "9-rest-api-spec.md#auth-endpoints"
+
+        - id: "1.2"
+          title: "Frontend - Registration and Login UI"
+          repository_type: frontend
+          estimated_complexity: medium
+          priority: P0
+
+          acceptance_criteria:
+            - id: AC1
+              title: "Registration form with validation"
+              scenario:
+                given: "User navigates to /register page"
+                when: "User fills and submits registration form"
+                then:
+                  - "Form validates input in real-time"
+                  - "On success, redirect to /login with success message"
+                  - "On error, display error message without clearing form"
+
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "Real-time validation triggers on field blur"
+                - id: "BR-1.2"
+                  rule: "Submit button is disabled until all validations pass"
+                - id: "BR-1.3"
+                  rule: "Password strength indicator shows weak/medium/strong"
+
+              data_validation:
+                - field: "email"
+                  type: "email"
+                  required: true
+                  rules: "Valid email format, validated on blur"
+                  error_message: "请输入有效的邮箱地址"
+                - field: "password"
+                  type: "string"
+                  required: true
+                  rules: "8-32 chars with complexity requirements"
+                  error_message: "密码须符合安全要求"
+                - field: "confirmPassword"
+                  type: "string"
+                  required: true
+                  rules: "Must match password field"
+                  error_message: "两次输入的密码不一致"
+
+              error_handling:
+                - scenario: "API returns 409 (email exists)"
+                  code: "409"
+                  message: "该邮箱已被注册"
+                  action: "Show error below email field, offer login link"
+                - scenario: "Network error"
+                  code: "NETWORK_ERROR"
+                  message: "无法连接，请检查网络连接"
+                  action: "Show retry button, preserve form data"
+
+              interaction:
+                - trigger: "Page load"
+                  behavior: "Focus on email field automatically"
+                - trigger: "Field blur"
+                  behavior: "Validate field, show error if invalid"
+                - trigger: "Submit click"
+                  behavior: "Show loading spinner, disable button"
+                - trigger: "Successful registration"
+                  behavior: "Show success toast, redirect to /login after 2 seconds"
+
+              examples:
+                - input: "User enters 'test@example.com' and valid password"
+                  expected: "Form submits, success message shown, redirect to /login"
+                - input: "User enters password without uppercase"
+                  expected: "Real-time error: '密码须包含大写字母'"
+
+          provides_apis: []
+          consumes_apis:
+            - "POST /api/users"
+            - "POST /api/auth/login"
+          dependencies:
+            - "1.1"
+          sm_hints:
+            front_end_spec:
+              file: "epic-1-front-end-spec.md"
+              sections:
+                - "Story 1.2: Registration and Login UI"
+                - "RegistrationForm component"
+                - "LoginForm component"
+                - "Form validation patterns"
+            architecture:
+              files:
+                - "5-components.md#AuthPages"
+                - "9-rest-api-spec.md#auth-endpoints"
+      ```
+
+      ## 验证清单
+
+      完成每个 Story 前，请确认:
+
+      - [ ] 每个 AC 至少有 1 条业务规则
+      - [ ] 每个有数据输入的 AC 都有 data_validation 部分
+      - [ ] 每个 AC 至少有 1 个 error_handling 场景
+      - [ ] 示例同时覆盖成功和失败情况
+      - [ ] UI stories 有 interaction 部分
+      - [ ] 所有 error_message 字段值对用户友好
+
+      Now define YAML blocks for ALL epics from your Epic List above.
+    elicit: true
+
+  - id: checklist-results
+    title: 检查清单结果报告
+    instruction: Before running the checklist and drafting the prompts, offer to output the full updated PRD. If outputting it, confirm with the user that you will be proceeding to run the checklist and produce the report. Once the user confirms, execute the pm-checklist and populate the results in this section.
+
+  - id: next-steps
+    title: 下一步
+    sections:
+      - id: ux-expert-prompt
+        title: UX Expert 提示
+        instruction: This section will contain the prompt for the UX Expert, keep it short and to the point to initiate create architecture mode using this document as input.
+      - id: architect-prompt
+        title: Architect 提示
+        instruction: This section will contain the prompt for the Architect, keep it short and to the point to initiate create architecture mode using this document as input.

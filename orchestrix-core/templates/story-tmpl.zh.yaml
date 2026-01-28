@@ -1,0 +1,747 @@
+template:
+  id: story-template-v3-zh
+  name: Story 文档
+  version: 3.0
+  output:
+    format: markdown
+    filename: docs/stories/{{epic_num}}.{{story_num}}.{{story_title_short}}.md
+    title: "Story {{epic_num}}.{{story_num}}: {{story_title_short}}"
+
+workflow:
+  mode: interactive
+  elicitation: advanced-elicitation
+
+agent_config:
+  editable_sections:
+    - 状态
+    - 任务 / 子任务
+    - 开发记录
+    - 变更日志
+
+sections:
+  - id: status
+    title: 状态
+    type: choice
+    choices:
+      [Blocked, AwaitingArchReview, AwaitingTestDesign, TestDesignComplete,
+       RequiresRevision, Approved, InProgress, Review, Done, Escalated]
+    instruction: |
+      Select the current status of the story:
+      - Blocked: Story quality not meeting standards, requires SM revision
+      - AwaitingArchReview: Waiting for Architect technical review
+      - AwaitingTestDesign: Waiting for QA test design
+      - TestDesignComplete: Test design complete, ready for development
+      - RequiresRevision: Architect review found issues, requires SM revision
+      - Approved: Story approved and ready for development
+      - InProgress: Dev is implementing or fixing QA issues
+      - Review: Waiting for QA review
+      - Done: Story completed
+      - Escalated: Requires human intervention for decision
+    owner: scrum-master
+    editors: [scrum-master, architect-agent, qa-agent, dev-agent]
+
+  - id: story
+    title: 用户故事
+    type: template-text
+    template: |
+      **作为** {{role}}，
+      **我希望** {{action}}，
+      **以便** {{benefit}}
+    instruction: Define the user story using the standard format with role, action, and benefit
+    elicit: true
+    owner: scrum-master
+    editors: [scrum-master]
+
+  - id: multi-repo-context
+    title: 多仓库上下文
+    condition: project.mode == 'multi-repo'
+    type: template-text
+    template: |
+      **仓库**: {{repository_name}}
+      **平台**: {{target_platform}}
+      **Epic**: Epic {{epic_id}} - {{epic_title}}
+
+      API 契约参考: 详见 `{{api_contracts_path}}`。
+
+      {{#if provides_apis}}
+
+      ### 🔌 本 Story 提供的 API
+
+      本 Story 实现以下 API 供其他仓库调用:
+
+      {{#each provides_apis}}
+      - `{{this}}`
+      {{/each}}
+      {{/if}}
+
+
+      {{ #if consumes_apis }}
+
+      ### 📡 本 Story 消费的 API
+
+      本 Story 调用以下来自其他仓库的 API:
+
+      {{#each consumes_apis}}
+      - `{{this}}`
+      {{/each}}
+
+
+      {{#if cross_repo_dependencies}}
+      ### 🔗 跨仓库依赖
+
+      本 Story 依赖以下 Story 完成:
+
+      {{#each cross_repo_dependencies}}
+      - **{{this}}** (必须 Status = Done)
+      {{/each}}
+      {{/if}}
+
+      {{#if repository_name}}
+      ### 📂 仓库信息
+
+      - **仓库路径**: `../{{repository_name}}/`
+      - **系统架构**: `../{{product_repo_name}}/docs/architecture/system-architecture.md`
+      - **详细架构**: `docs/architecture.md`
+      - **API 契约**: `../{{product_repo_name}}/docs/architecture/api-contracts.md`
+
+      **注意**: 始终参考 system-architecture.md 了解集成约束和 API 契约。
+      {{/if}}
+    instruction: |
+      Display multi-repository context information for this story.
+      This section is automatically populated from Epic YAML and PRD data.
+
+      Shows:
+      - Repository and platform assignments
+      - APIs provided (for backend stories)
+      - APIs consumed (for frontend/mobile stories)
+      - Cross-repository dependencies
+      - References to architecture documents
+    owner: scrum-master
+    editors: [scrum-master]
+
+  - id: acceptance-criteria
+    title: 验收标准
+    type: structured-list
+    instruction: |
+      RENDER ONLY - Do not modify or analyze.
+
+      This section renders the Enhanced AC structure directly from Epic YAML.
+      Each AC is a COMPLETE requirement unit containing:
+      - Scenario (GIVEN/WHEN/THEN)
+      - Business Rules
+      - Data Validation (if applicable)
+      - Error Handling
+      - UI Interaction (if applicable)
+      - Examples
+
+      Dev agents implement directly from this specification.
+      No additional requirement analysis needed.
+    owner: scrum-master
+    editors: [scrum-master]
+    template: |
+      {{#each acceptance_criteria}}
+      ### {{this.id}}: {{this.title}}
+
+      **场景**
+      ```gherkin
+      假设 {{this.scenario.given}}
+      当 {{this.scenario.when}}
+      那么 {{#each this.scenario.then}}
+        - {{this}}{{/each}}
+      ```
+
+      **业务规则**
+      | ID | 规则 |
+      |----|------|
+      {{#each this.business_rules}}
+      | {{this.id}} | {{this.rule}} |
+      {{/each}}
+
+      {{#if this.data_validation}}
+      **数据验证**
+      | 字段 | 类型 | 必填 | 规则 | 错误信息 |
+      |------|------|------|------|----------|
+      {{#each this.data_validation}}
+      | {{this.field}} | {{this.type}} | {{this.required}} | {{this.rules}} | {{this.error_message}} |
+      {{/each}}
+      {{/if}}
+
+      **错误处理**
+      | 场景 | 错误码 | 信息 | 处理方式 |
+      |------|--------|------|----------|
+      {{#each this.error_handling}}
+      | {{this.scenario}} | {{this.code}} | {{this.message}} | {{this.action}} |
+      {{/each}}
+
+      {{#if this.interaction}}
+      **UI 交互**
+      | 触发器 | 行为 |
+      |--------|------|
+      {{#each this.interaction}}
+      | {{this.trigger}} | {{this.behavior}} |
+      {{/each}}
+      {{/if}}
+
+      {{#if this.examples}}
+      **示例**
+      {{#each this.examples}}
+      - **输入**: {{this.input}}
+        **预期**: {{this.expected}}
+      {{/each}}
+      {{/if}}
+
+      ---
+      {{/each}}
+
+  - id: tasks-subtasks
+    title: 任务 / 子任务
+    type: structured-tasks
+    instruction: |
+      Task structure based on "independently completable technical units".
+      Each task is less than 2 hours, can be committed independently.
+
+      Structure:
+      1. Infrastructure Tasks (shared across ACs) - database, base setup
+      2. Feature Tasks (per AC) - with TDD cycle
+      3. Integration Tasks (cross-AC) - E2E testing
+
+      Dev: Execute tasks in order, check off as completed.
+      QA: Backfill Test Specs after test-design (Standard/Comprehensive only).
+    owner: scrum-master
+    editors: [scrum-master, qa-agent, dev-agent]
+    template: |
+      ## 基础设施任务 (共享)
+
+      - [ ] **T0: 数据库 & 基础配置** `[ALL ACs]`
+        - [ ] 创建/修改数据库表和迁移文件
+        - [ ] 搭建基础服务/仓库结构
+        - [ ] 验证迁移脚本执行成功
+
+      ## 功能实现任务
+
+      {{#each acceptance_criteria}}
+      ### {{this.id}}: {{this.title}}
+
+      - [ ] **T{{add @index 1}}: 实现 {{this.title}}** `[{{this.id}}]`
+        - [ ] 编写单元测试 (覆盖 BR-{{add @index 1}}.x 规则)
+        - [ ] 实现核心逻辑
+        {{#if this.data_validation}}- [ ] 实现数据验证{{/if}}
+        - [ ] 实现错误处理场景
+        - [ ] 验证所有测试通过
+      {{/each}}
+
+      ## 集成 & 验证任务
+
+      - [ ] **T{{add acceptance_criteria.length 1}}: 集成测试** `[ALL ACs]`
+        - [ ] 端到端流程测试
+        - [ ] 跨 AC 集成测试
+        - [ ] 边界情况和异常测试
+
+      - [ ] **T{{add acceptance_criteria.length 2}}: 最终验证** `[ALL ACs]`
+        - [ ] 所有测试通过 (单元 + 集成)
+        - [ ] 无 lint 错误
+        - [ ] 开发日志包含实现摘要
+        - [ ] 状态 → Review
+
+      ## AC 覆盖矩阵
+
+      | 任务 | {{#each acceptance_criteria}}{{this.id}} | {{/each}}
+      |------|{{#each acceptance_criteria}}:---:|{{/each}}
+      | T0: 基础设施 | {{#each acceptance_criteria}}✓ | {{/each}}
+      {{#each acceptance_criteria}}
+      | T{{add @index 1}}: {{this.title}} | {{#each ../acceptance_criteria}}{{#if (eq @index @../index)}}✓{{else}} {{/if}} | {{/each}}
+      {{/each}}
+      | T{{add acceptance_criteria.length 1}}: 集成 | {{#each acceptance_criteria}}✓ | {{/each}}
+      | T{{add acceptance_criteria.length 2}}: 最终 | {{#each acceptance_criteria}}✓ | {{/each}}
+
+  - id: dev-notes
+    title: 开发说明
+    instruction: |
+      Populate relevant information, only what was pulled from actual artifacts from docs folder, relevant to this story:
+      - Do not invent information
+      - If known add Relevant Source Tree info that relates to this story
+      - If there were important notes from previous story that are relevant to this one, include them here
+      - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents, these notes along with the tasks and subtasks must give the Dev Agent the complete context it needs to comprehend with the least amount of overhead the information to complete the story, meeting all AC and completing all tasks+subtasks
+    elicit: true
+    owner: scrum-master
+    editors: [scrum-master]
+
+    sections:
+
+      - id: technical-constraints
+        title: 技术约束
+        instruction: Record only constraints unique to this story (performance/security/version limits)
+
+      - id: ui-ux-reference
+        title: UI/UX 规格参考
+        condition: file_exists('docs/front-end-spec.md')
+        instruction: |
+          List relevant sections from docs/front-end-spec.md for this story.
+          Only populate if front-end-spec.md exists AND story involves UI/UX work.
+
+          Section mapping guide:
+          - Navigation/menu/routing → Information Architecture (IA)
+          - User journey/registration/checkout → User Flows
+          - Page layout/screen design → Wireframes & Mockups
+          - Form/button/input/component → Component Library / Design System
+          - Color/font/icon/spacing → Branding & Style Guide
+          - Keyboard nav/screen reader/WCAG → Accessibility Requirements
+          - Mobile/tablet/breakpoint → Responsiveness Strategy
+          - Animation/transition/feedback → Animation & Micro-interactions
+          - Load time/render perf → Performance Considerations
+
+          **IMPORTANT**: Always include the file path header so Dev knows where to read from.
+
+          Format:
+          **📐 参考文件**: `docs/front-end-spec.md`
+
+          | 章节 | 相关原因 |
+          |------|----------|
+          | {Section Title} | {Brief reason for this story} |
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: accumulated-context
+        title: 累积上下文 (来自之前 Story)
+        instruction: |
+          List ONLY resources relevant to THIS story. Use table format.
+
+          | 资源类型 | 名称 | 来源 Story | 操作 | 关键信息 |
+          |----------|------|------------|------|----------|
+          | Table | {table_name} | {X.Y} | REUSE/EXTEND/FK | {key_fields} (完整 schema 见 Story {X.Y}) |
+          | Endpoint | {METHOD /path} | {X.Y} | CALL/EXTEND | {brief_signature} |
+          | Model | {IModelName} | {X.Y} | REUSE/EXTEND | {action_description} |
+
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: database-design
+        title: 数据库设计
+        instruction: Describe design decisions for tables/indexes/FKs; full schema must be referenced via migration files
+
+      - id: data-sync-requirements
+        title: 数据同步要求
+        condition: story_involves_db_write
+        instruction: |
+          **CRITICAL - Data Synchronization Analysis (Required for all Stories with DB writes)**
+
+          ### 1. Write Operations Inventory
+          List all database write operations in this Story:
+
+          | 表 | 操作 | 关键字段 | 触发条件 |
+          |----|------|----------|----------|
+          | {table} | INSERT/UPDATE/DELETE | {fields} | {when this operation happens} |
+
+          ### 2. Status/Expiry/Sync Field Check
+          For each table involved, check for the following field types:
+          - Status fields (status, state, is_active, enabled, verified)
+          - Expiry fields (expires_at, valid_until, period_end, expiry_date)
+          - Sync fields (synced_at, last_updated, updated_at)
+
+          If present, list them:
+          | 表 | 字段 | 字段类型 | 当前值来源 |
+          |----|------|----------|------------|
+
+          ### 3. Related Field Synchronization Analysis (LLM Reasoning)
+          **Key Question**: Based on business logic reasoning, when this Story updates a field, are there other tables' fields that need to be synchronized?
+
+          **Reasoning Guidelines**:
+          - Does the same user/entity have related status in different tables?
+          - Do payment/subscription status changes affect permissions/access control?
+          - Do master table status changes need to cascade to dependent tables?
+          - Are there cache/redundant fields that need synchronization?
+
+          **Analysis Result**:
+          | 本 Story 更新 | 潜在关联字段 | 需要同步? | 原因 | AC 覆盖 |
+          |---------------|--------------|-----------|------|---------|
+          | {table.field} | {related.field} | YES/NO | {reasoning} | AC{N} / None |
+
+          ### 4. Uncovered Sync Requirements Handling
+          If "Sync Needed = YES" but "AC Coverage = None":
+          - [ ] Added AC to cover this sync requirement
+          - [ ] Documented as "Known Gap" with reason: _______________
+          - [ ] Escalated to Architect for discussion
+
+          **If no sync requirements exist**:
+          - [x] After analysis, this Story has no cross-table data synchronization requirements
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: data-models
+        title: 数据模型
+        instruction: Describe model contracts, key fields, validation rules; full types referenced via code paths
+
+      - id: file-locations
+        title: 文件位置
+        instruction: List important new/modified files according to project structure
+
+      - id: deliverable-bindings
+        title: 交付物绑定
+        instruction: |
+          MANDATORY for stories creating new code units (files, modules, components, endpoints).
+          Each deliverable MUST have at least one consumer. A deliverable without a consumer is orphaned code.
+
+          PURPOSE: Prevent "component island" problem where code exists and tests pass but feature is unreachable.
+
+          DEFINITION:
+          - deliverable: Code unit being created (file path, module, endpoint, command)
+          - consumer: Code unit that will use the deliverable (file path, service, "end_user")
+          - binding_type: How consumer references deliverable (see enum below)
+          - verify: Regex pattern to confirm binding exists in consumer file
+
+          BINDING TYPES (exhaustive enum):
+          - import_usage: Consumer imports and calls/renders deliverable
+          - route_mount: Deliverable registered in routing table (API/page routes)
+          - config_read: Runtime reads deliverable value from config
+          - cli_register: Command registered in CLI entrypoint
+          - di_inject: Service injected via dependency injection container
+          - event_subscribe: Handler subscribed to event emitter
+          - schema_applied: Migration executed against database
+          - export_public: Exported from package/module entrypoint (index file)
+
+          FORMAT:
+          ```yaml
+          deliverable_bindings:
+            - deliverable: "{path_or_identifier}"
+              consumer: "{path_or_identifier}"
+              binding_type: {type_from_enum}
+              verify: "{regex_pattern}"
+          ```
+
+          RULES:
+          - Every NEW file in File List MUST have at least one binding entry
+          - "Will be used later" is NOT acceptable - defer to future story
+          - If deliverable has no consumer, question if it should exist
+          - Dev Gate Section 14 will verify all bindings before QA handoff
+
+          SKIP CONDITION: If story only MODIFIES existing files without creating new code units, this section can be marked N/A.
+        owner: scrum-master
+        editors: [scrum-master]
+        required: true
+        format: yaml
+        template: |
+          ## 交付物绑定
+
+          > **SM**: 为每个新代码单元定义绑定。Dev Gate 将验证这些绑定。
+          > **Dev**: 确保在自检前实现所有绑定。
+
+          ```yaml
+          deliverable_bindings:
+            # 示例条目 (删除并替换为实际绑定):
+            # - deliverable: "src/components/NewFeature.tsx"
+            #   consumer: "src/pages/Dashboard.tsx"
+            #   binding_type: import_usage
+            #   verify: "import.*NewFeature"
+            #
+            # - deliverable: "POST /api/v1/items"
+            #   consumer: "src/routes/index.ts"
+            #   binding_type: route_mount
+            #   verify: "router\\.(post|use).*items"
+          ```
+
+          **绑定状态**: ⏳ 待 Dev 验证
+
+      - id: testing-requirements
+        title: 测试要求
+        instruction: Record test focus areas specific to this story (edge cases, performance, complex validation)
+
+  - id: change-log
+    title: 变更日志
+    type: table
+    columns: [日期, Agent, 状态转换, 详情/链接]
+    instruction: |
+      Track all status transitions and key events in this story's lifecycle.
+      Use table format for quick scanning. Include links to detailed reports when applicable.
+      Format: YYYY-MM-DD HH:MM | Agent | From → To | Brief detail + [Link](path) if applicable
+    owner: scrum-master
+    editors: [scrum-master, architect-agent, dev-agent, qa-agent]
+    template: |
+      ## 变更日志
+
+      | 日期 | Agent | 状态转换 | 详情/链接 |
+      |------|-------|----------|-----------|
+      | {{creation_date}} | SM | Created → {{initial_status}} | Story 创建 |
+      {{#each change_log_entries}}
+      | {{date}} | {{agent}} | {{from_status}} → {{to_status}} | {{details}} {{#if link}}[{{link_text}}]({{link}}){{/if}} |
+      {{/each}}
+
+  - id: ac-traceability
+    title: AC 追溯矩阵
+    instruction: |
+      **CRITICAL SECTION - MANDATORY FOR DEV SELF-REVIEW**
+
+      This section provides EVIDENCE that each Acceptance Criterion has been implemented.
+      Dev MUST populate this section before marking story as Review.
+      QA will verify each entry during AC Coverage Verification (Step 4.6).
+
+      **Purpose**: Replace subjective "I implemented all ACs" claims with verifiable proof.
+
+      **Rules**:
+      1. EVERY AC must have an entry
+      2. `code_locations` must point to actual implementation (file:line-range)
+      3. `test_locations` must point to actual tests (test_file:test_name)
+      4. Empty entries = Gate FAIL
+      5. Invalid locations = Gate FAIL
+
+      **Format per AC**:
+      ```yaml
+      - ac_id: AC1
+        code_locations:
+          - "src/services/user.service.ts:45-67"       # Main implementation
+          - "src/validators/user.validator.ts:12-25"  # Validation logic
+        test_locations:
+          - "tests/user.service.test.ts:describe('createUser')"
+          - "tests/user.validator.test.ts:it('validates email format')"
+        verification_type: unit_test
+        notes: "Business rules BR-1.1, BR-1.2 implemented in validateUser()"
+      ```
+
+      **Verification Types**:
+      - `unit_test`: Unit tests verify the AC
+      - `integration_test`: Integration tests verify the AC
+      - `e2e_test`: E2E tests verify the AC
+      - `manual`: Requires manual verification (must document steps)
+    owner: dev-agent
+    editors: [dev-agent]
+    required: true
+    format: yaml
+    template: |
+      ## AC 追溯矩阵
+
+      > **Dev**: 在自检前填写此部分。每个 AC 都需要证据。
+      > **QA**: 在 AC 覆盖验证期间核实每个条目。
+
+      {{#each acceptance_criteria}}
+      ### {{this.id}}: {{this.title}}
+
+      ```yaml
+      ac_id: {{this.id}}
+      code_locations:
+        - ""  # TODO: 添加 file:line-range (例如 "src/service.ts:45-67")
+      test_locations:
+        - ""  # TODO: 添加 test_file:test_name (例如 "tests/service.test.ts:it('should...')")
+      verification_type: unit_test  # unit_test | integration_test | e2e_test | manual
+      aspects_covered:
+        main_scenario: false    # GIVEN/WHEN/THEN 流程已实现?
+        business_rules: false   # 所有 BR-{{@index}}.x 规则已实现?
+        data_validation: false  # 验证逻辑已实现? (如适用)
+        error_handling: false   # 错误场景已处理?
+      notes: ""  # 额外实现说明
+      ```
+
+      {{/each}}
+
+      ---
+
+      ### 追溯摘要
+
+      | AC | 代码位置 | 测试位置 | 类型 | 状态 |
+      |----|----------|----------|------|------|
+      {{#each acceptance_criteria}}
+      | {{this.id}} | ⏳ 待定 | ⏳ 待定 | - | ⏳ |
+      {{/each}}
+
+      **图例**: ✅ 已验证 | ⏳ 待定 | ❌ 缺失
+
+  - id: dev-agent-record
+    title: 开发记录
+    instruction: This section is populated by the development agent during implementation
+    owner: dev-agent
+    editors: [dev-agent]
+    sections:
+      - id: agent-model
+        title: 使用的 Agent 模型
+        template: "{{agent_model_name_version}}"
+        instruction: Record the specific AI agent model and version used for development
+        owner: dev-agent
+        editors: [dev-agent]
+
+      - id: implementation-summary
+        title: 实现摘要
+        instruction: Provide a 3-5 sentence high-level summary of the implementation, including key technical decisions, challenges overcome, and final outcomes
+        owner: dev-agent
+        editors: [dev-agent]
+
+      - id: database-changes
+        title: 数据库变更 (结构化)
+        instruction: |
+          NEW: Structured field for database changes (replaces manual description in implementation summary).
+          Format as YAML. Use this structure for ALL database-related changes.
+          This data is used to automatically update the cumulative database registry.
+
+          Example:
+          ```yaml
+          tables_created:
+            - name: orders
+              description: "Stores customer orders"
+              fields:
+                - name: id
+                  type: uuid
+                  constraints: primary key, default gen_random_uuid()
+                - name: user_id
+                  type: uuid
+                  constraints: not null
+                  references: users.id
+              indexes:
+                - name: idx_orders_user_id
+                  fields: user_id
+                  type: btree
+              foreign_keys:
+                - name: fk_orders_user
+                  local_field: user_id
+                  references: users.id
+                  on_delete: CASCADE
+
+          tables_modified:
+            - name: users
+              fields_added:
+                - name: last_login_at
+                  type: timestamp
+                  constraints: nullable
+              indexes_added:
+                - name: idx_users_last_login
+                  fields: last_login_at
+                  type: btree
+
+          migrations:
+            - filename: 20250120_create_orders_table.sql
+              tables_affected: [orders]
+              type: create
+              status: applied
+          ```
+
+          If no database changes in this story, leave empty or set to: `{}`
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        format: yaml
+
+      - id: api-endpoints-created
+        title: 创建的 API 端点 (结构化)
+        instruction: |
+          NEW: Structured field for API endpoints (replaces manual description in implementation summary).
+          Format as YAML. Use this structure for ALL API endpoints created/modified.
+          This data is used to automatically update the cumulative API registry.
+
+          Example:
+          ```yaml
+          - method: POST
+            path: /api/orders
+            description: "Create a new order"
+            file_path: src/api/orders/create.ts
+            auth_required: true
+            auth_type: JWT Bearer
+            request_schema: CreateOrderRequest
+            request_body: "{ user_id, items[], shipping_address }"
+            success_status: 201
+            success_response: "{ order_id, status, created_at }"
+            success_schema: OrderResponse
+            error_responses:
+              - status: 400
+                description: "Invalid request data"
+              - status: 401
+                description: "Unauthorized"
+            notes: "Supports bulk item creation. Max 50 items per order."
+
+          - method: GET
+            path: /api/orders/:id
+            description: "Get order details by ID"
+            file_path: src/api/orders/get.ts
+            auth_required: true
+            auth_type: JWT Bearer
+            request_params: "id (uuid)"
+            success_status: 200
+            success_schema: OrderResponse
+            error_responses:
+              - status: 404
+                description: "Order not found"
+          ```
+
+          If no API changes in this story, leave empty or set to: `[]`
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        format: yaml
+
+      - id: shared-models-created
+        title: 创建的共享模型 (结构化)
+        instruction: |
+          NEW: Structured field for models/types/schemas (replaces manual description in implementation summary).
+          Format as YAML. Use this structure for ALL shared models, types, interfaces, schemas created.
+          This data is used to automatically update the cumulative models registry.
+
+          Example:
+          ```yaml
+          interfaces:
+            - name: IOrder
+              file_path: src/types/order.ts
+              category: entity
+              description: "Order entity interface"
+
+          zod_schemas:
+            - name: OrderSchema
+              file_path: src/schemas/order.ts
+              inferred_type: IOrder
+              description: "Zod validation schema for orders"
+
+          enums:
+            - name: OrderStatus
+              file_path: src/types/order.ts
+              values: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED]
+              description: "Order status enum"
+
+          classes:
+            - name: OrderService
+              file_path: src/services/order.service.ts
+              category: service
+              description: "Business logic for order management"
+
+          dtos:
+            - name: CreateOrderDto
+              file_path: src/dtos/order.dto.ts
+              purpose: request
+              description: "DTO for order creation request"
+          ```
+
+          If no model changes in this story, leave empty or set to: `{}`
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        format: yaml
+
+      - id: file-list
+        title: 文件列表
+        instruction: List all files created, modified, or affected during story implementation
+        owner: dev-agent
+        editors: [dev-agent]
+
+      - id: dev-log-reference
+        title: 开发日志引用
+        template: "docs/dev/logs/{story-id}-dev-log.md"
+        instruction: Reference to the detailed development log file containing complete implementation history, technical decisions, issues encountered, and phase-by-phase progress
+        owner: dev-agent
+        editors: [dev-agent]
+
+      - id: open-issues
+        title: 待解决问题
+        instruction: |
+          List of unresolved issues or concerns identified by Dev Agent during implementation.
+          These issues should be reviewed by QA Agent during quality review.
+        owner: dev-agent
+        editors: [dev-agent]
+        required: false
+        type: list
+        item_template: |
+          - 问题: {{issue_description}}
+            类型: {{issue_type}}
+            严重程度: {{severity_level}}
+            目标 Agent: {{target_agent}}
+            提出日期: {{date_raised}}
+            状态: {{status}}
+
+  - id: qa-results
+    title: QA 结果
+    instruction: Results from QA Agent QA review of the completed story implementation
+    owner: qa-agent
+    editors: [qa-agent]

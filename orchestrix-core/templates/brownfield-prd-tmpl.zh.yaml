@@ -1,0 +1,387 @@
+template:
+  id: brownfield-prd-template-v2
+  name: 棕地项目增强 PRD
+  version: 2.0
+  output:
+    format: markdown
+    filename: docs/prd.md
+    title: "{{project_name}} 棕地项目增强 PRD"
+
+workflow:
+  mode: interactive
+  elicitation: advanced-elicitation
+
+sections:
+  - id: intro-analysis
+    title: 项目分析与上下文
+    instruction: |
+      IMPORTANT - SCOPE AND PREREQUISITES:
+
+      This PRD is for SIGNIFICANT enhancements to existing projects that require comprehensive planning and multiple stories. Before proceeding:
+
+      1. **Assess Enhancement Complexity**: If this is a simple feature addition or bug fix that could be completed in 1-2 focused development sessions, STOP and recommend: "For simpler changes, consider using the brownfield-create-epic or brownfield-create-story task with the Product Owner instead. This full PRD process is designed for substantial enhancements that require architectural planning and multiple coordinated stories."
+
+      2. **REQUIRED PREREQUISITE - Existing System Analysis**:
+         - **Multi-Repo Detection**: Check if core-config.yaml contains `multi_repo:` key with `mode: multi-repo`
+           * If YES: Multi-repository mode → **MUST have**: docs/existing-system-integration.md (created via @architect *aggregate-system-analysis)
+           * If NO: Single-repository mode → **MUST have**: docs/existing-system-analysis.md (created via @architect *document-project)
+         - **Why required**: This PRD defines ENHANCEMENTS to the existing system. You need to understand the current state first.
+         - **If missing**:
+           * Multi-repo: HALT and instruct: "Please run '@architect *aggregate-system-analysis' first to create docs/existing-system-integration.md. This aggregates analysis from all implementation repositories."
+           * Single-repo: HALT and instruct: "Please run '@architect *document-project' first to create docs/existing-system-analysis.md. This provides the necessary context about the existing system before defining enhancements."
+
+      3. **Project Context Validation**:
+         - **Auto-detect mode**: Check core-config.yaml for `project.mode` and `multi_repo` configuration
+         - **Load and review**:
+           * Multi-repo mode: docs/existing-system-integration.md (aggregated analysis)
+           * Single-repo mode: docs/existing-system-analysis.md (repository analysis)
+         - Verify understanding of current tech stack, architecture, and constraints
+         - If IDE access available, validate analysis against actual codebase
+
+      4. **Deep Assessment Requirement**: You MUST thoroughly understand the existing project (from analysis document) before making ANY enhancement suggestions. Every recommendation must consider existing constraints and patterns.
+
+      Gather comprehensive information about the existing project. This section must be completed before proceeding with requirements.
+
+      CRITICAL: Throughout this process, explicitly reference findings from the analysis document. For every enhancement suggestion, explain: "Based on the existing system analysis showing [constraint/pattern], I recommend [enhancement] because [rationale]. Does this align with your goals?"
+
+      Do not proceed with any recommendations until the user has validated your understanding of the existing system.
+    sections:
+      - id: existing-project-overview
+        title: 现有项目概述
+        instruction: Check if document-project analysis was already performed. If yes, reference that output instead of re-analyzing.
+        sections:
+          - id: analysis-source
+            title: 分析来源
+            instruction: |
+              Reference the existing system analysis document (auto-detected):
+              - Primary source:
+                * Multi-repo mode: docs/existing-system-integration.md (aggregated from all repos)
+                * Single-repo mode: docs/existing-system-analysis.md (current repository)
+              - Supplementary: IDE-based validation (if available)
+              - Additional context: User-provided information
+
+              Auto-detect by checking core-config.yaml for `project.mode` value.
+          - id: current-state
+            title: 当前项目状态
+            instruction: |
+              Extract summary from analysis document (auto-detected):
+              - **Multi-repo mode**: Extract from docs/existing-system-integration.md
+                * Reference "Repository Topology" section
+                * Note "Cross-Repository API Contracts"
+                * Highlight "Technical Debt (System-Level)" section
+              - **Single-repo mode**: Extract from docs/existing-system-analysis.md
+                * Reference "High Level Architecture" and "Technical Summary" sections
+                * Note key technologies from "Tech Stack" section
+                * Highlight constraints from "Technical Debt and Known Issues" section
+              - Brief description of what the project currently does and its primary purpose
+      - id: documentation-analysis
+        title: 可用文档分析
+        instruction: |
+          Review analysis document (REQUIRED prerequisite, auto-detected):
+          - **Multi-repo mode**: docs/existing-system-integration.md
+            * Note: "Using aggregated system integration analysis"
+            * Reference: Repository Topology, API Contracts, Integration Patterns
+          - **Single-repo mode**: docs/existing-system-analysis.md
+            * Note: "Using existing system analysis"
+            * Reference: Tech Stack, Source Tree, Coding Standards, Technical Debt
+
+          Additionally check for other existing documentation in the project:
+        sections:
+          - id: available-docs
+            title: 可用文档
+            type: checklist
+            items:
+              - 技术栈文档 [[LLM: Check ✓ from existing-system-analysis.md]]
+              - 源码目录/架构 [[LLM: Check ✓ from existing-system-analysis.md]]
+              - 编码规范 [[LLM: Check ✓ from existing-system-analysis.md]]
+              - API 文档 [[LLM: Check ✓ if present in existing-system-analysis.md]]
+              - 外部 API 文档 [[LLM: Check ✓ if present in existing-system-analysis.md]]
+              - UX/UI 指南 [[LLM: May not be in existing-system-analysis.md]]
+              - 技术债务文档 [[LLM: Check ✓ from existing-system-analysis.md]]
+              - "其他: {{other_docs}}"
+            instruction: |
+              Using existing system analysis from docs/existing-system-analysis.md as primary source.
+              Mark items as available (✓) if covered in existing-system-analysis.md.
+      - id: enhancement-scope
+        title: 增强范围定义
+        instruction: Work with user to clearly define what type of enhancement this is. This is critical for scoping and approach.
+        sections:
+          - id: enhancement-type
+            title: 增强类型
+            type: checklist
+            instruction: Determine with user which applies
+            items:
+              - 新功能添加
+              - 主要功能修改
+              - 与新系统集成
+              - 性能/可扩展性改进
+              - UI/UX 改版
+              - 技术栈升级
+              - Bug 修复和稳定性改进
+              - "其他: {{other_type}}"
+          - id: enhancement-description
+            title: 增强描述
+            instruction: 2-3 sentences describing what the user wants to add or change
+          - id: impact-assessment
+            title: 影响评估
+            type: checklist
+            instruction: Assess the scope of impact on existing codebase
+            items:
+              - 影响极小（独立新增）
+              - 中等影响（部分现有代码需修改）
+              - 较大影响（大量现有代码需修改）
+              - 重大影响（需架构变更）
+      - id: goals-context
+        title: 目标与背景
+        sections:
+          - id: goals
+            title: 目标
+            type: bullet-list
+            instruction: Bullet list of 1-line desired outcomes this enhancement will deliver if successful
+          - id: background
+            title: 背景
+            type: paragraphs
+            instruction: 1-2 short paragraphs explaining why this enhancement is needed, what problem it solves, and how it fits with the existing project
+      - id: changelog
+        title: 变更日志
+        type: table
+        columns: [变更, 日期, 版本, 描述, 作者]
+
+  - id: requirements
+    title: 需求
+    instruction: |
+      Draft functional and non-functional requirements based on your validated understanding of the existing project. Before presenting requirements, confirm: "These requirements are based on my understanding of your existing system. Please review carefully and confirm they align with your project's reality."
+    elicit: true
+    sections:
+      - id: functional
+        title: 功能性需求
+        type: numbered-list
+        prefix: FR
+        instruction: Each Requirement will be a bullet markdown with identifier starting with FR
+        examples:
+          - "FR1: The existing Todo List will integrate with the new AI duplicate detection service without breaking current functionality."
+      - id: non-functional
+        title: 非功能性需求
+        type: numbered-list
+        prefix: NFR
+        instruction: Each Requirement will be a bullet markdown with identifier starting with NFR. Include constraints from existing system
+        examples:
+          - "NFR1: Enhancement must maintain existing performance characteristics and not exceed current memory usage by more than 20%."
+      - id: compatibility
+        title: 兼容性需求
+        instruction: Critical for brownfield - what must remain compatible
+        type: numbered-list
+        prefix: CR
+        template: "{{requirement}}: {{description}}"
+        items:
+          - id: cr1
+            template: "CR1: {{existing_api_compatibility}}"
+          - id: cr2
+            template: "CR2: {{database_schema_compatibility}}"
+          - id: cr3
+            template: "CR3: {{ui_ux_consistency}}"
+          - id: cr4
+            template: "CR4: {{integration_compatibility}}"
+
+  - id: ui-enhancement-goals
+    title: 用户界面增强目标
+    condition: Enhancement includes UI changes
+    instruction: For UI changes, capture how they will integrate with existing UI patterns and design systems
+    sections:
+      - id: existing-ui-integration
+        title: 与现有 UI 集成
+        instruction: Describe how new UI elements will fit with existing design patterns, style guides, and component libraries
+      - id: modified-screens
+        title: 修改/新增页面
+        instruction: List only the screens/views that will be modified or added
+      - id: ui-consistency
+        title: UI 一致性要求
+        instruction: Specific requirements for maintaining visual and interaction consistency with existing application
+
+  - id: technical-constraints
+    title: 技术约束与集成要求
+    instruction: This section replaces separate architecture documentation. Gather detailed technical constraints from existing project analysis.
+    sections:
+      - id: existing-tech-stack
+        title: 现有技术栈
+        instruction: |
+          If document-project output available:
+          - Extract from "Actual Tech Stack" table in High Level Architecture section
+          - Include version numbers and any noted constraints
+
+          Otherwise, document the current technology stack:
+        template: |
+          **语言**: {{languages}}
+          **框架**: {{frameworks}}
+          **数据库**: {{database}}
+          **基础设施**: {{infrastructure}}
+          **外部依赖**: {{external_dependencies}}
+      - id: integration-approach
+        title: 集成方法
+        instruction: Define how the enhancement will integrate with existing architecture
+        template: |
+          **数据库集成策略**: {{database_integration}}
+          **API 集成策略**: {{api_integration}}
+          **前端集成策略**: {{frontend_integration}}
+          **测试集成策略**: {{testing_integration}}
+      - id: code-organization
+        title: 代码组织与规范
+        instruction: Based on existing project analysis, define how new code will fit existing patterns
+        template: |
+          **文件结构方案**: {{file_structure}}
+          **命名规范**: {{naming_conventions}}
+          **编码规范**: {{coding_standards}}
+          **文档规范**: {{documentation_standards}}
+      - id: deployment-operations
+        title: 部署与运维
+        instruction: How the enhancement fits existing deployment pipeline
+        template: |
+          **构建流程集成**: {{build_integration}}
+          **部署策略**: {{deployment_strategy}}
+          **监控与日志**: {{monitoring_logging}}
+          **配置管理**: {{config_management}}
+      - id: risk-assessment
+        title: 风险评估与缓解
+        instruction: |
+          If document-project output available:
+          - Reference "Technical Debt and Known Issues" section
+          - Include "Workarounds and Gotchas" that might impact enhancement
+          - Note any identified constraints from "Critical Technical Debt"
+
+          Build risk assessment incorporating existing known issues:
+        template: |
+          **技术风险**: {{technical_risks}}
+          **集成风险**: {{integration_risks}}
+          **部署风险**: {{deployment_risks}}
+          **缓解策略**: {{mitigation_strategies}}
+
+  - id: epic-structure
+    title: Epic 与 Story 结构
+    instruction: |
+      For brownfield projects, favor a single comprehensive epic unless the user is clearly requesting multiple unrelated enhancements. Before presenting the epic structure, confirm: "Based on my analysis of your existing project, I believe this enhancement should be structured as [single epic/multiple epics] because [rationale based on actual project analysis]. Does this align with your understanding of the work required?"
+    elicit: true
+    sections:
+      - id: epic-approach
+        title: Epic 方法
+        instruction: Explain the rationale for epic structure - typically single epic for brownfield unless multiple unrelated features
+        template: "**Epic 结构决策**: {{epic_decision}} 理由"
+
+  - id: epics
+    title: Epics
+    instruction: |
+      ⚠️  CRITICAL SECTION - This section defines all Epics and Stories for the brownfield enhancement.
+
+      CRITICAL STORY SEQUENCING FOR BROWNFIELD:
+      - Stories must ensure existing functionality remains intact
+      - Each story should include verification that existing features still work
+      - Stories should be sequenced to minimize risk to existing system
+      - Include rollback considerations for each story
+      - Focus on incremental integration rather than big-bang changes
+      - Size stories for AI agent execution in existing codebase context
+      - MANDATORY: Present the complete story sequence and ask: "Does this order make sense given your project's architecture?"
+
+      During PO *shard, YAML blocks will be extracted to docs/prd/epic-{n}-{title}.yaml for SM agents.
+
+      For EACH epic, create a YAML block using this format:
+
+      ## Epic {{N}}: {{Epic Title}}
+
+      **Epic 概述:** {{2-3 sentence summary}}
+
+      **目标仓库:** {{backend, frontend, ios, android, mobile - as applicable}}
+
+      **集成说明:** {{Brief note on how this integrates with existing system}}
+
+      ```yaml
+      epic_id: {{N}}
+      title: "{{Epic Title}}"
+      description: |
+        {{Epic goal and integration requirements}}
+
+      stories:
+        - id: "{{N}}.1"
+          title: "{{Story title}}"
+          repository_type: backend | frontend | ios | android | monolith
+          acceptance_criteria:
+            - "AC1: {{New functionality criterion}}"
+            - "AC2: {{Integration verification criterion}}"
+            - "AC3: {{Existing system integrity criterion}}"
+          estimated_complexity: low | medium | high
+          priority: P0 | P1 | P2
+          provides_apis: []    # Backend: ["POST /api/search/ai"]
+          consumes_apis: []    # Frontend/Mobile: ["POST /api/search/ai"]
+          dependencies: []     # Story IDs: ["1.1"]
+      ```
+
+      BROWNFIELD-SPECIFIC REQUIREMENTS:
+
+      1. **acceptance_criteria** MUST include:
+         - New functionality criteria (ACn: what new feature does)
+         - Integration verification (ACn: existing functionality X still works)
+         - Performance impact (ACn: response time/memory within acceptable range)
+
+      2. **APIs tracking**:
+         - Include BOTH new APIs and modified existing APIs
+         - Mark existing APIs being enhanced
+
+      3. **dependencies**: Include both:
+         - Story dependencies (which stories must complete first)
+         - External dependencies (existing services that must be running)
+
+      EXAMPLE (Brownfield multi-repo enhancement):
+
+      ## Epic 1: AI 驱动搜索增强
+
+      **Epic 概述:** 在保持向后兼容的同时添加 AI 驱动的语义搜索。
+
+      **目标仓库:** backend, frontend
+
+      **集成说明:** 在不破坏现有 API 契约的情况下增强现有搜索功能。
+
+      ```yaml
+      epic_id: 1
+      title: "AI 驱动搜索增强"
+      description: |
+        使用 AI 驱动的语义搜索增强现有搜索功能。
+        后端添加新端点同时维护现有搜索 API。
+
+      stories:
+        - id: "1.1"
+          title: "后端 - AI 搜索服务集成"
+          repository_type: backend
+          acceptance_criteria:
+            - "AC1: 新 AI 搜索端点返回语义相关结果"
+            - "AC2: 现有关键词搜索端点继续正常工作"
+            - "AC3: 新端点遵循现有 API 约定（分页、过滤）"
+            - "AC4: AI 搜索对典型查询响应时间在 500ms 内"
+            - "AC5: 现有搜索测试仍然通过（回归验证）"
+          estimated_complexity: high
+          priority: P0
+          provides_apis:
+            - "POST /api/search/ai"
+            - "GET /api/search/ai/suggestions"
+          consumes_apis:
+            - "POST /external/openai/embeddings"
+          dependencies: []
+
+        - id: "1.2"
+          title: "前端 - AI 搜索 UI 组件"
+          repository_type: frontend
+          acceptance_criteria:
+            - "AC1: 搜索栏显示 AI 搜索切换选项"
+            - "AC2: 禁用时使用现有关键词搜索（向后兼容）"
+            - "AC3: 启用 AI 时搜索结果显示相关性评分"
+            - "AC4: UI 组件遵循现有设计系统"
+            - "AC5: AI 切换关闭时现有搜索功能不变"
+          estimated_complexity: medium
+          priority: P0
+          provides_apis: []
+          consumes_apis:
+            - "POST /api/search/ai"
+            - "GET /api/search"
+          dependencies:
+            - "1.1"
+      ```
+
+      Now define YAML blocks for ALL epics for your brownfield enhancement.
+    elicit: true

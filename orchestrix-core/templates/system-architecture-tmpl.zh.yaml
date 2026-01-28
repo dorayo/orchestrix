@@ -1,0 +1,627 @@
+# 系统架构模板
+# 用途: 定义多仓库项目的系统级架构
+# 本模板协调多个实现仓库，不深入实现细节
+# 关注: 仓库拓扑、API 契约、集成策略、部署架构
+
+template_id: system-architecture-template-v1
+name: 系统架构文档
+version: 1.0.0
+description: |
+  多仓库项目的系统级架构模板。
+  定义仓库之间的协调，而非实现细节。
+
+output:
+  format: markdown
+  default_filename: docs/architecture/system-architecture.md
+  title_template: "{{project_name}} - 系统架构"
+
+workflow:
+  mode: interactive
+  elicitation_style: comprehensive
+  validation_enabled: true
+
+# 元数据
+metadata:
+  document_type: system-architecture
+  scope: system-level-coordination
+  target_audience: all-teams
+  update_frequency: when-repository-topology-changes
+
+# 文档结构
+sections:
+  - id: header
+    title: "{{project_name}} - 系统架构"
+    type: header
+    level: 1
+    template: |
+      # {{project_name}} - 系统架构
+
+      **文档版本**: {{doc_version}}
+      **最后更新**: {{last_updated}}
+      **状态**: {{doc_status}}
+
+      **用途**: 本文档定义了 {{project_name}} 的系统级架构。
+      它协调多个实现仓库，不深入实现细节。
+
+      **范围**:
+      - 仓库拓扑与职责
+      - 仓库间的高层 API 契约
+      - 集成策略与部署架构
+      - 影响所有仓库的横切关注点
+
+      **范围外**（属于实现仓库架构）:
+      - 各仓库内的详细组件设计
+      - 数据库 Schema 和数据模型
+      - 代码级模式和目录结构
+      - 框架特定的实现细节
+
+  - id: introduction
+    title: 引言
+    sections:
+      - id: project-overview
+        title: 项目概述
+        instruction: |
+          Provide a 2-3 paragraph overview of the project from PRD.
+          Focus on WHAT the system does, not HOW it's implemented.
+
+          Key points to cover:
+          - Project purpose and goals
+          - Target users and use cases
+          - High-level feature categories
+        elicit: true
+        template: |
+          ## 引言
+
+          ### 项目概述
+
+          {{project_overview}}
+
+      - id: architecture-scope
+        title: 架构范围
+        instruction: |
+          Clarify what this system architecture document covers.
+          Emphasize it's a coordination document, not implementation guide.
+        template: |
+          ### 架构范围
+
+          本文档作为 {{project_name}} 系统的**协调蓝图**。
+          它定义:
+
+          - **仓库拓扑**: 存在哪些仓库及其职责
+          - **API 契约摘要**: 高层 API 类别和关键端点
+          - **集成策略**: 仓库之间如何通信和协调
+          - **部署架构**: 各仓库在哪里及如何部署
+          - **横切关注点**: 全系统要求（安全、性能、可观测性）
+
+          **实现细节**（组件、数据库、代码模式）记录在
+          各仓库的详细架构文档中。
+
+      - id: document-conventions
+        title: 文档约定
+        template: |
+          ### 文档约定
+
+          - **仓库名称**: 小写加连字符（例如 `my-product-backend`）
+          - **API 端点**: 格式为 `METHOD /path`（例如 `POST /api/users`）
+          - **图表**: 使用 Mermaid 语法进行可视化表示
+          - **引用**: 链接到实现仓库中的详细架构文档
+
+  - id: repository-topology
+    title: 仓库拓扑
+    instruction: |
+      Based on PRD requirements and Front-End Spec, identify all repositories needed.
+
+      **Analysis Steps**:
+      1. Review PRD functional requirements to identify system components
+      2. Determine repository breakdown:
+         - Backend API needed? → backend repository
+         - Web UI needed? → frontend repository
+         - Mobile apps needed? → ios/android repositories (or mobile for cross-platform)
+         - Shared libraries? → shared repository
+
+      3. For each repository, define:
+         - Repository name (following naming convention)
+         - Type (backend/frontend/ios/android/mobile/shared)
+         - Primary responsibility (1-2 sentences max)
+         - Technology stack (high-level: Node.js, React, Swift, etc.)
+         - Deployment platform (AWS, Vercel, App Store, Google Play, etc.)
+         - Team ownership (Backend Team, Frontend Team, Mobile Team)
+
+      **IMPORTANT**: Keep descriptions high-level. Details belong in each repo's architecture doc.
+    elicit: true
+    sections:
+      - id: repository-list
+        title: 仓库列表
+        type: table
+        instruction: |
+          Create a table of all repositories.
+          Ask user to confirm this list before proceeding.
+        template: |
+          ## 仓库拓扑
+
+          ### 仓库列表
+
+          | 仓库名称 | 类型 | 职责 | 技术栈 | 平台 | 团队 |
+          |---------|------|------|--------|------|------|
+          {{#each repositories}}
+          | `{{name}}` | {{type}} | {{responsibility}} | {{tech_stack}} | {{platform}} | {{team}} |
+          {{/each}}
+
+          **仓库总数**: {{repositories.length}}
+
+      - id: repository-diagram
+        title: 仓库关系图
+        instruction: |
+          Create a Mermaid diagram showing:
+          - All repositories as boxes/subgraphs
+          - Communication paths (arrows) between repositories
+          - External services/APIs
+          - Data flow directions
+
+          Keep it simple - no detailed components, just repo-to-repo relationships.
+        elicit: true
+        template: |
+          ### 仓库关系图
+
+          ```mermaid
+          graph TB
+              {{repository_mermaid_diagram}}
+          ```
+
+          **图例**:
+          - **实线箭头**: REST API 调用
+          - **虚线箭头**: 事件/消息总线通信
+          - **粗边框**: 实现仓库
+          - **圆角框**: 外部服务
+
+  - id: api-contracts-summary
+    title: API 契约摘要
+    instruction: |
+      Define the API contract SUMMARY between repositories.
+      This is NOT a full OpenAPI spec - just a high-level table of contents.
+
+      **For Backend → Frontend/Mobile communication**:
+      1. Group endpoints into logical categories (Auth, Users, Products, Orders, etc.)
+      2. For each category, list key endpoints at high level (method + path + brief description)
+      3. Note authentication requirements
+      4. Define general error handling approach
+
+      **IMPORTANT**:
+      - Detailed request/response schemas belong in `api-contracts.md` (separate file)
+      - This section is just a TABLE OF CONTENTS to coordinate teams
+      - Focus on WHAT APIs exist, not HOW they work in detail
+    elicit: true
+    sections:
+      - id: api-overview
+        title: API 概述
+        template: |
+          ## API 契约摘要
+
+          ### 概述
+
+          本节提供跨仓库边界 API 的高层摘要。
+          详细规格（请求/响应 Schema、验证规则）在 `api-contracts.md` 中。
+
+          **API 提供者**: {{api_provider_repo}}
+          **API 消费者**: {{api_consumer_repos}}
+          **API 风格**: {{api_style}}
+          **基础 URL 模式**: `{{api_base_url_pattern}}`
+
+      - id: api-categories
+        title: API 类别
+        type: repeatable
+        instruction: |
+          For each major feature area, create an API category section.
+          List key endpoints without full details.
+        template: |
+          ### {{category_name}} API
+
+          **用途**: {{category_purpose}}
+          **提供者**: `{{provider_repo}}`
+          **消费者**: {{consumers}}
+
+          **关键端点**:
+          {{#each endpoints}}
+          - `{{method}} {{path}}` - {{description}}
+          {{/each}}
+
+          **认证**: {{auth_requirement}}
+          **限流**: {{rate_limit}}
+
+      - id: api-versioning
+        title: API 版本策略
+        instruction: |
+          Define how APIs are versioned and how breaking changes are handled.
+        elicit: true
+        template: |
+          ### API 版本策略
+
+          **版本格式**: {{version_format}}
+          **版本位置**: {{version_location}}
+          **破坏性变更策略**: {{breaking_change_policy}}
+          **弃用时间线**: {{deprecation_timeline}}
+          **版本支持**: {{version_support_policy}}
+
+  - id: integration-strategy
+    title: 集成策略
+    instruction: |
+      Define HOW repositories integrate, not WHAT they contain.
+      This ensures consistency across all implementation teams.
+
+      **Key Areas**:
+      - Authentication & Authorization
+      - Data format standards
+      - Error handling conventions
+      - Logging and monitoring standards
+      - Inter-service communication patterns
+    elicit: true
+    sections:
+      - id: integration-overview
+        title: 概述
+        template: |
+          ## 集成策略
+
+          本节定义所有仓库必须遵循的全系统集成标准。
+          这些确保整个系统的一致性和互操作性。
+
+      - id: auth-strategy
+        title: 认证与授权
+        instruction: |
+          Define the system-wide auth approach.
+        elicit: true
+        template: |
+          ### 认证与授权
+
+          **认证机制**: {{auth_mechanism}}
+          **Token 格式**: {{token_format}}
+          **Token 存储**: {{token_storage}}
+          **Token 生命周期**: {{token_lifetime}}
+          **刷新策略**: {{refresh_strategy}}
+
+          **授权模式**: {{authz_pattern}}
+          **权限模型**: {{permission_model}}
+
+          **实现说明**:
+          - 后端实现认证端点和 Token 验证
+          - 前端/移动端安全存储 Token 并附加到 API 请求
+          - 所有受保护端点在处理前验证 Token
+
+      - id: data-standards
+        title: 数据格式标准
+        instruction: |
+          Define data format conventions for API communication.
+        elicit: true
+        template: |
+          ### 数据格式标准
+
+          **API 数据格式**: {{api_format}}
+          **日期/时间格式**: {{datetime_format}}
+          **时区处理**: {{timezone_handling}}
+
+          **分页**:
+          - **风格**: {{pagination_style}}
+          - **参数**: {{pagination_params}}
+          - **响应格式**: {{pagination_response}}
+
+          **过滤与排序**:
+          - **查询参数风格**: {{query_param_style}}
+          - **支持的操作**: {{supported_operations}}
+
+          **字段命名**: {{field_naming_convention}}
+
+      - id: error-handling
+        title: 错误处理标准
+        instruction: |
+          Define standard error response format across all APIs.
+        elicit: true
+        template: |
+          ### 错误处理标准
+
+          所有 API 必须以此标准格式返回错误:
+
+          ```json
+          {
+            "error": {
+              "code": "ERROR_CODE",
+              "message": "人类可读的错误消息",
+              "details": {},
+              "timestamp": "2025-01-14T10:30:00Z",
+              "request_id": "uuid"
+            }
+          }
+          ```
+
+          **HTTP 状态码使用**:
+          - `200`: 成功
+          - `201`: 资源已创建
+          - `400`: 错误请求（验证错误）
+          - `401`: 未授权（缺少/无效 Token）
+          - `403`: 禁止（有效 Token，权限不足）
+          - `404`: 资源未找到
+          - `429`: 超过限流
+          - `500`: 内部服务器错误
+
+          **错误代码分类**: {{error_code_taxonomy}}
+
+      - id: logging-monitoring
+        title: 日志与监控
+        instruction: |
+          Define logging and monitoring standards for observability.
+        elicit: true
+        template: |
+          ### 日志与监控标准
+
+          **日志平台**: {{logging_platform}}
+          **日志格式**: {{log_format}}
+          **日志级别**: DEBUG, INFO, WARN, ERROR, FATAL
+
+          **结构化日志字段**:
+          - `timestamp`: ISO 8601 格式
+          - `level`: 日志级别
+          - `service`: 仓库名称
+          - `request_id`: 分布式追踪 ID
+          - `user_id`: 用户标识符（如适用）
+          - `message`: 日志消息
+          - `metadata`: 额外上下文
+
+          **监控**:
+          - **平台**: {{monitoring_platform}}
+          - **指标**: {{key_metrics}}
+          - **告警**: {{alerting_strategy}}
+
+          **分布式追踪**:
+          - **工具**: {{tracing_tool}}
+          - **Trace ID 传播**: {{trace_propagation}}
+
+  - id: deployment-architecture
+    title: 部署架构
+    instruction: |
+      Define deployment strategy at SYSTEM level.
+      Implementation details belong in each repo's architecture doc.
+
+      **Focus on**:
+      - Where each repository deploys
+      - Environment strategy (dev, staging, prod)
+      - CI/CD approach (high-level)
+      - Infrastructure coordination
+    elicit: true
+    sections:
+      - id: deployment-overview
+        title: 概述
+        template: |
+          ## 部署架构
+
+          本节定义各仓库在系统级别的部署位置和方式。
+
+      - id: deployment-targets
+        title: 部署目标
+        type: table
+        instruction: |
+          For each repository, specify deployment platforms and environment URLs.
+        template: |
+          ### 部署目标
+
+          | 仓库 | 平台 | 开发 URL | 预发 URL | 生产 URL |
+          |------|------|----------|----------|----------|
+          {{#each repositories}}
+          | `{{name}}` | {{platform}} | {{dev_url}} | {{staging_url}} | {{prod_url}} |
+          {{/each}}
+
+      - id: cicd-strategy
+        title: CI/CD 策略
+        instruction: |
+          Define high-level CI/CD approach.
+        elicit: true
+        template: |
+          ### CI/CD 策略
+
+          **CI/CD 平台**: {{cicd_platform}}
+          **版本控制**: {{vcs_platform}}
+
+          **部署触发器**:
+          - **开发**: {{dev_trigger}}
+          - **预发**: {{staging_trigger}}
+          - **生产**: {{prod_trigger}}
+
+          **环境晋升**: {{promotion_strategy}}
+
+          **构建与测试**:
+          - **构建工具**: {{build_tool}}
+          - **测试执行**: {{test_execution}}
+          - **质量门控**: {{quality_gates}}
+
+      - id: infrastructure-diagram
+        title: 基础设施图
+        instruction: |
+          Create Mermaid diagram showing deployment architecture with infrastructure components.
+        elicit: true
+        template: |
+          ### 基础设施图
+
+          ```mermaid
+          graph TB
+              {{infrastructure_mermaid_diagram}}
+          ```
+
+  - id: cross-cutting-concerns
+    title: 横切关注点
+    instruction: |
+      Define system-wide concerns that affect ALL repositories.
+      These ensure consistency and compliance across the entire system.
+    elicit: true
+    sections:
+      - id: concerns-overview
+        title: 概述
+        template: |
+          ## 横切关注点
+
+          本节定义所有仓库必须遵守的全系统要求。
+
+      - id: security-requirements
+        title: 安全要求
+        instruction: |
+          Define security standards for the entire system.
+        elicit: true
+        template: |
+          ### 安全要求
+
+          **认证**: {{system_auth}}
+          **授权**: {{system_authz}}
+
+          **数据加密**:
+          - **传输中**: {{encryption_transit}}
+          - **静态**: {{encryption_rest}}
+
+          **合规标准**: {{compliance_standards}}
+          **安全扫描**: {{security_tools}}
+          **漏洞管理**: {{vuln_management}}
+          **密钥管理**: {{secrets_management}}
+
+          **安全头**（用于 Web API）:
+          {{security_headers}}
+
+      - id: performance-requirements
+        title: 性能要求
+        instruction: |
+          Define system-wide performance targets.
+        elicit: true
+        template: |
+          ### 性能要求
+
+          **响应时间 SLA**:
+          - API 端点: {{api_response_sla}}
+          - 网页加载: {{web_page_load_sla}}
+          - 移动应用启动: {{mobile_launch_sla}}
+
+          **吞吐量目标**: {{throughput_targets}}
+          **并发用户**: {{concurrent_users}}
+          **可用性目标**: {{availability_target}}
+
+          **性能监控**:
+          - **工具**: {{perf_monitoring_tool}}
+          - **指标**: {{perf_metrics}}
+
+      - id: observability
+        title: 可观测性策略
+        instruction: |
+          Define how the system is monitored and debugged.
+        elicit: true
+        template: |
+          ### 可观测性策略
+
+          **三大支柱**:
+
+          1. **日志**:
+             - **平台**: {{logging_platform}}
+             - **保留期**: {{log_retention}}
+
+          2. **监控**:
+             - **平台**: {{monitoring_platform}}
+             - **仪表板**: {{dashboards}}
+
+          3. **追踪**:
+             - **平台**: {{tracing_platform}}
+             - **采样率**: {{trace_sampling}}
+
+          **告警策略**:
+          - **渠道**: {{alert_channels}}
+          - **严重级别**: {{alert_severity}}
+          - **轮值安排**: {{oncall_rotation}}
+
+  - id: development-coordination
+    title: 开发协调
+    instruction: |
+      Define how teams coordinate development across repositories.
+    elicit: true
+    sections:
+      - id: coordination-overview
+        title: 概述
+        template: |
+          ## 开发协调
+
+          本节定义多个团队如何跨仓库协调工作。
+
+      - id: workflow-approach
+        title: 开发工作流
+        instruction: |
+          Define the development workflow type and approach.
+        elicit: true
+        template: |
+          ### 开发工作流
+
+          **项目类型**: {{project_type}}
+          **工作流风格**: {{workflow_style}}
+
+          **契约优先开发**: {{contract_first_enabled}}
+          {{#if contract_first_enabled}}
+          - 后端先定义 API 契约
+          - 前端/移动端基于契约开发（Mock 实现）
+          - 后端实现契约，然后进行集成测试
+          {{/if}}
+
+          **Story 分配策略**: {{story_assignment}}
+          **Epic 映射**: Stories 在 Epic YAML 文件中映射到仓库
+
+      - id: dependency-management
+        title: 跨仓库依赖管理
+        instruction: |
+          Define how cross-repo dependencies are tracked and managed.
+        elicit: true
+        template: |
+          ### 跨仓库依赖管理
+
+          **依赖追踪**: {{dependency_tracking}}
+          **Story 依赖**: {{story_dependency_approach}}
+
+          **破坏性变更流程**:
+          1. {{breaking_change_step_1}}
+          2. {{breaking_change_step_2}}
+          3. {{breaking_change_step_3}}
+
+          **API 契约更新**:
+          - {{api_contract_update_process}}
+
+  - id: appendix
+    title: 附录
+    sections:
+      - id: changelog
+        title: 变更日志
+        type: table
+        template: |
+          ## 变更日志
+
+          | 日期 | 版本 | 描述 | 作者 |
+          |------|------|------|------|
+          {{#each changelog}}
+          | {{date}} | {{version}} | {{description}} | {{author}} |
+          {{/each}}
+
+      - id: glossary
+        title: 术语表
+        template: |
+          ## 术语表
+
+          | 术语 | 定义 |
+          |------|------|
+          | **系统架构** | 多仓库项目的高层协调文档 |
+          | **实现架构** | 单个仓库内的详细技术架构 |
+          | **API 契约** | API 提供者和消费者之间的协议 |
+          | **仓库拓扑** | 所有项目仓库的结构和关系 |
+          | **横切关注点** | 影响所有仓库的要求 |
+
+      - id: references
+        title: 参考资料
+        template: |
+          ## 参考资料
+
+          **产品文档**:
+          - [产品需求文档 (PRD)](../prd.md)
+          - [前端规格说明](../front-end-spec.md)
+
+          **实现架构文档**:
+          {{#each repositories}}
+          - [{{name}} 架构](../../{{name}}/docs/architecture.md)
+          {{/each}}
+
+          **API 文档**:
+          - [API 契约规格](./api-contracts.md)

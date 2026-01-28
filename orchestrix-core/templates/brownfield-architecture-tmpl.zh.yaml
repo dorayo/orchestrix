@@ -1,11 +1,11 @@
 template:
   id: brownfield-architecture-template-v2
-  name: Brownfield Enhancement Architecture
+  name: 棕地项目增强架构
   version: 2.0
   output:
     format: markdown
     filename: docs/architecture.md
-    title: "{{project_name}} Brownfield Enhancement Architecture"
+    title: "{{project_name}} 棕地项目增强架构"
 
 workflow:
   mode: interactive
@@ -13,7 +13,7 @@ workflow:
 
 sections:
   - id: introduction
-    title: Introduction
+    title: 引言
     instruction: |
       IMPORTANT - SCOPE AND PREREQUISITES:
 
@@ -44,18 +44,18 @@ sections:
     sections:
       - id: intro-content
         content: |
-          This document outlines the architectural approach for enhancing {{project_name}} with {{enhancement_description}}. Its primary goal is to serve as the guiding architectural blueprint for AI-driven development of new features while ensuring seamless integration with the existing system.
+          本文档概述了使用 {{enhancement_description}} 增强 {{project_name}} 的架构方案。其主要目标是作为 AI 驱动开发新功能的架构蓝图，同时确保与现有系统的无缝集成。
 
-          **Key Improvement**: This architecture defines IMPROVED coding standards and patterns for the enhancement, learning from but not replicating the existing system's weaknesses documented in docs/existing-system-analysis.md.
+          **关键改进**: 本架构为增强定义了改进的编码规范和模式，借鉴但不复制 docs/existing-system-analysis.md 中记录的现有系统的弱点。
 
-          **Relationship to Existing Documents:**
-          - **docs/existing-system-analysis.md**: Describes current system state (as-is, including technical debt)
-          - **docs/prd.md**: Defines what enhancements to build
-          - **docs/architecture.md** (THIS DOCUMENT): Defines HOW to build enhancements with improved standards
+          **与现有文档的关系:**
+          - **docs/existing-system-analysis.md**: 描述当前系统状态（现状，包括技术债务）
+          - **docs/prd.md**: 定义要构建的增强内容
+          - **docs/architecture.md**（本文档）: 定义如何以改进的标准构建增强
 
-          Where conflicts arise between new and existing patterns, this document provides guidance on maintaining compatibility while implementing better practices.
+          当新旧模式发生冲突时，本文档提供关于在实施更好实践的同时保持兼容性的指导。
       - id: existing-project-analysis
-        title: Existing Project Analysis
+        title: 现有项目分析
         instruction: |
           Load and reference docs/existing-system-analysis.md as primary source:
 
@@ -70,32 +70,32 @@ sections:
         elicit: true
         sections:
           - id: current-state
-            title: Current Project State
+            title: 当前项目状态
             instruction: Extract summary from docs/existing-system-analysis.md
             template: |
-              - **Primary Purpose:** {{existing_project_purpose}}
-              - **Current Tech Stack:** {{existing_tech_summary}}
-              - **Architecture Style:** {{existing_architecture_style}}
-              - **Deployment Method:** {{existing_deployment_approach}}
-              - **Reference**: See docs/existing-system-analysis.md for complete details
+              - **主要用途:** {{existing_project_purpose}}
+              - **当前技术栈:** {{existing_tech_summary}}
+              - **架构风格:** {{existing_architecture_style}}
+              - **部署方式:** {{existing_deployment_approach}}
+              - **参考**: 详见 docs/existing-system-analysis.md
           - id: available-docs
-            title: Available Documentation
+            title: 可用文档
             instruction: Reference docs/existing-system-analysis.md
             type: bullet-list
             template: "- {{existing_docs_summary}}"
           - id: constraints
-            title: Identified Constraints
+            title: 已识别的约束
             instruction: Extract from "Technical Debt and Known Issues" section of existing-system-analysis.md
             type: bullet-list
             template: "- {{constraint}}"
       - id: changelog
-        title: Change Log
+        title: 变更日志
         type: table
-        columns: [Change, Date, Version, Description, Author]
+        columns: [变更, 日期, 版本, 描述, 作者]
         instruction: Track document versions and changes
 
   - id: enhancement-scope
-    title: Enhancement Scope and Integration Strategy
+    title: 增强范围与集成策略
     instruction: |
       Define how the enhancement will integrate with the existing system:
 
@@ -108,28 +108,28 @@ sections:
     elicit: true
     sections:
       - id: enhancement-overview
-        title: Enhancement Overview
+        title: 增强概述
         template: |
-          **Enhancement Type:** {{enhancement_type}}
-          **Scope:** {{enhancement_scope}}
-          **Integration Impact:** {{integration_impact_level}}
+          **增强类型:** {{enhancement_type}}
+          **范围:** {{enhancement_scope}}
+          **集成影响:** {{integration_impact_level}}
       - id: integration-approach
-        title: Integration Approach
+        title: 集成方法
         template: |
-          **Code Integration Strategy:** {{code_integration_approach}}
-          **Database Integration:** {{database_integration_approach}}
-          **API Integration:** {{api_integration_approach}}
-          **UI Integration:** {{ui_integration_approach}}
+          **代码集成策略:** {{code_integration_approach}}
+          **数据库集成:** {{database_integration_approach}}
+          **API 集成:** {{api_integration_approach}}
+          **UI 集成:** {{ui_integration_approach}}
       - id: compatibility-requirements
-        title: Compatibility Requirements
+        title: 兼容性要求
         template: |
-          - **Existing API Compatibility:** {{api_compatibility}}
-          - **Database Schema Compatibility:** {{db_compatibility}}
-          - **UI/UX Consistency:** {{ui_compatibility}}
-          - **Performance Impact:** {{performance_constraints}}
+          - **现有 API 兼容性:** {{api_compatibility}}
+          - **数据库 Schema 兼容性:** {{db_compatibility}}
+          - **UI/UX 一致性:** {{ui_compatibility}}
+          - **性能影响:** {{performance_constraints}}
 
   - id: tech-stack
-    title: Tech Stack
+    title: 技术栈
     instruction: |
       Ensure new components align with existing technology choices:
 
@@ -140,19 +140,19 @@ sections:
     elicit: true
     sections:
       - id: existing-stack
-        title: Existing Technology Stack
+        title: 现有技术栈
         type: table
-        columns: [Category, Current Technology, Version, Usage in Enhancement, Notes]
+        columns: [类别, 当前技术, 版本, 增强中的使用, 备注]
         instruction: Document the current stack that must be maintained or integrated with
       - id: new-tech-additions
-        title: New Technology Additions
+        title: 新增技术
         condition: Enhancement requires new technologies
         type: table
-        columns: [Technology, Version, Purpose, Rationale, Integration Method]
+        columns: [技术, 版本, 用途, 理由, 集成方式]
         instruction: Only include if new technologies are required for the enhancement
 
   - id: data-models
-    title: Data Models and Schema Changes
+    title: 数据模型与 Schema 变更
     instruction: |
       Define new data models and how they integrate with existing schema:
 
@@ -163,37 +163,37 @@ sections:
     elicit: true
     sections:
       - id: new-models
-        title: New Data Models
+        title: 新数据模型
         repeatable: true
         sections:
           - id: model
             title: "{{model_name}}"
             template: |
-              **Purpose:** {{model_purpose}}
-              **Integration:** {{integration_with_existing}}
+              **用途:** {{model_purpose}}
+              **集成:** {{integration_with_existing}}
 
-              **Key Attributes:**
+              **关键属性:**
               - {{attribute_1}}: {{type_1}} - {{description_1}}
               - {{attribute_2}}: {{type_2}} - {{description_2}}
 
-              **Relationships:**
-              - **With Existing:** {{existing_relationships}}
-              - **With New:** {{new_relationships}}
+              **关系:**
+              - **与现有模型:** {{existing_relationships}}
+              - **与新模型:** {{new_relationships}}
       - id: schema-integration
-        title: Schema Integration Strategy
+        title: Schema 集成策略
         template: |
-          **Database Changes Required:**
-          - **New Tables:** {{new_tables_list}}
-          - **Modified Tables:** {{modified_tables_list}}
-          - **New Indexes:** {{new_indexes_list}}
-          - **Migration Strategy:** {{migration_approach}}
+          **所需数据库变更:**
+          - **新增表:** {{new_tables_list}}
+          - **修改表:** {{modified_tables_list}}
+          - **新增索引:** {{new_indexes_list}}
+          - **迁移策略:** {{migration_approach}}
 
-          **Backward Compatibility:**
+          **向后兼容:**
           - {{compatibility_measure_1}}
           - {{compatibility_measure_2}}
 
   - id: component-architecture
-    title: Component Architecture
+    title: 组件架构
     instruction: |
       Define new components and their integration with existing architecture:
 
@@ -206,32 +206,32 @@ sections:
     elicit: true
     sections:
       - id: new-components
-        title: New Components
+        title: 新组件
         repeatable: true
         sections:
           - id: component
             title: "{{component_name}}"
             template: |
-              **Responsibility:** {{component_description}}
-              **Integration Points:** {{integration_points}}
+              **职责:** {{component_description}}
+              **集成点:** {{integration_points}}
 
-              **Key Interfaces:**
+              **关键接口:**
               - {{interface_1}}
               - {{interface_2}}
 
-              **Dependencies:**
-              - **Existing Components:** {{existing_dependencies}}
-              - **New Components:** {{new_dependencies}}
+              **依赖:**
+              - **现有组件:** {{existing_dependencies}}
+              - **新组件:** {{new_dependencies}}
 
-              **Technology Stack:** {{component_tech_details}}
+              **技术栈:** {{component_tech_details}}
       - id: interaction-diagram
-        title: Component Interaction Diagram
+        title: 组件交互图
         type: mermaid
         mermaid_type: graph
         instruction: Create Mermaid diagram showing how new components interact with existing ones
 
   - id: api-design
-    title: API Design and Integration
+    title: API 设计与集成
     condition: Enhancement requires API changes
     instruction: |
       Define new API endpoints and integration with existing APIs:
@@ -243,36 +243,36 @@ sections:
     elicit: true
     sections:
       - id: api-strategy
-        title: API Integration Strategy
+        title: API 集成策略
         template: |
-          **API Integration Strategy:** {{api_integration_strategy}}
-          **Authentication:** {{auth_integration}}
-          **Versioning:** {{versioning_approach}}
+          **API 集成策略:** {{api_integration_strategy}}
+          **认证:** {{auth_integration}}
+          **版本控制:** {{versioning_approach}}
       - id: new-endpoints
-        title: New API Endpoints
+        title: 新 API 端点
         repeatable: true
         sections:
           - id: endpoint
             title: "{{endpoint_name}}"
             template: |
-              - **Method:** {{http_method}}
-              - **Endpoint:** {{endpoint_path}}
-              - **Purpose:** {{endpoint_purpose}}
-              - **Integration:** {{integration_with_existing}}
+              - **方法:** {{http_method}}
+              - **端点:** {{endpoint_path}}
+              - **用途:** {{endpoint_purpose}}
+              - **集成:** {{integration_with_existing}}
             sections:
               - id: request
-                title: Request
+                title: 请求
                 type: code
                 language: json
                 template: "{{request_schema}}"
               - id: response
-                title: Response
+                title: 响应
                 type: code
                 language: json
                 template: "{{response_schema}}"
 
   - id: external-api-integration
-    title: External API Integration
+    title: 外部 API 集成
     condition: Enhancement requires new external APIs
     instruction: Document new external API integrations required for the enhancement
     repeatable: true
@@ -280,19 +280,19 @@ sections:
       - id: external-api
         title: "{{api_name}} API"
         template: |
-          - **Purpose:** {{api_purpose}}
-          - **Documentation:** {{api_docs_url}}
-          - **Base URL:** {{api_base_url}}
-          - **Authentication:** {{auth_method}}
-          - **Integration Method:** {{integration_approach}}
+          - **用途:** {{api_purpose}}
+          - **文档:** {{api_docs_url}}
+          - **基础 URL:** {{api_base_url}}
+          - **认证:** {{auth_method}}
+          - **集成方式:** {{integration_approach}}
 
-          **Key Endpoints Used:**
+          **使用的关键端点:**
           - `{{method}} {{endpoint_path}}` - {{endpoint_purpose}}
 
-          **Error Handling:** {{error_handling_strategy}}
+          **错误处理:** {{error_handling_strategy}}
 
   - id: source-tree
-    title: Source Tree
+    title: 源码目录
     instruction: |
       Define how new code will integrate with existing project structure:
 
@@ -303,13 +303,13 @@ sections:
     elicit: true
     sections:
       - id: existing-structure
-        title: Existing Project Structure
+        title: 现有项目结构
         type: code
         language: plaintext
         instruction: Document relevant parts of current structure
         template: "{{existing_structure_relevant_parts}}"
       - id: new-file-organization
-        title: New File Organization
+        title: 新文件组织
         type: code
         language: plaintext
         instruction: Show only new additions to existing structure
@@ -319,19 +319,19 @@ sections:
           │   ├── {{new_folder_1}}/           # {{purpose_1}}
           │   │   ├── {{new_file_1}}
           │   │   └── {{new_file_2}}
-          │   ├── {{existing_folder}}/        # Existing folder with additions
-          │   │   ├── {{existing_file}}       # Existing file
-          │   │   └── {{new_file_3}}          # New addition
+          │   ├── {{existing_folder}}/        # 现有文件夹带新增内容
+          │   │   ├── {{existing_file}}       # 现有文件
+          │   │   └── {{new_file_3}}          # 新增内容
           │   └── {{new_folder_2}}/           # {{purpose_2}}
       - id: integration-guidelines
-        title: Integration Guidelines
+        title: 集成指南
         template: |
-          - **File Naming:** {{file_naming_consistency}}
-          - **Folder Organization:** {{folder_organization_approach}}
-          - **Import/Export Patterns:** {{import_export_consistency}}
+          - **文件命名:** {{file_naming_consistency}}
+          - **文件夹组织:** {{folder_organization_approach}}
+          - **导入/导出模式:** {{import_export_consistency}}
 
   - id: infrastructure-deployment
-    title: Infrastructure and Deployment Integration
+    title: 基础设施与部署集成
     instruction: |
       Define how the enhancement will be deployed alongside existing infrastructure:
 
@@ -342,26 +342,26 @@ sections:
     elicit: true
     sections:
       - id: existing-infrastructure
-        title: Existing Infrastructure
+        title: 现有基础设施
         template: |
-          **Current Deployment:** {{existing_deployment_summary}}
-          **Infrastructure Tools:** {{existing_infrastructure_tools}}
-          **Environments:** {{existing_environments}}
+          **当前部署:** {{existing_deployment_summary}}
+          **基础设施工具:** {{existing_infrastructure_tools}}
+          **环境:** {{existing_environments}}
       - id: enhancement-deployment
-        title: Enhancement Deployment Strategy
+        title: 增强部署策略
         template: |
-          **Deployment Approach:** {{deployment_approach}}
-          **Infrastructure Changes:** {{infrastructure_changes}}
-          **Pipeline Integration:** {{pipeline_integration}}
+          **部署方式:** {{deployment_approach}}
+          **基础设施变更:** {{infrastructure_changes}}
+          **流水线集成:** {{pipeline_integration}}
       - id: rollback-strategy
-        title: Rollback Strategy
+        title: 回滚策略
         template: |
-          **Rollback Method:** {{rollback_method}}
-          **Risk Mitigation:** {{risk_mitigation}}
-          **Monitoring:** {{monitoring_approach}}
+          **回滚方式:** {{rollback_method}}
+          **风险缓解:** {{risk_mitigation}}
+          **监控:** {{monitoring_approach}}
 
   - id: coding-standards
-    title: Coding Standards
+    title: 编码规范
     instruction: |
       Define IMPROVED coding standards for the enhancement:
 
@@ -377,28 +377,28 @@ sections:
     elicit: true
     sections:
       - id: existing-standards
-        title: Existing Standards (From Current System)
+        title: 现有规范（来自当前系统）
         instruction: Extract from docs/existing-system-analysis.md "Coding Standards" section
         template: |
-          **Code Style:** {{existing_code_style}}
-          **Linting Rules:** {{existing_linting}}
-          **Testing Patterns:** {{existing_test_patterns}}
-          **Documentation Style:** {{existing_doc_style}}
+          **代码风格:** {{existing_code_style}}
+          **Linting 规则:** {{existing_linting}}
+          **测试模式:** {{existing_test_patterns}}
+          **文档风格:** {{existing_doc_style}}
       - id: enhancement-standards
-        title: Improved Standards for Enhancement
+        title: 增强的改进规范
         instruction: Define BETTER standards for new code (this is what Dev will follow)
         repeatable: true
-        template: "- **{{standard_name}}:** {{standard_description}} (Improvement: {{why_better_than_existing}})"
+        template: "- **{{standard_name}}:** {{standard_description}}（改进点: {{why_better_than_existing}}）"
       - id: integration-rules
-        title: Critical Integration Rules
+        title: 关键集成规则
         template: |
-          - **Existing API Compatibility:** {{api_compatibility_rule}}
-          - **Database Integration:** {{db_integration_rule}}
-          - **Error Handling:** {{error_handling_integration}}
-          - **Logging Consistency:** {{logging_consistency}}
+          - **现有 API 兼容性:** {{api_compatibility_rule}}
+          - **数据库集成:** {{db_integration_rule}}
+          - **错误处理:** {{error_handling_integration}}
+          - **日志一致性:** {{logging_consistency}}
 
   - id: testing-strategy
-    title: Testing Strategy
+    title: 测试策略
     instruction: |
       Define testing approach for the enhancement:
 
@@ -409,36 +409,36 @@ sections:
     elicit: true
     sections:
       - id: existing-test-integration
-        title: Integration with Existing Tests
+        title: 与现有测试集成
         template: |
-          **Existing Test Framework:** {{existing_test_framework}}
-          **Test Organization:** {{existing_test_organization}}
-          **Coverage Requirements:** {{existing_coverage_requirements}}
+          **现有测试框架:** {{existing_test_framework}}
+          **测试组织:** {{existing_test_organization}}
+          **覆盖率要求:** {{existing_coverage_requirements}}
       - id: new-testing
-        title: New Testing Requirements
+        title: 新测试要求
         sections:
           - id: unit-tests
-            title: Unit Tests for New Components
+            title: 新组件的单元测试
             template: |
-              - **Framework:** {{test_framework}}
-              - **Location:** {{test_location}}
-              - **Coverage Target:** {{coverage_target}}
-              - **Integration with Existing:** {{test_integration}}
+              - **框架:** {{test_framework}}
+              - **位置:** {{test_location}}
+              - **覆盖率目标:** {{coverage_target}}
+              - **与现有测试的集成:** {{test_integration}}
           - id: integration-tests
-            title: Integration Tests
+            title: 集成测试
             template: |
-              - **Scope:** {{integration_test_scope}}
-              - **Existing System Verification:** {{existing_system_verification}}
-              - **New Feature Testing:** {{new_feature_testing}}
+              - **范围:** {{integration_test_scope}}
+              - **现有系统验证:** {{existing_system_verification}}
+              - **新功能测试:** {{new_feature_testing}}
           - id: regression-tests
-            title: Regression Testing
+            title: 回归测试
             template: |
-              - **Existing Feature Verification:** {{regression_test_approach}}
-              - **Automated Regression Suite:** {{automated_regression}}
-              - **Manual Testing Requirements:** {{manual_testing_requirements}}
+              - **现有功能验证:** {{regression_test_approach}}
+              - **自动化回归套件:** {{automated_regression}}
+              - **手动测试要求:** {{manual_testing_requirements}}
 
   - id: security-integration
-    title: Security Integration
+    title: 安全集成
     instruction: |
       Ensure security consistency with existing system:
 
@@ -449,31 +449,31 @@ sections:
     elicit: true
     sections:
       - id: existing-security
-        title: Existing Security Measures
+        title: 现有安全措施
         template: |
-          **Authentication:** {{existing_auth}}
-          **Authorization:** {{existing_authz}}
-          **Data Protection:** {{existing_data_protection}}
-          **Security Tools:** {{existing_security_tools}}
+          **认证:** {{existing_auth}}
+          **授权:** {{existing_authz}}
+          **数据保护:** {{existing_data_protection}}
+          **安全工具:** {{existing_security_tools}}
       - id: enhancement-security
-        title: Enhancement Security Requirements
+        title: 增强安全要求
         template: |
-          **New Security Measures:** {{new_security_measures}}
-          **Integration Points:** {{security_integration_points}}
-          **Compliance Requirements:** {{compliance_requirements}}
+          **新增安全措施:** {{new_security_measures}}
+          **集成点:** {{security_integration_points}}
+          **合规要求:** {{compliance_requirements}}
       - id: security-testing
-        title: Security Testing
+        title: 安全测试
         template: |
-          **Existing Security Tests:** {{existing_security_tests}}
-          **New Security Test Requirements:** {{new_security_tests}}
-          **Penetration Testing:** {{pentest_requirements}}
+          **现有安全测试:** {{existing_security_tests}}
+          **新增安全测试要求:** {{new_security_tests}}
+          **渗透测试:** {{pentest_requirements}}
 
   - id: checklist-results
-    title: Checklist Results Report
+    title: 检查清单结果报告
     instruction: Execute the architect-checklist and populate results here, focusing on brownfield-specific validation
 
   - id: next-steps
-    title: Next Steps
+    title: 下一步
     instruction: |
       After completing the brownfield architecture:
 
@@ -483,7 +483,7 @@ sections:
       4. Plan rollback and monitoring procedures
     sections:
       - id: story-manager-handoff
-        title: Story Manager Handoff
+        title: Story Manager 交接
         instruction: |
           Create a brief prompt for Story Manager to work with this brownfield enhancement. Include:
           - Reference to this architecture document
@@ -492,7 +492,7 @@ sections:
           - First story to implement with clear integration checkpoints
           - Emphasis on maintaining existing system integrity throughout implementation
       - id: developer-handoff
-        title: Developer Handoff
+        title: 开发者交接
         instruction: |
           Create a brief prompt for developers starting implementation. Include:
           - Reference to this architecture and existing coding standards analyzed from actual project
