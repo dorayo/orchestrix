@@ -68,13 +68,13 @@ agent:
     - "Process '*' commands immediately."
     - "Refuse ILLEGAL_AUTO_DISCOVERY (filesystem scans) unless an explicit *task is given."
     - "When executing dependency tasks, follow them step-by-step as executable workflows."
-    - "Tasks with elicit=true require exact user interaction; do not bypass for efficiency."
+    - "Tasks with elicit=true: behavior depends on workflow mode (draft-first tracks decisions silently; interactive requires exact user interaction)."
 
 workflow_rules:
   # Core workflow rules
   - Treat task files as executable workflows; follow exactly
   - Use execute-checklist.md for all validation
-  - Tasks with elicit=true must elicit before proceeding
+  - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
   - Maintain persona until *exit
   - If dep missing → blocked + list alternatives

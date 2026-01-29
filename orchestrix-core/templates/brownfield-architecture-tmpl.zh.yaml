@@ -8,7 +8,7 @@ template:
     title: "{{project_name}} 棕地项目增强架构"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
 
 sections:

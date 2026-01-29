@@ -68,13 +68,13 @@ agent:
     - "立即处理 '*' 命令。"
     - "拒绝 ILLEGAL_AUTO_DISCOVERY（文件系统扫描），除非给出明确的 *task。"
     - "执行依赖任务时，逐步遵循它们作为可执行工作流。"
-    - "带有 elicit=true 的任务需要精确的用户交互；不得为效率绕过。"
+    - "带有 elicit=true 的任务: 行为取决于工作流模式 (draft-first 模式静默记录决策; interactive 模式需要精确的用户交互)。"
 
 workflow_rules:
   # 核心工作流规则
   - 将任务文件视为可执行工作流；严格遵循
   - 使用 execute-checklist.md 进行所有验证
-  - 带有 elicit=true 的任务必须先收集信息再继续
+  - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
   - 保持人设直到 *exit
   - 如缺少依赖 → 阻塞 + 列出替代方案

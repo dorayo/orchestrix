@@ -2,7 +2,7 @@
 
 ## Overview
 
-Orchestrix document templates are defined in YAML format to drive interactive document generation and agent interaction. Templates separate structure definition from content generation, making them both human and LLM-agent-friendly.
+Orchestrix document templates are defined in YAML format to drive document generation and agent interaction. Templates separate structure definition from content generation, making them both human and LLM-agent-friendly.
 
 ## Template Structure
 
@@ -17,7 +17,7 @@ template:
     title: "{{variable}} Document Title"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
 
 sections:
@@ -41,7 +41,12 @@ sections:
 
 ### Workflow Configuration
 
-- **workflow.mode**: Default interaction mode ("interactive" or "yolo")
+- **workflow.mode**: Document generation mode:
+  - `"draft-first"` (DEFAULT) — Generate complete draft, save to file, then present key decisions and uncertainties for user review. Sections with `elicit: true` are processed silently with AI's best judgment; decisions are tracked and presented after draft completion. Users can then review, provide feedback, or invoke `*elicit {section_id}` for deep exploration of specific sections.
+  - `"interactive"` — Step-by-step per-section processing with mandatory user interaction at each `elicit: true` section using 1-9 numbered elicitation options. Activate via `--interactive` CLI flag.
+  - `"non-interactive"` — Output-only, no user interaction (for machine-generated docs like registries).
+  - `"quick"` — Abbreviated workflow for simple documents.
+  - `"bugfix"` — Specialized bugfix workflow.
 - **workflow.elicitation**: Elicitation task to use ("advanced-elicitation")
 
 ## Section Properties
@@ -63,7 +68,9 @@ sections:
 
 #### Behavior Flags
 
-- **elicit**: Boolean - Apply elicitation after section rendered
+- **elicit**: Boolean - Mark section as a decision point. Behavior depends on `workflow.mode`:
+  - In `draft-first` mode: AI makes its best judgment and records a Decision Record (section_id, decision, reasoning, confidence, alternatives) for post-draft review
+  - In `interactive` mode: Hard stop requiring user interaction via 1-9 numbered elicitation options
 - **repeatable**: Boolean - Section can be repeated multiple times
 - **condition**: String - Condition for including section (e.g., "has ui requirements")
 

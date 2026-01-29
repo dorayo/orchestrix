@@ -5,13 +5,13 @@
 - Provide optional reflective and brainstorming actions to enhance content quality
 - Enable deeper exploration of ideas through structured elicitation techniques
 - Support iterative refinement through multiple analytical perspectives
-- Usable during template-driven document creation or any chat conversation
+- Usable during template-driven document creation, post-draft refinement, or any chat conversation
 
 ## Usage Scenarios
 
-### Scenario 1: Template Document Creation
+### Scenario 1: Template Document Creation (interactive mode)
 
-After outputting a section during document creation:
+After outputting a section during interactive-mode document creation:
 
 1. **Section Review**: Ask user to review the drafted section
 2. **Offer Elicitation**: Present 9 carefully selected elicitation methods
@@ -25,6 +25,18 @@ User can request advanced elicitation on any agent output:
 - User says "do advanced elicitation" or similar
 - Agent selects 9 relevant methods for the context
 - Same simple 0-9 selection process
+
+### Scenario 3: Post-Draft Targeted Elicitation (draft-first mode)
+
+After a complete draft has been generated in draft-first mode, user can request deep exploration of specific sections:
+
+1. **User Request**: User says `*elicit {section_id}` or "do elicitation on the [section name] section"
+2. **Load Context**: Read the specified section from the saved document file
+3. **Provide Context Summary**: Briefly summarize the section's current content and any decisions AI made
+4. **Offer Elicitation**: Present 9 context-appropriate methods (0-8) + proceed (9)
+   - If template has `custom_elicitation` options, use those instead of defaults
+5. **Execute & Refine**: Apply selected method, update the section in the document file
+6. **Re-offer or Return**: User continues eliciting or returns to overall review
 
 ## Task Instructions
 

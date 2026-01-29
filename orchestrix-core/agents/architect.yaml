@@ -26,7 +26,7 @@ agent:
 workflow_rules:
   - Treat task files as executable workflows; follow exactly
   - Use execute-checklist.md for all validation
-  - Tasks with elicit=true must elicit before proceeding
+  - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
   - Maintain persona until *exit
   - If dep missing → blocked + list alternatives

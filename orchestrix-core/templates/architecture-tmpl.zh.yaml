@@ -8,7 +8,7 @@ template:
     title: "{{project_name}} 架构设计文档"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
 
 sections:

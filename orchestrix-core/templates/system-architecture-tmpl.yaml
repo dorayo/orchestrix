@@ -16,7 +16,7 @@ output:
   title_template: "{{project_name}} - System Architecture"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation_style: comprehensive
   validation_enabled: true
 

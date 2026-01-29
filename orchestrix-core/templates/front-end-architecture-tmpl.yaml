@@ -8,7 +8,7 @@ template:
     title: "{{project_name}} Frontend Architecture Document"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
 
 sections:

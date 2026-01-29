@@ -4,14 +4,21 @@
 
 **THIS IS AN EXECUTABLE WORKFLOW - NOT REFERENCE MATERIAL**
 
-When this task is invoked:
+When this task is invoked, follow the resolved mode exactly. Do NOT deviate from the mode's workflow.
 
-1. **DISABLE ALL EFFICIENCY OPTIMIZATIONS** - This workflow requires full user interaction
-2. **MANDATORY STEP-BY-STEP EXECUTION** - Each section must be processed sequentially with user feedback
-3. **ELICITATION IS REQUIRED** - When `elicit: true`, you MUST use the 1-9 format and wait for user response
-4. **NO SHORTCUTS ALLOWED** - Complete documents cannot be created without following this workflow
+---
 
-**VIOLATION INDICATOR:** If you create a complete document without user interaction, you have violated this workflow.
+## Mode Resolution
+
+Determine the effective document generation mode using this priority:
+
+1. **CLI flag** (highest priority): `--interactive` → interactive, `--draft` → draft-first
+2. **Template YAML** `workflow.mode` field
+3. **Default**: `draft-first`
+
+**Backward compatibility:** `--yolo` maps to `draft-first` (emit note: "Note: --yolo is deprecated, using draft-first mode.")
+
+---
 
 ## Critical: Template Discovery
 
@@ -21,11 +28,113 @@ When this task is invoked:
 2. **Multiple templates available** → List numbered options for user selection
 3. **No templates available** → Ask user to provide template path
 
-## CRITICAL: Mandatory Elicitation Format
+---
+
+## Mode: draft-first (DEFAULT)
+
+### Core Principle
+
+> 先看到才能决定有没有问题。Generate the complete draft first, then let the user review and refine.
+
+### Phase 1: Context & Quick Questions
+
+1. **Parse YAML template** - Load template metadata, sections, and workflow config
+2. **Load available inputs** - Read existing docs referenced in section instructions (PRD, Project Brief, etc.)
+3. **Scan decision points** - Identify all sections with `elicit: true` to build a decision inventory
+4. **Identify critical unknowns** - Variables and information that AI cannot reasonably infer from available context
+5. **Ask 2-5 blocking questions** - Project-level questions only, NOT per-section questions
+   - Focus on: project name, target users, key constraints, platform choices, or anything the template needs but no input doc provides
+   - If sufficient context exists from input documents, skip questions and proceed directly
+6. **Wait for answers** before proceeding to Phase 2
+
+### Phase 2: Generate Complete Draft
+
+Process ALL sections sequentially, including `elicit: true` sections:
+
+1. **For each section:**
+   - Check condition → skip if unmet
+   - Check agent permissions (owner/editors) → note restrictions in document
+   - Draft content using section instruction and available context
+   - **IF `elicit: true`**: AI makes its best judgment and records a Decision Record:
+     ```
+     section_id | decision | reasoning | confidence (high/medium/low) | alternatives
+     ```
+   - Continue to next section immediately (NO stop, NO user interaction)
+
+2. **Save complete document** to the template's `output.filename` path
+
+3. **Announce:**
+   ```
+   📄 初稿已生成并保存到 {filepath}
+   ```
+
+### Phase 3: Decision Review
+
+Present a categorized summary of all decisions made during generation:
+
+**Format:**
+
+```
+## 关键决策与待确认项
+
+### 🔴 需要确认 (低置信度)
+1. **[Section Title]** — 选择了 X
+   - 原因: [reasoning]
+   - 备选: Y, Z
+
+### 🟡 建议审阅 (中等置信度)
+2. **[Section Title]** — 选择了 X
+   - 原因: [reasoning]
+   - 备选: Y
+
+### 🟢 已按常规处理 (高置信度)
+3. **[Section Title]** — 采用了 X（行业惯例）
+
+---
+请查看文档后告诉我：
+1. 以上决策有需要调整的吗？
+2. 有其他想补充或修改的内容吗？
+3. 如需对某个章节做深度探索，可以使用 `*elicit {section_id}`
+```
+
+**Rules:**
+- Only list sections where AI had to make a meaningful decision (skip trivial sections)
+- 🔴 Low confidence: AI lacked sufficient context or had multiple equally valid options
+- 🟡 Medium confidence: AI had a reasonable default but the user might prefer differently
+- 🟢 High confidence: Industry standard or clearly derived from input documents
+- If no decisions were needed (all info from inputs), state this briefly and ask for general feedback
+
+### Phase 4: Iterative Refinement
+
+1. **User provides feedback** → Revise the corresponding sections → Save updated document
+2. **User invokes `*elicit {section_id}`** → Execute advanced-elicitation task on that section → Apply results → Save
+3. **User provides new input or ideas** → Incorporate into relevant sections → Save → Present any new decisions if significant
+4. **Loop** until user is satisfied or explicitly approves
+
+**After each revision, briefly summarize what changed.** Do not re-present the entire decision list unless the user requests it.
+
+---
+
+## Mode: interactive (opt-in via `--interactive`)
+
+**Activation:** `*create-doc {template} --interactive` or template has `workflow.mode: interactive`
+
+### Processing Flow
+
+1. **Parse YAML template** - Load template metadata and sections
+2. **Set preferences** - Show current mode (Interactive), confirm output file
+3. **Process each section:**
+   - Skip if condition unmet
+   - Check agent permissions (owner/editors) - note if section is restricted to specific agents
+   - Draft content using section instruction
+   - Present content + detailed rationale
+   - **IF `elicit: true`** → MANDATORY 1-9 options format (see below)
+   - Save to file if possible
+4. **Continue until complete**
+
+### Mandatory Elicitation Format (interactive mode only)
 
 **When `elicit: true`, this is a HARD STOP requiring user interaction:**
-
-**YOU MUST:**
 
 1. Present section content
 2. Provide detailed rationale (explain trade-offs, assumptions, decisions made)
@@ -35,33 +144,7 @@ When this task is invoked:
    - End with: "Select 1-9 or just type your question/feedback:"
 4. **WAIT FOR USER RESPONSE** - Do not proceed until user selects option or provides feedback
 
-**WORKFLOW VIOLATION:** Creating content for elicit=true sections without user interaction violates this task.
-
-**NEVER ask yes/no questions or use any other format.**
-
-## Processing Flow
-
-1. **Parse YAML template** - Load template metadata and sections
-2. **Set preferences** - Show current mode (Interactive), confirm output file
-3. **Process each section:**
-   - Skip if condition unmet
-   - Check agent permissions (owner/editors) - note if section is restricted to specific agents
-   - Draft content using section instruction
-   - Present content + detailed rationale
-   - **IF elicit: true** → MANDATORY 1-9 options format
-   - Save to file if possible
-4. **Continue until complete**
-
-## Detailed Rationale Requirements
-
-When presenting section content, ALWAYS include rationale that explains:
-
-- Trade-offs and choices made (what was chosen over alternatives and why)
-- Key assumptions made during drafting
-- Interesting or questionable decisions that need user attention
-- Areas that might need validation
-
-## Elicitation Results Flow
+### Elicitation Results Flow (interactive mode only)
 
 After user selects elicitation method (2-9):
 
@@ -72,7 +155,11 @@ After user selects elicitation method (2-9):
    - **2. Return to elicitation menu**
    - **3. Ask any questions or engage further with this elicitation**
 
-## Agent Permissions
+---
+
+## Shared Rules (All Modes)
+
+### Agent Permissions
 
 When processing sections with agent permission fields:
 
@@ -85,30 +172,17 @@ When processing sections with agent permission fields:
 - Include a note in the generated document indicating the responsible agent
 - Example: "_(This section is owned by dev-agent and can only be modified by dev-agent)_"
 
-## YOLO Mode
+### Detailed Rationale
 
-YOLO mode processes all sections at once without per-section confirmations.
+Whether presented per-section (interactive) or as decision records (draft-first), rationale must explain:
 
-**Activation methods:**
-- Command parameter: `*create-doc {template} --yolo`
-- In-session trigger: Type `#yolo` during document creation
+- Trade-offs and choices made (what was chosen over alternatives and why)
+- Key assumptions made during drafting
+- Decisions that need user attention
+- Areas that might need validation
 
-**YOLO mode constraints:**
-- Sections with `elicit: true` still require user interaction (cannot be bypassed)
-- Security/acceptance invariants are always enforced
-- Outputs draft for review after completion
+### Custom Elicitation Options
 
-## CRITICAL REMINDERS
-
-**❌ NEVER:**
-
-- Ask yes/no questions for elicitation
-- Use any format other than 1-9 numbered options
-- Create new elicitation methods
-
-**✅ ALWAYS:**
-
-- Use exact 1-9 format when elicit: true
-- Select options 2-9 from data/elicitation-methods only
-- Provide detailed rationale explaining decisions
-- End with "Select 1-9 or just type your question/feedback:"
+If the template defines `workflow.custom_elicitation`, these options:
+- **Interactive mode**: Replace default options 2-9
+- **Draft-first mode**: Available during Phase 4 via `*elicit {section_id}`

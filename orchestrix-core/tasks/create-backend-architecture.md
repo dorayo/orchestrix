@@ -5,26 +5,32 @@
 Generate a **detailed backend architecture document** for a backend implementation repository. This document provides implementation-level technical details for backend development, referencing and aligning with system-level architecture from the Product repository.
 
 **IMPORTANT**: This is a DETAILED implementation architecture, NOT a system-level coordination document. It:
-- ✅ Includes component designs, database schemas, code patterns, and implementation details
-- ✅ References and aligns with the system-architecture.md from Product repository
-- ✅ Validates that backend implements ALL APIs defined in system-architecture.md
-- ✅ Uses `architecture-tmpl.yaml` template for output format
-- ❌ Does NOT duplicate system-level coordination concerns (those are in system-architecture.md)
+- Includes component designs, database schemas, code patterns, and implementation details
+- References and aligns with the system-architecture.md from Product repository
+- Validates that backend implements ALL APIs defined in system-architecture.md
+- Uses `architecture-tmpl.yaml` template for output format
+- Does NOT duplicate system-level coordination concerns (those are in system-architecture.md)
+
+## Workflow Mode
+
+**Default: Draft-First** -- Generate the complete architecture in one pass after collecting upfront inputs, then present key decisions for review.
+
+**Flag: `--interactive`** -- Revert to step-by-step interactive mode where each design phase requires user confirmation before proceeding. When `--interactive` is set, treat every "Generation Instructions" section below as a separate step with its own "Elicit User Confirmation" stop. Present the designed artifacts and wait for approval before moving to the next section.
 
 ## Prerequisites
 
 **Required Documents**:
-- ✅ System Architecture exists at `../product-repo/docs/system-architecture.md`
-- ✅ PRD exists at `../product-repo/docs/prd.md` (optional)
+- System Architecture exists at `../product-repo/docs/system-architecture.md`
+- PRD exists at `../product-repo/docs/prd.md` (optional)
 
 **Project Configuration**:
-- ✅ Project mode is `multi-repo` with role `backend` in `core-config.yaml`
-- ✅ `multi_repo.product_repo_path` is configured in `core-config.yaml` pointing to Product repository
-- ✅ Running in Backend implementation repository (not Product repo)
+- Project mode is `multi-repo` with role `backend` in `core-config.yaml`
+- `multi_repo.product_repo_path` is configured in `core-config.yaml` pointing to Product repository
+- Running in Backend implementation repository (not Product repo)
 
 **Recommended Environment**:
-- 🌐 **Web interface** (e.g., claude.ai/code with Gemini 1M+ tokens) - Recommended for comprehensive context
-- 💻 IDE (Claude Code, Cursor, etc.) - Acceptable but may hit context limits
+- Web interface (e.g., claude.ai/code with Gemini 1M+ tokens) - Recommended for comprehensive context
+- IDE (Claude Code, Cursor, etc.) - Acceptable but may hit context limits
 
 ## Validation
 
@@ -35,7 +41,7 @@ Before starting, validate prerequisites:
 PROJECT_MODE=$(grep "mode:" core-config.yaml | awk '{print $2}')
 PROJECT_ROLE=$(grep -A 1 "multi_repo:" core-config.yaml | grep "role:" | awk '{print $2}')
 if [ "$PROJECT_MODE" != "multi-repo" ] || [ "$PROJECT_ROLE" != "backend" ]; then
-  echo "❌ ERROR: Project mode is '$PROJECT_MODE' with role '$PROJECT_ROLE', expected mode='multi-repo' role='backend'"
+  echo "ERROR: Project mode is '$PROJECT_MODE' with role '$PROJECT_ROLE', expected mode='multi-repo' role='backend'"
   echo "This task should run in Backend implementation repository"
   exit 1
 fi
@@ -43,7 +49,7 @@ fi
 # Check if product repo path is configured
 PRODUCT_REPO_PATH_RAW=$(grep -A 3 "multi_repo:" core-config.yaml | grep "product_repo_path:" | awk '{print $2}')
 if [ -z "$PRODUCT_REPO_PATH_RAW" ]; then
-  echo "❌ ERROR: multi_repo.product_repo_path not configured in core-config.yaml"
+  echo "ERROR: multi_repo.product_repo_path not configured in core-config.yaml"
   echo "Add this to core-config.yaml:"
   echo "project:"
   echo "  mode: multi-repo"
@@ -61,38 +67,38 @@ else
   # Relative path - resolve from current directory
   PRODUCT_REPO_PATH=$(cd "$PRODUCT_REPO_PATH_RAW" 2>/dev/null && pwd)
   if [ $? -ne 0 ] || [ -z "$PRODUCT_REPO_PATH" ]; then
-    echo "❌ ERROR: Product repo not found at: $PRODUCT_REPO_PATH_RAW"
+    echo "ERROR: Product repo not found at: $PRODUCT_REPO_PATH_RAW"
     echo "   Tried to resolve from: $(pwd)"
     echo "   Check if the path is correct and the directory exists"
     exit 1
   fi
 fi
 
-echo "📍 Product repo resolved to: $PRODUCT_REPO_PATH"
+echo "Product repo resolved to: $PRODUCT_REPO_PATH"
 
 # Check if system architecture exists
 SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/system-architecture.md"
 if [ ! -f "$SYSTEM_ARCH" ]; then
-  echo "❌ ERROR: System architecture not found at $SYSTEM_ARCH"
+  echo "ERROR: System architecture not found at $SYSTEM_ARCH"
   echo ""
-  echo "👉 Action: Create system architecture first in Product repository"
+  echo "Action: Create system architecture first in Product repository"
   echo "   cd $PRODUCT_REPO_PATH"
   echo "   @architect *create-system-architecture"
   exit 1
 fi
 
-echo "✅ Found system architecture: docs/system-architecture.md"
+echo "Found system architecture: docs/system-architecture.md"
 
-echo "✅ Prerequisites validated. Proceeding with backend architecture generation..."
+echo "Prerequisites validated. Proceeding with backend architecture generation..."
 ```
 
 ---
 
 ## Task Instructions
 
-### Step 1: Load System Architecture Context
+### Step 1: Load Context & Validate
 
-Load the system-level architecture as a CONSTRAINT for this detailed architecture.
+Load both the system-level architecture and the PRD as constraints and requirements for this detailed architecture. **No user interaction required** -- this is pure context ingestion.
 
 **Step 1.1: Load System Architecture**
 
@@ -101,7 +107,7 @@ Load the system-level architecture as a CONSTRAINT for this detailed architectur
 # PRODUCT_REPO_PATH is the absolute path set during prerequisite validation
 SYSTEM_ARCH="$PRODUCT_REPO_PATH/docs/system-architecture.md"
 
-echo "📄 Reading system architecture from: $SYSTEM_ARCH"
+echo "Reading system architecture from: $SYSTEM_ARCH"
 ```
 
 Read and analyze the **complete** system architecture document (not the sharded files).
@@ -111,98 +117,88 @@ Read and analyze the **complete** system architecture document (not the sharded 
 - Reading the complete file ensures we get the full context in one pass
 - Sharded files are for PO/SM story creation, not for implementation architecture generation
 
-**Focus Areas**:
-1. **Repository Topology**: Understand this backend's role in the overall system
-2. **API Contracts Summary**: Identify which APIs THIS backend must implement (CRITICAL)
+**Extract from System Architecture** (retain internally, do not present to user yet):
+1. **Repository Topology**: This backend's role in the overall system
+2. **API Contracts Summary**: Which APIs THIS backend must implement (CRITICAL)
 3. **Integration Strategy**: Authentication mechanism, data format standards, error handling conventions
 4. **Deployment Architecture**: Where and how this backend deploys
 5. **Cross-Cutting Concerns**: Security, performance, observability requirements
+6. **APIs to Implement**: List of endpoints this backend must provide
+7. **APIs to Consume**: List of external/partner APIs this backend calls
+8. **Authentication Requirements**: JWT format, token validation, role-based access control
+9. **Data Format Standards**: JSON structure, date format (ISO 8601), pagination style (offset/cursor)
+10. **Error Handling Standard**: Error response format, HTTP status codes
+11. **Performance Requirements**: Response time SLAs (e.g., < 200ms p95), throughput targets
+12. **Security Requirements**: Encryption (TLS, at-rest), secrets management, security headers
 
-**Step 1.2: Extract Backend-Specific Constraints**
-
-From the system architecture, extract:
-- **APIs to Implement**: List of endpoints this backend must provide (CRITICAL)
-- **APIs to Consume**: List of external/partner APIs this backend calls
-- **Authentication Requirements**: JWT format, token validation, role-based access control
-- **Data Format Standards**: JSON structure, date format (ISO 8601), pagination style (offset/cursor)
-- **Error Handling Standard**: Error response format, HTTP status codes
-- **Performance Requirements**: Response time SLAs (e.g., < 200ms p95), throughput targets
-- **Security Requirements**: Encryption (TLS, at-rest), secrets management, security headers
-
-**Elicit User Confirmation**:
-```
-📖 I've loaded the system architecture from Product repository.
-
-**This Backend Repository's Role**:
-- Repository Name: {{backend_repo_name}}
-- Primary Responsibility: {{backend_responsibility}}
-
-**APIs This Backend Must Implement** (from system-architecture.md):
-[List all API categories and endpoints with clear formatting]
-
-**Integration Constraints**:
-- Authentication: {{auth_mechanism}} (JWT validation, RBAC)
-- Data Format: {{data_format_standards}}
-- Error Handling: {{error_standard}}
-
-**Performance Requirements**:
-- Response Time: {{response_sla}}
-- Throughput: {{throughput_target}}
-
-Does this match your understanding? Ready to proceed with detailed backend architecture?
-```
-
----
-
-### Step 2: Load PRD Context
-
-Load the PRD to understand functional requirements.
-
-**Step 2.1: Load PRD**
+**Step 1.2: Load PRD**
 
 ```bash
 # Read PRD
 PRD_PATH="$PRODUCT_REPO_PATH/docs/prd.md"
 ```
 
-**Analysis Focus**:
-- What are the main features/epics for backend?
-- What business entities are involved? (Users, Products, Orders, etc.)
-- What are the non-functional requirements? (scale, security, compliance)
-- Are there any backend-specific stories or requirements?
+**Extract from PRD** (retain internally):
+- Main features/epics for backend
+- Business entities involved (Users, Products, Orders, etc.)
+- Non-functional requirements (scale, security, compliance)
+- Backend-specific stories or requirements
 
-**Step 2.2: Map Features to APIs and Data Models**
+**Step 1.3: Cross-Reference Features to APIs**
 
-Cross-reference PRD features with API contracts from system-architecture.md:
+Map PRD features against API contracts from system-architecture.md:
 - For each Epic, identify which APIs are needed
 - For each Story (target_platform = backend), identify which endpoints to implement
 - Identify business entities and their relationships
-- Validate that all required APIs are covered in system-architecture.md
+- Flag any PRD features that require APIs NOT in system-architecture.md (used in Step 3)
 
-**Elicit User Confirmation**:
+---
+
+### Step 2: Upfront Questions
+
+Present all critical decision questions as a single consolidated list. Wait for answers before proceeding.
+
 ```
-📚 I've analyzed the PRD and system architecture.
+I've loaded the system architecture and PRD. Before generating the backend architecture, I need your input on a few key decisions:
 
-**Business Entities Identified**:
-1. {{entity_1}} - {{description_1}}
-2. {{entity_2}} - {{description_2}}
-3. {{entity_3}} - {{description_3}}
+1. **Backend Tech Stack Confirmation**
+   System architecture specifies: {{language}} + {{framework}} ({{version}})
+   Database: {{database}} ({{db_version}})
+   Is this correct, or do you want to adjust?
 
-**Feature-to-API Mapping**:
-- Epic: {{epic_1}} → APIs: {{api_list_1}}
-- Epic: {{epic_2}} → APIs: {{api_list_2}}
+2. **Architecture Pattern Preference**
+   Based on project complexity ({{complexity_assessment}}), options are:
 
-**Database Requirements**:
-- Primary Database: {{db_type}} (SQL/NoSQL)
-- Estimated Tables/Collections: {{table_count}}
-- Key Relationships: {{relationship_summary}}
+   [A] Three-Layer Architecture (MVC)
+       Controllers -> Services -> Repositories
+       Best for: Moderate complexity, widely understood
 
-Does this match the project scope?
+   [B] Hexagonal Architecture (Clean Architecture)
+       HTTP Adapters -> Use Cases -> Domain Models -> Repository Interfaces
+       Best for: Highly testable, business logic independent of infrastructure
+
+   [C] Domain-Driven Design (DDD)
+       Aggregates, Entities, Value Objects, Domain Services
+       Best for: Complex business logic, clear domain boundaries
+
+   Recommendation: {{recommended_pattern}} because {{rationale}}
+   Your preference? (A/B/C or custom)
+
+3. **Framework & Tooling Preferences**
+   Any specific preferences for:
+   - ORM / Database client? (e.g., Prisma, TypeORM, Knex, SQLAlchemy)
+   - Validation library? (e.g., Zod, Joi, class-validator)
+   - Testing framework? (e.g., Jest, Vitest, pytest)
+   - API documentation? (e.g., Swagger/OpenAPI auto-generation)
+   - Migration tool? (e.g., Prisma Migrate, Knex migrations, Alembic)
+   (Leave blank to use sensible defaults based on your stack)
+
+Please answer all three (or type "defaults" to accept all recommendations).
 ```
 
 ---
 
-### Step 3: Validate API Implementation (CRITICAL)
+### Step 3: Validate API Implementation (CRITICAL -- HARD STOP)
 
 **CRITICAL VALIDATION**: Ensure backend implements ALL APIs defined in system-architecture.md.
 
@@ -210,31 +206,31 @@ Based on the PRD features and system architecture API contracts, verify coverage
 
 **API Implementation Analysis**:
 ```
-⚠️ **API Contract Validation**
+API Contract Validation
 
 I've analyzed the APIs this backend must implement from system-architecture.md:
 
 **Authentication & User APIs**:
-- POST /api/auth/login → ✅ Will implement
-- POST /api/auth/register → ✅ Will implement
-- POST /api/auth/refresh → ✅ Will implement
-- GET /api/users/:id → ✅ Will implement
+- POST /api/auth/login      -> Will implement
+- POST /api/auth/register   -> Will implement
+- POST /api/auth/refresh    -> Will implement
+- GET /api/users/:id        -> Will implement
 
 **Product APIs**:
-- GET /api/products → ✅ Will implement
-- GET /api/products/:id → ✅ Will implement
-- POST /api/products → ✅ Will implement (Admin only)
-- PUT /api/products/:id → ✅ Will implement (Admin only)
+- GET /api/products          -> Will implement
+- GET /api/products/:id      -> Will implement
+- POST /api/products         -> Will implement (Admin only)
+- PUT /api/products/:id      -> Will implement (Admin only)
 
 **Order APIs**:
-- POST /api/orders → ✅ Will implement
-- GET /api/orders → ✅ Will implement
-- GET /api/orders/:id → ✅ Will implement
+- POST /api/orders           -> Will implement
+- GET /api/orders            -> Will implement
+- GET /api/orders/:id        -> Will implement
 
 **Shopping Cart APIs**:
-- GET /api/cart → ❌ NOT found in system-architecture.md but needed for Cart feature in PRD
+- GET /api/cart               -> NOT found in system-architecture.md but needed for Cart feature in PRD
 
-**⚠️ VALIDATION WARNING**: Cart feature in PRD requires Cart APIs, but they're not in system-architecture.md
+VALIDATION WARNING: Cart feature in PRD requires Cart APIs, but they're not in system-architecture.md
 
 **Action Required**:
 1. Option A: Update system-architecture.md to add Cart APIs
@@ -246,244 +242,19 @@ Please choose how to proceed before I continue with architecture design.
 
 **IF all APIs validated successfully**:
 ```
-✅ **API Contract Validation PASSED**
+API Contract Validation PASSED
 
 All {{api_count}} APIs defined in system-architecture.md are accounted for in this backend architecture.
-Backend will implement all required endpoints. Proceeding with detailed architecture design...
+Backend will implement all required endpoints. Proceeding with architecture generation...
 ```
 
-**CRITICAL RULE**: If validation fails, STOP and wait for user to resolve the mismatch before proceeding.
+**CRITICAL RULE**: If validation fails, STOP and wait for user to resolve the mismatch before proceeding. Do NOT generate the architecture document with unresolved API mismatches.
 
 ---
 
-### Step 4: Design Service Components
+### Step 4: Generate Complete Architecture Document
 
-Based on system constraints and PRD requirements, design the internal component architecture.
-
-**Step 4.1: Choose Architecture Pattern**
-
-Recommend architecture pattern based on tech stack and project complexity:
-
-**Elicit from User**:
-```
-🏗️ **Backend Architecture Pattern**
-
-Based on your tech stack from system-architecture.md, I recommend:
-
-**Option 1: Three-Layer Architecture** (MVC)
-- Controllers (API Layer) → Services (Business Logic) → Repositories (Data Access)
-- Pros: Simple, widely understood, good for moderate complexity
-- Cons: Can become monolithic, harder to test in isolation
-
-**Option 2: Hexagonal Architecture** (Clean Architecture)
-- HTTP Adapters → Use Cases → Domain Models → Repository Interfaces → Repository Implementations
-- Pros: Highly testable, business logic independent of infrastructure, easier to swap implementations
-- Cons: More boilerplate, steeper learning curve
-
-**Option 3: Domain-Driven Design** (DDD)
-- Aggregates, Entities, Value Objects, Domain Services, Application Services
-- Pros: Best for complex business logic, clear domain boundaries
-- Cons: Overkill for simple CRUD apps, requires DDD expertise
-
-**Recommended**: {{recommended_pattern}}
-**Rationale**: {{why_this_pattern}}
-
-What's your preference?
-```
-
-**Step 4.2: Define Component Layers**
-
-Based on chosen pattern, define component structure:
-- **API Layer**: Controllers, route handlers, middleware
-- **Business Logic Layer**: Services, use cases, domain models
-- **Data Access Layer**: Repositories, ORMs, database clients
-- **Infrastructure Layer**: Auth, logging, monitoring, external integrations
-
-**Step 4.3: Map APIs to Components**
-
-For each API endpoint from system-architecture.md, identify:
-- Controller/Route handler name
-- Service method name
-- Repository methods needed
-- Database entities involved
-
-**Elicit User Confirmation**:
-```
-🧩 **Proposed Backend Component Architecture**:
-
-**API Layer** ({{controller_count}} controllers):
-- AuthController: login, register, refresh
-- UserController: getUser, updateUser
-- ProductController: getProducts, getProduct, createProduct, updateProduct
-- OrderController: createOrder, getOrders, getOrder
-
-**Business Logic Layer** ({{service_count}} services):
-- AuthService: authenticate, generateToken, refreshToken
-- UserService: findById, update, delete
-- ProductService: findAll, findById, create, update, delete
-- OrderService: create, findByUser, findById, calculateTotal
-
-**Data Access Layer** ({{repository_count}} repositories):
-- UserRepository: findById, findByEmail, create, update
-- ProductRepository: findAll, findById, create, update, delete
-- OrderRepository: create, findByUserId, findById
-
-Does this component structure make sense for your backend?
-```
-
----
-
-### Step 5: Design Database Schema
-
-Based on identified business entities from Step 2, design the database schema.
-
-**Step 5.1: Define Tables/Collections**
-
-For each business entity, define:
-- Table/Collection name
-- Primary key
-- Key fields and data types
-- Indexes for performance
-- Constraints (NOT NULL, UNIQUE, FOREIGN KEY)
-
-**Step 5.2: Define Relationships**
-
-Document relationships between entities:
-- One-to-One (e.g., User ← UserProfile)
-- One-to-Many (e.g., User → Orders)
-- Many-to-Many (e.g., Orders ↔ Products via OrderItems)
-
-**Step 5.3: Define Migrations Strategy**
-
-Choose migration tool based on tech stack:
-- Node.js: Knex, TypeORM, Prisma Migrate
-- Python: Alembic, Django Migrations
-- Java: Flyway, Liquibase
-
-**Elicit User Confirmation**:
-```
-🗄️ **Proposed Database Schema**:
-
-**Tables** ({{table_count}} total):
-
-**users**:
-- id: UUID (PK)
-- email: VARCHAR(255) UNIQUE NOT NULL
-- password_hash: VARCHAR(255) NOT NULL
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-- Index: email
-
-**products**:
-- id: UUID (PK)
-- name: VARCHAR(255) NOT NULL
-- description: TEXT
-- price: DECIMAL(10,2) NOT NULL
-- stock_quantity: INT NOT NULL
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-- Index: name
-
-**orders**:
-- id: UUID (PK)
-- user_id: UUID (FK → users.id)
-- status: ENUM('pending', 'confirmed', 'shipped', 'delivered')
-- total_amount: DECIMAL(10,2) NOT NULL
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-- Index: user_id, status
-
-**order_items**:
-- id: UUID (PK)
-- order_id: UUID (FK → orders.id)
-- product_id: UUID (FK → products.id)
-- quantity: INT NOT NULL
-- unit_price: DECIMAL(10,2) NOT NULL
-- Index: order_id, product_id
-
-**Key Relationships**:
-- User 1→N Orders
-- Order 1→N OrderItems
-- Product 1→N OrderItems
-
-Does this database schema cover all requirements?
-```
-
----
-
-### Step 6: Define API Implementation Details
-
-For each API from system-architecture.md, define implementation details.
-
-**Step 6.1: Define Request/Response Schemas**
-
-For each endpoint, define:
-- Request body schema (JSON)
-- Response body schema (JSON)
-- Query parameters
-- Path parameters
-- Headers (Authorization, Content-Type)
-
-**Step 6.2: Define Validation Rules**
-
-For each request field, define:
-- Data type
-- Required/Optional
-- Min/Max length or value
-- Format (email, UUID, ISO 8601 date)
-- Custom validation (e.g., password strength)
-
-**Step 6.3: Define Error Responses**
-
-Based on error handling standard from system-architecture.md, define error format:
-- HTTP status codes (400, 401, 403, 404, 500)
-- Error response structure (code, message, details)
-- Validation error format
-
-**Elicit User Confirmation**:
-```
-📝 **API Implementation Details**:
-
-**Example: POST /api/auth/login**:
-
-**Request**:
-```json
-{
-  "email": "string (required, email format)",
-  "password": "string (required, min 8 chars)"
-}
-```
-
-**Response (200)**:
-```json
-{
-  "access_token": "string (JWT)",
-  "refresh_token": "string (JWT)",
-  "expires_in": 900,
-  "user": {
-    "id": "uuid",
-    "email": "string",
-    "created_at": "ISO 8601"
-  }
-}
-```
-
-**Error Response (401)**:
-```json
-{
-  "error": {
-    "code": "INVALID_CREDENTIALS",
-    "message": "Invalid email or password"
-  }
-}
-```
-
-Does this API implementation detail level match your expectations?
-```
-
----
-
-### Step 7: Generate Backend Architecture Document
+Using all loaded context (Step 1), user answers (Step 2), and validated APIs (Step 3), generate the **complete** backend architecture document in one pass.
 
 **Output Document**:
 Use template: `{root}/templates/architecture-tmpl.yaml`
@@ -495,27 +266,127 @@ mkdir -p docs
 OUTPUT_PATH="docs/architecture.md"
 ```
 
-**Fill Template Sections** with information collected in Steps 1-6:
-- System Architecture Context: Constraints from system-architecture.md (Step 1)
-- Tech Stack: Technology selections from system-architecture.md
-- Data Models & Database Schema: Entities and schema from Step 5
-- Components: Service architecture from Step 4
-- REST API Spec: All validated API implementations from Step 3
-- Core Workflows: Key backend workflows with sequence diagrams
-- Testing Strategy: Unit, integration, E2E test approach
-- Deployment: Deployment architecture and CI/CD pipeline
-- Security: Authentication, authorization, secrets management
-- Monitoring & Logging: Observability strategy
+Generate all sections below into `docs/architecture.md`. Each subsection provides generation instructions -- follow them to produce the content.
+
+#### 4.1: Service Components
+
+**Generation Instructions -- Component Architecture**:
+
+Choose component structure based on the architecture pattern selected in Step 2:
+
+- **API Layer**: Controllers, route handlers, middleware. Map each API endpoint from system-architecture.md to a controller and handler method.
+- **Business Logic Layer**: Services, use cases, domain models. Each service encapsulates business rules for one domain area.
+- **Data Access Layer**: Repositories, ORMs, database clients. Each repository handles CRUD and queries for one entity.
+- **Infrastructure Layer**: Auth middleware, logging, monitoring, external integrations.
+
+For each API endpoint from system-architecture.md, document:
+- Controller/Route handler name
+- Service method name
+- Repository methods needed
+- Database entities involved
+
+#### 4.2: Database Schema
+
+**Generation Instructions -- Database Design**:
+
+For each business entity identified in Step 1.3:
+- Table/Collection name
+- Primary key (UUID recommended)
+- Key fields and data types
+- Indexes for performance (foreign keys, frequently queried fields)
+- Constraints (NOT NULL, UNIQUE, FOREIGN KEY)
+
+Document relationships:
+- One-to-One (e.g., User <-> UserProfile)
+- One-to-Many (e.g., User -> Orders)
+- Many-to-Many (e.g., Orders <-> Products via OrderItems)
+
+Choose migration tool based on user's tooling preference from Step 2 (or sensible default for tech stack).
+
+#### 4.3: API Implementation Details
+
+**Generation Instructions -- API Specifications**:
+
+For each endpoint validated in Step 3:
+- Request body schema (JSON with field types, required/optional)
+- Response body schema (JSON)
+- Query parameters and path parameters
+- Headers (Authorization, Content-Type)
+- Validation rules per field (data type, min/max, format)
+- Error responses per endpoint (HTTP status codes, error code, message)
+
+Follow the error handling standard extracted from system-architecture.md in Step 1.
+
+#### 4.4: Code Patterns & Cross-Cutting Concerns
+
+**Generation Instructions -- Implementation Patterns**:
+
+- Authentication flow (JWT validation middleware, token refresh)
+- Authorization (RBAC middleware, permission checks)
+- Request validation pattern (middleware vs in-handler)
+- Error handling pattern (global error handler, custom error classes)
+- Logging strategy (structured logging, correlation IDs)
+- Testing strategy (unit tests for services, integration tests for repositories, E2E for API endpoints)
+- Deployment configuration (environment variables, Docker, CI/CD)
+- Security headers (CORS, CSP, X-Frame-Options)
+- Secrets management (env vars, vault)
+
+#### 4.5: Track Key Decisions
+
+While generating, track every significant design decision made, categorized as:
+- **Needs Confirmation**: Decisions where the AI was uncertain or the user's preference was ambiguous
+- **Suggest Review**: Reasonable defaults applied that the user may want differently
+- **Standard Practice**: Industry conventions applied without controversy
+
+Save the document to `docs/architecture.md`.
 
 ---
 
-### Step 8: Validate Against System Architecture
+### Step 5: Decision Review
 
-Perform final cross-validation to ensure alignment.
+After saving the document, present key decisions for review.
 
-**Validation Checklist**:
 ```
-📋 **Final Validation Checklist**:
+Backend architecture draft saved to docs/architecture.md
+
+## Key Decisions & Uncertainties
+
+[RED] Needs Confirmation:
+- [List decisions where AI was uncertain, e.g., "Chose cursor-based pagination
+  over offset-based -- system-architecture.md didn't specify clearly"]
+
+[YELLOW] Suggest Review:
+- [List reasonable defaults, e.g., "Used UUID v4 for all primary keys",
+  "Added soft-delete (deleted_at) to users and products tables",
+  "Set JWT expiration to 15 minutes with 7-day refresh token"]
+
+[GREEN] Standard Practice:
+- [List industry conventions, e.g., "bcrypt for password hashing",
+  "Parameterized queries for SQL injection prevention",
+  "ISO 8601 for all date fields"]
+
+## Document Structure Summary
+- {{controller_count}} Controllers / {{service_count}} Services / {{repository_count}} Repositories
+- {{table_count}} Database tables with {{relationship_count}} relationships
+- {{api_count}} API endpoints (all validated against system-architecture.md)
+- Architecture Pattern: {{architecture_pattern}}
+
+Please review docs/architecture.md. Let me know if you want changes to any
+[RED] or [YELLOW] decisions, or if this looks good to finalize.
+```
+
+Wait for user feedback. Apply requested changes to `docs/architecture.md` before proceeding.
+
+---
+
+### Step 6: Validate, Finalize & Handoff
+
+#### 6.1: Cross-Validation Checklist
+
+Perform final validation to ensure alignment:
+
+```
+Final Validation Checklist:
 
 **API Contract Alignment**:
 - [ ] All APIs from system-architecture.md are implemented
@@ -553,49 +424,49 @@ Perform final cross-validation to ensure alignment.
 - [ ] Environment variables documented
 - [ ] CI/CD strategy documented
 
-All checks passed? ✅
+All checks passed?
 ```
 
----
+If any check fails, fix the document before proceeding.
 
-### Step 9: Output Handoff
+#### 6.2: Handoff
 
 Present the completed backend architecture document and provide next steps.
 
 **Success Output**:
 ```
-✅ BACKEND ARCHITECTURE COMPLETE
+BACKEND ARCHITECTURE COMPLETE
 
-📄 Generated Document: docs/architecture.md
+Generated Document: docs/architecture.md
 
-📦 Backend Repository: {{backend_repo_name}}
-🖥️ Tech Stack: {{language}} + {{framework}} ({{version}})
-🗄️ Database: {{database}} ({{db_version}})
+Backend Repository: {{backend_repo_name}}
+Tech Stack: {{language}} + {{framework}} ({{version}})
+Database: {{database}} ({{db_version}})
 
-🧩 Component Architecture:
+Component Architecture:
   - {{controller_count}} Controllers
   - {{service_count}} Services
   - {{repository_count}} Repositories
   - Architecture Pattern: {{architecture_pattern}}
 
-🔌 API Implementation:
-  - Endpoints: {{api_count}} (all from system-architecture.md ✅)
+API Implementation:
+  - Endpoints: {{api_count}} (all from system-architecture.md validated)
   - Auth Strategy: {{auth_strategy}}
   - OpenAPI Spec: Generated
 
-🗄️ Database Schema:
+Database Schema:
   - Tables: {{table_count}}
   - Relationships: {{relationship_count}}
   - Migration Tool: {{migration_tool}}
 
-🔒 Security:
+Security:
   - Authentication: {{auth_mechanism}}
   - Authorization: {{rbac_details}}
   - Security Headers: {{security_headers}}
 
 ---
 
-📋 **NEXT STEPS**:
+NEXT STEPS:
 
 1. **Review Architecture Document**
    - Verify all sections are complete
@@ -609,7 +480,6 @@ Present the completed backend architecture document and provide next steps.
 3. **Dev: Begin Backend Implementation**
 
    **Setup Project**:
-   ```bash
    # Initialize project (adjust based on your framework choice)
    mkdir {{project_name}}
    cd {{project_name}}
@@ -618,7 +488,6 @@ Present the completed backend architecture document and provide next steps.
    # Install dependencies from architecture doc
    npm install {{dependencies}}
    npm install --save-dev {{dev_dependencies}}
-   ```
 
    **Implementation Order** (follow Story priorities from PRD):
    1. Set up project structure and configuration
@@ -643,14 +512,17 @@ Present the completed backend architecture document and provide next steps.
 
 ---
 
-🎉 **Backend architecture is now the technical blueprint for API development!**
+Backend architecture is now the technical blueprint for API development.
 
-All backend development will reference this document to ensure consistency with system architecture and frontend expectations.
+All backend development will reference this document to ensure consistency
+with system architecture and frontend expectations.
 ```
 
 ---
 
 ## Notes for Agent Execution
+
+- **Workflow Mode**: Default is draft-first. If user passes `--interactive`, treat every generation subsection in Step 4 as a separate interactive step with its own confirmation stop.
 
 - **Context Management**: This task requires significant context (system-architecture.md + PRD + user interactions). Recommend using **Web interface with large context window** (Gemini 1M+).
 
@@ -660,31 +532,28 @@ All backend development will reference this document to ensure consistency with 
 
 - **Template Reference**: This task uses `architecture-tmpl.yaml` for output format. Do NOT duplicate template content in this task file.
 
-- **Iterative Refinement**: Expect 2-4 rounds of user feedback, especially for:
-  - Architecture pattern choice (Three-Layer vs Hexagonal vs DDD)
-  - Database schema design (tables, relationships, indexes)
-  - API implementation details (validation rules, error handling)
+- **Decision Tracking**: In draft-first mode, the agent must internally track every non-obvious design decision and categorize it (Red/Yellow/Green) for presentation in Step 5.
 
-- **API Validation is Critical**: Step 3 is the most important validation. If it fails, STOP and wait for user to resolve before proceeding.
+- **API Validation is Critical**: Step 3 is the most important validation. If it fails, STOP and wait for user to resolve before proceeding. This is a technical correctness gate, not a UX preference.
 
 ## Success Criteria
 
-- ✅ Backend architecture document exists at `docs/architecture.md`
-- ✅ All APIs from system-architecture.md are implemented (Step 3 validation passed)
-- ✅ Component architecture is clear and follows chosen pattern
-- ✅ Database schema covers all business entities with proper relationships
-- ✅ API implementation details are complete (request/response schemas, validation, errors)
-- ✅ Authentication and authorization implementation is detailed
-- ✅ Testing strategy is comprehensive (unit, integration, E2E)
-- ✅ Deployment and monitoring strategy is documented
-- ✅ User has approved the document
-- ✅ Next steps are clear for Dev agent
+- Backend architecture document exists at `docs/architecture.md`
+- All APIs from system-architecture.md are implemented (Step 3 validation passed)
+- Component architecture is clear and follows chosen pattern
+- Database schema covers all business entities with proper relationships
+- API implementation details are complete (request/response schemas, validation, errors)
+- Authentication and authorization implementation is detailed
+- Testing strategy is comprehensive (unit, integration, E2E)
+- Deployment and monitoring strategy is documented
+- Key decisions presented and approved by user (Step 5)
+- Next steps are clear for Dev agent
 
 ## Error Handling
 
 **If system architecture is missing**:
 ```
-❌ ERROR: System architecture not found
+ERROR: System architecture not found
 
 Backend architecture requires system-architecture.md from Product repository.
 
@@ -702,7 +571,7 @@ After system architecture is ready, return here and run:
 
 **If API contracts are missing in system-architecture.md**:
 ```
-⚠️ WARNING: System architecture lacks API Contracts Summary
+WARNING: System architecture lacks API Contracts Summary
 
 Backend needs to know which APIs to implement.
 
@@ -711,7 +580,7 @@ Please update system-architecture.md to include an "API Contracts Summary" secti
 
 **If backend needs to implement APIs not in system-architecture.md** (Step 3 validation failure):
 ```
-❌ ERROR: PRD features require APIs not defined in system-architecture.md
+ERROR: PRD features require APIs not defined in system-architecture.md
 
 The following APIs are needed for PRD features but NOT in system-architecture.md:
 - {{undefined_api_1}}
@@ -734,6 +603,7 @@ All backend API implementations MUST be pre-defined in system-architecture.md to
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
+| 3.0.0 | 2026-01-29 | REFACTOR: Draft-first workflow -- consolidated 9 interactive steps into 6 steps (context load, upfront questions, API gate, full generation, decision review, finalize). Added --interactive flag for backward compat. | Orchestrix Team |
 | 2.1.0 | 2025-01-15 | REFACTOR: Simplified Step 7 template section description, reduced by 30 lines | Orchestrix Team |
 | 2.0.0 | 2025-01-14 | REFACTOR: Reduced from 1047 to 300 lines, removed template duplication, focused on procedures only | Orchestrix Team |
 | 1.0.0 | 2025-01-14 | Initial creation for Phase 2 | Orchestrix Team |

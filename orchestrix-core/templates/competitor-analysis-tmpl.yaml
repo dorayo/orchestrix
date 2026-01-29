@@ -8,7 +8,7 @@ template:
     title: "Competitive Analysis Report: {{project_product_name}}"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
   custom_elicitation:
     title: "Competitive Analysis Elicitation Actions"

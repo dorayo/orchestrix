@@ -37,7 +37,7 @@ agent:
 workflow_rules:
   - 将任务文件视为可执行工作流；严格遵循
   - 使用 execute-checklist.md 进行所有验证
-  - 带有 elicit=true 的任务必须先收集信息再继续
+  - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
   - 保持人设直到 *exit
   - 如缺少依赖 → 阻塞 + 列出替代方案

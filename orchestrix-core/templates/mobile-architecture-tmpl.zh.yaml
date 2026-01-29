@@ -8,7 +8,7 @@ template:
     title: "{{project_name}} 移动端架构文档"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
 
 sections:

@@ -16,7 +16,7 @@ output:
   title_template: "{{project_name}} - 系统架构"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation_style: comprehensive
   validation_enabled: true
 

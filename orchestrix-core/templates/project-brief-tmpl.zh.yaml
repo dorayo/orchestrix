@@ -8,7 +8,7 @@ template:
     title: "项目简报: {{project_name}}"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
   custom_elicitation:
     title: "项目简报深化动作"

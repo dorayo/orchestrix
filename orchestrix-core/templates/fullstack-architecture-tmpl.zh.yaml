@@ -8,7 +8,7 @@ template:
     title: "{{project_name}} 全栈架构文档"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
 
 sections:

@@ -8,7 +8,7 @@ template:
     title: "{{project_name}} 产品需求文档 (PRD)"
 
 workflow:
-  mode: interactive
+  mode: draft-first
   elicitation: advanced-elicitation
 
 sections:
