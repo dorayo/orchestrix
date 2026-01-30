@@ -77,6 +77,19 @@ ide-configurations:
       # 2. It concatenates all agent files into a single GEMINI.md file.
       # 3. Simply mention the agent in your prompt (e.g., "As *dev, ...").
       # 4. The Gemini CLI will automatically have the context for that agent.
+  opencode:
+    name: OpenCode
+    rule-dir: .opencode/
+    agent-dir: .opencode/agents/
+    command-dir: .opencode/commands/
+    format: multi-file
+    command-suffix: .md
+    instructions: |
+      # To use Orchestrix agents in OpenCode:
+      # 1. Press Tab to switch between primary agents (dev, sm, qa, etc.)
+      # 2. Use @agent-name to invoke subagents (e.g., @orchestrix-master)
+      # 3. Type /command-name to execute tasks (e.g., /develop-story)
+      # 4. Agent files are in .opencode/agents/, commands in .opencode/commands/
   github-copilot:
     name: Github Copilot
     rule-dir: .github/chatmodes/

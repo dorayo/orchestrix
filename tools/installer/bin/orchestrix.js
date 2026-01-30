@@ -51,7 +51,7 @@ program
   .option('-f, --full', '安装完整的 Orchestrix')
   .option('-x, --expansion-only', '仅安装扩展包 (不含 orchestrix-core)')
   .option('-d, --directory <path>', '安装目录')
-  .option('--ide <ide...>', '为指定的 IDE 配置 (可指定多个:cursor, claude-code, windsurf, trae, roo, cline, gemini, github-copilot, other)')
+  .option('--ide <ide...>', '为指定的 IDE 配置 (可指定多个:cursor, claude-code, opencode, windsurf, trae, roo, cline, gemini, github-copilot, other)')
   .option('-e, --expansion-packs <packs...>', '安装指定的扩展包 (可指定多个)')
   .option('-l, --lang <lang>', '设置 Agent 语言 (例如: zh, en，默认为 en)')
   .action(async (options) => {
@@ -91,7 +91,7 @@ program
         const config = {
           installType: 'full',
           directory: options.directory || '.',
-          ides: ['cursor', 'claude-code'],
+          ides: ['cursor', 'claude-code', 'opencode'],
           expansionPacks: [],
           includeWebBundles: true,
           webBundleType: 'all',
@@ -184,7 +184,7 @@ program
   .command('sync')
   .description('同步代理配置和版本更新')
   .option('--dry-run', '显示将要同步的内容，但不执行实际更改')
-  .option('--ide <ide...>', '指定要同步的 IDE (cursor, claude-code, windsurf, trae, roo, cline)')
+  .option('--ide <ide...>', '指定要同步的 IDE (cursor, claude-code, opencode, windsurf, trae, roo, cline)')
   .action(async (options) => {
     try {
       await initializeModules();
@@ -192,7 +192,7 @@ program
       const syncManager = new VersionSyncManager();
       
       const installDir = process.cwd();
-      const ides = options.ide || ['cursor', 'claude-code', 'windsurf', 'trae', 'roo', 'cline'];
+      const ides = options.ide || ['cursor', 'claude-code', 'opencode', 'windsurf', 'trae', 'roo', 'cline'];
       
       if (options.dryRun) {
         console.log(chalk.cyan('🔍 干运行模式 - 显示将要同步的内容:'));
@@ -394,6 +394,7 @@ async function promptInstallation() {
         choices: [
           { name: 'Cursor', value: 'cursor' },
           { name: 'Claude Code', value: 'claude-code' },
+          { name: 'OpenCode', value: 'opencode' },
           { name: 'Windsurf', value: 'windsurf' },
           { name: 'Trae', value: 'trae' }, // { name: 'Trae', value: 'trae'}
           { name: 'Roo Code', value: 'roo' },

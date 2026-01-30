@@ -84,6 +84,8 @@ class IdeSetup {
         return this.setupGeminiCli(installDir, selectedAgent);
       case "github-copilot":
         return this.setupGitHubCopilot(installDir, selectedAgent, spinner, preConfiguredSettings);
+      case "opencode":
+        return this.setupOpenCode(installDir, selectedAgent);
       default:
         this._log(console.log, chalk.yellow(`\nIDE ${ide} not yet supported`));
         return false;
@@ -568,6 +570,267 @@ class IdeSetup {
     }
   }
 
+  // ============= OpenCode Integration =============
+
+  async setupOpenCode(installDir, selectedAgent) {
+    this._log(console.log, chalk.blue("\n🔧 设置 OpenCode 集成..."));
+
+    const agentsDir = path.join(installDir, ".opencode", "agents");
+    const commandsDir = path.join(installDir, ".opencode", "commands");
+    const agents = selectedAgent ? [selectedAgent] : await this.getAllAgentIds(installDir);
+
+    await fileManager.ensureDirectory(agentsDir);
+    await fileManager.ensureDirectory(commandsDir);
+
+    // Phase 1: Generate agent files (.opencode/agents/*.md)
+    let agentCount = 0;
+    for (const agentId of agents) {
+      const agentPath = await this.findAgentPath(agentId, installDir);
+
+      if (agentPath) {
+        try {
+          const agentContent = await fileManager.readFile(agentPath);
+          const openCodeContent = await this.generateOpenCodeAgentContent(agentId, agentContent, installDir);
+          const targetPath = path.join(agentsDir, `${agentId}.md`);
+          await fileManager.writeFile(targetPath, openCodeContent);
+          agentCount++;
+        } catch (error) {
+          this._log(console.warn, chalk.yellow(`⚠️  Skipping agent ${agentId}: ${error.message}`));
+        }
+      }
+    }
+    this._log(console.log, chalk.green(`✔ 已创建 ${agentCount} 个 OpenCode Agent`));
+
+    // Phase 2: Generate command files (.opencode/commands/*.md) for tasks
+    const coreTasks = await this.getCoreTaskIds(installDir);
+    let taskCount = 0;
+    for (const taskId of coreTasks) {
+      const taskPath = await this.findTaskPath(taskId, installDir);
+
+      if (taskPath) {
+        try {
+          let taskContent = await fileManager.readFile(taskPath);
+          // Replace {root} placeholder
+          taskContent = this.smartPathReplacement(taskContent, "core", ".orchestrix-core");
+
+          // Extract description from task content (first heading or first line)
+          const descMatch = taskContent.match(/^#\s+(.+)$/m);
+          const taskDesc = descMatch ? descMatch[1].replace(/[#`]/g, '').trim() : `Execute the ${taskId} task`;
+
+          // Build command file with OpenCode frontmatter
+          let commandContent = `---\ndescription: "${taskDesc}"\n---\n\n`;
+          commandContent += `When this command is used, execute the following task:\n\n`;
+          commandContent += taskContent;
+
+          const targetPath = path.join(commandsDir, `${taskId}.md`);
+          await fileManager.writeFile(targetPath, commandContent);
+          taskCount++;
+        } catch (error) {
+          this._log(console.warn, chalk.yellow(`⚠️  Skipping task ${taskId}: ${error.message}`));
+        }
+      }
+    }
+    this._log(console.log, chalk.green(`✔ 已创建 ${taskCount} 个 OpenCode Commands`));
+
+    // Phase 3: Generate expansion pack commands
+    const expansionPacks = await this.getInstalledExpansionPacks(installDir);
+    for (const packInfo of expansionPacks) {
+      const packTasks = await this.getExpansionPackTasks(packInfo.path);
+      const rootPath = path.relative(installDir, packInfo.path);
+
+      for (const taskId of packTasks) {
+        const taskPath = path.join(packInfo.path, "tasks", `${taskId}.md`);
+        if (await fileManager.pathExists(taskPath)) {
+          try {
+            let taskContent = await fileManager.readFile(taskPath);
+            taskContent = this.smartPathReplacement(taskContent, packInfo.name, rootPath);
+
+            const descMatch = taskContent.match(/^#\s+(.+)$/m);
+            const taskDesc = descMatch ? descMatch[1].replace(/[#`]/g, '').trim() : `Execute the ${taskId} task`;
+
+            let commandContent = `---\ndescription: "${taskDesc}"\n---\n\n`;
+            commandContent += `When this command is used, execute the following task:\n\n`;
+            commandContent += taskContent;
+
+            const targetPath = path.join(commandsDir, `${taskId}.md`);
+            await fileManager.writeFile(targetPath, commandContent);
+            taskCount++;
+          } catch (error) {
+            this._log(console.warn, chalk.yellow(`⚠️  Skipping expansion task ${taskId}: ${error.message}`));
+          }
+        }
+      }
+    }
+
+    // Summary
+    this._log(console.log, chalk.green(`\n✅ OpenCode 集成完成:`));
+    this._log(console.log, chalk.dim(`   • Agents: .opencode/agents/ (${agentCount} 个)`));
+    this._log(console.log, chalk.dim(`   • Commands: .opencode/commands/ (${taskCount} 个)`));
+    this._log(console.log, chalk.dim(`   • 使用方式: Tab 切换 Agent, /command 执行任务`));
+
+    return true;
+  }
+
+  async generateOpenCodeAgentContent(agentId, agentContent, installDir) {
+    const yamlContent = this.getYamlContent(agentContent);
+    if (!yamlContent) {
+      throw new Error(`No YAML content found for agent ${agentId}`);
+    }
+
+    const yamlLib = require('js-yaml');
+    const agentData = yamlLib.load(yamlContent);
+    const agent = agentData.agent || {};
+
+    // OpenCode-specific mappings
+    const model = this.getOpenCodeModel(agentId);
+    const mode = this.getOpenCodeAgentMode(agentId);
+    const toolPermissions = this.getOpenCodeToolPermissions(agent.tools || []);
+
+    // Clean and prepare YAML content
+    const cleanedYaml = this.cleanYamlContent(yamlContent).replace(/\{root\}/g, '.orchestrix-core');
+
+    // Build frontmatter
+    let frontmatter = `---\n`;
+    frontmatter += `description: "${agent.whenToUse || `Use for ${agentId} related tasks`}"\n`;
+    frontmatter += `mode: ${mode}\n`;
+    frontmatter += `model: ${model}\n`;
+
+    // Add tool permissions (only restrict, don't enumerate allowed)
+    const restrictedTools = Object.entries(toolPermissions).filter(([, v]) => v === false);
+    if (restrictedTools.length > 0) {
+      frontmatter += `tools:\n`;
+      for (const [tool, allowed] of restrictedTools) {
+        frontmatter += `  ${tool}: ${allowed}\n`;
+      }
+    }
+    frontmatter += `---\n`;
+
+    // Build body — reuse the same structure as Claude Code sub-agents
+    let content = frontmatter;
+    content += `\nYou are **${agent.name || agentId}**, ${agent.title || agentId}. ${agent.persona?.identity || `Specialized in ${agentId} workflows`}\n`;
+    content += `\n## Activation Protocol\n\n`;
+    content += `**CRITICAL**: Read the complete YAML configuration below — it defines your entire persona, capabilities, and workflows.\n\n`;
+
+    // Activation instructions
+    if (agentData.activation_instructions && Array.isArray(agentData.activation_instructions)) {
+      content += `**Startup Sequence**:\n`;
+      agentData.activation_instructions.forEach((instruction, index) => {
+        content += `${index + 1}. ${instruction}\n`;
+      });
+      content += `\n`;
+    }
+
+    // YAML config block (single source of truth)
+    content += `## Complete Agent Configuration\n\n`;
+    content += `The following YAML contains your complete persona definition, including:\n`;
+    content += `- Core principles and workflow rules\n`;
+    content += `- Available commands and their specifications\n`;
+    content += `- Dependencies (tasks, templates, checklists, data)\n`;
+    content += `- File resolution patterns\n`;
+    content += `- Request resolution strategy\n\n`;
+    content += `\`\`\`yaml\n${cleanedYaml}\n\`\`\`\n\n`;
+
+    // Critical notes
+    const criticalNotes = this.generateCriticalNotes(agentData, agentId);
+    if (criticalNotes) {
+      content += `## Critical Reminders\n\n${criticalNotes}\n\n`;
+    }
+
+    // Quick command reference
+    if (agentData.commands && Object.keys(agentData.commands).length > 0) {
+      content += `## Quick Command Reference\n\n`;
+      content += `Type \`*help\` to see the full command list. Key commands:\n`;
+      const commandNames = Object.keys(agentData.commands).slice(0, 5);
+      commandNames.forEach(cmdName => {
+        if (cmdName !== 'help' && cmdName !== 'exit') {
+          const cmdConfig = agentData.commands[cmdName];
+          const desc = typeof cmdConfig === 'object' ? cmdConfig.description : cmdConfig;
+          if (desc) {
+            content += `- \`*${cmdName}\` — ${desc}\n`;
+          }
+        }
+      });
+      content += `\n`;
+    }
+
+    content += `---\n\n**Stay in ${agent.name || agentId} mode until explicitly told to exit.**\n`;
+
+    return content;
+  }
+
+  // OpenCode uses provider/model-name format (provider-agnostic)
+  getOpenCodeModel(agentId) {
+    const internalModel = this.getAgentModel(agentId); // reuse existing mapping
+    const modelMap = {
+      'opus': 'anthropic/claude-opus-4-5-20251101',
+      'sonnet': 'anthropic/claude-sonnet-4-20250514',
+      'sonnet-4.5': 'anthropic/claude-sonnet-4-5-20250514'
+    };
+    return modelMap[internalModel] || 'anthropic/claude-sonnet-4-20250514';
+  }
+
+  // Map Orchestrix agents to OpenCode primary/subagent modes
+  getOpenCodeAgentMode(agentId) {
+    const subagentIds = [
+      'orchestrix-master',
+      'orchestrix-orchestrator',
+      'decision-evaluator'
+    ];
+    return subagentIds.includes(agentId) ? 'subagent' : 'primary';
+  }
+
+  // Map Orchestrix tool list to OpenCode tool permission toggles
+  // OpenCode built-in tools: bash, edit, write, read, grep, glob, list, patch, task, webfetch, question
+  getOpenCodeToolPermissions(orchestrixTools) {
+    if (!orchestrixTools || orchestrixTools.length === 0) {
+      return {}; // No restrictions — full access
+    }
+
+    // Normalize Orchestrix tool names to lowercase for comparison
+    const normalizedTools = orchestrixTools.map(t => t.toLowerCase());
+
+    // All OpenCode built-in tools that can be toggled
+    const allOpenCodeTools = ['bash', 'edit', 'write', 'read', 'grep', 'glob', 'list', 'patch', 'task', 'webfetch'];
+
+    // Map Orchestrix tool names → OpenCode equivalents
+    const orchestrixToOpenCode = {
+      'read': ['read', 'grep', 'glob', 'list'],
+      'edit': ['edit', 'patch'],
+      'multiedit': ['edit', 'patch'],
+      'write': ['write'],
+      'bash': ['bash'],
+      'grep': ['grep'],
+      'glob': ['glob'],
+      'webbrowse': ['webfetch'],
+      'webfetch': ['webfetch'],
+      'task': ['task']
+    };
+
+    // Collect all allowed OpenCode tools
+    const allowedTools = new Set();
+    for (const tool of normalizedTools) {
+      const mapped = orchestrixToOpenCode[tool];
+      if (mapped) {
+        mapped.forEach(t => allowedTools.add(t));
+      }
+    }
+
+    // If no mappable tools found, don't restrict anything
+    if (allowedTools.size === 0) {
+      return {};
+    }
+
+    // Build permission object: only list tools that are DENIED
+    const permissions = {};
+    for (const tool of allOpenCodeTools) {
+      if (!allowedTools.has(tool)) {
+        permissions[tool] = false;
+      }
+    }
+
+    return permissions;
+  }
+
   async findAgentPath(agentId, installDir) {
     // Build list of possible paths, prioritizing language-specific files if language is not 'en'
     const possiblePaths = [];
@@ -584,7 +847,7 @@ class IdeSetup {
     // Exclude IDE configuration directories
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir }).filter(dir => {
       const dirName = path.basename(path.dirname(dir));
-      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes', '.opencode'];
       return !ideConfigDirs.includes(dirName);
     });
 
@@ -652,7 +915,7 @@ class IdeSetup {
     // Exclude IDE configuration directories (.claude, .cursor, .windsurf, .trae, etc.)
     const expansionDirs = glob.sync(".*/agents", { cwd: installDir }).filter(dir => {
       const dirName = path.basename(path.dirname(dir));
-      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes', '.opencode'];
       return !ideConfigDirs.includes(dirName);
     });
 
@@ -796,7 +1059,7 @@ class IdeSetup {
     // Exclude IDE configuration directories
     const expansionDirs = glob.sync(".*/tasks", { cwd: installDir }).filter(dir => {
       const dirName = path.basename(path.dirname(dir));
-      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes', '.opencode'];
       return !ideConfigDirs.includes(dirName);
     });
     
@@ -835,7 +1098,7 @@ class IdeSetup {
     // Exclude IDE configuration directories
     const expansionDirs = glob.sync(".*/tasks", { cwd: installDir }).filter(dir => {
       const dirName = path.basename(path.dirname(dir));
-      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes'];
+      const ideConfigDirs = ['.claude', '.cursor', '.windsurf', '.trae', '.cline', '.clinerules', '.vscode', '.idea', '.roomodes', '.opencode'];
       return !ideConfigDirs.includes(dirName);
     });
     

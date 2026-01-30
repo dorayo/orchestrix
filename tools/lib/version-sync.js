@@ -128,7 +128,7 @@ class VersionSyncManager {
    * @param {string} installDir - Installation directory
    * @param {Array<string>} ides - List of IDEs to update
    */
-  async autoUpdateIDEConfigurations(installDir, ides = ['cursor', 'claude-code', 'windsurf', 'trae', 'roo', 'cline']) {
+  async autoUpdateIDEConfigurations(installDir, ides = ['cursor', 'claude-code', 'opencode', 'windsurf', 'trae', 'roo', 'cline']) {
     const ideSetup = require('../installer/lib/ide-setup');
     const updatedAgents = [];
 
