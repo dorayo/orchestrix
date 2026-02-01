@@ -80,6 +80,69 @@ echo "✅ PRD sharded to: docs/prd/"
 ls -1 docs/prd/*.md | xargs -n1 basename
 ```
 
+**Step 2.3.1: Rename PRD shard files to English section IDs**
+
+[[LLM: After md-tree explode produces sharded files, standardize filenames to English section IDs from the PRD template. This ensures consistent cross-language file naming.
+
+CHECK: List .md files in docs/prd/ (excluding index.md). If all filenames are already ASCII/English and match known section IDs, skip this step.
+
+PRD TYPE DETECTION:
+- Read the sharded file headings or index.md content
+- If headings contain "Technical Assumptions" or "Epic List" → greenfield mapping
+- If headings contain "Intro Project Analysis" or "Technical Constraints" or "Enhancement Scope" → brownfield mapping
+- Default: greenfield
+
+GREENFIELD PRD MAPPING (section-id ← keywords):
+| Target Filename      | Match Keywords (EN)                      | Match Keywords (ZH)                    |
+|----------------------|------------------------------------------|----------------------------------------|
+| goals-context        | goals, background context                | 目标, 背景                              |
+| requirements         | requirements                             | 需求                                    |
+| ui-goals             | user interface, ui design, design goals  | 用户界面, UI设计, 界面设计              |
+| technical-assumptions| technical assumption                     | 技术假设                                |
+| epic-list            | epic list                                | Epic列表, 史诗列表                      |
+| epics                | epics (exact match only)                 | Epics                                   |
+| checklist-results    | checklist result                         | 检查结果, 清单结果                      |
+| next-steps           | next step                                | 下一步, 后续步骤                        |
+
+BROWNFIELD PRD MAPPING:
+| Target Filename        | Match Keywords (EN)                    | Match Keywords (ZH)                  |
+|------------------------|----------------------------------------|--------------------------------------|
+| intro-analysis         | intro, analysis, project analysis      | 项目分析, 分析和上下文                |
+| requirements           | requirements                           | 需求                                  |
+| ui-enhancement-goals   | ui enhancement, interface enhancement  | 界面增强, 用户界面增强                |
+| technical-constraints  | technical constraint, integration req  | 技术约束, 技术限制                    |
+| epic-structure         | epic structure, story structure        | Epic结构, Story结构                   |
+| epics                  | epics (exact match only)               | Epics                                 |
+
+RENAME PROCEDURE:
+1. List all .md files in docs/prd/ (excluding index.md and epic-*.yaml files)
+2. For each file:
+   a. Read the first heading line (# ...) to get the section title
+   b. If the filename (without .md) already matches a known English section ID → skip
+   c. Match the heading text against the appropriate mapping table using case-insensitive keyword matching
+   d. If match found and differs from current filename → rename: mv "{old}.md" "{new_section_id}.md"
+   e. If no match → keep original filename, log warning
+3. After all renames, update index.md:
+   a. Read index.md content
+   b. For each renamed file, replace old filename references with new filename in markdown links
+   c. Write updated index.md
+4. Output report
+
+IMPORTANT:
+- Do NOT rename epic-*.yaml files (those are handled by extract-epics.js)
+- Do NOT rename index.md
+- If two files map to the same English name (should not happen), append numeric suffix and warn
+
+REPORT FORMAT:
+```
+📝 PRD Shard File Renaming:
+   Renamed: {old_name}.md → {new_name}.md
+   Skipped: {name}.md (already English)
+   ⚠️ No match: {name}.md (kept original)
+   Updated: index.md ({N} link references updated)
+```
+]]
+
 **Step 2.4: Extract Epic YAML to standalone files**
 
 Use the `extract-epics.js` script to extract all YAML blocks containing `epic_id:` from the PRD file:
@@ -195,6 +258,125 @@ else
 fi
 ```
 
+**Step 3.3.1: Rename architecture shard files to English section IDs**
+
+[[LLM: After md-tree explode produces sharded architecture files, standardize filenames to English section IDs from the architecture templates. This is CRITICAL because Dev agent's `load-architecture-context` uses glob patterns like `*tech-stack.md`, `*coding-standards.md` which only match English filenames.
+
+CHECK: List .md files in {ARCH_DIR}/ (excluding index.md). If all filenames are already ASCII/English and match known section IDs, skip this step.
+
+ARCHITECTURE TYPE DETECTION (priority order):
+1. Check core-config.yaml `architectureFile` path:
+   - Contains "system-architecture" → system type
+   - Contains "ui-architecture" → frontend type
+2. Check core-config.yaml `multi_repo.role`:
+   - role = backend → backend type
+   - role = frontend → frontend type
+   - role = ios/android/mobile → mobile type
+3. Content-based fallback (read sharded file headings):
+   - Contains "REST API Spec" or "Database Schema" or "Data Models" → backend
+   - Contains "Component Standards" or "Styling Guidelines" → frontend
+   - Contains "App Architecture" or "Screen Structure" or "Push Notifications" → mobile
+   - Contains "Repository Topology" or "Cross-Cutting Concerns" → system
+4. Default for monolith without explicit role → backend
+
+BACKEND ARCHITECTURE MAPPING (architecture-tmpl.yaml):
+| Target Filename              | Match Keywords (EN)                      | Match Keywords (ZH)                  |
+|------------------------------|------------------------------------------|--------------------------------------|
+| introduction                 | introduction                             | 简介, 介绍                            |
+| system-architecture-context  | system architecture context              | 系统架构上下文                        |
+| high-level-architecture      | high level architecture                  | 高层架构, 高级架构                    |
+| tech-stack                   | tech stack, technology stack             | 技术栈                                |
+| data-models                  | data model                               | 数据模型                              |
+| components                   | components                               | 组件                                  |
+| external-apis                | external api                             | 外部API, 外部接口                     |
+| core-workflows               | core workflow                            | 核心工作流, 核心流程                  |
+| rest-api-spec                | rest api, api spec, api specification    | API规范, API接口, REST API            |
+| database-schema              | database schema, database design         | 数据库                                |
+| source-tree                  | source tree, project structure           | 源码目录, 项目结构, 源代码            |
+| infrastructure-deployment    | infrastructure, deployment               | 基础设施, 部署                        |
+| error-handling-strategy      | error handling                           | 错误处理                              |
+| coding-standards             | coding standard                          | 编码规范, 编码标准                    |
+| testing-strategy             | test strategy, testing strategy          | 测试策略                              |
+| security                     | security                                 | 安全                                  |
+| checklist-results            | checklist result                         | 检查结果                              |
+| next-steps                   | next step                                | 下一步, 后续                          |
+
+FRONTEND ARCHITECTURE MAPPING (front-end-architecture-tmpl.yaml):
+| Target Filename              | Match Keywords (EN)                      | Match Keywords (ZH)                  |
+|------------------------------|------------------------------------------|--------------------------------------|
+| template-framework-selection | template, framework selection            | 模板, 框架选择                        |
+| system-architecture-context  | system architecture context              | 系统架构上下文                        |
+| tech-stack                   | tech stack, frontend tech                | 技术栈, 前端技术                      |
+| source-tree                  | source tree, project structure           | 项目结构, 源码目录                    |
+| component-standards          | component standard                       | 组件标准, 组件规范                    |
+| state-management             | state management                         | 状态管理                              |
+| api-integration              | api integration                          | API集成, API对接                      |
+| routing                      | routing                                  | 路由                                  |
+| styling-guidelines           | styling, style guide                     | 样式, 样式指南                        |
+| testing-strategy             | test strategy, testing                   | 测试策略, 测试                        |
+| environment-configuration    | environment configuration                | 环境配置                              |
+| coding-standards             | coding standard                          | 编码规范, 编码标准                    |
+
+MOBILE ARCHITECTURE MAPPING (mobile-architecture-tmpl.yaml):
+| Target Filename              | Match Keywords (EN)                      | Match Keywords (ZH)                  |
+|------------------------------|------------------------------------------|--------------------------------------|
+| system-architecture-context  | system architecture context              | 系统架构上下文                        |
+| tech-stack                   | tech stack, mobile tech                  | 技术栈, 移动技术                      |
+| source-tree                  | source tree, project structure           | 项目结构, 源码目录                    |
+| app-architecture             | app architecture                         | 应用架构, App架构                     |
+| screen-structure             | screen structure                         | 屏幕结构, 页面结构                    |
+| state-management             | state management                         | 状态管理                              |
+| api-integration              | api integration                          | API集成                              |
+| local-data-management        | local data management, local storage     | 本地数据, 本地存储                    |
+| security                     | security                                 | 安全                                  |
+| offline-support              | offline support, offline                 | 离线支持, 离线                        |
+| push-notifications           | push notification                        | 推送通知                              |
+| testing-strategy             | test strategy, testing                   | 测试策略, 测试                        |
+| deployment                   | deployment                               | 部署                                  |
+| monitoring-and-analytics     | monitoring, analytics                    | 监控, 分析                            |
+| coding-standards             | coding standard                          | 编码规范, 编码标准                    |
+
+SYSTEM ARCHITECTURE MAPPING (system-architecture-tmpl.yaml):
+| Target Filename              | Match Keywords (EN)                      | Match Keywords (ZH)                  |
+|------------------------------|------------------------------------------|--------------------------------------|
+| introduction                 | introduction                             | 简介, 介绍                            |
+| repository-topology          | repository topology                      | 仓库拓扑, 代码库拓扑                  |
+| api-contracts-summary        | api contract, api summary                | API契约, API合约                      |
+| integration-strategy         | integration strategy                     | 集成策略                              |
+| deployment-architecture      | deployment architecture                  | 部署架构                              |
+| cross-cutting-concerns       | cross-cutting, cross cutting             | 横切关注, 跨领域关注                  |
+| development-coordination     | development coordination                 | 开发协调                              |
+| appendix                     | appendix                                 | 附录                                  |
+
+RENAME PROCEDURE:
+1. List all .md files in {ARCH_DIR}/ (excluding index.md)
+2. For each file:
+   a. Read the first heading line (# ...) to get the section title
+   b. If the filename (without .md) already matches a known English section ID → skip
+   c. Match the heading text against the detected architecture type's mapping table using case-insensitive keyword matching
+   d. If match found and differs from current filename → rename: mv "{old}.md" "{new_section_id}.md"
+   e. If no match → keep original filename, log warning
+3. After all renames, update index.md:
+   a. Read index.md content
+   b. For each renamed file, replace old filename references with new filename in markdown links
+   c. Write updated index.md
+4. Output report
+
+IMPORTANT:
+- Do NOT rename index.md
+- If two files map to the same English name (should not happen), append numeric suffix and warn
+- The index.md MUST be updated to reflect renames, otherwise *assemble will break
+
+REPORT FORMAT:
+```
+🏗️ Architecture Shard File Renaming (type: {detected_type}):
+   Renamed: {old_name}.md → {new_name}.md
+   Skipped: {name}.md (already English)
+   ⚠️ No match: {name}.md (kept original)
+   Updated: index.md ({N} link references updated)
+```
+]]
+
 ### 4. Archive Original Files
 
 After first sharding, archive original files to prevent confusion about source of truth.
@@ -300,14 +482,36 @@ For future iterations:
 
 ```
 docs/prd/
-├── 01-goals.md              # PRD section (md-tree output)
-├── 02-requirements.md       # PRD section
-├── ...
-├── XX-epics.md              # Original PRD section with YAML blocks (reference)
+├── index.md                           # TOC with links to all sections
+├── goals-context.md                   # Goals and Background Context
+├── requirements.md                    # Functional and Non-Functional Requirements
+├── ui-goals.md                        # User Interface Design Goals (if applicable)
+├── technical-assumptions.md           # Technical Assumptions
+├── epic-list.md                       # Epic List
+├── epics.md                           # Full Epics section with YAML blocks (reference)
+├── checklist-results.md               # Checklist Results Report
+├── next-steps.md                      # Next Steps (UX Expert + Architect prompts)
 ├── epic-1-user-authentication.yaml    # Extracted Epic 1 (SM reads this)
 ├── epic-2-product-catalog.yaml        # Extracted Epic 2 (SM reads this)
 └── epic-3-checkout.yaml               # Extracted Epic 3 (SM reads this)
+
+docs/architecture/                     # (or docs/system-architecture/ for product repos)
+├── index.md                           # TOC with links to all sections
+├── introduction.md                    # Introduction
+├── high-level-architecture.md         # High Level Architecture
+├── tech-stack.md                      # Tech Stack
+├── data-models.md                     # Data Models
+├── components.md                      # Components
+├── rest-api-spec.md                   # REST API Spec
+├── database-schema.md                 # Database Schema
+├── source-tree.md                     # Source Tree / Project Structure
+├── coding-standards.md                # Coding Standards
+├── testing-strategy.md                # Testing Strategy
+└── ...                                # Other sections per template type
 ```
+
+> **Note:** File names are standardized to English section IDs from templates (Step 2.3.1 / Step 3.3.1).
+> Original non-English filenames are automatically renamed during sharding.
 
 ## Epic YAML Format
 

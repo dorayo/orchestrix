@@ -269,21 +269,32 @@ sections:
   - id: epics
     title: Epics
     instruction: |
-      ⚠️  CRITICAL SECTION - This section defines all Epics and Stories for the brownfield enhancement.
+      ⚠️ CRITICAL SECTION - Complete requirement specifications for all Epics and Stories.
 
-      CRITICAL STORY SEQUENCING FOR BROWNFIELD:
+      ## Purpose
+
+      This section contains COMPLETE requirement details that flow directly to Dev agents.
+      PM MUST define all business rules, validation, error handling here - NOT delegated to SM.
+      SM agents will render this content into Story documents WITHOUT additional analysis.
+
+      ## Story Sequencing Requirements (Brownfield-Specific)
+
       - Stories must ensure existing functionality remains intact
       - Each story should include verification that existing features still work
       - Stories should be sequenced to minimize risk to existing system
       - Include rollback considerations for each story
       - Focus on incremental integration rather than big-bang changes
       - Size stories for AI agent execution in existing codebase context
+      - No story depends on work from a later story or epic
       - MANDATORY: Present the complete story sequence and ask: "Does this order make sense given your project's architecture?"
 
       During PO *shard, YAML blocks will be extracted to docs/prd/epic-{n}-{title}.yaml for SM agents.
 
-      For EACH epic, create a YAML block using this format:
+      ## Epic Document Format
 
+      For EACH epic, create a YAML block using this EXACT structure:
+
+      ```
       ## Epic {{N}}: {{Epic Title}}
 
       **Epic Summary:** {{2-3 sentence summary}}
@@ -291,44 +302,174 @@ sections:
       **Target Repositories:** {{backend, frontend, ios, android, mobile - as applicable}}
 
       **Integration Notes:** {{Brief note on how this integrates with existing system}}
+      ```
+
+      Followed by a YAML code fence with the complete Epic definition.
+
+      ## Enhanced Acceptance Criteria Structure
+
+      CRITICAL: Each AC is a COMPLETE requirement unit. Dev agents will implement directly
+      from this specification without needing to consult PRD or architecture documents.
 
       ```yaml
       epic_id: {{N}}
       title: "{{Epic Title}}"
       description: |
-        {{Epic goal and integration requirements}}
+        {{Epic goal - 2-3 sentences describing objective and integration requirements}}
+
+      # ============================================================
+      # REUSE ANALYSIS - Existing code assessment for brownfield
+      # Brownfield projects SHOULD always populate this section
+      # Records existing implementations to reuse/extend/resolve
+      # ============================================================
+      reuse_analysis:
+        directly_reusable:
+          # Category A: Existing code to reference, NOT reimplement
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            capability: "{{what_it_does}}"
+            usage: "{{how_this_epic_uses_it}}"
+
+        requires_extension:
+          # Category B: Existing code to extend
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            current_capability: "{{what_it_does_now}}"
+            extension_needed: "{{what_to_add}}"
+            affected_stories: ["{{story_id}}"]
+
+        conflicts:
+          # Category C: Conflicts requiring resolution
+          - component: "{{component_name}}"
+            location: "{{file_path}}"
+            conflict: "{{conflict_description}}"
+            resolution: "{{chosen_resolution}}"
+            affected_stories: ["{{story_id}}"]
+
+        new_implementations:
+          # Category D: New code to create
+          - feature: "{{feature_name}}"
+            suggested_location: "{{file_path}}"
+            pattern_reference: "{{existing_file_to_follow}}"
+            affected_stories: ["{{story_id}}"]
 
       stories:
         - id: "{{N}}.1"
           title: "{{Story title}}"
           repository_type: backend | frontend | ios | android | monolith
-          acceptance_criteria:
-            - "AC1: {{New functionality criterion}}"
-            - "AC2: {{Integration verification criterion}}"
-            - "AC3: {{Existing system integrity criterion}}"
           estimated_complexity: low | medium | high
           priority: P0 | P1 | P2
-          provides_apis: []    # Backend: ["POST /api/search/ai"]
-          consumes_apis: []    # Frontend/Mobile: ["POST /api/search/ai"]
-          dependencies: []     # Story IDs: ["1.1"]
+
+          # ============================================================
+          # ENHANCED ACCEPTANCE CRITERIA - Complete Requirement Specs
+          # ============================================================
+          acceptance_criteria:
+            - id: AC1
+              title: "{{Concise AC title}}"
+
+              # REQUIRED: Scenario in GIVEN/WHEN/THEN format
+              scenario:
+                given: "{{Precondition state}}"
+                when: "{{User action or system trigger}}"
+                then:
+                  - "{{Expected outcome 1}}"
+                  - "{{Expected outcome 2}}"
+
+              # REQUIRED: Business rules governing this AC
+              # Minimum 1 rule per AC. Use BR-{ac_num}.{seq} format.
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "{{Business rule description}}"
+
+              # CONDITIONAL: Required when AC involves form input or API request body
+              data_validation:
+                - field: "{{field_name}}"
+                  type: "string | number | boolean | email | date | array | object"
+                  required: true | false
+                  rules: "{{Validation rules}}"
+                  error_message: "{{User-facing error message}}"
+
+              # REQUIRED: Error scenarios and handling
+              # Minimum 1 error scenario per AC
+              error_handling:
+                - scenario: "{{Error condition description}}"
+                  code: "{{HTTP status or error code}}"
+                  message: "{{User-facing error message}}"
+                  action: "{{System behavior on this error}}"
+
+              # OPTIONAL: UI interaction details
+              interaction:
+                - trigger: "{{User action}}"
+                  behavior: "{{UI response}}"
+
+              # RECOMMENDED: Concrete examples
+              examples:
+                - input: "{{Example input data}}"
+                  expected: "{{Expected output or behavior}}"
+
+          # ============================================================
+          # API & Dependency Tracking
+          # ============================================================
+          provides_apis: []     # Backend: ["POST /api/users"]
+          consumes_apis: []     # Frontend/Mobile: ["POST /api/auth/login"]
+          dependencies: []      # Story IDs: ["1.1", "1.2"]
+
+          # ============================================================
+          # SM Hints - Populated by UX-Expert and Architect AFTER PM creates Epic
+          # ============================================================
+          sm_hints:
+            front_end_spec: null
+            architecture: null
       ```
 
-      BROWNFIELD-SPECIFIC REQUIREMENTS:
+      ## BROWNFIELD-SPECIFIC REQUIREMENTS
 
-      1. **acceptance_criteria** MUST include:
-         - New functionality criteria (ACn: what new feature does)
-         - Integration verification (ACn: existing functionality X still works)
-         - Performance impact (ACn: response time/memory within acceptable range)
+      In addition to the standard enhanced AC structure above, brownfield stories MUST ensure:
 
-      2. **APIs tracking**:
+      1. **acceptance_criteria** MUST include ACs covering these three categories:
+         - **New functionality**: What the new feature does (the enhancement itself)
+         - **Integration verification**: Existing functionality X still works correctly
+         - **Performance impact**: Response time/memory within acceptable range
+
+      2. **reuse_analysis** is STRONGLY RECOMMENDED for brownfield (not just post-MVP):
+         - Identify existing code that can be reused directly
+         - Flag code that needs extension
+         - Document any conflicts with existing patterns
+         - Reference existing files as pattern guides for new code
+
+      3. **APIs tracking**:
          - Include BOTH new APIs and modified existing APIs
-         - Mark existing APIs being enhanced
+         - Mark existing APIs being enhanced with comment
 
-      3. **dependencies**: Include both:
+      4. **dependencies**: Include both:
          - Story dependencies (which stories must complete first)
          - External dependencies (existing services that must be running)
 
-      EXAMPLE (Brownfield multi-repo enhancement):
+      ## Field Requirements Reference
+
+      **Epic-Level Fields:**
+
+      | Field | Required | Condition | Description |
+      |-------|----------|-----------|-------------|
+      | epic_id | YES | Always | Unique epic identifier |
+      | title | YES | Always | Epic title |
+      | description | YES | Always | 2-3 sentences describing goal and value |
+      | reuse_analysis | RECOMMENDED | Brownfield (always useful) | Existing implementation analysis |
+
+      **Acceptance Criteria Fields:**
+
+      | Field | Required | Condition | Description |
+      |-------|----------|-----------|-------------|
+      | id | YES | Always | AC identifier: AC1, AC2, etc. |
+      | title | YES | Always | Concise AC title (5-10 words) |
+      | scenario | YES | Always | GIVEN/WHEN/THEN structure |
+      | business_rules | YES | Always | Minimum 1 rule per AC |
+      | data_validation | CONDITIONAL | When AC has form/API input | Field-level validation specs |
+      | error_handling | YES | Always | Minimum 1 error scenario |
+      | interaction | NO | Only for UI stories | UI behavior details |
+      | examples | RECOMMENDED | Always | Specification by Example |
+
+      ## Complete Example (Brownfield multi-repo enhancement)
 
       ## Epic 1: AI-Powered Search Enhancement
 
@@ -345,43 +486,169 @@ sections:
         Enhance existing search functionality with AI-powered semantic search.
         Backend adds new endpoints while maintaining existing search API.
 
+      reuse_analysis:
+        directly_reusable:
+          - component: "SearchService"
+            location: "src/services/search.service.ts"
+            capability: "Keyword-based search with pagination and filtering"
+            usage: "AI search will wrap this service, falling back to keyword search"
+          - component: "SearchResultComponent"
+            location: "src/components/SearchResult.tsx"
+            capability: "Renders search results with pagination"
+            usage: "Extend to show relevance scores when AI mode active"
+
+        requires_extension:
+          - component: "SearchController"
+            location: "src/controllers/search.controller.ts"
+            current_capability: "Handles GET /api/search endpoint"
+            extension_needed: "Add POST /api/search/ai endpoint"
+            affected_stories: ["1.1"]
+
+        conflicts: []
+
+        new_implementations:
+          - feature: "AI Embedding Service"
+            suggested_location: "src/services/ai-embedding.service.ts"
+            pattern_reference: "src/services/search.service.ts"
+            affected_stories: ["1.1"]
+
       stories:
         - id: "1.1"
           title: "Backend - AI Search Service Integration"
           repository_type: backend
-          acceptance_criteria:
-            - "AC1: New AI search endpoint returns semantically relevant results"
-            - "AC2: Existing keyword search endpoint continues to work unchanged"
-            - "AC3: New endpoint follows existing API conventions (pagination, filtering)"
-            - "AC4: AI search responds within 500ms for typical queries"
-            - "AC5: Existing search tests still pass (regression verification)"
           estimated_complexity: high
           priority: P0
+
+          acceptance_criteria:
+            - id: AC1
+              title: "AI search returns relevant results"
+              scenario:
+                given: "Search index contains product data"
+                when: "User submits semantic query via POST /api/search/ai"
+                then:
+                  - "Returns semantically relevant results ranked by relevance score"
+                  - "Response includes relevance_score field per result"
+                  - "Response format matches existing search API pagination"
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "AI search uses OpenAI embeddings for semantic matching"
+                - id: "BR-1.2"
+                  rule: "Results are limited to max 50 per page"
+              data_validation:
+                - field: "query"
+                  type: "string"
+                  required: true
+                  rules: "1-500 characters, non-empty after trimming"
+                  error_message: "Search query is required"
+              error_handling:
+                - scenario: "OpenAI API unavailable"
+                  code: "503"
+                  message: "AI search temporarily unavailable, please try keyword search"
+                  action: "Log error, suggest fallback to keyword search"
+              examples:
+                - input: "POST /api/search/ai {\"query\": \"comfortable running shoes\"}"
+                  expected: "200 OK with semantically matched products sorted by relevance"
+
+            - id: AC2
+              title: "Existing keyword search unchanged"
+              scenario:
+                given: "Existing search endpoint is deployed"
+                when: "User queries GET /api/search?q=shoes"
+                then:
+                  - "Returns same results as before enhancement"
+                  - "Response time within 10% of baseline"
+                  - "All existing search tests pass"
+              business_rules:
+                - id: "BR-2.1"
+                  rule: "Existing GET /api/search endpoint must not be modified"
+              error_handling:
+                - scenario: "Regression in existing search"
+                  code: "500"
+                  message: "Search service error"
+                  action: "Rollback AI search changes, existing tests must pass"
+
           provides_apis:
             - "POST /api/search/ai"
             - "GET /api/search/ai/suggestions"
           consumes_apis:
             - "POST /external/openai/embeddings"
           dependencies: []
+          sm_hints:
+            front_end_spec: null
+            architecture: null
 
         - id: "1.2"
           title: "Frontend - AI Search UI Component"
           repository_type: frontend
-          acceptance_criteria:
-            - "AC1: Search bar shows AI Search toggle option"
-            - "AC2: When disabled, uses existing keyword search (backward compatible)"
-            - "AC3: Search results display relevance scores when AI enabled"
-            - "AC4: UI components follow existing design system"
-            - "AC5: Existing search functionality unchanged when AI toggle off"
           estimated_complexity: medium
           priority: P0
+
+          acceptance_criteria:
+            - id: AC1
+              title: "AI search toggle in search bar"
+              scenario:
+                given: "User is on any page with search bar"
+                when: "User clicks AI search toggle"
+                then:
+                  - "Toggle switches between AI and keyword mode"
+                  - "Visual indicator shows current mode"
+                  - "Search input placeholder text updates"
+              business_rules:
+                - id: "BR-1.1"
+                  rule: "Default mode is keyword search (backward compatible)"
+                - id: "BR-1.2"
+                  rule: "Toggle state persists in localStorage"
+              error_handling:
+                - scenario: "AI search API returns error"
+                  code: "503"
+                  message: "AI search unavailable. Switching to keyword search."
+                  action: "Auto-fallback to keyword search, show toast notification"
+              interaction:
+                - trigger: "Toggle click"
+                  behavior: "Smooth transition animation, placeholder text changes"
+                - trigger: "AI search error"
+                  behavior: "Show warning toast, auto-switch toggle to keyword mode"
+
+            - id: AC2
+              title: "Existing search works when AI disabled"
+              scenario:
+                given: "AI toggle is off (keyword mode)"
+                when: "User performs search"
+                then:
+                  - "Uses existing keyword search endpoint"
+                  - "UI behavior identical to pre-enhancement"
+              business_rules:
+                - id: "BR-2.1"
+                  rule: "No visual or behavioral changes when AI is disabled"
+              error_handling:
+                - scenario: "Keyword search fails"
+                  code: "500"
+                  message: "Search temporarily unavailable"
+                  action: "Show error state, preserve search query for retry"
+
           provides_apis: []
           consumes_apis:
             - "POST /api/search/ai"
             - "GET /api/search"
           dependencies:
             - "1.1"
+          sm_hints:
+            front_end_spec: null
+            architecture: null
       ```
+
+      ## Validation Checklist
+
+      Before finalizing each Story, verify:
+
+      - [ ] Every AC has at least 1 business rule
+      - [ ] Every AC with data input has data_validation section
+      - [ ] Every AC has at least 1 error_handling scenario
+      - [ ] Examples cover both success and failure cases
+      - [ ] UI stories have interaction section
+      - [ ] All field error_message values are user-friendly
+      - [ ] At least one AC verifies existing functionality still works (brownfield requirement)
+      - [ ] reuse_analysis identifies existing code to leverage
 
       Now define YAML blocks for ALL epics for your brownfield enhancement.
     elicit: true

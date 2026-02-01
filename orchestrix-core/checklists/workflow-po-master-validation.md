@@ -63,15 +63,33 @@ Ask the user if they want to work through the checklist:
 
 ### 0.1 Core Document Structure
 
-- [ ] PRD contains all required template sections: Goals and Background Context, Requirements, Technical Assumptions, Epic List, Epics
+[[LLM: PRD structure differs between Greenfield and Brownfield templates. Validate against the correct template.]]
+
+**[[GREENFIELD]]:**
+
+- [ ] PRD contains all required template sections: Goals and Background Context, Requirements, Technical Assumptions, Epic List, Epics, Checklist Results Report, Next Steps
 - [ ] Each section follows the template structure (subsections, format types)
-- [ ] Goals and Background Context includes Change Log table
+- [ ] If project has UI/UX requirements: `User Interface Design Goals` section exists between Requirements and Technical Assumptions
+- [ ] Goals and Background Context includes Change Log table with columns: `[Date, Version, Description, Author]`
 - [ ] Requirements section has both Functional (FR prefix) and Non-Functional (NFR prefix) subsections
 - [ ] Next Steps section includes UX Expert Prompt and Architect Prompt
+- [ ] Checklist Results Report section exists (populated after PM checklist execution)
+
+**[[BROWNFIELD]]:**
+
+- [ ] PRD contains all required template sections: Intro Project Analysis and Context, Requirements, Technical Constraints and Integration Requirements, Epic and Story Structure, Epics
+- [ ] Each section follows the brownfield template structure
+- [ ] If enhancement includes UI changes: `User Interface Enhancement Goals` section exists
+- [ ] Intro Project Analysis and Context includes subsections: Existing Project Overview, Available Documentation Analysis, Enhancement Scope Definition, Goals and Background Context, Change Log
+- [ ] Change Log table uses columns: `[Change, Date, Version, Description, Author]`
+- [ ] Requirements section has Functional (FR prefix), Non-Functional (NFR prefix), and Compatibility Requirements (CR prefix) subsections
+- [ ] Existing System Analysis prerequisite document exists (docs/existing-system-analysis.md or docs/existing-system-integration.md)
 
 ### 0.2 Epics YAML Format [[CRITICAL]]
 
-[[LLM: Epics section contains structured YAML that will be parsed by SM agents. Invalid or incomplete YAML will block story creation.]]
+[[LLM: Epics section contains structured YAML that will be parsed by SM agents. Invalid or incomplete YAML will block story creation. Both Greenfield and Brownfield PRDs use the Enhanced Structured AC format (objects with `id`, `title`, `scenario`, `business_rules`, etc.).]]
+
+#### Common YAML Validation
 
 - [ ] Epics section exists and contains YAML blocks
 - [ ] One YAML block per epic
@@ -80,7 +98,32 @@ Ask the user if they want to work through the checklist:
 - [ ] Story IDs follow format: "{epic_id}.{story_number}" (e.g., "1.1", "1.2", "2.1")
 - [ ] All YAML blocks include required fields: `epic_id`, `title`, `description`, `stories`
 - [ ] Each story includes required fields: `id`, `title`, `repository_type`, `acceptance_criteria`, `estimated_complexity`, `priority`
-- [ ] `acceptance_criteria` is an array with items starting with "ACn:" prefix (e.g., "AC1: User can...")
+
+#### Enhanced Structured AC Format
+
+[[LLM: Both Greenfield and Brownfield PRDs use this format. Each AC is a complete requirement unit that Dev agents implement directly. Validate the full structure.]]
+
+- [ ] Each `acceptance_criteria` entry is an object (not a string)
+- [ ] Each AC object has required fields: `id` (AC1, AC2, ...) and `title` (concise, 5-10 words)
+- [ ] Each AC has `scenario` with required subfields: `given` (string), `when` (string), `then` (array of strings)
+- [ ] Each AC has `business_rules` array with at least 1 entry, format: `{id: "BR-{ac_num}.{seq}", rule: "..."}`
+- [ ] Each AC has `error_handling` array with at least 1 entry, format: `{scenario, code, message, action}`
+- [ ] ACs involving form input or API request body include `data_validation` array, format: `{field, type, required, rules, error_message}`
+- [ ] Frontend/mobile story ACs include `interaction` array when UI behavior exists (optional), format: `{trigger, behavior}`
+- [ ] ACs include `examples` array when applicable (recommended), format: `{input, expected}`
+- [ ] Each story includes `provides_apis` array (may be empty) — backend stories list provided endpoints
+- [ ] Each story includes `consumes_apis` array (may be empty) — frontend/mobile stories list consumed endpoints
+- [ ] Each story includes `dependencies` array (may be empty) — story IDs this story depends on
+- [ ] Each story includes `sm_hints` field (may be null): `{front_end_spec, architecture}`
+
+#### Epic-Level Fields [[IF post-MVP iteration OR brownfield]]
+
+- [ ] If this is a post-MVP iteration or brownfield project: epics include `reuse_analysis` section (RECOMMENDED)
+- [ ] `reuse_analysis` contains subsections: `directly_reusable`, `requires_extension`, `conflicts`, `new_implementations`
+- [ ] Each `directly_reusable` entry has: `component`, `location`, `capability`, `usage`
+- [ ] Each `requires_extension` entry has: `component`, `location`, `current_capability`, `extension_needed`, `affected_stories`
+- [ ] Each `conflicts` entry has: `component`, `location`, `conflict`, `resolution`, `affected_stories`
+- [ ] Each `new_implementations` entry has: `feature`, `suggested_location`, `pattern_reference`, `affected_stories`
 
 ### 0.3 Multi-Repo Configuration Completeness
 
@@ -132,7 +175,7 @@ Ask the user if they want to work through the checklist:
 
 - [ ] All stories have `estimated_complexity` field with valid values: low, medium, high
 - [ ] All stories have `priority` field with valid values: P0, P1, P2
-- [ ] `acceptance_criteria` array contains clear, testable criteria with "ACn:" prefix
+- [ ] Each AC has clear, testable scenario in GIVEN/WHEN/THEN format with at least 1 business rule and 1 error handling scenario
 - [ ] Story titles are descriptive and include repository context for multi-repo (e.g., "Backend - User Registration API")
 
 ### 0.8 Architecture Document Template Compliance [[MULTI-REPO ONLY]]
