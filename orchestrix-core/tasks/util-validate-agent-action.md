@@ -180,7 +180,7 @@ result:
 **Input**:
 ```yaml
 agent_id: dev
-story_path: docs/dev/stories/1.1.implement-auth.md
+story_path: docs/stories/1.1.implement-auth.md
 action: implement
 ```
 
@@ -200,7 +200,7 @@ result:
 **Input**:
 ```yaml
 agent_id: dev
-story_path: docs/dev/stories/1.2.user-profile.md
+story_path: docs/stories/1.2.user-profile.md
 action: implement
 ```
 
@@ -223,7 +223,7 @@ result:
 **Input**:
 ```yaml
 agent_id: dev
-story_path: docs/dev/stories/1.1.implement-auth.md
+story_path: docs/stories/1.1.implement-auth.md
 action: complete_implementation
 target_status: Review
 ```
@@ -251,7 +251,7 @@ result:
 **Input**:
 ```yaml
 agent_id: qa
-story_path: docs/dev/stories/1.3.dashboard.md
+story_path: docs/stories/1.3.dashboard.md
 action: mark_done
 target_status: Approved
 ```

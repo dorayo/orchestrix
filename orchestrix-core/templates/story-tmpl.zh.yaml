@@ -13,14 +13,14 @@ workflow:
 
 agent_config:
   editable_sections:
-    - 状态
+    - Status
     - 任务 / 子任务
     - 开发记录
     - 变更日志
 
 sections:
   - id: status
-    title: 状态
+    title: Status
     type: choice
     choices:
       [Blocked, AwaitingArchReview, AwaitingTestDesign, TestDesignComplete,
