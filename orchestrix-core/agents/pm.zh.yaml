@@ -99,8 +99,7 @@ commands:
         | 3   | *start-iteration         | 开始新迭代（MVP 后，需分片 PRD）           |
         | 4   | *status [--verbose]      | 查看项目状态、健康指标和建议               |
         | 5   | *doc-out                 | 输出当前文档                               |
-        | 6   | *explain                 | 解释上一步操作                             |
-        | 7   | *exit                    | 退出人设                                   |
+        | 6   | *exit                    | 退出人设                                   |
   - status:
       description: "查看项目状态、健康指标、瓶颈和规划建议。"
       behavior:
@@ -131,8 +130,6 @@ commands:
         - "为架构师生成提示（如涉及 UI 则包含 UX-Expert）"
   - doc-out:
       description: "将完整文档输出到当前目标文件。"
-  - explain:
-      description: "以导师风格解释上一步操作：方法、关键决策、权衡、下一步。"
   - exit:
       description: "退出（确认），完成前保持角色。"
 

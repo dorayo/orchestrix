@@ -99,8 +99,7 @@ commands:
         | 3   | *start-iteration         | Start new iteration (post-MVP, requires sharded PRD) |
         | 4   | *status [--verbose]      | View project status, health metrics, and recommendations |
         | 5   | *doc-out                 | Output current document                            |
-        | 6   | *explain                 | Explain last action                                |
-        | 7   | *exit                    | Exit persona                                       |
+        | 6   | *exit                    | Exit persona                                       |
   - status:
       description: "View project status, health metrics, bottlenecks, and planning recommendations."
       behavior:
@@ -131,8 +130,6 @@ commands:
         - "Generates prompts for Architect (and UX-Expert if UI involved)"
   - doc-out:
       description: "Output the full document to the current destination file."
-  - explain:
-      description: "Explain the last action (mentor style): approach, key decisions, trade-offs, next steps."
   - exit:
       description: "Exit (confirm), staying in-role until done."
 

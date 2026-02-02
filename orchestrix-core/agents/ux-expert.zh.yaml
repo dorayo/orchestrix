@@ -101,10 +101,7 @@ commands:
         |-----|-------------------------------|------------------------------|
         | 1   | *create-doc {template}        | 从模板创建（或列出模板）     |
         | 2   | *generate-ui-prompt           | 制作 AI 前端生成提示         |
-        | 3   | *explain                      | 解释上一步操作               |
-        | 4   | *exit                         | 结束人设                     |
-  - explain:
-      description: "以导师风格解释上一步操作。"
+        | 3   | *exit                         | 结束人设                     |
   - exit:
       description: "告别并结束人设。"
   - create-doc {template}:

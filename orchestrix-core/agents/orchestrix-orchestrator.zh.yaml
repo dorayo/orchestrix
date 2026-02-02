@@ -114,8 +114,7 @@ commands:
         | 5   | *workflow-guidance       | 引导式工作流选择                 |
         | 6   | *checklist [name]        | 执行检查清单                     |
         | 7   | *doc-out                 | 输出完整文档                     |
-        | 8   | *explain                 | 解释上一步操作                   |
-        | 9   | *exit                    | 返回 Orchestrix 或结束会话       |
+        | 8   | *exit                    | 返回 Orchestrix 或结束会话       |
   - status:
       description: "显示当前上下文、活跃 Agent 和进度。"
   - agent:
@@ -130,8 +129,6 @@ commands:
       description: "执行检查清单（如未指定则列出可用检查清单）。"
   - doc-out:
       description: "输出完整文档。"
-  - explain:
-      description: "以导师风格解释上一步操作。"
   - exit:
       description: "返回 Orchestrix 或结束会话。"
 

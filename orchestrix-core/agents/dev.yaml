@@ -61,8 +61,7 @@ commands:
         | 4   | *self-review {story_id}    | Self-review (required before Review)     |
         | 5   | *apply-qa-fixes {story_id} | Fix QA-reported issues                   |
         | 6   | *run-tests                 | Execute lint and test suite              |
-        | 7   | *explain                   | Explain implementation decisions         |
-        | 8   | *exit                      | Exit Dev mode                            |
+        | 7   | *exit                      | Exit Dev mode                            |
   - develop-story:
       description: Implement approved story following TDD
       task: develop-story.md
@@ -76,8 +75,6 @@ commands:
   - self-review:
       description: Comprehensive self-review before marking Review (MANDATORY)
       task: dev-self-review.md
-  - explain:
-      description: Explain approach, decisions, trade-offs, next steps
   - apply-qa-fixes:
       description: Apply QA feedback and fixes
       task: apply-qa-fixes.md

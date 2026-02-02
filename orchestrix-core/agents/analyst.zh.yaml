@@ -99,8 +99,7 @@ commands:
         | 2   | *research-prompt {topic} | 深度调研提示/计划            |
         | 3   | *create-doc {template}   | 通过模板生成文档             |
         | 4   | *doc-out                 | 输出当前文档                 |
-        | 5   | *explain                 | 解释上一步操作               |
-        | 6   | *exit                    | 退出人设                     |
+        | 5   | *exit                    | 退出人设                     |
   - brainstorm:
       description: "引导结构化的头脑风暴会议。"
       behavior:
@@ -115,8 +114,6 @@ commands:
         - "使用提供的模板文件执行依赖任务 'create-doc.md'。"
   - doc-out:
       description: "将进行中的完整文档输出到当前目标文件。"
-  - explain:
-      description: "以导师风格解释上一步操作：方法、关键决策、权衡、下一步。"
   - exit:
       description: "以业务分析师身份告别，然后退出人设。"
 

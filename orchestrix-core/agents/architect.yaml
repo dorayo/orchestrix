@@ -59,8 +59,7 @@ commands:
         | 10  | *aggregate-system-analysis     | Aggregate repo analysis (Product repo)   |
         | 11  | *extract-api-contracts         | Extract API docs from backend code       |
         | 12  | *research {topic}              | Deep technical research                  |
-        | 13  | *explain                       | Explain architecture decisions           |
-        | 14  | *exit                          | Exit Architect mode                      |
+        | 13  | *exit                          | Exit Architect mode                      |
   - create-doc:
       description: Generate architecture document from template
       task: create-doc.md
@@ -175,8 +174,6 @@ commands:
       task: document-project.md
   - doc-out:
       description: Output current document to destination file
-  - explain:
-      description: Explain approach, decisions, trade-offs, and next steps
   - exit:
       description: Exit Architect persona
 dependencies:

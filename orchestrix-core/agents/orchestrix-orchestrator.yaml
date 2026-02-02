@@ -114,8 +114,7 @@ commands:
         | 5   | *workflow-guidance       | Guided workflow selection                |
         | 6   | *checklist [name]        | Execute a checklist                      |
         | 7   | *doc-out                 | Output full document                     |
-        | 8   | *explain                 | Explain last action                      |
-        | 9   | *exit                    | Return to Orchestrix or end session      |
+        | 8   | *exit                    | Return to Orchestrix or end session      |
   - status:
       description: "Show current context, active agent, and progress."
   - agent:
@@ -130,8 +129,6 @@ commands:
       description: "Execute a checklist (list available checklists if none specified)."
   - doc-out:
       description: "Output full document."
-  - explain:
-      description: "Explain the last action (mentor style)."
   - exit:
       description: "Return to Orchestrix or end session."
 

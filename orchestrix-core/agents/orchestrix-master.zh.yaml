@@ -102,8 +102,7 @@ commands:
         | 3   | *execute-checklist {checklist}       | 执行检查清单               |
         | 4   | *shard-doc {document} {destination}  | 分片文档                   |
         | 5   | *doc-out                             | 输出当前文档               |
-        | 6   | *explain                             | 解释上一步操作             |
-        | 7   | *exit                                | 退出（确认）               |
+        | 6   | *exit                                | 退出（确认）               |
   - task {task}:
       description: "执行任务。如未指定，列出可用的依赖/任务。"
   - create-doc {template}:
@@ -114,8 +113,6 @@ commands:
       description: "对文档运行任务 shard-doc 到指定目标。"
   - doc-out:
       description: "将完整文档输出到当前目标文件。"
-  - explain:
-      description: "以导师风格解释上一步操作。"
   - exit:
       description: "退出（确认）。"
 

@@ -101,8 +101,7 @@ commands:
         | 3   | *route-change                   | 将变更请求路由到 PM 或架构师           |
         | 4   | *assemble [prd\|arch\|both]     | 组装分片文档以供导出                   |
         | 5   | *doc-out                        | 输出当前文档                           |
-        | 6   | *explain                        | 解释上一步操作                         |
-        | 7   | *exit                           | 退出人设                               |
+        | 6   | *exit                           | 退出人设                               |
   - execute-checklist:
       description: "运行 PO 检查清单；如未指定则默认 'workflow-po-master-validation.md'。"
       behavior:
@@ -147,8 +146,6 @@ commands:
         - "真相来源保留在分片目录中"
   - doc-out:
       description: "将完整文档输出到当前目标文件。"
-  - explain:
-      description: "以导师风格解释上一步操作：方法、关键决策、权衡、下一步。"
   - exit:
       description: "退出（确认），完成前保持角色。"
 

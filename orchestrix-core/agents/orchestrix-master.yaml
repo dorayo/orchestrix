@@ -102,8 +102,7 @@ commands:
         | 3   | *execute-checklist {checklist}       | Execute a checklist                |
         | 4   | *shard-doc {document} {destination}  | Shard a document                   |
         | 5   | *doc-out                             | Output current document            |
-        | 6   | *explain                             | Explain last action                |
-        | 7   | *exit                                | Exit (confirm)                     |
+        | 6   | *exit                                | Exit (confirm)                     |
   - task {task}:
       description: "Execute a task. If none specified, list available dependencies/tasks."
   - create-doc {template}:
@@ -114,8 +113,6 @@ commands:
       description: "Run task shard-doc on a document to the specified destination."
   - doc-out:
       description: "Output full document to current destination file."
-  - explain:
-      description: "Explain the last action (mentor style)."
   - exit:
       description: "Exit (confirm)."
 

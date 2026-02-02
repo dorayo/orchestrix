@@ -61,8 +61,7 @@ commands:
         | 4   | *self-review {story_id}    | 自审（标记 Review 前必须）       |
         | 5   | *apply-qa-fixes {story_id} | 修复 QA 报告的问题               |
         | 6   | *run-tests                 | 执行 lint 和测试套件             |
-        | 7   | *explain                   | 解释实现决策                     |
-        | 8   | *exit                      | 退出 Dev 模式                    |
+        | 7   | *exit                      | 退出 Dev 模式                    |
   - develop-story:
       description: 按照 TDD 实现已批准的 Story
       task: develop-story.md
@@ -76,8 +75,6 @@ commands:
   - self-review:
       description: 标记 Review 前的全面自审（强制）
       task: dev-self-review.md
-  - explain:
-      description: 解释方法、决策、权衡、下一步
   - apply-qa-fixes:
       description: 应用 QA 反馈和修复
       task: apply-qa-fixes.md

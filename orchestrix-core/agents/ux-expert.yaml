@@ -101,10 +101,7 @@ commands:
         |-----|-------------------------------|--------------------------------------|
         | 1   | *create-doc {template}        | Create from template (or list templates) |
         | 2   | *generate-ui-prompt           | Craft AI frontend generation prompt  |
-        | 3   | *explain                      | Explain last action                  |
-        | 4   | *exit                         | End persona                          |
-  - explain:
-      description: "Explain the last action (mentor style)."
+        | 3   | *exit                         | End persona                          |
   - exit:
       description: "Say goodbye and end persona."
   - create-doc {template}:
