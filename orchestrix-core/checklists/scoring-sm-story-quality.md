@@ -13,7 +13,7 @@ metadata:
 **Execution Flow**:
 1. Structure Validation (Gate=100%) → Fail = Blocked, STOP
 2. Technical Quality (P1=100%) → S2<80% = Blocked
-3. Quality Score (P1=100% AND S2≥80%) → (S2×0.50)+(S3×0.50)
+3. Quality Score (P1=100% AND S2≥80%) → (S2×0.45)+(S3×0.45)+S4
 4. Complexity Detection (P2 done) → 7 indicators
 
 **Rules**: P1 fail → Blocked, STOP | P2<80% → Blocked
@@ -140,11 +140,54 @@ metadata:
 
 ---
 
+## S4: AC Precision Validation (CRITICAL - Quality Multiplier)
+
+**Purpose**: Verify Acceptance Criteria are precise, unambiguous, and testable.
+
+**Load**: `{root}/data/ac-quality-requirements.yaml`
+
+**For each AC in the story, verify**:
+
+| Rule | Check | Deduction | Status |
+|------|-------|-----------|--------|
+| `ac_has_error_path` | AC has ≥1 error/failure scenario | -1.0 per violation | [ ] |
+| `ac_no_vague_words` | No prohibited vague words | -0.5 per word | [ ] |
+| `ac_ui_three_states` | UI ACs have default/loading/result states | -1.0 per violation | [ ] |
+| `ac_form_validation_rules` | Form ACs have validation rules per field | -1.5 per violation | [ ] |
+| `ac_api_response_format` | API ACs have request/response specs | -1.0 per violation | [ ] |
+| `ac_data_boundary` | Data ACs have empty/single/max states | -0.5 per violation | [ ] |
+
+**AC Precision Deduction: -___** (sum of all deductions, cap at -3.0)
+
+**S4 Result**:
+```yaml
+ac_precision:
+  total_acs_checked: {count}
+  violations_found: {count}
+  total_deduction: {number, max -3.0}
+  violations:
+    - rule: '{rule_id}'
+      ac: 'AC{N}'
+      issue: '{description}'
+      deduction: {number}
+```
+
+---
+
 ## Quality Score
 
-**Formula:** `(S2 × 0.50) + (S3 × 0.50)`
+**Formula:** `(S2 × 0.45) + (S3 × 0.45) + max(0, 1.0 + S4_deduction) × 1.0`
 
-**Calc:** S2: ___% × 0.50 = ___ | S3: ___% × 0.50 = ___ | **Score: ___/10**
+Where:
+- S2 (Technical Extraction): 45% weight
+- S3 (Implementation Readiness): 45% weight
+- S4 (AC Precision): 10% weight (1.0 base, reduced by deductions, minimum 0)
+
+**Example**: S2=90%, S3=85%, S4 deduction=-1.5:
+- (0.90 × 0.45) + (0.85 × 0.45) + max(0, 1.0 - 1.5) × 1.0
+- = 0.405 + 0.3825 + 0 = 0.7875 → Score: 7.9/10
+
+**Calc:** S2: ___% × 0.45 = ___ | S3: ___% × 0.45 = ___ | S4: max(0, 1.0 + ___) × 1.0 = ___ | **Score: ___/10**
 
 ---
 
@@ -196,7 +239,13 @@ type_consistency:
 
 quality_score:
   final_score: 0-10
-  calculation: "(S2 × 0.50) + (S3 × 0.50)"
+  calculation: "(S2 × 0.45) + (S3 × 0.45) + max(0, 1.0 + S4_deduction) × 1.0"
+
+ac_precision:
+  total_acs_checked: 0
+  violations_found: 0
+  total_deduction: 0
+  violations: []
 
 complexity_indicators:
   api_changes: true/false

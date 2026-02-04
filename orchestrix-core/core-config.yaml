@@ -6,6 +6,7 @@ markdownExploder: true
 project:
   name: My Project
   mode: monolith
+  testCommand: ''  # Optional. Auto-detected if empty. Examples: 'npm test', 'deno test -A', 'pytest'
   multi_repo:
     role: implementation
     repository_id: ''

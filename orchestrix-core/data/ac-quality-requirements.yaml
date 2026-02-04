@@ -1,0 +1,153 @@
+# AC Quality Requirements
+# Used by SM during story creation to enforce precise, unambiguous ACs.
+
+description: >
+  Minimum quality standards for Acceptance Criteria. Each AC must be precise
+  enough that two independent developers would implement the same behavior.
+  Vague ACs are the #1 source of post-development bugs.
+
+rules:
+  # ============================================
+  # MANDATORY: Every AC must satisfy these
+  # ============================================
+
+  - id: ac_has_error_path
+    applies_to: all
+    requirement: >
+      Every AC that describes a user action MUST include at least one
+      error/failure scenario. Use "Given... When [error condition]...
+      Then [specific error behavior]" format.
+    examples:
+      good: |
+        AC1: User can login with email and password
+        - Given valid credentials, When user submits login form, Then redirect to dashboard
+        - Given invalid password, When user submits login form, Then show error "Invalid email or password" below the form, login button re-enables
+        - Given unregistered email, When user submits login form, Then show same error "Invalid email or password" (no info leak)
+      bad: |
+        AC1: User can login with email and password
+        - User enters email and password and clicks login
+        - System should show appropriate error if login fails
+    scoring_impact: -1.0 per AC missing error path
+
+  - id: ac_no_vague_words
+    applies_to: all
+    requirement: >
+      ACs MUST NOT use vague/ambiguous words. Each of the following words
+      MUST be replaced with specific, testable descriptions.
+    prohibited_words:
+      - word: "appropriate"
+        replace_with: "specify exactly what is appropriate"
+        example: "show appropriate error → show red error banner with text 'Invalid input' that auto-dismisses after 5 seconds"
+      - word: "proper"
+        replace_with: "specify exactly what proper means"
+      - word: "correctly"
+        replace_with: "specify what correct behavior looks like"
+      - word: "should handle"
+        replace_with: "specify the exact handling behavior"
+      - word: "etc."
+        replace_with: "list all items explicitly"
+      - word: "similar"
+        replace_with: "list all items explicitly"
+      - word: "as needed"
+        replace_with: "specify exact conditions"
+      - word: "properly"
+        replace_with: "specify exact behavior"
+      - word: "nicely"
+        replace_with: "specify exact visual/behavioral requirements"
+      - word: "reasonable"
+        replace_with: "specify exact threshold or criteria"
+    scoring_impact: -0.5 per vague word found
+
+  # ============================================
+  # CONDITIONAL: Apply based on AC type
+  # ============================================
+
+  - id: ac_ui_three_states
+    applies_to: ui_interaction
+    condition: "AC involves user interface interaction (forms, buttons, navigation)"
+    requirement: >
+      UI ACs MUST describe three states:
+      1. Default/ready state (what user sees initially)
+      2. Loading/processing state (what happens while action executes)
+      3. Result state (success AND error outcomes)
+    examples:
+      good: |
+        AC: User can submit feedback form
+        - Default: Form shows text area (max 500 chars) with char counter, Submit button enabled
+        - Loading: Submit button shows spinner and disables, form fields become read-only
+        - Success: Form clears, green toast "Feedback submitted" appears for 3s
+        - Error: Form retains input, red toast "Submission failed, please retry" appears, Submit re-enables
+      bad: |
+        AC: User can submit feedback form
+        - User fills in form and clicks submit
+        - System saves feedback
+    scoring_impact: -1.0 per UI AC missing states
+
+  - id: ac_form_validation_rules
+    applies_to: form_input
+    condition: "AC involves form input or data entry"
+    requirement: >
+      Form ACs MUST specify for each input field:
+      1. Validation rules (required, format, min/max length, allowed characters)
+      2. When validation triggers (on blur, on submit, on change)
+      3. Error message text and position (inline, toast, banner)
+      4. What happens to the submit button when validation fails
+    examples:
+      good: |
+        AC: User registration form
+        - Email: required, valid email format, max 255 chars
+          - Validates on blur
+          - Error: red inline text below field "Please enter a valid email address"
+        - Password: required, min 8 chars, must contain 1 uppercase + 1 number
+          - Validates on blur, strength indicator updates on change
+          - Error: red inline text "Password must be at least 8 characters with 1 uppercase and 1 number"
+        - Submit: disabled until all fields valid
+      bad: |
+        AC: User registration form
+        - User enters email and password
+        - Form validates input
+    scoring_impact: -1.5 per form AC without validation rules
+
+  - id: ac_api_response_format
+    applies_to: api_endpoint
+    condition: "AC involves API endpoint creation or modification"
+    requirement: >
+      API ACs MUST specify:
+      1. HTTP method and path
+      2. Request body/params schema
+      3. Success response status code and body shape
+      4. Error response status codes and body shape for each error case
+      5. Authentication/authorization requirements
+    scoring_impact: -1.0 per API AC missing response format
+
+  - id: ac_data_boundary
+    applies_to: data_processing
+    condition: "AC involves data processing, list display, or calculations"
+    requirement: >
+      Data ACs MUST specify boundary behaviors:
+      1. Empty state (what happens with 0 items / no data)
+      2. Single item state
+      3. Maximum/overflow state (what happens with very large data sets)
+      4. Pagination or truncation strategy if applicable
+    scoring_impact: -0.5 per data AC missing boundaries
+
+output:
+  ac_quality_score:
+    type: number
+    description: "Deduction from quality score based on AC violations"
+  violations:
+    type: array
+    items:
+      rule_id: string
+      ac_ref: string
+      violation: string
+      deduction: number
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-02-04"
+  owner: "SM Agent"
+  usage_context: >
+    Referenced by scoring-sm-story-quality.md during Phase 2 scoring.
+    SM MUST check each AC against these rules before finalizing the story.
+    Violations reduce the quality score and may trigger Blocked status.

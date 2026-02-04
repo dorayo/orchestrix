@@ -34,6 +34,16 @@ inputs:
     required: false
     description: "Whether E2E tests were skipped (automated_only mode)"
 
+  - name: regression_tests_passed
+    type: boolean
+    required: false
+    description: "Whether regression tests from previous stories passed (null if not executed)"
+
+  - name: regression_failures_count
+    type: number
+    required: false
+    description: "Count of regression test failures (0 if not executed or all passed)"
+
   - name: console_errors_found
     type: boolean
     required: false
@@ -219,6 +229,23 @@ rules:
       expected_effort: "high"
       test_based_decision: true
       failure_type: "e2e_critical"
+
+  # FAIL: Regression tests failed (current story broke previous stories)
+  - id: fail_regression
+    priority: 9
+    condition: >
+      regression_tests_passed == false AND
+      regression_failures_count >= 1
+    result: FAIL
+    reasoning: "Regression tests failed. Current story implementation broke previously working functionality."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "regression_failure"
+      expected_effort: "high"
+      test_based_decision: true
+      failure_type: "regression"
+      fix_guidance: "Fix regression failures before proceeding. Check if current story's code changes conflict with previous stories."
 
   # FAIL: Console errors in production code
   - id: fail_console_errors

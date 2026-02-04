@@ -333,58 +333,116 @@ migration_verification:
 
 ---
 
-## Step 4: Automated Test Evidence Verification
+## Step 4: Independent Automated Test Execution
 
-**Purpose**: Verify Dev has executed automated tests successfully. Do NOT re-run tests.
+**Purpose**: Execute the project's automated test suite independently to verify all tests pass. QA runs tests directly rather than relying on Dev's evidence.
 
-**Rationale**: Dev has already run unit/integration tests. QA verifies evidence exists rather than duplicating execution.
+**Rationale**: Independent test execution catches cases where code changed after Dev's last test run, tests with weak assertions that Dev self-review missed, or environment-specific failures. This is the single highest-impact quality gate.
 
-### 4.1 Locate Evidence Sources
+### 4.1 Detect Test Command
 
-Check the following locations for test evidence:
+Read `orchestrix/core-config.yaml` for `project.testCommand`.
 
+If not configured, auto-detect from project:
+
+| Detection Method | Test Command |
+|-----------------|--------------|
+| `package.json` has `scripts.test` | `npm test` |
+| `package.json` has `scripts.test` with vitest | `npx vitest run` |
+| `deno.json` exists | `deno test -A` |
+| `Cargo.toml` exists | `cargo test` |
+| `go.mod` exists | `go test ./...` |
+| `pyproject.toml` or `setup.py` | `pytest` |
+| None detected | Record as FAIL: "No test runner detected" |
+
+**Store**:
 ```yaml
-evidence_sources:
-  - path: '{devLogsLocation}/{story_id}-dev-log.md'
-    section: 'Test Results'
-  - path: '{story_path}'
-    section: 'Dev Agent Record.self_review'
-  - path: 'CI pipeline logs (if available)'
+test_command: '{detected command}'
+test_runner_type: 'npm' | 'deno' | 'cargo' | 'go' | 'pytest' | 'unknown'
 ```
 
-### 4.2 Extract Test Evidence
+### 4.2 Execute Test Suite
 
-From Dev Log or Story file, extract:
+Run the detected test command via Bash tool:
+
+```bash
+{test_command} 2>&1
+```
+
+**Timeout**: 300 seconds (5 minutes). If exceeded, record as FAIL with reason "Test execution timed out after 300s".
+
+**Capture**:
+- Exit code (0 = pass, non-zero = fail)
+- Full stdout/stderr output
+- Parse test count, pass count, fail count from output
+
+### 4.3 Parse Test Results
+
+Extract from test runner output:
 
 ```yaml
 automated_tests:
-  evidence_found: true | false
-  source: 'dev-log' | 'story' | 'ci'
-  passed: true | false
-  total: {from evidence}
-  passed_count: {from evidence}
-  failed_count: {from evidence}
-  pass_rate: {from evidence}
-  coverage_percentage: {from evidence, if available}
-  evidence_timestamp: {when tests were run}
+  execution_method: 'independent_execution'
+  test_command: '{command used}'
+  exit_code: {0 or non-zero}
+  passed: {true if exit_code == 0}
+  total: {parsed from output}
+  passed_count: {parsed from output}
+  failed_count: {parsed from output}
+  skipped_count: {parsed from output}
+  pass_rate: {percentage}
+  execution_time_seconds: {duration}
+  raw_output_summary: '{first 500 chars of output if failed}'
 ```
 
-### 4.3 Evidence Validation
+**Parsing patterns by runner**:
+
+| Runner | Pass Pattern | Fail Pattern |
+|--------|-------------|--------------|
+| vitest/jest | `Tests: X passed` | `Tests: X failed` |
+| deno | `ok \| X passed` | `FAILED \| X failed` |
+| cargo | `test result: ok. X passed` | `test result: FAILED. X failed` |
+| go | `ok` (per package) | `FAIL` |
+| pytest | `X passed` | `X failed` |
+
+If output cannot be parsed, use exit code as sole indicator: 0 = PASS, non-zero = FAIL.
+
+### 4.4 Cross-Reference with Dev Evidence (Optional Integrity Check)
+
+After independent execution, compare with Dev's claimed results:
+
+| QA Result | Dev Claim | Action |
+|-----------|-----------|--------|
+| PASS | PASS | Consistent - no issue |
+| PASS | No evidence | Record LOW issue: "Dev Log missing test evidence" |
+| FAIL | PASS | Record CRITICAL issue: "Tests fail independently but Dev claimed PASS - possible code change after Dev's test run or environment difference" |
+| FAIL | FAIL | Dev was honest - continue with FAIL |
+| FAIL | No evidence | Record HIGH issue: "Tests fail and no Dev evidence found" |
+
+### 4.5 Evidence Validation Decision
 
 | Condition | Result | Action |
 |-----------|--------|--------|
-| Evidence found AND passed = true | PASS | Continue to Step 5 |
-| Evidence found AND passed = false | FAIL | Record HIGH severity issue, skip to Step 7 |
-| Evidence NOT found | FAIL | Record HIGH severity issue: "No test evidence found", skip to Step 7 |
+| Independent tests PASS (exit_code == 0) | PASS | Continue to Step 4.5 (checkbox verification) |
+| Independent tests FAIL | FAIL | Record HIGH severity issue with failed test names, continue to Step 4.5 |
+| No test runner found | FAIL | Record HIGH severity issue: "No automated test suite found", continue to Step 4.5 |
+| Test execution timeout | FAIL | Record HIGH severity issue: "Test execution timed out", continue to Step 4.5 |
 
 **Store result for Step 7**:
 ```yaml
 automated_tests:
-  verification_method: 'evidence_check'
-  evidence_found: true | false
+  verification_method: 'independent_execution'
+  test_command: '{command}'
+  exit_code: {code}
   passed: true | false
   pass_rate: {percentage}
-  issues: [] # populated if evidence missing or tests failed
+  execution_time_seconds: {duration}
+  failed_test_names: ['{test1}', '{test2}']  # if any failed
+  integrity_check:
+    dev_evidence_found: true | false
+    dev_claimed_pass: true | false | null
+    discrepancy: true | false
+  issues: []
 ```
 
 ---
@@ -678,6 +736,54 @@ ac_coverage:
 
 ---
 
+## Step 4.7: Regression Test Execution (Conditional)
+
+**Purpose**: Run all persisted E2E tests from previous Stories to catch regressions before testing the current Story.
+
+**Skip conditions**:
+- If `review_mode == "automated_only"` AND `risk_level == LOW`, skip
+- If no persisted E2E test files exist, skip
+- If `review_mode_type == incremental` AND previous round regression passed, skip
+
+### 4.7.1 Check for Persisted Tests
+
+Glob: `{project_root}/tests/e2e/story-*.spec.ts`
+
+**If no files found**:
+- Log: "No regression test files found. Skipping regression step."
+- Set `regression.executed: false, regression.reason: 'no_test_files'`
+- Continue to Step 5
+
+### 4.7.2 Execute Regression Suite
+
+Execute: `{root}/tasks/qa-regression-test.md`
+
+Input:
+```yaml
+story_id: {story_id}
+scope: 'epic'  # Test stories within the same epic
+```
+
+### 4.7.3 Handle Regression Results
+
+| Condition | Action |
+|-----------|--------|
+| All regression tests pass | Log: "Regression suite PASS ({N} tests)". Continue to Step 5 |
+| Any regression test fails | Record each failure as CRITICAL issue. Continue to Step 5 |
+| Regression execution fails (infra) | Record as MEDIUM issue: "Regression suite execution failed". Continue to Step 5 |
+
+**Store result for Step 7**:
+```yaml
+regression:
+  executed: true | false
+  passed: true | false
+  tests_total: {count}
+  tests_failed: {count}
+  issues: [{severity: CRITICAL, finding, evidence}]
+```
+
+---
+
 ## Step 5: E2E Testing (Conditional)
 
 **Purpose**: Execute end-to-end tests based on risk level
@@ -896,6 +1002,11 @@ acs_not_verified: {count from Step 4.6}
 
 # Step 5: E2E Testing
 e2e_tests_passed: {from Step 5, or null if skipped}
+
+# Step 4.7: Regression Testing
+regression_executed: {from Step 4.7, default false}
+regression_passed: {from Step 4.7, default true}
+regression_failures_count: {from Step 4.7, default 0}
 e2e_tests_skipped: {true if review_mode == automated_only}
 console_errors_found: {from Step 5}
 network_errors_found: {from Step 5}
@@ -1118,6 +1229,56 @@ This task will:
 - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
 - If failed: `commit_error`
 
+### 9.5.3 Persist E2E Tests (Conditional)
+
+**Condition**: Execute ONLY if ALL of the following are true:
+- E2E tests were executed (not skipped)
+- Gate result is PASS or CONCERNS
+- Project type is web_frontend or fullstack
+
+Execute: `{root}/tasks/qa-persist-e2e-tests.md`
+
+Input:
+```yaml
+story_id: {story_id}
+e2e_results: {from Step 5}
+project_type: {from Step 2}
+environment_url: {from Step 3}
+```
+
+Log result. Do not block on failures.
+
+---
+
+### 9.5.4 Epic Integration Test (Conditional)
+
+**Condition**: Execute ONLY if ALL of the following are true:
+- Gate result is PASS
+- Status is Done
+- At least 2 Stories in the same Epic have Status = Done
+
+**Check**: Glob `{story_root}/{epic_id}.*.md`, count stories with Status = Done.
+
+**If count >= 2**:
+
+Execute: `{root}/tasks/qa-epic-integration-test.md`
+
+Input:
+```yaml
+epic_id: '{epic_id}'
+completed_story_id: '{story_id}'
+story_root: '{devStoryLocation}'
+```
+
+**Handle results**:
+- If integration PASS: Log "Epic integration: PASS ({N} scenarios)"
+- If integration FAIL:
+  - Do NOT change gate result (Story itself passed)
+  - Record integration issues in gate file under `epic_integration` section
+  - Add WARNING to handoff message: "Warning: Epic integration issues detected - see gate file"
+
+---
+
 ### 9.6 Final Test Process Cleanup (MANDATORY - Post-Commit)
 
 **Purpose**: Terminate all test runner processes after git operations complete.
@@ -1297,18 +1458,21 @@ Gate: PASS | Tests: {pass_rate}%
 | 4 | Automated Test Evidence | Verify | Execute |
 | 4.5 | Task Checkbox Verification | Full scan | ⚡ **FOCUS**: Previous failures only |
 | 4.6 | AC Coverage Verification | Full scan | ⚡ **FOCUS**: Failed ACs only |
+| 4.7 | **Regression Testing** | Execute all | ⏭️ **SKIP** if previous round passed |
 | 5 | E2E Testing | Full scenarios | ⚡ **FOCUS**: Failed scenarios only |
 | 5.5 | Blind Spot Verification | Full scan | ⚡ **FOCUS**: Missing spots only |
 | 6 | Evidence Collection | All issues | New issues only |
 | 7 | Gate Decision | Full context | Full context + populate incremental_context |
 | 8 | Environment Cleanup | Execute | Execute |
+| 9.5.3 | **Persist E2E Tests** | Execute | Execute |
+| 9.5.4 | **Epic Integration Test** | Execute | Execute |
 | 9.x | Output & Handoff | Execute | Execute |
 
 **Token Savings**: Incremental mode saves ~50-70% execution time by skipping stable checks.
 
 ## Key Principles
 
-1. **Trust Dev evidence**: Verify test results exist, do NOT re-run automated tests
+1. **Independent verification**: Execute automated tests independently, then cross-reference with Dev evidence
 2. **Checkbox-deliverable consistency**: Verify checked boxes match actual deliverables
 3. **AC Traceability verification**: Every AC must have verified code + test locations (CRITICAL)
 4. **Risk-aware E2E**: Low-risk = skip, Medium = spot check, High = full testing
