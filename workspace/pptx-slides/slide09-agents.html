@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 12pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 20pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 12pt 30pt;
+  flex: 1;
+  display: flex;
+}
+.column {
+  flex: 1;
+  padding: 0 8pt;
+}
+.section-header {
+  border-bottom: 2pt solid #ff6b6b;
+  padding-bottom: 5pt;
+  margin: 0 0 8pt 0;
+}
+.section-title {
+  color: #ff6b6b;
+  font-size: 13pt;
+  font-weight: bold;
+  margin: 0;
+}
+.agent-row {
+  display: flex;
+  margin-bottom: 6pt;
+  background: #1a2332;
+  border-radius: 4pt;
+  padding: 6pt 10pt;
+}
+.agent-name {
+  color: #00d9ff;
+  font-size: 11pt;
+  font-weight: bold;
+  margin: 0;
+  width: 75pt;
+}
+.agent-role {
+  color: #aaaaaa;
+  font-size: 10pt;
+  margin: 0;
+  width: 60pt;
+}
+.agent-task {
+  color: #ffffff;
+  font-size: 10pt;
+  margin: 0;
+  flex: 1;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">10 个专业 AI Agent</h1>
+</div>
+<div class="content">
+  <div class="column">
+    <div class="section-header">
+      <p class="section-title">规划层（类似策划组）</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">Analyst</p>
+      <p class="agent-role">市场调研</p>
+      <p class="agent-task">竞品分析、用户画像</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">PM</p>
+      <p class="agent-role">主策划</p>
+      <p class="agent-task">写PRD、定功能</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">UX-Expert</p>
+      <p class="agent-role">UI设计</p>
+      <p class="agent-task">出交互稿</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">Architect</p>
+      <p class="agent-role">主程序</p>
+      <p class="agent-task">技术方案</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">PO</p>
+      <p class="agent-role">制作人</p>
+      <p class="agent-task">质量把关</p>
+    </div>
+  </div>
+  <div class="column">
+    <div class="section-header">
+      <p class="section-title">执行层（类似开发组）</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">SM</p>
+      <p class="agent-role">项目管理</p>
+      <p class="agent-task">拆任务、排期</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">Dev</p>
+      <p class="agent-role">程序员</p>
+      <p class="agent-task">写代码、写测试</p>
+    </div>
+    <div class="agent-row">
+      <p class="agent-name">QA</p>
+      <p class="agent-role">测试</p>
+      <p class="agent-task">审代码、找Bug</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

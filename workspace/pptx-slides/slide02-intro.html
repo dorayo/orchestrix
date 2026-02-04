@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+}
+.quote-box {
+  background: #1a2332;
+  border-left: 4pt solid #00d9ff;
+  padding: 15pt 20pt;
+  margin: 0 0 20pt 0;
+}
+.quote-text {
+  color: #ffffff;
+  font-size: 18pt;
+  font-style: italic;
+  margin: 0;
+  text-align: center;
+}
+.table-container {
+  display: flex;
+  justify-content: center;
+}
+.row {
+  display: flex;
+  margin-bottom: 8pt;
+}
+.cell {
+  padding: 12pt 20pt;
+  margin: 0 5pt;
+  border-radius: 8pt;
+}
+.cell-left {
+  background: #2d4a3e;
+}
+.cell-right {
+  background: #3d2a4a;
+}
+.cell-text {
+  color: #ffffff;
+  font-size: 14pt;
+  margin: 0;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">我是谁？</h1>
+</div>
+<div class="content">
+  <div class="quote-box">
+    <p class="quote-text">"我们把游戏公司最优秀团队的工作方式，教给了 AI"</p>
+  </div>
+  <div class="table-container">
+    <div>
+      <div class="row">
+        <div class="cell cell-left"><p class="cell-text">你们造的：游戏世界</p></div>
+        <div class="cell cell-right"><p class="cell-text">我们造的：开发世界</p></div>
+      </div>
+      <div class="row">
+        <div class="cell cell-left"><p class="cell-text">NPC AI</p></div>
+        <div class="cell cell-right"><p class="cell-text">开发 AI</p></div>
+      </div>
+      <div class="row">
+        <div class="cell cell-left"><p class="cell-text">团队配合打 Boss</p></div>
+        <div class="cell cell-right"><p class="cell-text">AI 团队协作开发</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

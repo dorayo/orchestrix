@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+  display: flex;
+}
+.left {
+  flex: 1;
+  padding-right: 20pt;
+}
+.right {
+  width: 280pt;
+}
+.code-block {
+  background: #1a2332;
+  padding: 15pt;
+  border-radius: 8pt;
+  margin-bottom: 15pt;
+  border-left: 3pt solid #00d9ff;
+}
+.code {
+  color: #00d9ff;
+  font-size: 14pt;
+  font-family: Courier New, monospace;
+  margin: 0;
+}
+.auto-title {
+  color: #ff6b6b;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+}
+.auto-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8pt;
+}
+.check {
+  color: #70ad47;
+  font-size: 14pt;
+  margin: 0;
+  width: 20pt;
+}
+.auto-text {
+  color: #ffffff;
+  font-size: 12pt;
+  margin: 0;
+}
+.highlight-box {
+  background: #4a2d3d;
+  padding: 20pt;
+  border-radius: 8pt;
+  border-left: 4pt solid #ff6b6b;
+}
+.highlight-text {
+  color: #ff6b6b;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">演示 2：Story 自动评估</h1>
+</div>
+<div class="content">
+  <div class="left">
+    <div class="code-block">
+      <p class="code">@sm *draft</p>
+    </div>
+    <p class="auto-title">自动执行</p>
+    <div class="auto-item">
+      <p class="check">✓</p>
+      <p class="auto-text">结构验证（模板完整性）</p>
+    </div>
+    <div class="auto-item">
+      <p class="check">✓</p>
+      <p class="auto-text">技术提取（从架构抽取细节）</p>
+    </div>
+    <div class="auto-item">
+      <p class="check">✓</p>
+      <p class="auto-text">复杂度评估（7个风险指标）</p>
+    </div>
+    <div class="auto-item">
+      <p class="check">✓</p>
+      <p class="auto-text">智能决策（批准/审核/打回）</p>
+    </div>
+  </div>
+  <div class="right">
+    <div class="highlight-box">
+      <p class="highlight-text">质量不达标？</p>
+      <p class="highlight-text">自动打回！</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

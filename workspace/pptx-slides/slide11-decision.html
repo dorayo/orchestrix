@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+}
+.table-header {
+  display: flex;
+  background: #2d3d4a;
+  padding: 10pt 15pt;
+  border-radius: 8pt 8pt 0 0;
+}
+.table-row {
+  display: flex;
+  background: #1a2332;
+  padding: 10pt 15pt;
+  border-bottom: 1pt solid #2d3d4a;
+}
+.table-row:last-child {
+  border-radius: 0 0 8pt 8pt;
+}
+.col1 { width: 100pt; }
+.col2 { width: 100pt; }
+.col3 { flex: 1; }
+.th {
+  color: #00d9ff;
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0;
+}
+.td {
+  color: #ffffff;
+  font-size: 12pt;
+  margin: 0;
+}
+.td-green {
+  color: #70ad47;
+}
+.td-yellow {
+  color: #f0ad4e;
+}
+.td-red {
+  color: #ff6b6b;
+}
+.highlight {
+  margin-top: 20pt;
+  background: #2d4a3e;
+  padding: 15pt 20pt;
+  border-radius: 8pt;
+  border-left: 4pt solid #70ad47;
+}
+.highlight-text {
+  color: #ffffff;
+  font-size: 14pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">智能决策矩阵</h1>
+</div>
+<div class="content">
+  <div class="table-header">
+    <div class="col1"><p class="th">质量评分</p></div>
+    <div class="col2"><p class="th">复杂度</p></div>
+    <div class="col3"><p class="th">自动决策</p></div>
+  </div>
+  <div class="table-row">
+    <div class="col1"><p class="td">≥ 8.0</p></div>
+    <div class="col2"><p class="td">0</p></div>
+    <div class="col3"><p class="td td-green">✓ 直接开发</p></div>
+  </div>
+  <div class="table-row">
+    <div class="col1"><p class="td">≥ 8.0</p></div>
+    <div class="col2"><p class="td">1</p></div>
+    <div class="col3"><p class="td td-green">✓ 批准，可选审核</p></div>
+  </div>
+  <div class="table-row">
+    <div class="col1"><p class="td">≥ 8.0</p></div>
+    <div class="col2"><p class="td">≥ 2</p></div>
+    <div class="col3"><p class="td td-yellow">⚡ 需要技术审核</p></div>
+  </div>
+  <div class="table-row">
+    <div class="col1"><p class="td">6.0 - 7.9</p></div>
+    <div class="col2"><p class="td">任何</p></div>
+    <div class="col3"><p class="td td-yellow">⚡ 需要技术审核</p></div>
+  </div>
+  <div class="table-row">
+    <div class="col1"><p class="td">< 6.0</p></div>
+    <div class="col2"><p class="td">任何</p></div>
+    <div class="col3"><p class="td td-red">✗ 打回重写</p></div>
+  </div>
+  <div class="highlight">
+    <p class="highlight-text">质量不达标？自动打回，不用人盯！</p>
+  </div>
+</div>
+</body>
+</html>

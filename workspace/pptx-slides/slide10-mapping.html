@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.mapping {
+  display: flex;
+  align-items: center;
+}
+.box {
+  padding: 15pt;
+  border-radius: 8pt;
+  width: 180pt;
+}
+.box-left {
+  background: #2d3d4a;
+  border: 2pt solid #00d9ff;
+}
+.box-right {
+  background: #3d4a2d;
+  border: 2pt solid #70ad47;
+}
+.box-title {
+  color: #00d9ff;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+  text-align: center;
+}
+.box-title-green {
+  color: #70ad47;
+}
+.item {
+  color: #ffffff;
+  font-size: 11pt;
+  margin: 5pt 0;
+}
+.arrow-container {
+  padding: 0 20pt;
+}
+.arrow {
+  color: #ff6b6b;
+  font-size: 24pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">Agent 角色映射</h1>
+</div>
+<div class="content">
+  <div class="mapping">
+    <div class="box box-left">
+      <p class="box-title">Orchestrix</p>
+      <p class="item">Analyst</p>
+      <p class="item">PM</p>
+      <p class="item">UX-Expert</p>
+      <p class="item">Architect</p>
+      <p class="item">PO</p>
+      <p class="item">SM</p>
+      <p class="item">Dev</p>
+      <p class="item">QA</p>
+    </div>
+    <div class="arrow-container">
+      <p class="arrow">←→</p>
+    </div>
+    <div class="box box-right">
+      <p class="box-title box-title-green">游戏团队</p>
+      <p class="item">市场调研</p>
+      <p class="item">主策划</p>
+      <p class="item">UI设计</p>
+      <p class="item">主程序</p>
+      <p class="item">制作人</p>
+      <p class="item">项目管理</p>
+      <p class="item">程序员</p>
+      <p class="item">测试工程师</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

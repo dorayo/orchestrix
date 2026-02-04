@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 15pt 30pt;
+  flex: 1;
+  display: flex;
+}
+.column {
+  flex: 1;
+  padding: 0 10pt;
+}
+.section-title {
+  color: #ff6b6b;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+}
+.metric {
+  background: #1a2332;
+  padding: 10pt 15pt;
+  border-radius: 6pt;
+  margin-bottom: 8pt;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.metric-name {
+  color: #ffffff;
+  font-size: 12pt;
+  margin: 0;
+}
+.metric-value {
+  color: #70ad47;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0;
+}
+.metric-bad {
+  color: #888888;
+  font-size: 11pt;
+  margin: 0;
+}
+.metric-good {
+  color: #70ad47;
+  font-size: 11pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">预期效果</h1>
+</div>
+<div class="content">
+  <div class="column">
+    <p class="section-title">效率提升</p>
+    <div class="metric">
+      <p class="metric-name">需求文档</p>
+      <p class="metric-value">10x</p>
+    </div>
+    <div class="metric">
+      <p class="metric-name">技术方案</p>
+      <p class="metric-value">10x</p>
+    </div>
+    <div class="metric">
+      <p class="metric-name">任务拆分</p>
+      <p class="metric-value">8x</p>
+    </div>
+    <div class="metric">
+      <p class="metric-name">新人上手</p>
+      <p class="metric-value">3x</p>
+    </div>
+  </div>
+  <div class="column">
+    <p class="section-title">质量提升</p>
+    <div class="metric">
+      <div>
+        <p class="metric-name">CR通过率</p>
+        <p class="metric-bad">60-70%</p>
+      </div>
+      <p class="metric-good">→ 90%+</p>
+    </div>
+    <div class="metric">
+      <div>
+        <p class="metric-name">文档完整率</p>
+        <p class="metric-bad">40-60%</p>
+      </div>
+      <p class="metric-good">→ 95%+</p>
+    </div>
+    <div class="metric">
+      <div>
+        <p class="metric-name">返工率</p>
+        <p class="metric-bad">30-40%</p>
+      </div>
+      <p class="metric-good">→ &lt;10%</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

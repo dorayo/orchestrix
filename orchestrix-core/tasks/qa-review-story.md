@@ -594,17 +594,69 @@ expected_structure:
 - Status: Cannot verify implementation
 - Skip to Step 4.6.5 with FAIL result
 
+### 4.6.1.5 Placeholder Pattern Pre-Scan (MANDATORY - Before Semantic Verification)
+
+**Purpose**: Fast-fail detection of unpopulated template defaults. Catches incomplete traceability matrices before per-AC semantic verification begins.
+
+For EACH AC entry in `ac_traceability`, scan for these placeholder patterns:
+
+**PLACEHOLDER DETECTION RULES**:
+
+A `code_locations` or `test_locations` value is a **PLACEHOLDER** (not real evidence) if ANY of these is true:
+- Array is empty: `[]`
+- Array contains empty strings: `[""]` or `["", ""]`
+- Any element is whitespace-only (matches `^\s*$`)
+- Any element contains literal text: `TODO`, `FIXME`, `pending`, `TBD`
+- Any element is the template default: `""  # TODO: Add file:line-range` or `""  # TODO: Add test_file:test_name`
+- Any element does not contain a `:` separator (valid format requires `file:line-range` or `file:function`)
+
+An `aspects_covered` section is **UNCHANGED FROM TEMPLATE** if ALL boolean values (`main_scenario`, `business_rules`, `data_validation`, `error_handling`) are `false`.
+
+**Scan each AC entry**:
+
+| Check | Condition | Severity | Issue |
+|-------|-----------|----------|-------|
+| code_locations placeholder | `code_locations` matches any PLACEHOLDER rule above | CRITICAL | "AC{N} code_locations contains template placeholder — Dev did not provide implementation evidence" |
+| test_locations placeholder | `test_locations` matches any PLACEHOLDER rule above | HIGH | "AC{N} test_locations contains template placeholder — Dev did not provide test evidence" |
+| aspects_covered unchanged | ALL `aspects_covered` flags are `false` | HIGH | "AC{N} aspects_covered flags are all false — unchanged from template defaults" |
+| combined signal | code_locations is PLACEHOLDER AND aspects_covered all `false` | CRITICAL | "AC{N} traceability entry is entirely template default — never populated by Dev" |
+
+**Pre-Scan Result**:
+
+```yaml
+placeholder_scan:
+  total_acs: {count}
+  placeholder_detected: {count}
+  aspects_unchanged: {count}
+  clean_entries: {count}
+  flagged_acs: [{ac_id, issues}]
+```
+
+**Pre-Scan Decision**:
+
+| Condition | Action |
+|-----------|--------|
+| Zero placeholders AND zero unchanged aspects | PASS — continue to 4.6.2 for full semantic verification |
+| Some placeholders detected | Record issues above. Skip semantic verification (Steps B/C in 4.6.2) for flagged ACs only — they are already confirmed FAIL. Continue 4.6.2 for clean ACs |
+| ALL ACs are placeholders | Record CRITICAL: "AC Traceability Matrix entirely unpopulated — all entries are template defaults". Set `ac_traceability_found: false`. Skip to Step 4.6.5 with FAIL |
+
 ### 4.6.2 Verify Each AC Implementation
 
 For EACH AC in `story.acceptance_criteria`:
 
-**A. Check Traceability Entry Exists**
+**A. Check Traceability Entry Exists and Is Not Placeholder**
 
 | Condition | Severity | Issue |
 |-----------|----------|-------|
-| No entry for AC in traceability matrix | CRITICAL | "AC{N} has no traceability entry - cannot verify implementation" |
-| Entry exists but `code_locations` empty | CRITICAL | "AC{N} traceability entry has no code locations" |
-| Entry exists but `test_locations` empty | HIGH | "AC{N} traceability entry has no test locations" |
+| No entry for AC in traceability matrix | CRITICAL | "AC{N} has no traceability entry — cannot verify implementation" |
+| Entry exists but `code_locations` is `[]` (empty array) | CRITICAL | "AC{N} has no code locations — empty array" |
+| Entry exists but `code_locations` contains only empty strings `[""]` | CRITICAL | "AC{N} code_locations is template placeholder (empty string) — not populated by Dev" |
+| Entry exists but `code_locations` values contain `TODO` or `FIXME` | CRITICAL | "AC{N} code_locations contains TODO marker — not populated by Dev" |
+| Entry exists but `test_locations` is `[]` or contains only `[""]` | HIGH | "AC{N} test_locations is empty or template placeholder — not populated by Dev" |
+| Entry exists but `test_locations` values contain `TODO` or `FIXME` | HIGH | "AC{N} test_locations contains TODO marker — not populated by Dev" |
+| Entry exists but ALL `aspects_covered` values are `false` | HIGH | "AC{N} aspects_covered unchanged from template defaults — Dev did not verify coverage" |
+
+**CRITICAL RULE**: An AC with PLACEHOLDER `code_locations` (empty string, TODO, empty array) MUST NOT proceed to semantic verification (Steps B and C below). It is an automatic CRITICAL issue. Only ACs with real file:line-range references proceed to semantic verification.
 
 **B. Verify Code Actually Implements AC**
 

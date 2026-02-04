@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  width: 400pt;
+  margin-bottom: 20pt;
+}
+.cell {
+  width: 195pt;
+  height: 80pt;
+  background: #1a2332;
+  border: 1pt solid #2d3d4a;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.cell-title {
+  color: #00d9ff;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 5pt 0;
+}
+.cell-desc {
+  color: #aaaaaa;
+  font-size: 11pt;
+  margin: 0;
+}
+.flow {
+  color: #ffffff;
+  font-size: 12pt;
+  margin: 0 0 15pt 0;
+  text-align: center;
+}
+.highlight {
+  color: #70ad47;
+  font-size: 16pt;
+  margin: 0;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">演示 3：全自动协作</h1>
+</div>
+<div class="content">
+  <div class="grid">
+    <div class="cell">
+      <p class="cell-title">Architect</p>
+      <p class="cell-desc">技术审核</p>
+    </div>
+    <div class="cell">
+      <p class="cell-title">Dev</p>
+      <p class="cell-desc">编码实现</p>
+    </div>
+    <div class="cell">
+      <p class="cell-title">SM</p>
+      <p class="cell-desc">任务拆分</p>
+    </div>
+    <div class="cell">
+      <p class="cell-title">QA</p>
+      <p class="cell-desc">代码审查</p>
+    </div>
+  </div>
+  <p class="flow">SM创建 → Architect审 → Dev写 → QA测 → 自动提交</p>
+  <p class="highlight">人类可以去喝咖啡了 :)</p>
+</div>
+</body>
+</html>

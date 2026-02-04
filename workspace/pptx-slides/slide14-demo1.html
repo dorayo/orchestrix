@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+  display: flex;
+}
+.left {
+  flex: 1;
+  padding-right: 20pt;
+}
+.right {
+  width: 280pt;
+}
+.code-block {
+  background: #1a2332;
+  padding: 15pt;
+  border-radius: 8pt;
+  margin-bottom: 15pt;
+  border-left: 3pt solid #00d9ff;
+}
+.code {
+  color: #00d9ff;
+  font-size: 12pt;
+  font-family: Courier New, monospace;
+  margin: 0;
+}
+.output-title {
+  color: #ff6b6b;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+}
+.output-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8pt;
+}
+.check {
+  color: #70ad47;
+  font-size: 14pt;
+  margin: 0;
+  width: 20pt;
+}
+.output-text {
+  color: #ffffff;
+  font-size: 12pt;
+  margin: 0;
+}
+.highlight-box {
+  background: #2d4a3e;
+  padding: 15pt;
+  border-radius: 8pt;
+  border-left: 4pt solid #70ad47;
+}
+.highlight-text {
+  color: #70ad47;
+  font-size: 16pt;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">演示 1：需求生成</h1>
+</div>
+<div class="content">
+  <div class="left">
+    <div class="code-block">
+      <p class="code">@pm "设计一个玩家背包系统，</p>
+      <p class="code">    支持道具堆叠和快捷栏"</p>
+    </div>
+    <p class="output-title">产出（实时）</p>
+    <div class="output-item">
+      <p class="check">✓</p>
+      <p class="output-text">功能清单</p>
+    </div>
+    <div class="output-item">
+      <p class="check">✓</p>
+      <p class="output-text">优先级矩阵</p>
+    </div>
+    <div class="output-item">
+      <p class="check">✓</p>
+      <p class="output-text">验收标准</p>
+    </div>
+    <div class="output-item">
+      <p class="check">✓</p>
+      <p class="output-text">边界条件</p>
+    </div>
+  </div>
+  <div class="right">
+    <div class="highlight-box">
+      <p class="highlight-text">5分钟</p>
+      <p class="highlight-text">=</p>
+      <p class="highlight-text">策划2天工作量</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

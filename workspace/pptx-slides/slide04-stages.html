@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 25pt 30pt;
+  flex: 1;
+}
+.stages {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20pt;
+}
+.stage {
+  text-align: center;
+  padding: 12pt 8pt;
+  background: #1a2332;
+  border-radius: 8pt;
+  width: 80pt;
+}
+.stage-name {
+  color: #00d9ff;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 5pt 0;
+}
+.stage-desc {
+  color: #aaaaaa;
+  font-size: 10pt;
+  margin: 0;
+}
+.arrow {
+  color: #00d9ff;
+  font-size: 20pt;
+  margin: 0;
+  align-self: center;
+}
+.bottom-row {
+  display: flex;
+  margin-top: 15pt;
+}
+.info-box {
+  flex: 1;
+  margin: 0 10pt;
+  padding: 15pt;
+  background: #1a2332;
+  border-radius: 8pt;
+  border-left: 3pt solid #ff6b6b;
+}
+.info-title {
+  color: #ff6b6b;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 8pt 0;
+}
+.info-text {
+  color: #cccccc;
+  font-size: 11pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">游戏研发 7 大阶段</h1>
+</div>
+<div class="content">
+  <div class="stages">
+    <div class="stage">
+      <p class="stage-name">调研</p>
+      <p class="stage-desc">市场分析</p>
+    </div>
+    <p class="arrow">→</p>
+    <div class="stage">
+      <p class="stage-name">立项</p>
+      <p class="stage-desc">确定方向</p>
+    </div>
+    <p class="arrow">→</p>
+    <div class="stage">
+      <p class="stage-name">Demo</p>
+      <p class="stage-desc">核心验证</p>
+    </div>
+    <p class="arrow">→</p>
+    <div class="stage">
+      <p class="stage-name">Alpha</p>
+      <p class="stage-desc">内容生产</p>
+    </div>
+    <p class="arrow">→</p>
+    <div class="stage">
+      <p class="stage-name">Beta</p>
+      <p class="stage-desc">全面测试</p>
+    </div>
+    <p class="arrow">→</p>
+    <div class="stage">
+      <p class="stage-name">上市</p>
+      <p class="stage-desc">正式发布</p>
+    </div>
+  </div>
+  <div class="bottom-row">
+    <div class="info-box">
+      <p class="info-title">规划阶段</p>
+      <p class="info-text">调研 → 立项 → Demo</p>
+      <p class="info-text">验证可行性和核心玩法</p>
+    </div>
+    <div class="info-box">
+      <p class="info-title">生产阶段</p>
+      <p class="info-text">Alpha → Beta</p>
+      <p class="info-text">大规模内容生产和测试</p>
+    </div>
+    <div class="info-box">
+      <p class="info-title">运营阶段</p>
+      <p class="info-text">上市 → 持续迭代</p>
+      <p class="info-text">版本更新和用户维护</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

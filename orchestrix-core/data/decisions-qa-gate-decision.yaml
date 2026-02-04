@@ -3,9 +3,11 @@ decision_type: qa-gate-decision
 
 description: >
   Determine QA Gate result (PASS/FAIL/CONCERNS) based on automated test results,
-  E2E testing outcomes, and task checkbox verification. Validates that checked
-  boxes have matching deliverables. Focuses on real test execution rather than
-  static code review. Uses progressive standards for re-reviews.
+  E2E testing outcomes, task checkbox verification, and AC coverage verification.
+  Validates that checked boxes have matching deliverables and that all ACs have
+  verified implementation evidence (not template placeholders). Focuses on real
+  test execution rather than static code review. Uses progressive standards for
+  re-reviews.
 
 inputs:
   # Test execution results (primary inputs)
@@ -85,6 +87,27 @@ inputs:
     required: false
     description: "Count of checked boxes without matching deliverables"
 
+  # AC Coverage Verification (Step 4.6) - hard backstop
+  - name: ac_coverage_rate
+    type: number
+    required: false
+    description: "Percentage of ACs fully verified by QA (0-100). From Step 4.6 ac_coverage_result.coverage_rate."
+
+  - name: ac_coverage_passed
+    type: boolean
+    required: false
+    description: "Whether AC coverage verification passed. False if coverage_rate < 100 or any critical AC issue found."
+
+  - name: ac_traceability_found
+    type: boolean
+    required: false
+    description: "Whether ac_traceability section exists in story and contains at least one non-placeholder entry."
+
+  - name: ac_discrepancies_count
+    type: number
+    required: false
+    description: "Count of discrepancies between Dev claims and QA findings from Step 4.6.3."
+
   # Deliverable context (for E2E requirement)
   - name: has_user_facing_deliverable
     type: boolean
@@ -149,7 +172,8 @@ rules:
       has_user_facing_deliverable == false AND
       has_new_ui_components == false AND
       issues_by_severity.critical == 0 AND
-      issues_by_severity.high == 0
+      issues_by_severity.high == 0 AND
+      ac_coverage_passed != false
     result: PASS
     reasoning: "All automated tests passed. E2E skipped (no user-facing deliverables)."
     next_status: Done
@@ -169,7 +193,8 @@ rules:
       network_errors_found == false AND
       issues_by_severity.critical == 0 AND
       issues_by_severity.high == 0 AND
-      (issues_by_severity.medium <= 1 OR review_round >= 2)
+      (issues_by_severity.medium <= 1 OR review_round >= 2) AND
+      ac_coverage_passed != false
     result: PASS
     reasoning: "All automated and E2E tests passed with no runtime errors."
     next_status: Done
@@ -186,7 +211,8 @@ rules:
       automated_tests_passed == true AND
       issues_by_severity.critical == 0 AND
       issues_by_severity.high <= 1 AND
-      issues_by_severity.medium <= 2
+      issues_by_severity.medium <= 2 AND
+      ac_coverage_passed != false
     result: PASS
     reasoning: "Re-review with acceptable issues. Progressive standard applied."
     next_status: Done
@@ -195,6 +221,54 @@ rules:
       quality_level: "acceptable"
       progressive_standard_applied: true
       test_based_decision: true
+
+  # ============================================
+  # FAIL RULES: AC Coverage (Hard Backstop)
+  # ============================================
+
+  # FAIL: AC Traceability Matrix missing or entirely placeholder
+  - id: fail_no_ac_traceability
+    priority: 6
+    condition: "ac_traceability_found == false"
+    result: FAIL
+    reasoning: "AC Traceability Matrix not found in story or entirely unpopulated with template placeholders. Dev must provide implementation evidence for every AC."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "incomplete"
+      expected_effort: "medium"
+      failure_type: "ac_traceability_missing"
+      fix_guidance: "Dev must populate ac_traceability section with actual code_locations and test_locations for every AC. Empty strings and TODO placeholders are not valid."
+
+  # FAIL: AC coverage below minimum threshold
+  - id: fail_ac_coverage_low
+    priority: 7
+    condition: >
+      ac_coverage_passed == false AND
+      ac_coverage_rate < 80
+    result: FAIL
+    reasoning: "AC coverage rate below 80%. Multiple Acceptance Criteria lack verified implementation evidence."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "poor"
+      expected_effort: "high"
+      failure_type: "ac_coverage_low"
+      fix_guidance: "Dev must provide verified code_locations and test_locations for all ACs. Check ac_coverage_verification report for specific gaps."
+
+  # FAIL: AC coverage verification explicitly failed
+  - id: fail_ac_coverage_failed
+    priority: 8
+    condition: "ac_coverage_passed == false"
+    result: FAIL
+    reasoning: "AC coverage verification failed. One or more ACs lack verified implementation evidence or have critical discrepancies."
+    next_status: InProgress
+    next_action: "handoff_to_dev_rework"
+    metadata:
+      quality_level: "incomplete"
+      expected_effort: "medium"
+      failure_type: "ac_coverage_failed"
+      fix_guidance: "Dev must address AC traceability issues identified by QA in the ac_coverage_verification report."
 
   # ============================================
   # FAIL RULES: Critical Test Failures
@@ -422,15 +496,18 @@ output:
       failure_type: {type: string}
 
 metadata:
-  version: "2.1.0"
-  last_updated: "2025-12-24"
+  version: "2.2.0"
+  last_updated: "2026-02-04"
   owner: "QA Agent"
   related_requirements: ["6.2", "6.4", "6.8"]
   usage_context: >
     Called by QA at end of review-story. Decision based on test execution results,
-    E2E testing outcomes, and task checkbox verification. Primary factors: automated
-    test pass/fail, E2E test results, console/network errors, checkbox completion
-    and consistency rates. Progressive standards apply to re-reviews.
+    E2E testing outcomes, task checkbox verification, and AC coverage verification.
+    Primary factors: automated test pass/fail, E2E test results, console/network
+    errors, checkbox completion and consistency rates, AC coverage rate and
+    traceability verification. AC coverage acts as a hard backstop — PASS is
+    blocked if ac_coverage_passed == false regardless of other inputs.
+    Progressive standards apply to re-reviews.
     PASS: Set Status=Done. FAIL/CONCERNS: Set Status=InProgress, handoff to Dev.
 
 examples:
@@ -516,3 +593,27 @@ examples:
       gate_result: FAIL
       next_status: InProgress
       reasoning: "Less than 80% of checked boxes have matching deliverables. Significant gaps in implementation."
+
+  # AC traceability contains template placeholders
+  - input:
+      automated_tests_passed: true
+      ac_coverage_passed: false
+      ac_coverage_rate: 33
+      ac_traceability_found: true
+      issues_by_severity: {critical: 2, high: 0, medium: 0, low: 0}
+      review_round: 1
+    output:
+      gate_result: FAIL
+      next_status: InProgress
+      reasoning: "AC coverage rate below 80%. Multiple Acceptance Criteria lack verified implementation evidence."
+
+  # AC traceability section entirely missing or all placeholder
+  - input:
+      automated_tests_passed: true
+      ac_traceability_found: false
+      issues_by_severity: {critical: 1, high: 0, medium: 0, low: 0}
+      review_round: 1
+    output:
+      gate_result: FAIL
+      next_status: InProgress
+      reasoning: "AC Traceability Matrix not found in story or entirely unpopulated with template placeholders."

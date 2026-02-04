@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 15pt 30pt;
+  flex: 1;
+}
+.solution-row {
+  display: flex;
+  margin-bottom: 10pt;
+}
+.pain {
+  width: 200pt;
+  background: #4a2d3d;
+  padding: 10pt 15pt;
+  border-radius: 8pt 0 0 8pt;
+}
+.pain-text {
+  color: #ff6b6b;
+  font-size: 12pt;
+  margin: 0;
+}
+.solution {
+  flex: 1;
+  background: #2d4a3e;
+  padding: 10pt 15pt;
+  border-radius: 0 8pt 8pt 0;
+}
+.solution-text {
+  color: #70ad47;
+  font-size: 12pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">痛点 vs 解决方案</h1>
+</div>
+<div class="content">
+  <div class="solution-row">
+    <div class="pain"><p class="pain-text">需求文档不完整</p></div>
+    <div class="solution"><p class="solution-text">PM Agent 强制模板输出</p></div>
+  </div>
+  <div class="solution-row">
+    <div class="pain"><p class="pain-text">文档更新不及时</p></div>
+    <div class="solution"><p class="solution-text">文档驱动开发</p></div>
+  </div>
+  <div class="solution-row">
+    <div class="pain"><p class="pain-text">跨部门沟通低效</p></div>
+    <div class="solution"><p class="solution-text">Agent Handoff 自动交接</p></div>
+  </div>
+  <div class="solution-row">
+    <div class="pain"><p class="pain-text">Code Review 走过场</p></div>
+    <div class="solution"><p class="solution-text">强制 QA 审查门禁</p></div>
+  </div>
+  <div class="solution-row">
+    <div class="pain"><p class="pain-text">新人上手慢</p></div>
+    <div class="solution"><p class="solution-text">标准化流程 + AI 辅助</p></div>
+  </div>
+  <div class="solution-row">
+    <div class="pain"><p class="pain-text">进度难追踪</p></div>
+    <div class="solution"><p class="solution-text">8个明确状态，实时可见</p></div>
+  </div>
+</div>
+</body>
+</html>

@@ -151,22 +151,35 @@ ac_traceability_entry:
 For each AC entry:
 
 **Step A: Code Location Verification**
-1. Check if `code_locations` is populated (not empty)
+1. Check if `code_locations` is populated (not empty — see DEFINITION below)
 2. Navigate to each listed location
 3. Read the code at that location
 4. Verify the code actually implements the AC requirement (semantic check)
+
+**DEFINITION — "populated" means real evidence, not template defaults**:
+
+A `code_locations` or `test_locations` array is NOT populated if ANY of:
+- Array is `[]` (empty)
+- Array contains only empty strings: `[""]`
+- Any element is whitespace-only (matches `^\s*$`)
+- Any element contains literal: `TODO`, `FIXME`, `pending`, `TBD`
+- Any element matches template default: `""  # TODO: Add file:line-range`
+
+A valid `code_locations` entry MUST be a real file path with line range (e.g., `src/service.ts:45-67`). Template placeholders are NOT valid.
 
 **Validation Checks**:
 
 | Condition | Severity | Issue |
 |-----------|----------|-------|
-| `code_locations` is empty | CRITICAL | "No implementation location provided for {AC_ID}" |
-| File does not exist | CRITICAL | "Implementation file not found: {file_path} for {AC_ID}" |
+| `code_locations` is `[]` (empty array) | CRITICAL | "No implementation location provided for {AC_ID}" |
+| `code_locations` contains only empty strings `[""]` | CRITICAL | "Template placeholder not replaced for {AC_ID} — must provide actual file:line-range" |
+| `code_locations` contains `TODO` or `FIXME` text | CRITICAL | "TODO placeholder in code_locations for {AC_ID} — must replace with actual evidence" |
+| File at code location does not exist | CRITICAL | "Implementation file not found: {file_path} for {AC_ID}" |
 | Code at location is unrelated to AC | CRITICAL | "Code at {location} does not implement {AC_ID}" |
 | Code partially implements AC | MAJOR | "Partial implementation for {AC_ID}: {missing_aspect}" |
 
 **Step B: Test Coverage Verification**
-1. Check if `test_locations` is populated
+1. Check if `test_locations` is populated (same DEFINITION as Step A — empty strings and TODO placeholders are NOT populated)
 2. Navigate to each test location
 3. Verify test actually tests the AC (not just "exists")
 
@@ -174,10 +187,23 @@ For each AC entry:
 
 | Condition | Severity | Issue |
 |-----------|----------|-------|
-| `test_locations` is empty | HIGH | "No test location provided for {AC_ID}" |
+| `test_locations` is `[]` or contains only `[""]` | HIGH | "No test location provided for {AC_ID} — empty or template placeholder" |
+| `test_locations` contains `TODO` or `FIXME` text | HIGH | "TODO placeholder in test_locations for {AC_ID} — must replace with actual evidence" |
 | Test file does not exist | HIGH | "Test file not found: {test_file} for {AC_ID}" |
 | Test doesn't assert AC behavior | MAJOR | "Test at {location} doesn't verify {AC_ID} requirements" |
 | Test is stub/empty | CRITICAL | "Test for {AC_ID} is a stub with no assertions" |
+
+**Step C: Verify `aspects_covered` Flags**
+
+For each AC entry, check the `aspects_covered` boolean flags:
+
+| Condition | Severity | Issue |
+|-----------|----------|-------|
+| ALL `aspects_covered` flags (`main_scenario`, `business_rules`, `data_validation`, `error_handling`) are `false` | CRITICAL | "AC{N} aspects_covered entirely false — template defaults not updated by Dev" |
+| `main_scenario` is `false` but `code_locations` has real entries | HIGH | "AC{N} main_scenario marked false despite having code_locations — Dev must verify and update" |
+| More than half of applicable aspects are `false` | MAJOR | "AC{N} has majority aspects unverified — review implementation completeness" |
+
+**Rule**: If ALL `aspects_covered` values are `false`, the AC status MUST be `INCOMPLETE` regardless of whether `code_locations` appears populated. This catches cases where Dev copies file paths but never verified actual aspect coverage.
 
 **1.6.3 Cross-Reference with AC Requirements**
 

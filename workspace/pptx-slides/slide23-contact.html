@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 12pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 20pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 15pt 30pt;
+  flex: 1;
+  display: flex;
+}
+.left {
+  flex: 1;
+  padding-right: 25pt;
+}
+.step {
+  background: #1a2332;
+  padding: 10pt 15pt;
+  border-radius: 6pt;
+  margin-bottom: 10pt;
+  border-left: 3pt solid #00d9ff;
+}
+.step-num {
+  color: #00d9ff;
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0 0 3pt 0;
+}
+.step-title {
+  color: #ffffff;
+  font-size: 13pt;
+  font-weight: bold;
+  margin: 0 0 3pt 0;
+}
+.step-desc {
+  color: #aaaaaa;
+  font-size: 11pt;
+  margin: 0;
+}
+.right {
+  width: 180pt;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.qr-placeholder {
+  width: 130pt;
+  height: 130pt;
+  background: #ffffff;
+  border-radius: 6pt;
+  margin-bottom: 8pt;
+}
+.contact-name {
+  color: #ffffff;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 3pt 0;
+}
+.contact-info {
+  color: #aaaaaa;
+  font-size: 11pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">下一步</h1>
+</div>
+<div class="content">
+  <div class="left">
+    <div class="step">
+      <p class="step-num">1</p>
+      <p class="step-title">立即体验</p>
+      <p class="step-desc">访问 youlidao.ai</p>
+    </div>
+    <div class="step">
+      <p class="step-num">2</p>
+      <p class="step-title">试点项目</p>
+      <p class="step-desc">选一个小功能，1-2周见效</p>
+    </div>
+    <div class="step">
+      <p class="step-num">3</p>
+      <p class="step-title">深度合作</p>
+      <p class="step-desc">探讨游戏开发专属扩展</p>
+    </div>
+  </div>
+  <div class="right">
+    <div class="qr-placeholder" id="qr"></div>
+    <p class="contact-name">尤明</p>
+    <p class="contact-info">扫码添加微信</p>
+  </div>
+</div>
+</body>
+</html>

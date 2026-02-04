@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+  display: flex;
+}
+.org-chart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.producer {
+  background: #4a3d6a;
+  padding: 12pt 25pt;
+  border-radius: 8pt;
+  margin-bottom: 15pt;
+}
+.producer-text {
+  color: #ffffff;
+  font-size: 16pt;
+  font-weight: bold;
+  margin: 0;
+}
+.teams {
+  display: flex;
+  justify-content: center;
+  gap: 15pt;
+  margin-bottom: 15pt;
+}
+.team-box {
+  padding: 12pt 20pt;
+  border-radius: 8pt;
+  text-align: center;
+}
+.team-plan { background: #2d4a3e; }
+.team-art { background: #4a3d2d; }
+.team-dev { background: #2d3d4a; }
+.team-text {
+  color: #ffffff;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0;
+}
+.qa-box {
+  background: #4a2d3d;
+  padding: 12pt 40pt;
+  border-radius: 8pt;
+}
+.qa-text {
+  color: #ffffff;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0;
+}
+.right-panel {
+  width: 260pt;
+  padding-left: 20pt;
+}
+.role-card {
+  background: #1a2332;
+  padding: 10pt 15pt;
+  border-radius: 6pt;
+  margin-bottom: 8pt;
+  border-left: 3pt solid #00d9ff;
+}
+.role-name {
+  color: #00d9ff;
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0 0 3pt 0;
+}
+.role-desc {
+  color: #aaaaaa;
+  font-size: 10pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">游戏公司 4 大职能</h1>
+</div>
+<div class="content">
+  <div class="org-chart">
+    <div class="producer">
+      <p class="producer-text">制作人</p>
+    </div>
+    <div class="teams">
+      <div class="team-box team-plan">
+        <p class="team-text">策划</p>
+      </div>
+      <div class="team-box team-art">
+        <p class="team-text">美术</p>
+      </div>
+      <div class="team-box team-dev">
+        <p class="team-text">程序</p>
+      </div>
+    </div>
+    <div class="qa-box">
+      <p class="qa-text">QA 测试</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="role-card">
+      <p class="role-name">策划</p>
+      <p class="role-desc">系统 / 数值 / 关卡 / 文案</p>
+    </div>
+    <div class="role-card">
+      <p class="role-name">美术</p>
+      <p class="role-desc">原画 / 3D / UI / 动画特效</p>
+    </div>
+    <div class="role-card">
+      <p class="role-name">程序</p>
+      <p class="role-desc">客户端 / 服务端 / 引擎工具</p>
+    </div>
+    <div class="role-card">
+      <p class="role-name">QA</p>
+      <p class="role-desc">功能测试 / 性能测试 / 兼容测试</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

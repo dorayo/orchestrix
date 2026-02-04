@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #1a2332;
+  padding: 15pt 30pt;
+}
+.header-title {
+  color: #00d9ff;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 20pt 30pt;
+  flex: 1;
+}
+.challenge {
+  background: #2d4a3e;
+  padding: 15pt 20pt;
+  border-radius: 8pt;
+  margin-bottom: 20pt;
+  border-left: 4pt solid #70ad47;
+}
+.challenge-text {
+  color: #ffffff;
+  font-size: 16pt;
+  margin: 0;
+  text-align: center;
+}
+.qa-row {
+  display: flex;
+  margin-bottom: 10pt;
+}
+.question {
+  width: 260pt;
+  background: #1a2332;
+  padding: 10pt 15pt;
+  border-radius: 8pt 0 0 8pt;
+}
+.question-text {
+  color: #ff6b6b;
+  font-size: 12pt;
+  margin: 0;
+}
+.answer {
+  flex: 1;
+  background: #2d3d4a;
+  padding: 10pt 15pt;
+  border-radius: 0 8pt 8pt 0;
+}
+.answer-text {
+  color: #ffffff;
+  font-size: 12pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">互动环节</h1>
+</div>
+<div class="content">
+  <div class="challenge">
+    <p class="challenge-text">"给我一个你们正在做的功能，我现场演示"</p>
+  </div>
+  <div class="qa-row">
+    <div class="question"><p class="question-text">和 Cursor 什么区别？</p></div>
+    <div class="answer"><p class="answer-text">工具 vs 团队。Cursor是1个人，我们是1支队伍</p></div>
+  </div>
+  <div class="qa-row">
+    <div class="question"><p class="question-text">会不会限制创造力？</p></div>
+    <div class="answer"><p class="answer-text">标准化的是流程，不是创意</p></div>
+  </div>
+  <div class="qa-row">
+    <div class="question"><p class="question-text">成本怎么算？</p></div>
+    <div class="answer"><p class="answer-text">开源免费 + API费用。10x效率远超成本</p></div>
+  </div>
+</div>
+</body>
+</html>

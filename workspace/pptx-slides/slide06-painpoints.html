@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #0f1419; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0f1419;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  background: #4a2d3d;
+  padding: 12pt 30pt;
+}
+.header-title {
+  color: #ff6b6b;
+  font-size: 20pt;
+  font-weight: bold;
+  margin: 0;
+}
+.content {
+  padding: 15pt 25pt;
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10pt;
+  align-content: flex-start;
+}
+.pain-item {
+  width: 210pt;
+  background: #1a2332;
+  padding: 10pt 12pt;
+  border-radius: 6pt;
+  border-left: 3pt solid #ff6b6b;
+}
+.pain-title {
+  color: #ff6b6b;
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0 0 4pt 0;
+}
+.pain-desc {
+  color: #ffffff;
+  font-size: 10pt;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 class="header-title">常见痛点 - 你们有没有遇到过？</h1>
+</div>
+<div class="content">
+  <div class="pain-item">
+    <p class="pain-title">文档问题</p>
+    <p class="pain-desc">需求文档不完整、口头需求多 → 返工</p>
+  </div>
+  <div class="pain-item">
+    <p class="pain-title">同步问题</p>
+    <p class="pain-desc">文档更新不及时 → 版本不一致</p>
+  </div>
+  <div class="pain-item">
+    <p class="pain-title">沟通问题</p>
+    <p class="pain-desc">跨部门沟通效率低 → 进度延误</p>
+  </div>
+  <div class="pain-item">
+    <p class="pain-title">质量问题</p>
+    <p class="pain-desc">Code Review 形同虚设 → 技术债务</p>
+  </div>
+  <div class="pain-item">
+    <p class="pain-title">培训问题</p>
+    <p class="pain-desc">新人上手慢 → 知识传承困难</p>
+  </div>
+  <div class="pain-item">
+    <p class="pain-title">管理问题</p>
+    <p class="pain-desc">进度难以追踪 → 风险发现滞后</p>
+  </div>
+</div>
+</body>
+</html>
