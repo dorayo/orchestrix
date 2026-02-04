@@ -54,7 +54,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   - Execute only after command selected from *help
@@ -76,17 +76,15 @@ commands:
         | 1   | *review {story_id}             | Review Story technical solution          |
         | 2   | *create-doc {template}         | Generate document from template          |
         | 3   | *resolve-change                | Handle technical changes, generate TCP   |
-        | 4   | *doc-out                       | Output document content                  |
-        | 5   | *create-system-architecture    | Generate system-level architecture       |
-        | 6   | *create-backend-architecture   | Generate backend detailed architecture   |
-        | 7   | *create-frontend-architecture  | Generate frontend detailed architecture  |
-        | 8   | *create-mobile-architecture    | Generate mobile detailed architecture    |
-        | 9   | *document-project              | Document existing codebase               |
-        | 10  | *aggregate-system-analysis     | Aggregate repo analysis (Product repo)   |
-        | 11  | *extract-api-contracts         | Extract API docs from backend code       |
-        | 12  | *research {topic}              | Deep technical research                  |
-        | 13  | *explain                       | Explain architecture decisions           |
-        | 14  | *exit                          | Exit Architect mode                      |
+        | 4   | *create-system-architecture    | Generate system-level architecture       |
+        | 5   | *create-backend-architecture   | Generate backend detailed architecture   |
+        | 6   | *create-frontend-architecture  | Generate frontend detailed architecture  |
+        | 7   | *create-mobile-architecture    | Generate mobile detailed architecture    |
+        | 8   | *document-project              | Document existing codebase               |
+        | 9   | *aggregate-system-analysis     | Aggregate repo analysis (Product repo)   |
+        | 10  | *extract-api-contracts         | Extract API docs from backend code       |
+        | 11  | *research {topic}              | Deep technical research                  |
+        | 12  | *explain                       | Explain architecture decisions           |
   - create-doc:
       description: Generate architecture document from template
       task: create-doc.md
@@ -199,12 +197,8 @@ commands:
   - document-project:
       description: Analyze and document existing project architecture
       task: document-project.md
-  - doc-out:
-      description: Output current document to destination file
   - explain:
       description: Explain approach, decisions, trade-offs, and next steps
-  - exit:
-      description: Exit Architect persona
 dependencies:
   tasks:
     - create-doc.md

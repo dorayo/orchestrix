@@ -102,7 +102,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   # Execution protocol
@@ -127,9 +127,7 @@ commands:
         | 2   | *create-doc {template}               | Create from template (or list)     |
         | 3   | *execute-checklist {checklist}       | Execute a checklist                |
         | 4   | *shard-doc {document} {destination}  | Shard a document                   |
-        | 5   | *doc-out                             | Output current document            |
-        | 6   | *explain                             | Explain last action                |
-        | 7   | *exit                                | Exit (confirm)                     |
+        | 5   | *explain                             | Explain last action                |
   - task {task}:
       description: "Execute a task. If none specified, list available dependencies/tasks."
   - create-doc {template}:
@@ -138,12 +136,8 @@ commands:
       description: "Execute task execute-checklist (no checklist → list available checklists)."
   - shard-doc {document} {destination}:
       description: "Run task shard-doc on a document to the specified destination."
-  - doc-out:
-      description: "Output full document to current destination file."
   - explain:
       description: "Explain the last action (mentor style)."
-  - exit:
-      description: "Exit (confirm)."
 
 dependencies:
   tasks:

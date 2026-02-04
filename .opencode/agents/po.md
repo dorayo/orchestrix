@@ -105,7 +105,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   # Execution protocol
@@ -126,9 +126,7 @@ commands:
         | 2   | *shard                          | Shard PRD and Architecture documents           |
         | 3   | *route-change                   | Route change request to PM or Architect        |
         | 4   | *assemble [prd\|arch\|both]     | Assemble sharded docs for export               |
-        | 5   | *doc-out                        | Output current document                        |
-        | 6   | *explain                        | Explain last action                            |
-        | 7   | *exit                           | Exit persona                                   |
+        | 5   | *explain                        | Explain last action                            |
   - execute-checklist:
       description: "Run PO checklist; default to 'workflow-po-master-validation.md' if not specified."
       behavior:
@@ -171,12 +169,8 @@ commands:
         - "Uses md-tree assemble command"
         - "Generated files are DERIVED, not source of truth"
         - "Source of truth remains in sharded directories"
-  - doc-out:
-      description: "Output the full document to the current destination file."
   - explain:
       description: "Explain the last action (mentor style): approach, key decisions, trade-offs, next steps."
-  - exit:
-      description: "Exit (confirm), staying in-role until done."
 
 dependencies:
   tasks:

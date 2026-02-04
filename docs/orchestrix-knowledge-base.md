@@ -22,9 +22,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*brainstorm {topic}`      | Structured brainstorming session |
 | `*research-prompt {topic}` | Deep research prompt/plan        |
 | `*create-doc {template}`   | Generate document via template   |
-| `*doc-out`                 | Output current document          |
 | `*explain`                 | Explain last action              |
-| `*exit`                    | Exit persona                     |
 
 **Output**: `project-brief.md`
 
@@ -38,9 +36,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*revise-prd`            | Handle PRD-level changes, create PCP                     |
 | `*start-iteration`       | Start new iteration (post-MVP, requires sharded PRD)     |
 | `*status [--verbose]`    | View project status, health metrics, and recommendations |
-| `*doc-out`               | Output current document                                  |
 | `*explain`               | Explain last action                                      |
-| `*exit`                  | Exit persona                                             |
 
 **Output**: `prd.md`, `docs/proposals/product/PCP-YYYY-NNN.md`
 
@@ -53,7 +49,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*create-doc {template}` | Create from template (or list templates) |
 | `*generate-ui-prompt`    | Craft AI frontend generation prompt      |
 | `*explain`               | Explain last action                      |
-| `*exit`                  | End persona                              |
 
 **Output**: `front-end-spec.md`
 
@@ -74,9 +69,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*aggregate-system-analysis`    | Aggregate repo analysis (Product repo)  |
 | `*extract-api-contracts`        | Extract API docs from backend code      |
 | `*research {topic}`             | Deep technical research                 |
-| `*doc-out`                      | Output document content                 |
 | `*explain`                      | Explain architecture decisions          |
-| `*exit`                         | Exit Architect mode                     |
 
 **Output**: `architecture.md`, `docs/proposals/tech/TCP-YYYY-NNN.md`
 
@@ -90,9 +83,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*shard`                         | Shard PRD and Architecture documents            |
 | `*route-change`                  | Route change request to PM or Architect         |
 | `*assemble [prd\|arch\|both]`    | Assemble sharded docs for export                |
-| `*doc-out`                       | Output current document                         |
 | `*explain`                       | Explain last action                             |
-| `*exit`                          | Exit persona                                    |
 
 **Output**: Sharded docs in `docs/prd/`, `docs/architecture/`
 
@@ -108,7 +99,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*apply-proposal [{proposal_id}]`                             | Apply proposal to create/update Stories   |
 | `*story-checklist {story_id}`                                 | Validate Story quality                    |
 | `*init-registries`                                            | Initialize/refresh cumulative registries  |
-| `*exit`                                                       | Exit SM mode                              |
 
 **Output**: `docs/stories/{epic}.{story}-{title}.md`
 
@@ -125,7 +115,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*apply-qa-fixes {story_id}`             | Fix QA-reported issues                         |
 | `*run-tests`                             | Execute lint and test suite                    |
 | `*explain`                               | Explain implementation decisions               |
-| `*exit`                                  | Exit Dev mode                                  |
 
 **Output**: Implementation code + Tests
 
@@ -142,7 +131,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*nfr-assess {story_id}`      | Assess NFRs (security, performance)     |
 | `*trace {story_id}`           | Map requirements to Given/When/Then     |
 | `*risk-profile {story_id}`    | Generate risk assessment matrix         |
-| `*exit`                       | Exit QA mode                            |
 
 **Output**: QA Report + Git Commit
 

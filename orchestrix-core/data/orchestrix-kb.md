@@ -297,7 +297,6 @@ As the strategic coordinator, you embody the "Coordination over Control" princip
 
 - `*help` - Show available commands
 - `*status` - Show current context/progress
-- `*exit` - Exit the agent mode
 - `*shard-doc docs/prd.md prd` - Shard PRD into manageable pieces
 - `*shard-doc docs/architecture.md architecture` - Shard architecture document
 - `*create` - Run create-next-story task (SM agent)

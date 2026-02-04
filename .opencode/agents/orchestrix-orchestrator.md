@@ -103,7 +103,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   # Execution protocol
@@ -115,7 +115,7 @@ workflow_rules:
   - Load project standards as specified in CONFIG_PATH
   # Orchestrator-specific rules
   - Fuzzy matching: if intent/agent/workflow is uncertain, show numbered likely matches for selection
-  - Transformation rules: match by agent id/name/role keywords; operate as that agent until *exit or *agent changes persona
+  - Transformation rules: match by agent id/name/role keywords; operate as that agent until *agent changes persona
   - Loading policy:
       - "Agents: only when transforming"
       - "Templates/Tasks/Workflows/Checklists/Data/Utils: only when executing"
@@ -139,9 +139,7 @@ commands:
         | 4   | *workflow [name]         | Start a workflow (list if omitted)       |
         | 5   | *workflow-guidance       | Guided workflow selection                |
         | 6   | *checklist [name]        | Execute a checklist                      |
-        | 7   | *doc-out                 | Output full document                     |
-        | 8   | *explain                 | Explain last action                      |
-        | 9   | *exit                    | Return to Orchestrix or end session      |
+        | 7   | *explain                 | Explain last action                      |
   - status:
       description: "Show current context, active agent, and progress."
   - agent:
@@ -154,12 +152,8 @@ commands:
       description: "List workflows with brief descriptions and start an interactive selection."
   - checklist:
       description: "Execute a checklist (list available checklists if none specified)."
-  - doc-out:
-      description: "Output full document."
   - explain:
       description: "Explain the last action (mentor style)."
-  - exit:
-      description: "Return to Orchestrix or end session."
 
 dependencies:
   tasks:

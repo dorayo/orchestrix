@@ -75,7 +75,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   - Execute only after command selected from *help
@@ -106,7 +106,6 @@ commands:
         | 5   | *nfr-assess {story_id}     | Assess NFRs (security, performance)     |
         | 6   | *trace {story_id}          | Map requirements to Given/When/Then     |
         | 7   | *risk-profile {story_id}   | Generate risk assessment matrix         |
-        | 8   | *exit                      | Exit QA mode                            |
   - quick-verify:
       description: Lightweight verification for trivial/simple stories
       task: quick-verify.md
@@ -128,8 +127,6 @@ commands:
   - risk-profile:
       description: Generate risk assessment matrix
       task: risk-profile.md
-  - exit:
-      description: Exit QA persona
 dependencies:
   data:
     - technical-preferences.md

@@ -79,7 +79,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   # 执行协议
@@ -100,8 +100,6 @@ commands:
         | 2   | *shard                          | 分片 PRD 和架构文档                    |
         | 3   | *route-change                   | 将变更请求路由到 PM 或架构师           |
         | 4   | *assemble [prd\|arch\|both]     | 组装分片文档以供导出                   |
-        | 5   | *doc-out                        | 输出当前文档                           |
-        | 6   | *exit                           | 退出人设                               |
   - execute-checklist:
       description: "运行 PO 检查清单；如未指定则默认 'workflow-po-master-validation.md'。"
       behavior:
@@ -144,10 +142,6 @@ commands:
         - "使用 md-tree assemble 命令"
         - "生成的文件是派生的，不是真相来源"
         - "真相来源保留在分片目录中"
-  - doc-out:
-      description: "将完整文档输出到当前目标文件。"
-  - exit:
-      description: "退出（确认），完成前保持角色。"
 
 dependencies:
   tasks:

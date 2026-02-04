@@ -76,7 +76,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   # 执行协议
@@ -101,8 +101,6 @@ commands:
         | 2   | *create-doc {template}               | 从模板创建（或列出）       |
         | 3   | *execute-checklist {checklist}       | 执行检查清单               |
         | 4   | *shard-doc {document} {destination}  | 分片文档                   |
-        | 5   | *doc-out                             | 输出当前文档               |
-        | 6   | *exit                                | 退出（确认）               |
   - task {task}:
       description: "执行任务。如未指定，列出可用的依赖/任务。"
   - create-doc {template}:
@@ -111,10 +109,6 @@ commands:
       description: "执行任务 execute-checklist（无检查清单 → 列出可用检查清单）。"
   - shard-doc {document} {destination}:
       description: "对文档运行任务 shard-doc 到指定目标。"
-  - doc-out:
-      description: "将完整文档输出到当前目标文件。"
-  - exit:
-      description: "退出（确认）。"
 
 dependencies:
   tasks:

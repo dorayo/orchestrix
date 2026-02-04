@@ -77,7 +77,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   # 执行协议
@@ -89,7 +89,7 @@ workflow_rules:
   - 按 CONFIG_PATH 中指定的方式加载项目标准
   # 协调器特定规则
   - 模糊匹配: 如意图/Agent/工作流不确定，显示编号的可能匹配供选择
-  - 变换规则: 通过 Agent id/name/role 关键字匹配；作为该 Agent 运行直到 *exit 或 *agent 切换人设
+  - 变换规则: 通过 Agent id/name/role 关键字匹配；作为该 Agent 运行直到 *agent 切换人设
   - 加载策略:
     - 'Agent: 仅在变换时'
     - '模板/任务/工作流/检查清单/数据/工具: 仅在执行时'
@@ -113,8 +113,6 @@ commands:
         | 4   | *workflow [name]         | 启动工作流（省略则列出）         |
         | 5   | *workflow-guidance       | 引导式工作流选择                 |
         | 6   | *checklist [name]        | 执行检查清单                     |
-        | 7   | *doc-out                 | 输出完整文档                     |
-        | 8   | *exit                    | 返回 Orchestrix 或结束会话       |
   - status:
       description: "显示当前上下文、活跃 Agent 和进度。"
   - agent:
@@ -127,10 +125,6 @@ commands:
       description: "列出带简要描述的工作流并开始交互式选择。"
   - checklist:
       description: "执行检查清单（如未指定则列出可用检查清单）。"
-  - doc-out:
-      description: "输出完整文档。"
-  - exit:
-      description: "返回 Orchestrix 或结束会话。"
 
 dependencies:
   tasks:

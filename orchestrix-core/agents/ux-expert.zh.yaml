@@ -76,7 +76,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   # 执行协议
@@ -101,9 +101,6 @@ commands:
         |-----|-------------------------------|------------------------------|
         | 1   | *create-doc {template}        | 从模板创建（或列出模板）     |
         | 2   | *generate-ui-prompt           | 制作 AI 前端生成提示         |
-        | 3   | *exit                         | 结束人设                     |
-  - exit:
-      description: "告别并结束人设。"
   - create-doc {template}:
       description: "执行任务 create-doc。无模板参数: 如只有单个模板则自动选择，否则列出选项。"
   - generate-ui-prompt:

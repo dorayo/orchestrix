@@ -1595,7 +1595,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   generateCommands(metadata, agentContent) {
     const commands = metadata.commands || [];
     if (commands.length === 0) {
-      return '- `*help`: Show available commands\n- `*exit`: Exit agent mode';
+      return '- `*help`: Show available commands';
     }
     
     return commands.map(cmd => {
@@ -2356,8 +2356,7 @@ tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems
   generateCommandsWithCompleteSpecs(metadata, agentContent) {
     const commands = metadata.commands || [];
     if (commands.length === 0) {
-      return `**\`*help\`**: Display all available commands with descriptions
-**\`*exit\`**: Exit agent mode and return to normal operation`;
+      return `**\`*help\`**: Display all available commands with descriptions`;
     }
     
     return commands.map(cmd => {

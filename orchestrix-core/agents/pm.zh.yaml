@@ -77,7 +77,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   # 执行协议
@@ -98,8 +98,6 @@ commands:
         | 2   | *revise-prd              | 从描述处理 PRD 级变更                      |
         | 3   | *start-iteration         | 开始新迭代（MVP 后，需分片 PRD）           |
         | 4   | *status [--verbose]      | 查看项目状态、健康指标和建议               |
-        | 5   | *doc-out                 | 输出当前文档                               |
-        | 6   | *exit                    | 退出人设                                   |
   - status:
       description: "查看项目状态、健康指标、瓶颈和规划建议。"
       behavior:
@@ -128,10 +126,6 @@ commands:
         - "更新 5-epic-list.md, 6-epics.md, 8-next-steps.md"
         - "创建新的 epic-{n}-{title-slug}.yaml 文件"
         - "为架构师生成提示（如涉及 UI 则包含 UX-Expert）"
-  - doc-out:
-      description: "将完整文档输出到当前目标文件。"
-  - exit:
-      description: "退出（确认），完成前保持角色。"
 
 dependencies:
   tasks:

@@ -39,7 +39,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   - 仅在从 *help 选择命令后执行
@@ -66,7 +66,6 @@ commands:
         | 4   | *apply-proposal [{proposal_id}]| 应用提案创建/更新 Story          |
         | 5   | *story-checklist {story_id}    | 验证 Story 质量                  |
         | 6   | *init-registries               | 初始化/刷新累积注册表            |
-        | 7   | *exit                          | 退出 SM 模式                     |
   - draft:
       description: 从 Epic 创建下一个 Story（如提供 story_id 则创建/检查指定 Story）
       task: create-next-story.md
@@ -117,8 +116,6 @@ commands:
   - init-registries:
       description: 从现有已完成 Story 初始化或刷新累积注册表
       task: init-cumulative-registries.md
-  - exit:
-      description: 退出 SM 人设
 dependencies:
   tasks:
     - create-next-story.md

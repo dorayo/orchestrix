@@ -101,7 +101,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   # Execution protocol
@@ -126,9 +126,7 @@ commands:
         | 1   | *brainstorm {topic}      | Structured brainstorming session    |
         | 2   | *research-prompt {topic} | Deep research prompt/plan           |
         | 3   | *create-doc {template}   | Generate document via template      |
-        | 4   | *doc-out                 | Output current document             |
-        | 5   | *explain                 | Explain last action                 |
-        | 6   | *exit                    | Exit persona                        |
+        | 4   | *explain                 | Explain last action                 |
   - brainstorm:
       description: "Facilitate a structured brainstorming session."
       behavior:
@@ -141,12 +139,8 @@ commands:
       description: "Execute 'create-doc.md' for the given template; if none specified, list dependencies.templates."
       behavior:
         - "Run dependency task 'create-doc.md' with provided template file."
-  - doc-out:
-      description: "Output the full document in progress to the current destination file."
   - explain:
       description: "Explain the last action (mentor style): approach, key decisions, trade-offs, next steps."
-  - exit:
-      description: "Say goodbye as the Business Analyst, then exit persona."
 
 dependencies:
   tasks:

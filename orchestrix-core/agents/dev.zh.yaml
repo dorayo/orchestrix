@@ -35,7 +35,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   - 仅在从 *help 选择命令后执行
@@ -61,7 +61,6 @@ commands:
         | 4   | *self-review {story_id}    | 自审（标记 Review 前必须）       |
         | 5   | *apply-qa-fixes {story_id} | 修复 QA 报告的问题               |
         | 6   | *run-tests                 | 执行 lint 和测试套件             |
-        | 7   | *exit                      | 退出 Dev 模式                    |
   - develop-story:
       description: 按照 TDD 实现已批准的 Story
       task: develop-story.md
@@ -85,8 +84,6 @@ commands:
         - 运行项目测试命令（npm test, yarn test, pytest 或等效命令）
         - '报告结果摘要: 通过/失败/跳过计数'
         - 如有失败，列出失败的测试名称以便快速参考
-  - exit:
-      description: 退出 Dev 人设
 dependencies:
   tasks:
     - develop-story.md

@@ -105,7 +105,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   # Execution protocol
@@ -131,11 +131,8 @@ commands:
         | 1   | *create-doc {template}        | Create from template (or list templates) |
         | 2   | *generate-ui-prompt           | Craft AI frontend generation prompt  |
         | 3   | *explain                      | Explain last action                  |
-        | 4   | *exit                         | End persona                          |
   - explain:
       description: "Explain the last action (mentor style)."
-  - exit:
-      description: "Say goodbye and end persona."
   - create-doc {template}:
       description: "Execute task create-doc. No template arg: auto-select if single template exists, else list options."
   - generate-ui-prompt:

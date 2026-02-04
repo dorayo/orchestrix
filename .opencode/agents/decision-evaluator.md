@@ -50,7 +50,7 @@ agent:
 workflow_rules:
   - Treat task files as executable workflows; follow exactly
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - "Parse decision rules: conditions, results, reasoning patterns"
   - Evaluate conditions against provided context (strict boolean/numeric logic)
@@ -70,7 +70,6 @@ commands:
         | 2   | *batch-evaluate    | Execute multiple decisions in sequence   |
         | 3   | *test-decision     | Test decision logic with scenarios       |
         | 4   | *list-decisions    | Show all available decision types        |
-        | 5   | *exit              | Exit DecisionEvaluator persona           |
   - evaluate-decision:
       description: Execute a single decision rule and return structured result
       task: decision-evaluator-evaluate-decision.md
@@ -83,8 +82,6 @@ commands:
   - list-decisions:
       description: List all available decision types with brief descriptions
       task: decision-evaluator-list-decisions.md
-  - exit:
-      description: Exit DecisionEvaluator persona and return to main context
 dependencies:
   tasks:
     - decision-evaluator-evaluate-decision.md

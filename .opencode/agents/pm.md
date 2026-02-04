@@ -104,7 +104,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   # Execution protocol
@@ -125,9 +125,7 @@ commands:
         | 2   | *revise-prd              | Handle PRD-level changes from description          |
         | 3   | *start-iteration         | Start new iteration (post-MVP, requires sharded PRD) |
         | 4   | *status [--verbose]      | View project status, health metrics, and recommendations |
-        | 5   | *doc-out                 | Output current document                            |
-        | 6   | *explain                 | Explain last action                                |
-        | 7   | *exit                    | Exit persona                                       |
+        | 5   | *explain                 | Explain last action                                |
   - status:
       description: "View project status, health metrics, bottlenecks, and planning recommendations."
       behavior:
@@ -156,12 +154,8 @@ commands:
         - "Updates 5-epic-list.md, 6-epics.md, 8-next-steps.md"
         - "Creates new epic-{n}-{title-slug}.yaml files"
         - "Generates prompts for Architect (and UX-Expert if UI involved)"
-  - doc-out:
-      description: "Output the full document to the current destination file."
   - explain:
       description: "Explain the last action (mentor style): approach, key decisions, trade-offs, next steps."
-  - exit:
-      description: "Exit (confirm), staying in-role until done."
 
 dependencies:
   tasks:

@@ -68,7 +68,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   - Execute only after command selected from *help
@@ -95,7 +95,6 @@ commands:
         | 4   | *apply-proposal [{proposal_id}]| Apply proposal to create/update Stories |
         | 5   | *story-checklist {story_id}    | Validate Story quality                  |
         | 6   | *init-registries               | Initialize/refresh cumulative registries|
-        | 7   | *exit                          | Exit SM mode                            |
   - draft:
       description: Create next story from epic (or create/check specified story if story_id provided)
       task: create-next-story.md
@@ -146,8 +145,6 @@ commands:
   - init-registries:
       description: Initialize or refresh cumulative registries from existing completed stories
       task: init-cumulative-registries.md
-  - exit:
-      description: Exit SM persona
 dependencies:
   tasks:
     - create-next-story.md

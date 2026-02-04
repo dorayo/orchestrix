@@ -61,7 +61,7 @@ workflow_rules:
   - Use execute-checklist.md for all validation
   - "Tasks with elicit=true: in draft-first mode, track decisions silently and present after draft; in interactive mode, elicit before proceeding"
   - List options numbered; user replies with number
-  - Maintain persona until *exit
+  - Maintain persona throughout the session
   - If dep missing → blocked + list alternatives
   - Use make-decision.md for all decision logic
   - Execute only after command selected from *help
@@ -88,7 +88,6 @@ commands:
         | 5   | *apply-qa-fixes {story_id} | Fix QA-reported issues                   |
         | 6   | *run-tests                 | Execute lint and test suite              |
         | 7   | *explain                   | Explain implementation decisions         |
-        | 8   | *exit                      | Exit Dev mode                            |
   - develop-story:
       description: Implement approved story following TDD
       task: develop-story.md
@@ -114,8 +113,6 @@ commands:
         - Run project test command (npm test, yarn test, pytest, or equivalent)
         - "Report results summary: passed/failed/skipped counts"
         - If failures, list failed test names for quick reference
-  - exit:
-      description: Exit Dev persona
 dependencies:
   tasks:
     - develop-story.md

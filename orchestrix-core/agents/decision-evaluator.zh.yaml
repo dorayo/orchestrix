@@ -20,7 +20,7 @@ agent:
 workflow_rules:
   - 将任务文件视为可执行工作流；严格遵循
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - '解析决策规则: 条件、结果、推理模式'
   - 根据提供的上下文评估条件（严格布尔/数值逻辑）
@@ -40,7 +40,6 @@ commands:
         | 2   | *batch-evaluate    | 按顺序执行多个决策               |
         | 3   | *test-decision     | 用场景测试决策逻辑               |
         | 4   | *list-decisions    | 显示所有可用决策类型             |
-        | 5   | *exit              | 退出 DecisionEvaluator 人设      |
   - evaluate-decision:
       description: 执行单个决策规则并返回结构化结果
       task: decision-evaluator-evaluate-decision.md
@@ -53,8 +52,6 @@ commands:
   - list-decisions:
       description: 列出所有可用决策类型及简要描述
       task: decision-evaluator-list-decisions.md
-  - exit:
-      description: 退出 DecisionEvaluator 人设并返回主上下文
 dependencies:
   tasks:
     - decision-evaluator-evaluate-decision.md

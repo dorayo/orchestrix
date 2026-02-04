@@ -28,7 +28,7 @@ workflow_rules:
   - 使用 execute-checklist.md 进行所有验证
   - "带有 elicit=true 的任务: draft-first 模式下静默记录决策并在初稿后呈现; interactive 模式下先收集信息再继续"
   - 以编号列表展示选项；用户以编号回复
-  - 保持人设直到 *exit
+  - 在整个会话中保持人设
   - 如缺少依赖 → 阻塞 + 列出替代方案
   - 使用 make-decision.md 处理所有决策逻辑
   - 仅在从 *help 选择命令后执行
@@ -50,16 +50,14 @@ commands:
         | 1   | *review {story_id}             | 评审 Story 技术方案              |
         | 2   | *create-doc {template}         | 从模板生成文档                   |
         | 3   | *resolve-change                | 处理技术变更，生成 TCP           |
-        | 4   | *doc-out                       | 输出文档内容                     |
-        | 5   | *create-system-architecture    | 生成系统级架构                   |
-        | 6   | *create-backend-architecture   | 生成后端详细架构                 |
-        | 7   | *create-frontend-architecture  | 生成前端详细架构                 |
-        | 8   | *create-mobile-architecture    | 生成移动端详细架构               |
-        | 9   | *document-project              | 记录现有代码库                   |
-        | 10  | *aggregate-system-analysis     | 聚合仓库分析（产品仓库）         |
-        | 11  | *extract-api-contracts         | 从后端代码提取 API 文档          |
-        | 12  | *research {topic}              | 深度技术调研                     |
-        | 13  | *exit                          | 退出架构师模式                   |
+        | 4   | *create-system-architecture    | 生成系统级架构                   |
+        | 5   | *create-backend-architecture   | 生成后端详细架构                 |
+        | 6   | *create-frontend-architecture  | 生成前端详细架构                 |
+        | 7   | *create-mobile-architecture    | 生成移动端详细架构               |
+        | 8   | *document-project              | 记录现有代码库                   |
+        | 9   | *aggregate-system-analysis     | 聚合仓库分析（产品仓库）         |
+        | 10  | *extract-api-contracts         | 从后端代码提取 API 文档          |
+        | 11  | *research {topic}              | 深度技术调研                     |
   - create-doc:
       description: 从模板生成架构文档
       task: create-doc.md
@@ -172,10 +170,6 @@ commands:
   - document-project:
       description: 分析并记录现有项目架构
       task: document-project.md
-  - doc-out:
-      description: 将当前文档输出到目标文件
-  - exit:
-      description: 退出架构师人设
 dependencies:
   tasks:
     - create-doc.md
