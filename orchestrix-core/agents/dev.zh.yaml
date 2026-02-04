@@ -58,9 +58,10 @@ commands:
         | 1   | *develop-story {story_id}  | 实现 Story（TDD 模式）           |
         | 2   | *quick-develop {story_id}  | 快速实现（简单/微小 Story）      |
         | 3   | *quick-fix {bug}           | 轻量级 bug 修复（无需 Story）    |
-        | 4   | *self-review {story_id}    | 自审（标记 Review 前必须）       |
-        | 5   | *apply-qa-fixes {story_id} | 修复 QA 报告的问题               |
-        | 6   | *run-tests                 | 执行 lint 和测试套件             |
+        | 4   | *solo "{description}"      | 一站式开发（Story→TDD→测试→提交）|
+        | 5   | *self-review {story_id}    | 自审（标记 Review 前必须）       |
+        | 6   | *apply-qa-fixes {story_id} | 修复 QA 报告的问题               |
+        | 7   | *run-tests                 | 执行 lint 和测试套件             |
   - develop-story:
       description: 按照 TDD 实现已批准的 Story
       task: develop-story.md
@@ -71,6 +72,10 @@ commands:
       description: 轻量级 bug 修复，无需创建 Story
       task: quick-fix.md
       decision: decisions-quick-fix-scope.yaml
+  - solo:
+      description: 一站式 Solo 开发（Story → TDD → 测试 → 提交）
+      task: solo-develop.md
+      decision: decisions-solo-escalation.yaml
   - self-review:
       description: 标记 Review 前的全面自审（强制）
       task: dev-self-review.md
@@ -89,6 +94,7 @@ dependencies:
     - develop-story.md
     - quick-develop.md
     - quick-fix.md
+    - solo-develop.md
     - dev-self-review.md
     - apply-qa-fixes.md
     - make-decision.md
@@ -105,6 +111,7 @@ dependencies:
     - gate-dev-completion-steps.md
     - gate-quick-fix-verification.md
   templates:
+    - story-solo-tmpl.yaml
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml
     - models-registry-tmpl.yaml
