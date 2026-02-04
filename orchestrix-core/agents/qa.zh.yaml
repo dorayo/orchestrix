@@ -80,6 +80,7 @@ commands:
         | 5   | *nfr-assess {story_id}     | 评估 NFR（安全性、性能）         |
         | 6   | *trace {story_id}          | 将需求映射到 Given/When/Then     |
         | 7   | *risk-profile {story_id}   | 生成风险评估矩阵                 |
+        | 8   | *smoke-test {epic_id}      | Epic 完成后端到端冒烟测试        |
   - quick-verify:
       description: 简单/微小 Story 的轻量级验证
       task: quick-verify.md
@@ -101,6 +102,9 @@ commands:
   - risk-profile:
       description: 生成风险评估矩阵
       task: risk-profile.md
+  - smoke-test:
+      description: Epic 完成后端到端冒烟测试
+      task: qa-smoke-test.md
 dependencies:
   data:
     - technical-preferences.md
@@ -114,6 +118,7 @@ dependencies:
     - nfr_assess.md
     - trace-requirements.md
     - risk-profile.md
+    - qa-smoke-test.md
     - make-decision.md
   templates:
     - qa-gate-tmpl.yaml

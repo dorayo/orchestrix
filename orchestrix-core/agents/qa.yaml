@@ -80,6 +80,7 @@ commands:
         | 5   | *nfr-assess {story_id}     | Assess NFRs (security, performance)     |
         | 6   | *trace {story_id}          | Map requirements to Given/When/Then     |
         | 7   | *risk-profile {story_id}   | Generate risk assessment matrix         |
+        | 8   | *smoke-test {epic_id}      | Post-epic end-to-end smoke test         |
   - quick-verify:
       description: Lightweight verification for trivial/simple stories
       task: quick-verify.md
@@ -101,6 +102,9 @@ commands:
   - risk-profile:
       description: Generate risk assessment matrix
       task: risk-profile.md
+  - smoke-test:
+      description: Post-epic end-to-end smoke test
+      task: qa-smoke-test.md
 dependencies:
   data:
     - technical-preferences.md
@@ -114,6 +118,7 @@ dependencies:
     - nfr_assess.md
     - trace-requirements.md
     - risk-profile.md
+    - qa-smoke-test.md
     - make-decision.md
   templates:
     - qa-gate-tmpl.yaml

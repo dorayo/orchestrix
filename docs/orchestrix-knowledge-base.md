@@ -125,6 +125,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*nfr-assess {story_id}`      | Assess NFRs (security, performance)     |
 | `*trace {story_id}`           | Map requirements to Given/When/Then     |
 | `*risk-profile {story_id}`    | Generate risk assessment matrix         |
+| `*smoke-test {epic_id}`       | Post-epic end-to-end smoke test         |
 
 **Output**: QA Report + Git Commit
 
