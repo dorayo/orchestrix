@@ -1,0 +1,175 @@
+decision_type: solo-escalation
+
+description: Determine if a solo development task should proceed or escalate to standard workflow.
+
+inputs:
+  - name: acceptance_criteria
+    type: array
+    description: List of generated acceptance criteria
+    required: true
+
+  - name: estimated_complexity
+    type: enum
+    values: [low, medium, high]
+    description: Overall complexity rating of the task
+    required: true
+
+  - name: involves_db_changes
+    type: boolean
+    description: Does task require database schema changes (CREATE/ALTER TABLE, migrations)?
+    required: true
+
+  - name: involves_security
+    type: boolean
+    description: Does task implement auth/authz, password handling, or token logic?
+    required: true
+
+  - name: involves_multiple_modules
+    type: boolean
+    description: Does task span more than 2 distinct modules or domains?
+    required: true
+
+  - name: estimated_file_count
+    type: integer
+    description: Predicted number of source files to create or modify
+    required: true
+
+llm_analysis:
+  instruction: Analyze acceptance_criteria to derive input values via semantic analysis.
+
+  involves_db_changes:
+    true_if: Creating/altering tables, columns, indexes, migrations
+    false_if: Read queries, connection config, ORM usage without schema change
+
+  involves_security:
+    true_if: Auth/authz logic, password hashing, token generation/validation, permission checks
+    false_if: Auth-related UI, error messages, documentation
+
+  involves_multiple_modules:
+    true_if: Changes span >2 distinct directory boundaries or domain contexts
+    false_if: Changes localized to single module or 2 closely related modules
+
+  estimated_complexity:
+    low: Utility functions, validators, formatters, simple UI components
+    medium: Business logic with 2-3 dependencies, single API endpoint
+    high: Complex algorithms, state management, multi-service integration
+
+  estimated_file_count:
+    method: Count distinct source files mentioned/implied in ACs plus test files
+
+rules:
+  # Immediate escalation (highest priority)
+  - id: security_escalation
+    condition: "involves_security == true"
+    result: escalate_complex
+    reason: "Security-sensitive work requires Architect review"
+    target_agent: architect
+    target_command: "*review"
+
+  - id: db_escalation
+    condition: "involves_db_changes == true"
+    result: escalate_standard
+    reason: "Database schema changes require migration planning and review"
+    target_agent: SM
+    target_command: "*draft"
+
+  - id: scope_escalation
+    condition: "estimated_file_count > 5"
+    result: escalate_standard
+    reason: "Scope too broad for solo workflow (>5 files)"
+    target_agent: SM
+    target_command: "*draft"
+
+  - id: complexity_escalation
+    condition: "estimated_complexity == 'high'"
+    result: escalate_standard
+    reason: "High complexity requires planning and review"
+    target_agent: SM
+    target_command: "*draft"
+
+  - id: multi_module_escalation
+    condition: >
+      involves_multiple_modules == true AND
+      estimated_file_count > 3
+    result: escalate_standard
+    reason: "Cross-module changes with broad scope require coordination"
+    target_agent: SM
+    target_command: "*draft"
+
+  # Solo eligible
+  - id: solo_ideal
+    condition: >
+      involves_db_changes == false AND
+      involves_security == false AND
+      estimated_file_count <= 3 AND
+      estimated_complexity == 'low'
+    result: solo_continue
+    confidence: high
+    reason: "Ideal solo candidate: small, simple, no safety concerns"
+
+  - id: solo_acceptable
+    condition: >
+      involves_db_changes == false AND
+      involves_security == false AND
+      estimated_file_count <= 5 AND
+      estimated_complexity in ['low', 'medium']
+    result: solo_continue
+    confidence: medium
+    reason: "Acceptable solo candidate: moderate scope, manageable complexity"
+
+  # Default fallback
+  - id: default_escalate
+    condition: "true"
+    result: escalate_standard
+    reason: "When in doubt, use standard workflow for safety"
+    target_agent: SM
+    target_command: "*draft"
+
+output:
+  result:
+    type: enum
+    values:
+      - solo_continue       # Proceed with solo workflow
+      - escalate_standard   # Escalate to SM for standard story
+      - escalate_complex    # Escalate to Architect for complex story
+
+  confidence:
+    type: enum
+    values: [high, medium, low]
+
+  reason:
+    type: string
+
+  target_agent:
+    type: enum
+    values: [SM, architect]
+    optional: true
+
+  target_command:
+    type: string
+    optional: true
+
+usage_example: |
+  # In solo-develop.md Phase 2:
+
+  ANALYZE acceptance_criteria using llm_analysis instructions.
+
+  EVALUATE decisions-solo-escalation.yaml:
+    acceptance_criteria: [{ac_list}]
+    estimated_complexity: low
+    involves_db_changes: false
+    involves_security: false
+    involves_multiple_modules: false
+    estimated_file_count: 3
+
+  IF result == 'solo_continue':
+    PROCEED to Phase 3
+  ELSE:
+    SET Story.status = Blocked
+    OUTPUT escalation message with reason
+    OUTPUT: "🎯 HANDOFF TO {target_agent}: {target_command} \"{description}\""
+    HALT
+
+metadata:
+  version: "1.0.0"
+  owner: Dev

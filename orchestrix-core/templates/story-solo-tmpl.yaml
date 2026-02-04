@@ -1,0 +1,69 @@
+template:
+  id: story-solo-template-v1
+  name: Solo Story Document
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/stories/{{story_id}}-{{story_title_short}}.md
+
+workflow:
+  mode: solo
+  skip_architect_review: true
+  skip_test_design: true
+  skip_qa_review: true
+  auto_commit: true
+
+sections:
+  - id: story-metadata
+    title: Story
+    type: yaml-block
+    template: |
+      ```yaml
+      Story:
+        id: {{story_id}}
+        title: {{story_title}}
+        tier: solo
+        status: InProgress
+        mode: solo
+      ```
+
+  - id: description
+    title: Description
+    type: text
+    template: |
+      {{story_description}}
+
+  - id: acceptance-criteria
+    title: Acceptance Criteria
+    type: bullet-list
+    template: |
+      {{#each acceptance_criteria}}
+      - [ ] {{this}}
+      {{/each}}
+
+  - id: implementation-notes
+    title: Implementation Notes
+    type: text
+    required: false
+    instruction: |
+      Dev fills this section during implementation.
+      Document key decisions, files modified, and dependencies added.
+
+  - id: solo-record
+    title: Solo Record
+    type: table
+    template: |
+      | Field | Value |
+      |-------|-------|
+      | Dev | - |
+      | Files | - |
+      | Tests | - |
+      | Commit | - |
+
+  - id: change-log
+    title: Change Log
+    type: table
+    template: |
+      | Date | Agent | Status | Details |
+      |------|-------|--------|---------|
+      | {{creation_date}} | Dev | InProgress | Solo story created |

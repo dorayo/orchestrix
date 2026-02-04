@@ -106,6 +106,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*develop-story {story_id}`              | Implement Story (TDD mode)                     |
 | `*quick-develop {story_id}`              | Quick implementation (trivial/simple)          |
 | `*quick-fix "{bug}" [--files "{paths}"]` | Lightweight bug fix (no story, scope ≤3 files) |
+| `*solo "{description}"`                  | One-stop development (story→TDD→test→commit)   |
 | `*self-review {story_id}`                | Self-review (required before QA)               |
 | `*apply-qa-fixes {story_id}`             | Fix QA-reported issues                         |
 | `*run-tests`                             | Execute lint and test suite                    |
@@ -133,11 +134,13 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 
 ## Story Format
 
-| Element        | Format                            | Example                                       |
-| -------------- | --------------------------------- | --------------------------------------------- |
-| Story ID       | `{epic}.{story}`                  | `1.1`, `2.3`                                  |
-| Story Filename | `{epic}.{story}-{kebab-title}.md` | `1.3-user-authentication-api.md`              |
-| Story Path     | `docs/stories/{filename}`         | `docs/stories/1.3-user-authentication-api.md` |
+| Type          | Format                            | Example                                       |
+| ------------- | --------------------------------- | --------------------------------------------- |
+| Epic Story ID | `{epic}.{story}`                  | `1.1`, `2.3`                                  |
+| Epic Filename | `{epic}.{story}-{kebab-title}.md` | `1.3-user-authentication-api.md`              |
+| Solo Story ID | `S-{NNNN}`                        | `S-0001`, `S-0042`                            |
+| Solo Filename | `S-{NNNN}-{kebab-title}.md`       | `S-0042-add-logging-utility.md`               |
+| Story Path    | `docs/stories/{filename}`         | `docs/stories/1.3-user-authentication-api.md` |
 
 ## Workflow
 
@@ -327,4 +330,23 @@ Scope ≤ 3 files? ─── YES → Phase 3-5: Fix & Verify → Done
 SM creates bugfix story under source Epic (or Maintenance Epic)
     ↓
 Dev *quick-develop {bugfix_story_id}
+```
+
+### Solo Development
+
+```
+Dev *solo "{description}"
+    ↓
+Phase 0: Pre-flight (clean git required)
+Phase 1: Generate ACs → Create solo story (S-NNNN)
+Phase 2: Complexity check (auto-escalate if DB/security/scope>5)
+    ↓
+Escalate? ─── YES → 🎯 HANDOFF TO SM: *draft "{description}"
+    │
+    NO
+    ↓
+Phase 3: TDD implementation (test-first for each AC)
+Phase 4: Validation (all tests + lint pass, max 3 retries)
+Phase 5: Update story record
+Phase 6: Auto-commit → Done
 ```

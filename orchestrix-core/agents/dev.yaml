@@ -58,9 +58,10 @@ commands:
         | 1   | *develop-story {story_id}  | Implement Story (TDD mode)               |
         | 2   | *quick-develop {story_id}  | Quick implementation (trivial/simple)    |
         | 3   | *quick-fix {bug}           | Lightweight bug fix (no story)           |
-        | 4   | *self-review {story_id}    | Self-review (required before Review)     |
-        | 5   | *apply-qa-fixes {story_id} | Fix QA-reported issues                   |
-        | 6   | *run-tests                 | Execute lint and test suite              |
+        | 4   | *solo "{description}"      | One-stop development (story→test→commit) |
+        | 5   | *self-review {story_id}    | Self-review (required before Review)     |
+        | 6   | *apply-qa-fixes {story_id} | Fix QA-reported issues                   |
+        | 7   | *run-tests                 | Execute lint and test suite              |
   - develop-story:
       description: Implement approved story following TDD
       task: develop-story.md
@@ -71,6 +72,10 @@ commands:
       description: Lightweight bug fix without story creation
       task: quick-fix.md
       decision: decisions-quick-fix-scope.yaml
+  - solo:
+      description: One-stop solo development (story → TDD → test → commit)
+      task: solo-develop.md
+      decision: decisions-solo-escalation.yaml
   - self-review:
       description: Comprehensive self-review before marking Review (MANDATORY)
       task: dev-self-review.md
@@ -89,6 +94,7 @@ dependencies:
     - develop-story.md
     - quick-develop.md
     - quick-fix.md
+    - solo-develop.md
     - dev-self-review.md
     - apply-qa-fixes.md
     - make-decision.md
@@ -105,6 +111,7 @@ dependencies:
     - gate-dev-completion-steps.md
     - gate-quick-fix-verification.md
   templates:
+    - story-solo-tmpl.yaml
     - database-registry-tmpl.yaml
     - api-registry-tmpl.yaml
     - models-registry-tmpl.yaml
