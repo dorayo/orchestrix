@@ -22,7 +22,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*brainstorm {topic}`      | Structured brainstorming session |
 | `*research-prompt {topic}` | Deep research prompt/plan        |
 | `*create-doc {template}`   | Generate document via template   |
-| `*explain`                 | Explain last action              |
 
 **Output**: `project-brief.md`
 
@@ -36,7 +35,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*revise-prd`            | Handle PRD-level changes, create PCP                     |
 | `*start-iteration`       | Start new iteration (post-MVP, requires sharded PRD)     |
 | `*status [--verbose]`    | View project status, health metrics, and recommendations |
-| `*explain`               | Explain last action                                      |
 
 **Output**: `prd.md`, `docs/proposals/product/PCP-YYYY-NNN.md`
 
@@ -48,7 +46,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | ------------------------ | ---------------------------------------- |
 | `*create-doc {template}` | Create from template (or list templates) |
 | `*generate-ui-prompt`    | Craft AI frontend generation prompt      |
-| `*explain`               | Explain last action                      |
 
 **Output**: `front-end-spec.md`
 
@@ -69,7 +66,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*aggregate-system-analysis`    | Aggregate repo analysis (Product repo)  |
 | `*extract-api-contracts`        | Extract API docs from backend code      |
 | `*research {topic}`             | Deep technical research                 |
-| `*explain`                      | Explain architecture decisions          |
 
 **Output**: `architecture.md`, `docs/proposals/tech/TCP-YYYY-NNN.md`
 
@@ -83,7 +79,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*shard`                         | Shard PRD and Architecture documents            |
 | `*route-change`                  | Route change request to PM or Architect         |
 | `*assemble [prd\|arch\|both]`    | Assemble sharded docs for export                |
-| `*explain`                       | Explain last action                             |
 
 **Output**: Sharded docs in `docs/prd/`, `docs/architecture/`
 
@@ -114,7 +109,6 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*self-review {story_id}`                | Self-review (required before QA)               |
 | `*apply-qa-fixes {story_id}`             | Fix QA-reported issues                         |
 | `*run-tests`                             | Execute lint and test suite                    |
-| `*explain`                               | Explain implementation decisions               |
 
 **Output**: Implementation code + Tests
 
