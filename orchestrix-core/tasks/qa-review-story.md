@@ -195,6 +195,7 @@ Read from Story file:
 - `complexity_indicators` from metadata (if available from SM assessment)
 - `security_sensitive` flag
 - File List to detect `has_ui_changes` and `has_api_changes`
+- `deliverable_bindings` to detect `has_user_facing_deliverable`
 
 Read from Dev Agent Record:
 - `self_review.implementation_gate_score` as `dev_gate_score`
@@ -211,6 +212,7 @@ context:
   dev_gate_score: {from Dev Agent Record, default 95}
   has_ui_changes: {detected from File List}
   has_api_changes: {detected from File List}
+  has_user_facing_deliverable: {from story deliverable_bindings, default false}
   test_coverage_level: {from Dev Agent Record, default 'medium'}
 ```
 

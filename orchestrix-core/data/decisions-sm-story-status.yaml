@@ -22,11 +22,11 @@ rules:
     metadata:
       test_design_deferred: true
   
-  # No Architect review + Simple test → Ready for Dev
+  # No Architect review + Simple test → Ready for Dev (direct Approved)
   - condition: "(architect_review_result IN ['NOT_REQUIRED', 'APPROVED']) AND test_design_level == 'Simple'"
-    result: TestDesignComplete
-    reasoning: "No Architect review needed and Simple test design, proceed to Dev"
-    next_status: TestDesignComplete
+    result: Approved
+    reasoning: "No Architect review needed and Simple test design (unit only), proceed directly to Dev"
+    next_status: Approved
     next_action: "handoff_to_dev"
     metadata:
       qa_test_design_skipped: true
@@ -62,7 +62,7 @@ rules:
 output:
   story_status:
     type: enum
-    values: [AwaitingArchReview, AwaitingTestDesign, TestDesignComplete, RequiresRevision, Blocked]
+    values: [AwaitingArchReview, AwaitingTestDesign, Approved, RequiresRevision, Blocked]
   reasoning:
     type: string
   next_action:
@@ -79,8 +79,8 @@ output:
       quality_issue: {type: boolean}
 
 metadata:
-  version: "1.0.0"
-  last_updated: "2025-01-17"
+  version: "1.1.0"
+  last_updated: "2025-02-04"
   owner: "SM Agent"
   related_requirements: ["6.2", "6.4", "6.5"]
   usage_context: >
@@ -91,6 +91,6 @@ examples:
   - input: {architect_review_result: "REQUIRED", test_design_level: "Standard"}
     output: {story_status: AwaitingArchReview, next_action: "handoff_to_architect"}
   - input: {architect_review_result: "NOT_REQUIRED", test_design_level: "Simple"}
-    output: {story_status: TestDesignComplete, next_action: "handoff_to_dev"}
+    output: {story_status: Approved, next_action: "handoff_to_dev"}
   - input: {architect_review_result: "APPROVED", test_design_level: "Comprehensive"}
     output: {story_status: AwaitingTestDesign, next_action: "handoff_to_qa_test_design"}

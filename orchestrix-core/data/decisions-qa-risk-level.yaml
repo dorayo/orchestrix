@@ -27,6 +27,10 @@ inputs:
     type: boolean
     source: "Detect from story File List (routes/, api/, controllers/)"
 
+  - name: has_user_facing_deliverable
+    type: boolean
+    source: "Detect from story deliverable_bindings where binding_type in [import_usage, route_mount, cli_register] and consumer is user-facing file (pages/**, app/**, routes/**)"
+
   - name: test_coverage_level
     type: enum
     values: [high, medium, low, unknown]
@@ -54,12 +58,13 @@ rules:
       complexity_count <= 1 AND
       security_sensitive == false AND
       dev_gate_score >= 98 AND
-      test_coverage_level in ['high', 'medium']
+      test_coverage_level in ['high', 'medium'] AND
+      has_user_facing_deliverable == false
     result:
       risk_level: LOW
       review_mode: automated_only
       skip_e2e: true
-      reasoning: "Low complexity, high Dev Gate score, good test coverage."
+      reasoning: "Low complexity, high Dev Gate score, good test coverage, no user-facing deliverables."
 
   - id: low_risk_library
     priority: 2
@@ -68,7 +73,8 @@ rules:
       security_sensitive == false AND
       dev_gate_score >= 95 AND
       has_ui_changes == false AND
-      has_api_changes == false
+      has_api_changes == false AND
+      has_user_facing_deliverable == false
     result:
       risk_level: LOW
       review_mode: automated_only
