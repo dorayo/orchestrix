@@ -81,16 +81,59 @@ agents:
         aliases: ["*develop-story"]
         note: "Primary command is *develop-story"
 
+      - name: quick-develop
+        syntax: "*quick-develop {story_id}"
+        description: "Quick implementation for trivial/simple stories"
+        used_for: "Lightweight story implementation"
+        example: "*quick-develop 1.3"
+
+      - name: quick-fix
+        syntax: '*quick-fix "{bug}" [--files "{paths}"]'
+        description: "Lightweight bug fix without story, scope ≤3 files"
+        used_for: "Small bug fixes that do not require a story"
+        example: '*quick-fix "login button not responsive" --files "src/auth/login.ts"'
+
+      - name: solo
+        syntax: '*solo "{description}"'
+        description: "One-stop development: story creation → TDD → test → commit. For small, self-contained changes (≤5 files, no DB/security)."
+        used_for: "Small feature additions or changes (1-2 requirements) that bypass SM/PM pipeline"
+        example: '*solo "add rate limiting to API endpoints"'
+        note: "Preferred path for small changes. Auto-escalates to SM if complexity exceeds threshold."
+
+      - name: self-review
+        syntax: "*self-review {story_id}"
+        description: "Self-review implementation before QA"
+        used_for: "Pre-QA quality check"
+        example: "*self-review 1.3"
+
       - name: apply-qa-fixes
         syntax: "*apply-qa-fixes {story_id}"
         description: "Apply QA feedback and fixes"
         used_for: "Fixing issues found by QA"
         example: "*apply-qa-fixes 1.3"
 
+      - name: run-tests
+        syntax: "*run-tests"
+        description: "Execute lint and test suite"
+        used_for: "Running project tests and linting"
+
 # Handoff Workflow Mapping
 # Use this section to determine correct handoff based on workflow state
 
 handoff_scenarios:
+  # Small-scope changes bypass PM/SM pipeline entirely
+  user_direct_to_dev_solo:
+    condition: "Small change: single feature, ≤5 files, no DB schema changes, no security-sensitive logic"
+    command: '*solo "{description}"'
+    target_agent: dev
+    note: "Preferred path for 1-2 requirement points. Skips PO/PM/SM. Dev auto-escalates to SM if complexity exceeds threshold."
+
+  user_direct_to_dev_quickfix:
+    condition: "Bug fix: known defect, scope ≤3 files"
+    command: '*quick-fix "{bug}"'
+    target_agent: dev
+    note: "Lightweight fix without story creation."
+
   sm_to_architect:
     condition: "Story created, Status = AwaitingArchReview"
     command: "*review {story_id}"

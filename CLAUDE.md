@@ -148,6 +148,18 @@ project:
 
 ## Change Handling
 
+### Change Scope Assessment
+
+**IMPORTANT: Evaluate scope BEFORE choosing a workflow.** Most small changes (1-2 requirements) do NOT need the full PM/SM pipeline.
+
+| Scope                | Criteria (ALL must be true)                                                 | Recommended Path                             |
+| -------------------- | --------------------------------------------------------------------------- | -------------------------------------------- |
+| Small feature/change | Single feature, ≤5 files, no DB schema changes, no security-sensitive logic | `Dev *solo "{description}"`                  |
+| Bug fix              | Known defect, ≤3 files                                                      | `Dev *quick-fix "{bug}"`                     |
+| Medium/Large change  | Multi-feature, cross-module, DB/security changes, or product-level scope    | `PO *route-change` → standard workflow below |
+
+**Default rule**: When in doubt, start with `Dev *solo`. It auto-escalates to SM if complexity exceeds threshold.
+
 ### 入口判断 (PO `*route-change`)
 
 | 变更类型 | 关键词示例                           | 路由目标           |
@@ -159,32 +171,42 @@ project:
 ### Change Handling Workflow
 
 ```
-用户提出变更
+User raises a change/requirement
     ↓
-[PO *route-change] ─→ 判断类型
+[Scope Assessment] ← ALWAYS start here
+    ↓
+├── Small scope (single feature, ≤5 files, no DB/security)
+│   → Dev *solo "{description}" → Done
+│
+├── Bug fix (known defect, ≤3 files)
+│   → Dev *quick-fix "{bug}" → Done
+│
+└── Medium/Large scope
+    ↓
+[PO *route-change]
     ↓
 ┌───────┴───────┐
 ↓               ↓
-技术变更      产品/混合变更
+Technical       Product/Mixed
 ↓               ↓
-[Architect]   [PM *revise-prd]
+[Architect]     [PM *revise-prd]
 *resolve-change     ↓
-↓             创建 PCP
-创建 TCP          ↓
-↓          需要技术变更?
+↓               Creates PCP
+Creates TCP         ↓
+↓               Needs tech change?
 ↓         ┌──NO──┴──YES──┐
 ↓         ↓              ↓
-↓      直接→SM      [Architect]
-↓                  *resolve-change
-↓                  (带 related_product_proposal)
+↓      Direct→SM    [Architect]
+↓                   *resolve-change
+↓                   (with related_product_proposal)
 ↓                       ↓
-↓                  创建 TCP + 双向链接
+↓                   Creates TCP + bidirectional link
 ↓                       ↓
 └───────────→[SM *apply-proposal]←───────────┘
                     ↓
-              创建/修改 Stories
+              Create/Update Stories
                     ↓
-              标准开发流程
+              Standard Dev Flow
               (Architect Review → Dev → QA)
 ```
 
