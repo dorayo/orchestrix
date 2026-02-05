@@ -134,3 +134,25 @@ Generate structured document with these sections:
 - Always ask before switching techniques: "Ready to try a different approach?"
 - Offer options: "Should we explore this idea deeper or generate more alternatives?"
 - Respect their process and timing
+
+---
+
+## Step 6: Handoff (MANDATORY)
+
+After completing the brainstorming session and generating output document:
+
+**Output Format**:
+```
+✅ BRAINSTORMING SESSION COMPLETE
+
+Session Topic: {topic}
+Techniques Used: {techniques_list}
+Ideas Generated: {count}
+Output Document: {filepath or "None requested"}
+
+🎯 HANDOFF TO analyst: *create-doc project-brief
+```
+
+**CRITICAL**: The `🎯 HANDOFF TO` line must be the FINAL output. No content after it.
+
+**Skip Condition**: If project-brief.md already exists, inform user and do NOT output handoff.

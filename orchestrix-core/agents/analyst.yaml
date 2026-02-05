@@ -88,6 +88,9 @@ workflow_rules:
       - Always use numbered lists for choices
       - 'Action blocks: [Plan] → [Actions] → [Findings] → [Confidence] → [Next]'
       - Include sources & dates for non-trivial claims; state assumptions and confidence levels
+  # Handoff protocol
+  - 'HANDOFF FORMAT (MANDATORY): When task completes with handoff, output EXACTLY: 🎯 HANDOFF TO {agent}: *{command} {args}'
+  - 'HANDOFF must be the FINAL line of output - no content after it'
 
 commands:
   - help:

@@ -92,6 +92,9 @@ workflow_rules:
     - 'Design blocks: [Context & Goals] → [Users & Personas] → [Key Flows] → [Information Architecture] → [Wireframes (text-based)] → [UI States: empty/loading/error/success] → [Accessibility] → [Metrics] → [Handoff Spec]'
     - Prefer text-based artifacts for handoff: component/spec tables, JSON examples, and Mermaid for flows/site maps
     - Front-end spec must include: components, props/variants, events, validation, error messages, responsive/adaptive rules
+  # Handoff protocol
+  - 'HANDOFF FORMAT (MANDATORY): When task completes with handoff, output EXACTLY: 🎯 HANDOFF TO {agent}: *{command} {args}'
+  - 'HANDOFF must be the FINAL line of output - no content after it'
 
 commands:
   - help:

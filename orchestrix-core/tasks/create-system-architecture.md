@@ -515,6 +515,8 @@ NEXT STEPS:
   @qa *review {story_id}
 
 System architecture is now the single source of truth!
+
+🎯 HANDOFF TO po: *shard
 ```
 
 ---

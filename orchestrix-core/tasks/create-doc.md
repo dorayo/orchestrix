@@ -186,3 +186,61 @@ Whether presented per-section (interactive) or as decision records (draft-first)
 If the template defines `workflow.custom_elicitation`, these options:
 - **Interactive mode**: Replace default options 2-9
 - **Draft-first mode**: Available during Phase 4 via `*elicit {section_id}`
+
+---
+
+## Phase 5: Template-Based Handoff (MANDATORY)
+
+After document generation is complete and user has approved, output handoff based on template.
+
+### Handoff Routing Table
+
+| Template | Agent | Next Target | Command |
+|----------|-------|-------------|---------|
+| project-brief-tmpl | Analyst | PM | `*create-doc prd` |
+| prd-tmpl | PM | Conditional | See below |
+| brownfield-prd-tmpl | PM | Conditional | See below |
+| front-end-spec-tmpl | UX-Expert | Architect | `*create-doc architecture` |
+| architecture-tmpl | Architect | PO | `*shard` |
+| Other templates | Any | None | Terminal |
+
+### PRD Conditional Handoff Logic
+
+After generating PRD, check for frontend/mobile work (in order, stop at first TRUE):
+
+1. Does "User Interface Design Goals" section contain actual content (not empty/N/A)?
+2. Does "Repository Details" table include type = `frontend`, `ios`, `android`, or `mobile`?
+3. Do any Epic stories have `repository_type` = frontend/ios/android/mobile?
+
+**Decision**:
+- **ANY check TRUE** → `🎯 HANDOFF TO ux-expert: *create-doc front-end-spec`
+- **ALL checks FALSE** → `🎯 HANDOFF TO architect: *create-doc architecture`
+
+### Handoff Output Format
+
+```
+📄 DOCUMENT GENERATION COMPLETE
+
+Document: {output_filepath}
+Template: {template_id}
+{For PRD: Project Type: has-frontend | backend-only}
+
+🎯 HANDOFF TO {target_agent}: *{command}
+```
+
+**CRITICAL**: The `🎯 HANDOFF TO` line must be the FINAL output. No content after it.
+
+### Terminal Templates (No Handoff)
+
+For templates without defined next step (market-research-tmpl, competitor-analysis-tmpl):
+
+```
+📄 DOCUMENT GENERATION COMPLETE
+
+Document: {output_filepath}
+Template: {template_id}
+
+No automatic next step. Suggested actions:
+- Review document with stakeholders
+- Use findings to inform other planning documents
+```
