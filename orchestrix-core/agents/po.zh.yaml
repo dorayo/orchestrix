@@ -99,7 +99,7 @@ commands:
         | 1   | *execute-checklist {checklist}  | 运行检查清单（默认: po-master-validation）|
         | 2   | *shard                          | 分片 PRD 和架构文档                    |
         | 3   | *route-change                   | 将变更请求路由到 PM 或架构师           |
-        | 4   | *assemble [prd\|arch\|both]     | 组装分片文档以供导出                   |
+        | 4   | *assemble {document}            | 组装 prd.md 或 architecture.md 以供导出|
   - execute-checklist:
       description: "运行 PO 检查清单；如未指定则默认 'workflow-po-master-validation.md'。"
       behavior:
@@ -130,14 +130,14 @@ commands:
           required: true
           description: "请求变更的描述"
   - assemble:
-      description: "将分片文档组装成完整文件（用于导出/共享）。"
+      description: "将分片文档组装成完整文件以供导出或共享。"
       behavior:
         - "执行依赖任务 'po-assemble-documents.md'。"
       params:
-        document_type:
+        document:
           required: false
           default: "both"
-          description: "prd | architecture | both"
+          description: "组装 prd.md 或 architecture.md（默认: 两者都组装）"
       context:
         - "使用 md-tree assemble 命令"
         - "生成的文件是派生的，不是真相来源"
@@ -146,8 +146,8 @@ commands:
 dependencies:
   tasks:
     - po-shard-documents.md
-    - po-assemble-documents.md
     - po-route-change.md
+    - po-assemble-documents.md
   checklists:
     - workflow-po-master-validation.md
     - workflow-change-navigation.md

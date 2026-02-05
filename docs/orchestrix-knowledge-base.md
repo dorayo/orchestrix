@@ -78,7 +78,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*execute-checklist {checklist}` | Run a checklist (default: po-master-validation) |
 | `*shard`                         | Shard PRD and Architecture documents            |
 | `*route-change`                  | Route change request to PM or Architect         |
-| `*assemble [prd\|arch\|both]`    | Assemble sharded docs for export                |
+| `*assemble {document}`           | Assemble prd.md or architecture.md for export   |
 
 **Output**: Sharded docs in `docs/prd/`, `docs/architecture/`
 

@@ -99,7 +99,7 @@ commands:
         | 1   | *execute-checklist {checklist}  | Run a checklist (default: po-master-validation)|
         | 2   | *shard                          | Shard PRD and Architecture documents           |
         | 3   | *route-change                   | Route change request to PM or Architect        |
-        | 4   | *assemble [prd\|arch\|both]     | Assemble sharded docs for export               |
+        | 4   | *assemble {document}            | Assemble prd.md or architecture.md for export  |
   - execute-checklist:
       description: "Run PO checklist; default to 'workflow-po-master-validation.md' if not specified."
       behavior:
@@ -130,14 +130,14 @@ commands:
           required: true
           description: "Description of the requested change"
   - assemble:
-      description: "Assemble sharded documents into complete files (for export/sharing)."
+      description: "Assemble sharded documents into complete files for export or sharing."
       behavior:
         - "Run dependency task 'po-assemble-documents.md'."
       params:
-        document_type:
+        document:
           required: false
           default: "both"
-          description: "prd | architecture | both"
+          description: "Assemble prd.md or architecture.md (default: both)"
       context:
         - "Uses md-tree assemble command"
         - "Generated files are DERIVED, not source of truth"
@@ -146,8 +146,8 @@ commands:
 dependencies:
   tasks:
     - po-shard-documents.md
-    - po-assemble-documents.md
     - po-route-change.md
+    - po-assemble-documents.md
   checklists:
     - workflow-po-master-validation.md
     - workflow-change-navigation.md
