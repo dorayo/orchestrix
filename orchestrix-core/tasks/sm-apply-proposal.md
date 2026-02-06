@@ -108,17 +108,38 @@ FOR EACH proposal IN proposals_to_process:
 #### Step 2.2: Load Context
 
 1. Read `core-config.yaml`:
-   - `devStoryLocation`: Story files directory
+   - `devStoryLocation`: Story files directory (default: docs/stories)
+   - `prdShardedLocation`: PRD/Epic location (default: docs/prd)
    - `project.mode`: monolith or multi-repo
 
 2. Read `templates/story-tmpl.yaml` for Story format reference
 
-3. Load existing Stories in affected Epic(s):
+3. Scan existing story files to get real story IDs:
    ```
-   Glob: {devStoryLocation}/{epic_id}.*.md
+   Glob: {devStoryLocation}/*.md
+   Pattern: {epic}.{story}-*.md
+   Extract: existing_story_ids = Set["{epic}.{story}" from each filename]
    ```
 
-4. Determine `max_story_id` for each affected Epic
+4. Calculate `max_story_id` for each affected Epic:
+   ```
+   For each epic_id in proposal.story_requirements:
+     ids_in_epic = [id for id in existing_story_ids where id.startswith("{epic_id}.")]
+     max_story_id[epic_id] = max(story_numbers) or 0
+   ```
+
+5. Initialize batch tracking:
+   ```
+   batch_assigned_ids = Set()
+   ```
+
+6. Validate Epic existence:
+   ```
+   For each epic_id in proposal.story_requirements:
+     epic_file = Glob: {prdShardedLocation}/epic-{epic_id}-*.yaml
+     IF NOT found:
+       Output: "⚠️ Warning: Epic {epic_id} not found in {prdShardedLocation}/"
+   ```
 
 #### Step 2.3: Process Story Requirements
 
@@ -128,11 +149,34 @@ FOR EACH requirement IN proposal.story_requirements:
 
 **IF action == "create":**
 
-1. Calculate new Story ID:
-   - IF `suggested_story_id` provided AND not taken: use it
-   - ELSE: `{epic_id}.{max_story_id + 1}`
+1. Determine Story ID (with collision detection):
+   ```
+   IF suggested_story_id provided:
+     IF suggested_story_id IN existing_story_ids:
+       new_id = "{epic_id}.{max_story_id[epic_id] + 1}"
+     ELIF suggested_story_id IN batch_assigned_ids:
+       new_id = "{epic_id}.{max_story_id[epic_id] + 1}"
+     ELSE:
+       new_id = suggested_story_id
+   ELSE:
+     new_id = "{epic_id}.{max_story_id[epic_id] + 1}"
 
-2. Generate Story file using `story-tmpl.yaml`:
+   batch_assigned_ids.add(new_id)
+   max_story_id[epic_id] = max(max_story_id[epic_id], int(new_id.split('.')[1]))
+   ```
+
+2. Similarity check against existing stories:
+   ```
+   existing_stories = Read: {devStoryLocation}/{epic_id}.*-*.md
+   For each story in existing_stories:
+     similarity = compare(story.title, requirement.title)
+     IF similarity > 0.7:
+       Output:
+         "⚠️ Potential duplicate: '{requirement.title}' similar to Story {story.id}: '{story.title}' ({similarity}%)"
+         "Consider: action=modify, target_story_id={story.id}"
+   ```
+
+3. Generate Story file using `story-tmpl.yaml`:
    - Fill Story section (As a... I want... So that...)
    - Expand `acceptance_criteria_hints` into full ACs:
      - Use Given/When/Then format where applicable
@@ -147,16 +191,26 @@ FOR EACH requirement IN proposal.story_requirements:
    - Populate Dev Notes from `technical_notes` if present
    - Set initial status: `AwaitingArchReview`
 
-3. Write Story file:
-   - Path: `{devStoryLocation}/{story_id}.{title_slug}.md`
+4. IF proposal contains "Risk Assessment":
+   - Extract risks with severity >= "high"
+   - Add to Dev Notes:
+     ```
+     ## Risks (from {proposal_id})
+     | Risk | Severity | Mitigation |
+     |------|----------|------------|
+     {extracted_risks}
+     ```
 
-4. Record: `created_stories.append(story_id)`
+5. Write Story file:
+   - Path: `{devStoryLocation}/{new_id}-{title_slug}.md`
+
+6. Record: `created_stories.append(new_id)`
 
 **IF action == "modify":**
 
 1. Locate target Story file:
    ```
-   Glob: {devStoryLocation}/{target_story_id}.*.md
+   Glob: {devStoryLocation}/{target_story_id}-*.md
    ```
 
 2. Read existing Story content
@@ -191,13 +245,48 @@ FOR EACH requirement IN proposal.story_requirements:
 
 #### Step 2.4: Update Proposal Status
 
-1. Read proposal file
-2. Update frontmatter: `status: draft` → `status: applied`
-3. Add to approval record:
+1. Verify processing completeness:
+   ```
+   total = len(proposal.story_requirements)
+   processed = len(created_stories) + len(modified_stories) + len(deprecated_stories)
+
+   IF total != processed:
+     Output:
+       "❌ Incomplete processing"
+       "Expected: {total}, Processed: {processed}"
+       "Unprocessed: {list unprocessed requirements}"
+     HALT (do not update proposal status)
+   ```
+
+2. Read proposal file
+3. Update frontmatter: `status: draft` → `status: applied`
+4. Add to approval record:
    ```
    | {date} | SM | applied | Stories created/modified as specified |
    ```
-4. Write updated proposal file
+5. Write updated proposal file
+
+#### Step 2.5: Apply Document Changes (Optional)
+
+**For PCP with PRD Changes:**
+
+1. IF proposal contains "## PRD Changes" section:
+   - Parse affected_sections
+   - For each section:
+     - Locate: `{prdShardedLocation}/section-{name}.md`
+     - Apply changes OR flag for manual review
+   - Record: `prd_sections_updated = [list]`
+
+**For TCP with Architecture Changes:**
+
+1. IF proposal contains architecture changes in "## Proposed Solution":
+   - Add to each created story's Dev Notes:
+     ```
+     ## Architecture Context (from {proposal_id})
+     - {key_decisions}
+     - {api_changes}
+     - {database_changes}
+     ```
 
 ### Step 3: Handle Linked Proposals (if applicable)
 
@@ -394,7 +483,10 @@ story_requirements:
 
 ## Notes
 
-- SM does not validate the correctness of proposal content - it trusts PM and Architect
+- SM validates story ID uniqueness and detects potential duplicates (similarity > 70% triggers warning)
 - Story quality assessment (`scoring-sm-story-quality.md`) should be run after Story creation
-- If a proposal references non-existent Epic, SM should create the Epic first (coordinate with PO if needed)
+- Epic existence is validated; missing Epic triggers warning but does not block processing
+- Completeness verification ensures all story_requirements are processed before marking proposal as applied
+- Story file naming: `{epic}.{story}-{kebab-title}.md` (dash before slug, not dot)
+- High-severity risks from proposal are automatically added to Story Dev Notes
 - This task replaces the old `sm-correct-course.md` and `sm-create-tech-story.md`
