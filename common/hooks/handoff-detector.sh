@@ -91,7 +91,7 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
 fi
 
 # Session-specific log file (all logging starts AFTER session detection)
-LOG_FILE="/tmp/orchestrix-${SESSION_NAME}-handoff.log"
+LOG_FILE="/tmp/${SESSION_NAME}-handoff.log"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
 
 log "========== Hook triggered =========="
@@ -100,7 +100,7 @@ log "Session: $SESSION_NAME"
 # ============================================
 # Scan All Windows for HANDOFF
 # ============================================
-PROCESSED_FILE="/tmp/orchestrix-${SESSION_NAME}-processed.txt"
+PROCESSED_FILE="/tmp/${SESSION_NAME}-processed.txt"
 touch "$PROCESSED_FILE"
 
 SOURCE_WIN=""
@@ -294,7 +294,7 @@ log "Command: $CMD"
 # ============================================
 # Atomic Lock
 # ============================================
-LOCK="/tmp/orchestrix-${SESSION_NAME}-${SOURCE_WIN}.lock"
+LOCK="/tmp/${SESSION_NAME}-${SOURCE_WIN}.lock"
 LOCK_TIMEOUT=60
 
 if ! mkdir "$LOCK" 2>/dev/null; then

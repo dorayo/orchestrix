@@ -44,8 +44,8 @@ fi
 
 # Generate dynamic session name and log file
 SESSION_NAME="orchestrix-${REPO_ID}"
-# IMPORTANT: Must match handoff-detector.sh pattern: /tmp/orchestrix-${SESSION_NAME}-handoff.log
-LOG_FILE="/tmp/orchestrix-${SESSION_NAME}-handoff.log"
+# IMPORTANT: Must match handoff-detector.sh pattern: /tmp/${SESSION_NAME}-handoff.log
+LOG_FILE="/tmp/${SESSION_NAME}-handoff.log"
 
 echo "🏷️  Repository ID: $REPO_ID"
 echo "📺 tmux Session: $SESSION_NAME"
