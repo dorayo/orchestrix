@@ -50,7 +50,7 @@ activation_instructions:
     今天我能帮你做什么？请回复编号或描述你想要完成的事情。
 
 agent:
-  name: Jianghuan
+  name: 房玄龄
   id: po
   title: 产品负责人
   icon: "📝"
