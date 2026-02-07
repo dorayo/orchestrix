@@ -36,9 +36,16 @@ fi
 # Sanitize REPO_ID for tmux session name (alphanumeric, dash, underscore only)
 REPO_ID=$(echo "$REPO_ID" | tr -cd 'a-zA-Z0-9_-')
 
+# Sanitized REPO_ID must not be empty
+if [ -z "$REPO_ID" ]; then
+    REPO_ID="default"
+    echo "⚠️  REPO_ID is empty after sanitization, using fallback: $REPO_ID"
+fi
+
 # Generate dynamic session name and log file
 SESSION_NAME="orchestrix-${REPO_ID}"
-LOG_FILE="/tmp/orchestrix-${REPO_ID}-handoff.log"
+# IMPORTANT: Must match handoff-detector.sh pattern: /tmp/orchestrix-${SESSION_NAME}-handoff.log
+LOG_FILE="/tmp/orchestrix-${SESSION_NAME}-handoff.log"
 
 echo "🏷️  Repository ID: $REPO_ID"
 echo "📺 tmux Session: $SESSION_NAME"
@@ -79,6 +86,13 @@ TMUX_MARKER="$RUNTIME_DIR/tmux-automation-active"
 mkdir -p "$RUNTIME_DIR"
 echo "{\"session\": \"$SESSION_NAME\", \"started_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "$TMUX_MARKER"
 echo "📌 tmux automation marker: $TMUX_MARKER"
+
+# Cleanup marker file on script exit (detach, kill, Ctrl+C)
+cleanup() {
+    rm -f "$TMUX_MARKER"
+    echo "🧹 Cleaned up tmux automation marker"
+}
+trap cleanup EXIT INT TERM
 
 # Configure status bar for better display
 tmux set-option -t "$SESSION_NAME" status-left-length 20
@@ -151,10 +165,10 @@ AUTO_START_COMMAND="1"
 
 # Agent activation commands (mapping window → command)
 declare -a AGENT_COMMANDS=(
-    "/Orchestrix:agents:architect"   # Window 0 - Architect
-    "/Orchestrix:agents:sm"          # Window 1 - SM
-    "/Orchestrix:agents:dev"         # Window 2 - Dev
-    "/Orchestrix:agents:qa"          # Window 3 - QA
+    "/o architect"   # Window 0 - Architect
+    "/o sm"          # Window 1 - SM
+    "/o dev"         # Window 2 - Dev
+    "/o qa"          # Window 3 - QA
 )
 
 declare -a AGENT_NAMES=(

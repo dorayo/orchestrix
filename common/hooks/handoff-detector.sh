@@ -13,9 +13,8 @@ set +e  # Don't exit on errors
 # ============================================
 # Configuration
 # ============================================
-# Try to get session from env, otherwise scan for orchestrix sessions
+# Try to get session from env, otherwise detect from tmux context
 SESSION_NAME="${ORCHESTRIX_SESSION:-}"
-LOG_FILE="/tmp/orchestrix-handoff.log"
 
 # Agent mappings
 get_agent_name() {
@@ -40,10 +39,10 @@ get_window_num() {
 
 get_agent_command() {
     case "$1" in
-        architect) echo "/Orchestrix:agents:architect" ;;
-        sm) echo "/Orchestrix:agents:sm" ;;
-        dev) echo "/Orchestrix:agents:dev" ;;
-        qa) echo "/Orchestrix:agents:qa" ;;
+        architect) echo "/o architect" ;;
+        sm) echo "/o sm" ;;
+        dev) echo "/o dev" ;;
+        qa) echo "/o qa" ;;
         *) echo "" ;;
     esac
 }
@@ -65,30 +64,37 @@ get_target_from_command() {
     esac
 }
 
-log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
-
 # ============================================
-# Find Orchestrix Session
+# Find Orchestrix Session (before any logging)
 # ============================================
-log "========== Hook triggered =========="
 
-# If SESSION_NAME not set, find orchestrix session
+# Priority 1: Explicit env var
+# Priority 2: Detect current tmux session (if inside tmux and it's an orchestrix session)
+# Priority 3: Scan all tmux sessions for orchestrix prefix
+if [[ -z "$SESSION_NAME" && -n "$TMUX" ]]; then
+    CURRENT_SESSION=$(tmux display-message -p '#{session_name}' 2>/dev/null)
+    if [[ "$CURRENT_SESSION" == orchestrix* ]]; then
+        SESSION_NAME="$CURRENT_SESSION"
+    fi
+fi
+
 if [[ -z "$SESSION_NAME" ]]; then
     SESSION_NAME=$(tmux list-sessions -F '#{session_name}' 2>/dev/null | grep -E '^orchestrix' | head -1)
 fi
 
 if [[ -z "$SESSION_NAME" ]]; then
-    log "EXIT: No orchestrix session found"
     exit 0
 fi
 
 if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-    log "EXIT: Session '$SESSION_NAME' not found"
     exit 0
 fi
 
-# Update log file path with session name
+# Session-specific log file (all logging starts AFTER session detection)
 LOG_FILE="/tmp/orchestrix-${SESSION_NAME}-handoff.log"
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
+
+log "========== Hook triggered =========="
 log "Session: $SESSION_NAME"
 
 # ============================================
@@ -251,9 +257,10 @@ if [[ -z "$TARGET" || -z "$CMD" ]]; then
 
     # Mark the fallback file as completed
     if command -v jq &>/dev/null; then
-        jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.status = "completed_by_fallback" | .completed_at = $ts' "$FALLBACK_FILE" > "$FALLBACK_FILE.tmp" 2>/dev/null && mv "$FALLBACK_FILE.tmp" "$FALLBACK_FILE"
+        jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.status = "completed_by_fallback" | .completed_at = $ts' "$FALLBACK_FILE" > "$FALLBACK_FILE.tmp.$$" 2>/dev/null && mv "$FALLBACK_FILE.tmp.$$" "$FALLBACK_FILE"
     else
         sed -i.bak 's/"status"[[:space:]]*:[[:space:]]*"pending"/"status": "completed_by_fallback"/' "$FALLBACK_FILE" 2>/dev/null
+        rm -f "$FALLBACK_FILE.bak" 2>/dev/null
     fi
 fi
 
@@ -261,7 +268,8 @@ fi
 echo "$HANDOFF_HASH" >> "$PROCESSED_FILE"
 
 # Keep processed file small (last 100 entries)
-tail -100 "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp" 2>/dev/null && mv "$PROCESSED_FILE.tmp" "$PROCESSED_FILE"
+# Use PID in tmp filename to avoid race with concurrent hook instances or background processes
+tail -100 "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp.$$" 2>/dev/null && mv "$PROCESSED_FILE.tmp.$$" "$PROCESSED_FILE"
 
 # Get source agent name (only if not already set by fallback)
 if [[ -z "$SOURCE_AGENT" ]]; then
@@ -349,7 +357,7 @@ RELOAD_CMD=$(get_agent_command "$SOURCE_AGENT")
     # Remove hash from processed file to allow future same-message HANDOFF
     # This fixes the issue where repeated identical messages (e.g., "*draft") are skipped
     if [[ -n "$HANDOFF_HASH" && -f "$PROCESSED_FILE" ]]; then
-        grep -v "^${HANDOFF_HASH}$" "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp" 2>/dev/null && mv -f "$PROCESSED_FILE.tmp" "$PROCESSED_FILE"
+        grep -v "^${HANDOFF_HASH}$" "$PROCESSED_FILE" > "$PROCESSED_FILE.tmp.$$" 2>/dev/null && mv -f "$PROCESSED_FILE.tmp.$$" "$PROCESSED_FILE"
         log "[BG] Hash removed from processed file: $HANDOFF_HASH"
     fi
 
