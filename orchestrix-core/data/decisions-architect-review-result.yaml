@@ -18,16 +18,16 @@ inputs:
 
 rules:
   # Approved: High score + No critical issues
-  - condition: "(architecture_score >= 8.0 AND critical_issues == 0) OR (architecture_score >= 7.0 AND critical_issues == 0 AND review_round >= 2)"
+  - condition: "(architecture_score >= 8.5 AND critical_issues == 0) OR (architecture_score >= 7.5 AND critical_issues == 0 AND review_round >= 2)"
     result: Approved
     reasoning: "Architecture review passed with good score and no critical issues"
     next_status: Approved
     next_action: "check_test_design_level"
     metadata:
       test_design_check_needed: true
-  
+
   # RequiresRevision: Good score with few critical issues
-  - condition: "architecture_score >= 6.0 AND critical_issues <= 5"
+  - condition: "architecture_score >= 6.5 AND critical_issues <= 5"
     result: RequiresRevision
     reasoning: "Architecture needs improvement, SM should revise"
     next_status: RequiresRevision
@@ -35,9 +35,9 @@ rules:
     metadata:
       revision_type: "standard"
       expected_effort: "medium"
-  
+
   # Escalated: Low score (fundamental issues)
-  - condition: "architecture_score < 6.0"
+  - condition: "architecture_score < 6.5"
     result: Escalated
     reasoning: "Architecture score too low, fundamental design issues"
     next_status: Escalated
@@ -57,7 +57,7 @@ rules:
       severity: "high"
   
   # Escalated: Persistent issues after multiple reviews
-  - condition: "review_round >= 3 AND (architecture_score < 7.5 OR critical_issues >= 2)"
+  - condition: "review_round >= 3 AND (architecture_score < 8.0 OR critical_issues >= 2)"
     result: Escalated
     reasoning: "Multiple review cycles without sufficient improvement"
     next_status: Escalated
@@ -96,9 +96,9 @@ metadata:
     design level. RequiresRevision: Handoff to SM. Escalated: Escalate to senior/lead.
 
 examples:
-  - input: {architecture_score: 8.5, critical_issues: 0, review_round: 1}
+  - input: {architecture_score: 9.0, critical_issues: 0, review_round: 1}
     output: {review_result: Approved, next_status: Approved}
-  - input: {architecture_score: 7.5, critical_issues: 2, review_round: 1}
+  - input: {architecture_score: 8.0, critical_issues: 2, review_round: 1}
     output: {review_result: RequiresRevision, next_status: RequiresRevision}
-  - input: {architecture_score: 5.5, critical_issues: 3, review_round: 1}
+  - input: {architecture_score: 6.0, critical_issues: 3, review_round: 1}
     output: {review_result: Escalated, next_status: Escalated}

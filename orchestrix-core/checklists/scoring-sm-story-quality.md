@@ -135,6 +135,7 @@ metadata:
 | | Tools/tech specified | [ ] |
 | | Config/setup documented | [ ] |
 | | No research needed | [ ] |
+| **Journey** | User journey context populated (if user-facing) | [ ] |
 
 **S3 Score: ___% (Done/Total)**
 

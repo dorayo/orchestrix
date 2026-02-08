@@ -131,9 +131,36 @@ metadata:
 
 ---
 
+## 7. User Journey Continuity (1 pt)
+
+**Purpose**: Verify that user-facing stories connect to form coherent user journeys (skip for non-user-facing stories, award 1 pt automatically).
+
+| Item | Status |
+|------|--------|
+| Entry points reference implemented or planned stories | [ ] |
+| Exit points have defined target stories | [ ] |
+| Precondition fallbacks defined (redirect, error state, empty state) | [ ] |
+| No dead ends in user journey (every exit leads somewhere) | [ ] |
+
+**Architect Review Guidelines**:
+
+1. **Entry Validation**: Do entry points map to real navigation paths from source stories? Are source stories implemented or planned in the same epic?
+2. **Exit Validation**: Do exit points specify concrete target stories? Will users have a clear next action?
+3. **Fallback Coverage**: For each precondition, is there a defined behavior when it is NOT met? (redirect to login, show empty state, display error message)
+4. **Journey Completeness**: Trace the full user path — does the story create any dead ends where users have no way forward?
+
+**Typical Problem Patterns**:
+- Story assumes "user is on dashboard" but no story implements the dashboard navigation
+- Success page has no next-step action (dead end)
+- Precondition "user has verified email" with no handling for unverified users
+
+**Score:** ___/1 | **Issues:** ___
+
+---
+
 # REVIEW SUMMARY
 
-**Arch Review Score:** ___/11
+**Arch Review Score:** ___/12
 **Critical Issues Count:** ___  
 **Review Round:** ___
 

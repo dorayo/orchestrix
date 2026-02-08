@@ -316,6 +316,40 @@ sections:
         owner: scrum-master
         editors: [scrum-master]
 
+      - id: user-journey-context
+        title: User Journey Context
+        condition: story_has_user_facing_flows
+        instruction: |
+          **Required for user-facing stories.** Maps how this story connects to the broader user experience.
+
+          ### Entry Points (How users arrive at this story's functionality)
+
+          | Entry Point | Source Story | Navigation Path | Precondition |
+          |-------------|-------------|-----------------|--------------|
+          | {e.g., "Dashboard link"} | {X.Y} | {e.g., "Sidebar → Dashboard → Button"} | {e.g., "User is authenticated"} |
+
+          ### Exit Points (Where users go after this story's functionality)
+
+          | Exit Point | Target Story | Navigation Path | State Passed |
+          |------------|-------------|-----------------|--------------|
+          | {e.g., "Success redirect"} | {X.Y} | {e.g., "→ Profile page"} | {e.g., "userId, sessionToken"} |
+
+          ### Precondition Traceability
+
+          | AC | GIVEN Clause | Source Story | Verified By |
+          |----|-------------|-------------|-------------|
+          | AC1 | {e.g., "User is logged in"} | {X.Y} | {e.g., "Story X.Y AC2 THEN clause"} |
+
+          ### Unmet Precondition Handling
+
+          | Precondition | Fallback Behavior | Implementation |
+          |-------------|-------------------|----------------|
+          | {e.g., "User not authenticated"} | {e.g., "Redirect to login"} | {e.g., "Auth guard middleware"} |
+
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
       - id: database-design
         title: Database Design
         instruction: Describe design decisions for tables/indexes/FKs; full schema must be referenced via migration files

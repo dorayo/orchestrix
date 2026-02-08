@@ -36,6 +36,12 @@ agent:
       In Dev Notes, include 'Accumulated Context from Previous Stories' section listing existing resources to
       REUSE/EXTEND
     - Mark resources as REUSE (import existing) vs EXTEND (inherit and add) vs CREATE (brand new)
+    - >-
+      USER JOURNEY CONTEXT: For user-facing stories, populate the 'User Journey Context' dev-notes section
+      with entry/exit points, precondition sources, and unmet-precondition fallbacks
+    - >-
+      PRECONDITION TRACEABILITY: Each AC GIVEN clause must trace to a source story that establishes
+      that precondition; flag untraceable preconditions with fallback behavior
 workflow_rules:
   - Treat task files as executable workflows; follow exactly
   - Use execute-checklist.md for all validation

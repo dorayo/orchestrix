@@ -1,12 +1,12 @@
 # qa-epic-integration-test
 
-Execute cross-Story integration tests after each Story completion within an Epic.
+Execute journey-driven integration tests after each Story completion within an Epic.
 
 ## Purpose
 
-Verify that Stories within the same Epic work together correctly.
-Individual Stories pass QA independently, but may fail when combined.
-This task catches integration bugs between Stories.
+Verify that Stories within the same Epic compose into coherent user journeys.
+Individual Stories pass QA independently, but may break when users traverse them in sequence.
+This task catches journey breaks, missing navigation paths, and precondition failures between Stories.
 
 ## Inputs
 
@@ -22,8 +22,8 @@ optional:
 ## Prerequisites
 
 - At least 2 Stories in the Epic have Status = Done
-- Application environment is running
-- E2E test files exist for completed stories
+- Application environment is running (for Step 3 execution)
+- Done stories have User Journey Context populated (for user-facing stories)
 
 ## Process
 
@@ -37,9 +37,84 @@ optional:
 - Log: "Only 1 completed story in Epic {epic_id}. Skipping integration test."
 - Return: `integration_skipped: true, reason: 'insufficient_stories'`
 
-### Step 1: Identify Integration Touchpoints
+### Step 1: Build User Journey Graph
 
-For each pair of Done stories in the epic, identify shared resources:
+For each Done story in the epic:
+
+1. **Extract Journey Data**: Read the "User Journey Context" dev-notes section
+   - Entry Points: `{source_story, navigation_path, precondition}`
+   - Exit Points: `{target_story, navigation_path, state_passed}`
+   - Precondition Traceability: `{ac_id, given_clause, source_story}`
+   - Unmet Precondition Handling: `{precondition, fallback_behavior}`
+
+2. **Build Directed Graph**: Map story connections
+   ```yaml
+   journey_graph:
+     nodes:
+       - story_id: '{epic}.1'
+         is_user_facing: true
+         entry_points: [{source, path}]
+         exit_points: [{target, path}]
+       - story_id: '{epic}.2'
+         is_user_facing: false  # No journey context → technical story
+     edges:
+       - from: '{epic}.1'
+         to: '{epic}.2'
+         type: 'exit_to_entry'
+         navigation: '{path description}'
+         state_passed: '{data/state}'
+   ```
+
+3. **Identify Non-User-Facing Stories**: Stories without User Journey Context are technical — include them only in the secondary touchpoint analysis (Step 3b).
+
+### Step 2: Identify Journey Chains
+
+1. **Find Entry Nodes**: Stories with no inbound edges or with entry points from outside the epic (e.g., homepage, external link)
+
+2. **Find Terminal Nodes**: Stories with no outbound edges (user journey ends here)
+
+3. **Trace All Paths**: From each entry node, follow edges to build complete chains:
+   ```yaml
+   journey_chains:
+     - chain_id: 'CHAIN-{epic}-{SEQ}'
+       path: ['{epic}.1', '{epic}.3', '{epic}.5']
+       status: fully_testable  # All stories Done
+       description: 'User registers → verifies email → accesses dashboard'
+     - chain_id: 'CHAIN-{epic}-{SEQ}'
+       path: ['{epic}.1', '{epic}.4']
+       status: partially_testable  # Story {epic}.4 not yet Done
+       missing_stories: ['{epic}.4']
+   ```
+
+4. **Detect Breaks** (static analysis):
+   - **Broken link**: Exit points to story IDs that don't exist in the epic
+   - **Orphan story**: User-facing story with no inbound AND no outbound journey connections
+   - **Missing entry**: Story assumes a precondition no other story establishes
+   - **Dead end**: Story has entry points but no exit points (user has no next step)
+
+### Step 3: Execute Journey Tests
+
+**For each fully testable chain**:
+
+#### 3a. Journey Flow Test (Primary)
+
+1. Start from the chain's real entry point (e.g., homepage, login page)
+2. Walk through each story's functionality in sequence:
+   - Execute the happy path of Story N
+   - Verify navigation to Story N+1 exists (button, link, redirect)
+   - Verify data/state passes correctly between stories
+   - Verify the GIVEN precondition of Story N+1 is satisfied by Story N's THEN
+3. At each transition, verify:
+   - Navigation path exists and works
+   - Required state/data is available
+   - No authentication/authorization gaps
+4. Test precondition failure handling:
+   - For each defined fallback, trigger the failure condition
+   - Verify fallback behavior works (redirect, error message, empty state)
+
+#### 3b. Technical Touchpoint Analysis (Secondary)
+
+For all Done stories (including non-user-facing), check traditional integration points:
 
 1. Read each story's `Dev Agent Record.file_list`
 2. Find **overlapping files** (files modified by multiple stories)
@@ -47,7 +122,7 @@ For each pair of Done stories in the epic, identify shared resources:
 4. Find **shared data models** (stories that touch the same DB tables/models)
 
 ```yaml
-integration_touchpoints:
+technical_touchpoints:
   - stories: ['{epic}.1', '{epic}.2']
     type: 'shared_file'
     resource: 'src/services/auth.ts'
@@ -56,63 +131,93 @@ integration_touchpoints:
     type: 'api_dependency'
     resource: '/api/users'
     risk: 'Story 1 creates endpoint, Story 3 extends it'
-  - stories: ['{epic}.2', '{epic}.3']
-    type: 'shared_data_model'
-    resource: 'User model'
-    risk: 'Both stories add fields to User'
 ```
 
-### Step 2: Design Cross-Story Test Scenarios
+**Execution**: For each touchpoint, verify the combined behavior:
+- Shared files: check for conflicting modifications
+- API dependencies: verify contract compatibility
+- Shared models: verify field additions don't break existing consumers
 
-For each integration touchpoint, create a test scenario that exercises the combined flow:
+### Step 4: Detect Breaks (Static Analysis Summary)
+
+Even without running the app, compile all journey breaks found:
 
 ```yaml
-integration_scenario:
-  id: 'EPIC-{epic}-INT-{SEQ}'
-  stories_involved: ['{epic}.1', '{epic}.2']
-  description: 'User registers (Story 1) then logs in (Story 2)'
-  steps:
-    - action: 'Complete Story 1 happy path'
-      expected: 'User created successfully'
-    - action: 'Complete Story 2 happy path using Story 1 output'
-      expected: 'Login succeeds with registered credentials'
-  priority: P0  # Cross-story flows are always critical
+journey_breaks:
+  disconnected_nodes:
+    - story_id: '{epic}.3'
+      issue: 'No inbound journey connections — users cannot reach this story'
+  missing_entry_points:
+    - story_id: '{epic}.2'
+      precondition: 'User has completed onboarding'
+      issue: 'No story in this epic establishes onboarding completion'
+  missing_exit_paths:
+    - story_id: '{epic}.4'
+      issue: 'Story ends with success message but no next-step navigation'
+  broken_links:
+    - from_story: '{epic}.1'
+      to_story: '{epic}.6'
+      issue: 'Exit points to Story {epic}.6 which does not exist'
 ```
 
-### Step 3: Execute Integration Tests
-
-**Method 1: Playwright (if persisted E2E tests exist)**
-
-Run all persisted E2E tests in sequence:
-```bash
-npx playwright test tests/e2e/story-{epic}.*.spec.ts --reporter=json
-```
-
-**Method 2: Manual MCP (if no persisted tests)**
-
-Execute each integration scenario using MCP browser tools:
-1. Navigate to application
-2. Execute the combined user flow
-3. Verify each step produces expected output
-4. Capture screenshots at each step
-
-### Step 4: Record Results
+### Step 5: Record Results
 
 ```yaml
 epic_integration:
   epic_id: '{epic}'
   stories_tested: ['{epic}.1', '{epic}.2', '{epic}.3']
-  touchpoints_found: {count}
-  scenarios_executed: {count}
-  scenarios_passed: {count}
-  scenarios_failed: {count}
+
+  # Journey results
+  journey_graph:
+    nodes: {count}
+    edges: {count}
+    chains_identified: {count}
+    chains_fully_testable: {count}
+
+  journey_tests:
+    chains_executed: {count}
+    chains_passed: {count}
+    chains_failed: {count}
+    journey_coverage: '{chains_tested / chains_identified}%'
+
+  journey_breaks:
+    disconnected_nodes: {count}
+    missing_entry_points: {count}
+    missing_exit_paths: {count}
+    broken_links: {count}
+    total_breaks: {count}
+
+  # Technical touchpoint results
+  technical_touchpoints:
+    touchpoints_found: {count}
+    touchpoints_verified: {count}
+    touchpoints_failed: {count}
+
+  # Per-chain detail
+  chain_results:
+    - chain_id: 'CHAIN-{epic}-001'
+      path: ['{epic}.1', '{epic}.2']
+      result: PASS | FAIL
+      evidence: ['{screenshot paths}']
+      issues: []
+    - chain_id: 'CHAIN-{epic}-002'
+      path: ['{epic}.1', '{epic}.3']
+      result: FAIL
+      evidence: ['{screenshot paths}']
+      issues:
+        - severity: CRITICAL
+          finding: 'Navigation from Story 1 success page to Story 3 entry does not exist'
+          suggested_action: 'Add redirect or link from registration success to email verification'
+
+  # Overall
   issues:
     - id: 'EPIC-{epic}-INT-001'
-      severity: CRITICAL
+      type: journey_break | touchpoint_conflict
+      severity: CRITICAL | HIGH | MEDIUM
       stories_involved: ['{epic}.1', '{epic}.2']
-      finding: 'Registration flow completes but login fails with registered credentials'
-      evidence: '{screenshot path}'
-      suggested_action: 'Verify Story 1 user creation format matches Story 2 login expectations'
+      finding: '{description}'
+      evidence: '{screenshot path or analysis detail}'
+      suggested_action: '{recommendation}'
 ```
 
 ## Output
@@ -122,10 +227,12 @@ integration_result:
   executed: true
   epic_id: '{epic}'
   passed: true | false
-  touchpoints: {count}
-  scenarios_total: {count}
-  scenarios_passed: {count}
-  issues: [{severity, finding, evidence}]
+  journey_coverage: '{percentage}'
+  chains_total: {count}
+  chains_passed: {count}
+  journey_breaks: {count}
+  touchpoints_verified: {count}
+  issues: [{type, severity, finding, evidence}]
 ```
 
 ## Trigger Conditions

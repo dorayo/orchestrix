@@ -394,6 +394,60 @@ cumulative_context: {from Step 5.1}
 
 ---
 
+**Step 5.3: Precondition Traceability (Conditional)**
+
+**Skip if**: Story has NO user-facing flows (no UI interactions, no user-visible state changes in AC).
+
+**Detection**: Scan AC content for user-facing indicators:
+- Keywords: `user`, `page`, `screen`, `form`, `button`, `navigate`, `redirect`, `display`, `view`, `click`, `login`, `dashboard`
+- GIVEN clauses referencing user state: `logged in`, `on the X page`, `has completed`, `viewing`
+
+**If user-facing**:
+
+1. **Extract Preconditions**: Parse each AC's GIVEN clause to identify preconditions
+   ```yaml
+   preconditions:
+     - ac_id: AC1
+       given_clause: "{full GIVEN text}"
+       precondition: "{extracted precondition}"
+       type: user_state | navigation | data_state
+   ```
+
+2. **Trace to Source**: For each precondition, find the story that establishes it:
+   - Search `cumulative_context` for stories whose THEN clauses produce this state
+   - Check Epic YAML `dependencies` for explicit story links
+   - Check previously created stories' exit points
+
+3. **Flag Untraceable Preconditions**:
+   ```
+   ⚠️ WARN: AC{N} GIVEN "{clause}" - No source story found that establishes this precondition.
+   Action: SM should either (a) identify the source story, (b) document it as an entry-point assumption, or (c) define fallback handling.
+   ```
+
+4. **Flag Missing Fallback Handling**:
+   ```
+   ⚠️ WARN: Precondition "{precondition}" has no defined fallback behavior if unmet.
+   Action: SM should define what happens when precondition is NOT satisfied (redirect, error state, empty state).
+   ```
+
+5. **Output**: `journey_context` for use in Step 6.3 story population:
+   ```yaml
+   journey_context:
+     is_user_facing: true
+     entry_points: [{source_story, navigation_path, precondition}]
+     exit_points: [{target_story, navigation_path, state_passed}]
+     precondition_traceability:
+       - ac_id: AC1
+         given_clause: "{text}"
+         source_story: "{X.Y}" | "UNTRACED"
+         fallback_defined: true | false
+     warnings: ["{warning messages}"]
+   ```
+
+**Severity**: WARN only — does not HALT. SM addresses warnings in story content.
+
+---
+
 ### 5.5. Extract UI/UX References (Conditional)
 
 **Skip if**: `docs/front-end-spec.md` does NOT exist
