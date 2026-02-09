@@ -58,6 +58,7 @@ orchestrix-core/
 | ----------- | ------------------------------------- | -------- |
 | Planning    | Analyst, PM, UX-Expert, Architect, PO | Web      |
 | Development | SM, Dev, QA                           | IDE      |
+| Solo        | Solo (Carmack)                        | IDE      |
 
 Agent 文件为独立 `.yaml`，直接编辑即可生效。
 

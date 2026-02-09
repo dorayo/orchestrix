@@ -12,6 +12,7 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | ----------- | ------------------------------------- | ------------ |
 | Planning    | Analyst, PM, UX-Expert, Architect, PO | Web (Gemini) |
 | Development | SM, Dev, QA                           | IDE          |
+| Solo        | Solo (Carmack)                        | IDE          |
 
 ## Agent Commands
 
@@ -129,6 +130,28 @@ Orchestrix is a universal AI Agent framework that coordinates specialized agents
 | `*smoke-test {epic_id}`       | Post-epic end-to-end smoke test         |
 
 **Output**: QA Report + Git Commit
+
+---
+
+### Solo (Carmack) ⚡
+
+Independent full-stack developer. No stories, no handoffs, no architecture docs, no QA gate.
+
+| Command                 | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| `*init "{description}"` | New project: scaffold + implement initial features |
+| `*do "{description}"`   | Implement feature: describe → code → test → commit |
+| `*fix "{bug}"`          | Fix a bug: locate → fix → test → commit            |
+| `*plan`                 | Manage lightweight backlog (BACKLOG.md)            |
+| `*status`               | Show project status and recent activity            |
+| `*run-tests`            | Execute lint and test suite                        |
+
+**Output**: Working code + Git commits (no story files, no handoffs)
+
+**Two usage modes**:
+
+- **Mode A (Full Lifecycle)**: Start a new project with `*init`, iterate with `*do` and `*fix`. Solo handles everything.
+- **Mode B (Quick Task in Team Project)**: Use `*do` or `*fix` for small tasks in a project that also uses Team workflow. Coexists with Team agents.
 
 ---
 
@@ -332,7 +355,7 @@ SM creates bugfix story under source Epic (or Maintenance Epic)
 Dev *quick-develop {bugfix_story_id}
 ```
 
-### Solo Development
+### Dev Solo (Team Workflow Shortcut)
 
 ```
 Dev *solo "{description}"
@@ -349,4 +372,29 @@ Phase 3: TDD implementation (test-first for each AC)
 Phase 4: Validation (all tests + lint pass, max 3 retries)
 Phase 5: Update story record
 Phase 6: Auto-commit → Done
+```
+
+### Solo Agent — New Project
+
+```
+Solo *init "{description}"
+    ↓
+Phase 0: Validate environment (runtime, directory)
+Phase 1: Parse intent (framework, deps, features)
+Phase 2: Scaffold (CLI + deps + config)
+Phase 3: TDD per feature (write test → implement → green)
+Phase 4: Verify all (tests + lint)
+Phase 5: Commit → Done
+```
+
+### Solo Agent — Existing Project
+
+```
+Solo *do "{description}"
+    ↓
+Phase 0: Pre-flight (git status, project scan)
+Phase 1: Analyze (plan, risk advisory)
+Phase 2: TDD cycle (write test → implement → green, per AC)
+Phase 3: Verify all (tests + lint, max 3 retries)
+Phase 4: Commit → Done
 ```
