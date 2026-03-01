@@ -63,6 +63,12 @@ agents:
         used_for: "QA review of Dev's work"
         example: "*review 1.3"
 
+      - name: quick-verify
+        syntax: "*quick-verify {story_id}"
+        description: "Lightweight verification for trivial/simple stories"
+        used_for: "Quick QA pass for stories with mode=quick"
+        example: "*quick-verify 1.3"
+
       - name: risk-profile
         syntax: "*risk-profile {story_id}"
         description: "Generate risk assessment matrix"
@@ -191,6 +197,30 @@ handoff_scenarios:
     message: "Story {story_id} DONE ✅"
     note: "Terminal state - no handoff needed"
 
+  # Quick-mode handoff scenarios (story.mode = quick)
+  sm_to_dev_quick:
+    condition: "Quick story created, Status = Approved, story.mode = quick"
+    command: "*quick-develop {story_id}"
+    target_agent: dev
+    note: "Trivial/simple stories skip Architect review and test design"
+
+  dev_to_qa_quick:
+    condition: "Quick dev complete, Status = Review, story.mode = quick"
+    command: "*quick-verify {story_id}"
+    target_agent: qa
+
+  qa_to_dev_quick:
+    condition: "Quick verify failed, tests not passing, story.mode = quick"
+    command: "*quick-develop {story_id}"
+    target_agent: dev
+
+  qa_completion_quick:
+    condition: "Quick verify passed, Status = Done, story.mode = quick"
+    command: null
+    target_agent: null
+    message: "Story {story_id} DONE ✅"
+    note: "Terminal state - no handoff needed"
+
 # Quick Reference: Most Common Handoffs
 
 common_handoffs:
@@ -217,6 +247,19 @@ common_handoffs:
   - from: Architect
     to: SM
     command: "*revise-story {story_id}"
+
+  # Quick-mode handoffs
+  - from: SM (quick)
+    to: Dev
+    command: "*quick-develop {story_id}"
+
+  - from: Dev (quick)
+    to: QA
+    command: "*quick-verify {story_id}"
+
+  - from: QA (quick, failed)
+    to: Dev
+    command: "*quick-develop {story_id}"
 
 # Usage Instructions for Agents
 

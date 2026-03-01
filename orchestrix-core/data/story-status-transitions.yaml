@@ -286,7 +286,7 @@ transitions:
       doc_created: true
     desc: "Test design complete, auto-transition to Approved for Dev"
   
-  # Dev transitions
+  # Dev transitions (standard mode)
   Approved_to_InProgress:
     from: Approved
     to: InProgress
@@ -294,17 +294,18 @@ transitions:
     prereq:
       impl_started: true
     desc: "Dev starts"
-  
+
   InProgress_to_Review:
     from: InProgress
     to: Review
     agent: Dev
     prereq:
+      story_mode: "standard"
       impl_done: true
       tasks_done: true
       tests_written: true
-    desc: "Dev done, submit for QA"
-  
+    desc: "Standard dev done, submit for QA"
+
   InProgress_to_Blocked:
     from: InProgress
     to: Blocked
@@ -314,30 +315,44 @@ transitions:
       type: "AC unclear"
       documented: true
     desc: "Dev blocks due to unclear AC"
-  
-  # QA transitions
+
+  # Dev transitions (quick mode)
+  InProgress_to_Review_Quick:
+    from: InProgress
+    to: Review
+    agent: Dev
+    prereq:
+      story_mode: "quick"
+      impl_done: true
+      tasks_done: true
+      tests_pass: true
+    desc: "Quick dev done, submit for QA quick-verify"
+
+  # QA transitions (standard mode)
   Review_to_Done:
     from: Review
     to: Done
     agent: QA
     prereq:
+      story_mode: "standard"
       qa_done: true
       gate: "PASS"
       ac_met: true
       no_critical: true
-    desc: "QA passed, done"
-  
+    desc: "Standard QA passed, done"
+
   Review_to_InProgress:
     from: Review
     to: InProgress
     agent: QA
     prereq:
+      story_mode: "standard"
       qa_done: true
     cond:
       gate: "CONCERNS/FAIL"
       has_issues: true
-    desc: "QA found issues, needs Dev fix"
-  
+    desc: "Standard QA found issues, needs Dev fix"
+
   Review_to_Escalated:
     from: Review
     to: Escalated
@@ -348,6 +363,26 @@ transitions:
       severity: "Med/High"
       documented: true
     desc: "QA found arch concerns, needs Architect"
+
+  # QA transitions (quick mode)
+  Review_to_Done_Quick:
+    from: Review
+    to: Done
+    agent: QA
+    prereq:
+      story_mode: "quick"
+      tests_pass: true
+      ac_met: true
+    desc: "Quick verify passed, done"
+
+  Review_to_InProgress_Quick:
+    from: Review
+    to: InProgress
+    agent: QA
+    prereq:
+      story_mode: "quick"
+      tests_fail: true
+    desc: "Quick verify failed, return to Dev"
   
   # Escalated transitions
   Escalated_to_AwaitingArchReview:
