@@ -6,7 +6,7 @@ markdownExploder: true
 project:
   name: My Project
   mode: monolith
-  testCommand: ''  # Optional. Auto-detected if empty. Examples: 'npm test', 'deno test -A', 'pytest'
+  testCommand: ''
   multi_repo:
     role: implementation
     repository_id: ''
@@ -57,7 +57,7 @@ qa:
         - test-design
         - risk-profile
 slashPrefix: Orchestrix
-version: 15.14.0
+version: 15.15.0
 i18n:
   default_language: en
   supported_languages:

@@ -1,3 +1,32 @@
+# [15.15.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.14.0...v15.15.0) (2026-03-01)
+
+
+### Bug Fixes
+
+* **decisions:** resolve QA risk-level skip_e2e conflict and story-status output mismatch ([7e11f0e](https://github.com/dorayo/ORCHESTRIX/commit/7e11f0e16c028016e3fa17afc5f46d525891bd49))
+* **i18n:** keep Status field and values in English in zh story template ([228c7c4](https://github.com/dorayo/ORCHESTRIX/commit/228c7c460defecc8c164890f47e3aa57367c65a6))
+* **i18n:** sync *solo command to dev.zh.yaml ([858e157](https://github.com/dorayo/ORCHESTRIX/commit/858e157b3bd77c26a4e1551e88b3cc6a0a20a2d5))
+* **qa:** add AC traceability placeholder detection and gate backstop ([512ca97](https://github.com/dorayo/ORCHESTRIX/commit/512ca97eb06fe51dbd4835b1f4cf20b390c67f23))
+* **qa:** standardize handoff format in qa-handoff-message-tmpl.yaml ([cdba6ab](https://github.com/dorayo/ORCHESTRIX/commit/cdba6ab7705a0b6d81699fa4de8575351a21d9d5))
+* **routing:** add change scope assessment to prioritize Dev *solo for small changes ([6fa638c](https://github.com/dorayo/ORCHESTRIX/commit/6fa638cbb9d8924bf17598407459136f1c6601f5))
+* **sm:** enhance *apply-proposal with ID collision detection and completeness verification ([61b0618](https://github.com/dorayo/ORCHESTRIX/commit/61b061818ee4f2be122cc1d6a31bcc39e41b406c))
+* **tmux:** fix multi-repo log collision, session detection, and agent command format ([7dfc624](https://github.com/dorayo/ORCHESTRIX/commit/7dfc624dc8fb2e30a065109438813097ba09079f))
+* **tmux:** remove redundant orchestrix- prefix from tmp file paths ([e134151](https://github.com/dorayo/ORCHESTRIX/commit/e134151235bb8a59cb205cff8b60a51972ba698a))
+
+
+### Features
+
+* **agents:** add Solo (Carmack) independent full-stack developer agent ([a4187f2](https://github.com/dorayo/ORCHESTRIX/commit/a4187f23143ac3f1e1c80330f3527688be410146))
+* **agents:** update agent names with cultural references ([033c413](https://github.com/dorayo/ORCHESTRIX/commit/033c413cb32e273b558ae70376e9a4fe0944951d))
+* **dev:** add *solo command for one-stop development workflow ([3c03534](https://github.com/dorayo/ORCHESTRIX/commit/3c035347b0fa80dfe06d411dea3a0c2f18d831c0))
+* **ide:** add OpenCode TUI integration support ([b1f6382](https://github.com/dorayo/ORCHESTRIX/commit/b1f638238fa49ebbe961f42e8b914d5140d20fb5))
+* **po:** align PRD templates and update checklist for enhanced AC format ([7baa905](https://github.com/dorayo/ORCHESTRIX/commit/7baa905900ac6f5c83eb280fd622718c654624df))
+* **qa:** add *smoke-test command for post-epic E2E verification ([362df7f](https://github.com/dorayo/ORCHESTRIX/commit/362df7f73f044358f4cba07104e7f2c912ae2dc4))
+* **qa:** implement quality enforcement system for production-ready output ([5f87910](https://github.com/dorayo/ORCHESTRIX/commit/5f879109c8675f7317e6fd347ffce9953ba339b9))
+* **workflow:** add draft-first document generation mode as default ([6d3151b](https://github.com/dorayo/ORCHESTRIX/commit/6d3151b7f466acdddb7f7c9dee3536156cf581af))
+* **workflow:** add standardized handoff messages to planning phase agents ([c5bf51e](https://github.com/dorayo/ORCHESTRIX/commit/c5bf51e26eb12096c4ddd6d1bd2f9d41a0921c21))
+* **workflow:** add user journey continuity system across story lifecycle ([ca6d8f5](https://github.com/dorayo/ORCHESTRIX/commit/ca6d8f5a1ca1e4292a76f811228f448a594b0c50))
+
 # [15.14.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.13.0...v15.14.0) (2026-01-28)
 
 
