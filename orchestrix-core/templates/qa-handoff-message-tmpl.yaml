@@ -59,7 +59,7 @@ handoff_messages:
       Issues Resolved This Round: {{resolved_count}}/{{previous_issues}}
       Improvement: {{improvement_percentage}}%
       {{/if}}
-    handoff: "🎯 NEXT STEP: Deploy or start next story via SM *draft"
+    handoff: "🎯 HANDOFF TO sm: *draft"
 
   # Gate PASS + Commit Failed - retry needed
   gate_pass_commit_failed:
@@ -85,7 +85,7 @@ handoff_messages:
       - Review Report: {{review_report_path}}
 
       Manual commit retry needed.
-    handoff: "🎯 RETRY COMMIT: *finalize-commit {{story_id}}"
+    handoff: "🎯 HANDOFF TO qa: *finalize-commit {{story_id}}"
 
   # Gate CONCERNS or FAIL - handoff back to Dev
   gate_issues_found:
