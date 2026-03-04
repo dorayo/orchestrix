@@ -15,7 +15,11 @@ sections:
   - id: goals-context
     title: 目标与背景
     instruction: |
-      Ask if Project Brief document is available. If NO Project Brief exists, STRONGLY recommend creating one first using project-brief-tmpl (it provides essential foundation: problem statement, target users, success metrics, MVP scope, constraints). If user insists on PRD without brief, gather this information during Goals section. If Project Brief exists, review and use it to populate Goals (bullet list of desired outcomes) and Background Context (1-2 paragraphs on what this solves and why) so we can determine what is and is not in scope for PRD mvp. Either way this is critical to determine the requirements. Include Change Log table.
+      Check for available input documents in this priority order:
+      1. If `docs/brainstorming-session-results.md` exists → use it directly as the primary input. It contains validated problem/solution context from a facilitated brainstorming session. Review it and use its findings to populate Goals (bullet list of desired outcomes) and Background Context (1-2 paragraphs on what this solves and why).
+      2. If `docs/project-brief.md` exists (and no brainstorming results) → use it as the primary input. Review and use it to populate Goals and Background Context so we can determine what is and is not in scope for PRD MVP.
+      3. If neither document exists → STRONGLY recommend creating one first: either run a brainstorming session (facilitates deeper exploration) or create a Project Brief using project-brief-tmpl (provides essential foundation: problem statement, target users, success metrics, MVP scope, constraints). If user insists on proceeding without either, gather this information interactively during this section.
+      Either way this is critical to determine the requirements. Include Change Log table.
     sections:
       - id: goals
         title: 目标
