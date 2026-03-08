@@ -122,6 +122,7 @@ dependencies:
     - make-decision.md
   templates:
     - qa-gate-tmpl.yaml
+    - qa-smoke-test-report-tmpl.yaml
     - story-tmpl.yaml
   checklists:
     - gate-dev-implementation-gate.md

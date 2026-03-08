@@ -1,0 +1,158 @@
+template:
+  id: qa-smoke-test-report-v1
+  name: Smoke Test Report
+  version: 1.0
+  description: >
+    Fixed-format report generated after every smoke test execution.
+    Produced regardless of outcome (PASS, FAIL, or SKIPPED).
+  output:
+    format: markdown
+    filename: docs/qa/evidence/smoke-test-epic-{{epic_id}}.md
+    title: "Smoke Test Report: Epic {{epic_id}}"
+
+# ──────────────────────────────────────────────
+# Template Structure
+# ──────────────────────────────────────────────
+
+sections:
+  header: |
+    # Smoke Test Report: Epic {{epic_id}}
+
+    | Field            | Value                              |
+    |------------------|------------------------------------|
+    | **Epic**         | {{epic_id}}                        |
+    | **Trigger**      | {{trigger}}                        |
+    | **Executed At**  | {{iso_timestamp}}                  |
+    | **Overall**      | {{overall_result}}                 |
+    | **Confidence**   | {{confidence_level}}               |
+
+  epic_completeness: |
+    ## 1. Epic Completeness
+
+    | Story ID | Title | Status |
+    |----------|-------|--------|
+    {{#each stories}}
+    | {{story_id}} | {{title}} | {{status}} |
+    {{/each}}
+
+    - **Total Stories**: {{stories_total}}
+    - **Done**: {{stories_done}}
+    - **Not Done**: {{stories_not_done}}
+    - **Completeness**: {{completeness_percentage}}%
+
+  regression_suite: |
+    ## 2. Regression Suite
+
+    | Metric          | Value            |
+    |-----------------|------------------|
+    | **Executed**    | {{reg_executed}} |
+    | **Passed**      | {{reg_passed}}   |
+    | **Tests Total** | {{reg_total}}    |
+    | **Tests Failed**| {{reg_failed}}   |
+
+    {{#if reg_failed_details}}
+    ### Failed Tests
+
+    {{#each reg_failed_details}}
+    - `{{test_name}}`: {{error_message}}
+    {{/each}}
+    {{/if}}
+
+  core_journeys: |
+    ## 3. Core User Journeys
+
+    {{#each journeys}}
+    ### Journey {{index}}: {{description}}
+
+    | Step | Action | Expected | Actual | Result |
+    |------|--------|----------|--------|--------|
+    {{#each steps}}
+    | {{step_num}} | {{action}} | {{expected}} | {{actual}} | {{result}} |
+    {{/each}}
+
+    {{/each}}
+
+    **Summary**: {{journeys_passed}} / {{journeys_total}} passed
+
+  cross_cutting: |
+    ## 4. Cross-Cutting Concerns
+
+    | Concern              | Result | Details          |
+    |----------------------|--------|------------------|
+    | Console Errors       | {{console_result}}  | {{console_detail}}  |
+    | Network Failures     | {{network_result}}  | {{network_detail}}  |
+    | Visual Consistency   | {{visual_result}}   | {{visual_detail}}   |
+    | Performance          | {{perf_result}}     | {{perf_detail}}     |
+    | Auth Flow            | {{auth_result}}     | {{auth_detail}}     |
+
+  issues: |
+    ## 5. Issues Found
+
+    {{#if has_issues}}
+    | ID | Severity | Finding | Journey | Suggested Action |
+    |----|----------|---------|---------|------------------|
+    {{#each issues}}
+    | {{issue_id}} | {{severity}} | {{finding}} | {{journey}} | {{suggested_action}} |
+    {{/each}}
+    {{else}}
+    No issues found.
+    {{/if}}
+
+  evidence_files: |
+    ## 6. Evidence Files
+
+    {{#if has_evidence}}
+    | Type | Path | Description |
+    |------|------|-------------|
+    {{#each evidence}}
+    | {{type}} | {{path}} | {{description}} |
+    {{/each}}
+    {{else}}
+    No evidence files captured.
+    {{/if}}
+
+  recommendation: |
+    ## 7. Recommendation
+
+    **Result**: {{overall_result}}
+
+    {{recommendation_text}}
+
+  # Section displayed ONLY when overall_result == SKIPPED
+  skipped_section: |
+    ## Execution Skipped
+
+    **Reason**: {{skip_reason}}
+
+    {{skip_details}}
+
+# ──────────────────────────────────────────────
+# Section Selection Rules
+# ──────────────────────────────────────────────
+
+rendering_rules:
+  when_skipped:
+    include:
+      - header
+      - epic_completeness
+      - skipped_section
+    exclude:
+      - regression_suite
+      - core_journeys
+      - cross_cutting
+      - issues
+      - evidence_files
+      - recommendation
+
+  when_executed:
+    include:
+      - header
+      - epic_completeness
+      - regression_suite
+      - core_journeys
+      - cross_cutting
+      - issues
+      - evidence_files
+      - recommendation
+    exclude:
+      - skipped_section
