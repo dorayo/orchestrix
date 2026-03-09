@@ -59,7 +59,7 @@ handoff_messages:
       Issues Resolved This Round: {{resolved_count}}/{{previous_issues}}
       Improvement: {{improvement_percentage}}%
       {{/if}}
-    handoff: "🎯 HANDOFF TO sm: *draft"
+    handoff: "🎯 HANDOFF TO sm: *draft {{next_story_id}}"
 
   # Gate PASS + Commit Failed - retry needed
   gate_pass_commit_failed:

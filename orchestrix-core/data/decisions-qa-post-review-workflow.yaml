@@ -37,7 +37,7 @@ rules:
       workflow_action: finalize_commit
       requires_git_commit: true
       handoff_target: SM
-      next_command: "*draft"
+      next_command: "*draft {next_story_id}"
       completion_status: complete
       priority: "critical"
       automation_level: "automatic"
@@ -220,7 +220,7 @@ examples:
         workflow_action: finalize_commit
         requires_git_commit: true
         handoff_target: SM
-        next_command: "*draft"
+        next_command: "*draft {next_story_id}"
         completion_status: complete
 
   - input:

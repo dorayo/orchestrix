@@ -1111,7 +1111,7 @@ Glob: `{root}/runtime/tmux-automation-active`
 
 | gate_result | next_status | target_agent | command |
 |-------------|-------------|--------------|---------|
-| PASS | Done | sm | *draft |
+| PASS | Done | sm | *draft {next_story_id} |
 | FAIL/CONCERNS | InProgress | dev | *apply-qa-fixes {story_id} |
 | any | Escalated | architect | *review-escalation {story_id} |
 
@@ -1281,7 +1281,32 @@ This task will:
 - If skipped: `skip_reason` (e.g., "Status not Done" or "Gate not PASS")
 - If failed: `commit_error`
 
-### 9.5.3 Persist E2E Tests (Conditional)
+### 9.5.3 Determine Next Story ID (Conditional - PASS + Done only)
+
+**Condition**: Execute ONLY if `gate_result == PASS` AND `final_status == Done`.
+
+**Purpose**: Compute the next story ID so the HANDOFF to SM is explicit (e.g., `*draft 2.4` instead of bare `*draft`).
+
+**Algorithm**:
+
+1. Parse current `story_id` → `epic = N`, `story = M`
+2. Candidate = `N.(M+1)`
+3. **Check candidate exists in Epic YAML**:
+   - Glob: `{prdShardedLocation}/epic-{N}-*.yaml`
+   - Read the epic file, check if `stories` array contains an entry with `id: "N.(M+1)"`
+4. **If candidate exists** → `next_story_id = N.(M+1)`
+5. **If candidate does NOT exist** (current epic exhausted) → `next_story_id = (N+1).1`
+
+**Examples**:
+- Current `2.3`, epic 2 has story `2.4` defined → `next_story_id = 2.4`
+- Current `2.3`, epic 2 has NO `2.4` → `next_story_id = 3.1`
+
+**Store result**:
+```yaml
+next_story_id: '{computed}'  # e.g., '2.4' or '3.1'
+```
+
+### 9.5.5 Persist E2E Tests (Conditional)
 
 **Condition**: Execute ONLY if ALL of the following are true:
 - E2E tests were executed (not skipped)
@@ -1302,7 +1327,7 @@ Log result. Do not block on failures.
 
 ---
 
-### 9.5.4 Epic Integration Test (Conditional)
+### 9.5.6 Epic Integration Test (Conditional)
 
 **Condition**: Execute ONLY if ALL of the following are true:
 - Gate result is PASS
@@ -1464,7 +1489,7 @@ Issues: {architecture_issues}
 Gate: PASS | Commit: {commit_hash}
 Tests: {pass_rate}% passed
 
-🎯 HANDOFF TO sm: *draft
+🎯 HANDOFF TO sm: *draft {next_story_id}
 ```
 
 #### Scenario C: Gate PASS + Status Done + Commit Failed
@@ -1489,7 +1514,7 @@ Issues: {critical_count} critical / {high_count} high
 ✅ STORY {story_id} DONE (Low Risk)
 Gate: PASS | Tests: {pass_rate}%
 
-🎯 HANDOFF TO sm: *draft
+🎯 HANDOFF TO sm: *draft {next_story_id}
 ```
 
 **STOP**: The `🎯 HANDOFF TO` line must be your FINAL output. Hook handles the rest.
@@ -1516,8 +1541,9 @@ Gate: PASS | Tests: {pass_rate}%
 | 6 | Evidence Collection | All issues | New issues only |
 | 7 | Gate Decision | Full context | Full context + populate incremental_context |
 | 8 | Environment Cleanup | Execute | Execute |
-| 9.5.3 | **Persist E2E Tests** | Execute | Execute |
-| 9.5.4 | **Epic Integration Test** | Execute | Execute |
+| 9.5.3 | **Determine Next Story ID** | Check epic YAML → `N.(M+1)` or `(N+1).1` | Check epic YAML → `N.(M+1)` or `(N+1).1` |
+| 9.5.5 | **Persist E2E Tests** | Execute | Execute |
+| 9.5.6 | **Epic Integration Test** | Execute | Execute |
 | 9.x | Output & Handoff | Execute | Execute |
 
 **Token Savings**: Incremental mode saves ~50-70% execution time by skipping stable checks.
