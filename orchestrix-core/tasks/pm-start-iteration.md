@@ -2,14 +2,19 @@
 
 ## Purpose
 
-Start a new iteration after MVP completion by creating new Epics and updating PRD shard files.
-This task assumes the PRD has been sharded (prdSharded: true).
+Start a new iteration by creating new Epics and updating PRD shard files.
+Supports both greenfield (post-MVP) and brownfield (existing project without Orchestrix history) scenarios.
 
 ## Prerequisites
 
+**Greenfield (standard):**
 1. PRD is sharded: `prd.prdSharded: true` in `core-config.yaml`
 2. Shard directory exists: `docs/prd/`
 3. At least one MVP iteration has been completed
+
+**Brownfield (auto-bootstrap):**
+1. `docs/existing-system-analysis.md` exists (created via `@architect *document-project`)
+2. No prior PRD or architecture shards required — will be auto-generated
 
 ## Process
 
@@ -17,24 +22,323 @@ This task assumes the PRD has been sharded (prdSharded: true).
 
 Read `{root}/core-config.yaml`:
 
-1. Confirm `prd.prdSharded: true`
+1. Check `prd.prdSharded` value
 2. Get `prd.prdShardedLocation` (default: `docs/prd`)
 3. Get `dev.devLogLocation` (default: `docs/dev/logs`) → derive `devDocLocation` as parent directory
 
-**IF NOT sharded:**
+**Route by state:**
 
 ```
-❌ PRD not yet sharded
+IF prdSharded == true AND docs/prd/ exists
+  → Continue to Step 2 (standard greenfield flow)
 
-Please execute initial sharding first:
+ELSE IF docs/existing-system-analysis.md exists
+  → Enter Step 1.B (Brownfield Bootstrap)
 
+ELSE
+  → HALT with error (see below)
+```
 
-🎯 HANDOFF TO PO: *shard
+**IF neither sharded NOR brownfield context available:**
 
-Return to execute *start-iteration after sharding is complete.
+```
+❌ Cannot start iteration
+
+No PRD shards found and no existing system analysis available.
+
+Option A (greenfield): Create PRD first, then shard:
+  🎯 HANDOFF TO PO: *shard
+
+Option B (brownfield): Analyze existing project first:
+  🎯 HANDOFF TO architect: *document-project
+  Then return to execute *start-iteration
 ```
 
 HALT
+
+---
+
+### Step 1.B: Brownfield Bootstrap
+
+Auto-generate minimal PRD and architecture shard scaffolding from existing system analysis, enabling brownfield projects to use the standard iteration workflow.
+
+**1.B.1 Load Brownfield Context**
+
+Read the following files (in priority order):
+
+```
+REQUIRED:
+  docs/existing-system-analysis.md    → Current system state, tech stack, architecture
+
+OPTIONAL (higher priority input if available):
+  docs/brainstorming-session-results.md  → New feature ideas, user pain points, goals
+  docs/existing-system-integration.md    → Multi-repo integration analysis (if multi-repo)
+```
+
+Extract from `existing-system-analysis.md`:
+- Project name and purpose
+- Technology stack (languages, frameworks, databases)
+- Current architecture patterns (modules, services, components)
+- Existing API endpoints (if any)
+- Database schema overview (if any)
+- Known limitations and technical debt
+
+Extract from `brainstorming-session-results.md` (if exists):
+- Product goals and vision for enhancement
+- Proposed features and user scenarios
+- Priority items and pain points
+
+**1.B.2 Present Bootstrap Plan**
+
+```
+═══════════════════════════════════════════════════════
+🔄 BROWNFIELD BOOTSTRAP DETECTED
+═══════════════════════════════════════════════════════
+
+Project: {project_name}
+Source: docs/existing-system-analysis.md
+{IF brainstorming exists:}
+Enhancement Context: docs/brainstorming-session-results.md
+{ENDIF}
+
+This project has no PRD or architecture shards.
+I will auto-generate scaffolding from your existing system analysis:
+
+📁 docs/prd/ (to be created):
+   - goals-context.md        ← from analysis: project purpose + goals
+   - requirements.md         ← empty scaffold (you'll define new requirements next)
+   - technical-assumptions.md ← from analysis: tech stack + constraints
+   - epic-list.md            ← empty (will be populated in this session)
+   - epics.md                ← empty (will be populated in this session)
+   - next-steps.md           ← empty (will be generated at end)
+
+📁 docs/architecture/ (to be created):
+   - tech-stack.md           ← from analysis: current technology stack
+   - components.md           ← from analysis: existing modules/services
+   - database-schema.md      ← from analysis: current DB structure (if any)
+   - rest-api-spec.md        ← from analysis: current API endpoints (if any)
+
+⚙️ core-config.yaml will be updated:
+   - prdSharded: true
+   - prdShardedLocation: docs/prd
+
+Continue with bootstrap? [Y/n]
+═══════════════════════════════════════════════════════
+```
+
+HALT — wait for user confirmation.
+
+**1.B.3 Generate PRD Scaffold**
+
+Create `docs/prd/` directory and populate files:
+
+```bash
+mkdir -p docs/prd
+```
+
+**File: `docs/prd/goals-context.md`**
+
+```markdown
+# Goals and Background Context
+
+## Background
+
+{Extract from existing-system-analysis.md: project purpose, current functionality, target users}
+
+## Existing System Summary
+
+- **Project**: {project_name}
+- **Tech Stack**: {extracted tech stack summary}
+- **Current State**: {brief description of what the system currently does}
+
+## Enhancement Goals
+
+{IF brainstorming-session-results.md exists:
+  Extract: vision, goals, key themes from brainstorming results}
+{ELSE:
+  (To be defined in this iteration planning session)}
+
+## Source Documents
+
+- System Analysis: `docs/existing-system-analysis.md`
+{IF brainstorming exists:}
+- Brainstorming Results: `docs/brainstorming-session-results.md`
+{ENDIF}
+```
+
+**File: `docs/prd/requirements.md`**
+
+```markdown
+# Requirements
+
+## Functional Requirements
+
+(To be defined during iteration planning)
+
+## Non-Functional Requirements
+
+### Performance
+{Extract from analysis if available, otherwise: (To be defined)}
+
+### Security
+{Extract from analysis if available, otherwise: (To be defined)}
+
+### Compatibility
+- Must maintain backward compatibility with existing system
+- Existing APIs must remain functional unless explicitly deprecated
+```
+
+**File: `docs/prd/technical-assumptions.md`**
+
+```markdown
+# Technical Assumptions
+
+## Technology Stack
+
+{Extract from existing-system-analysis.md: complete tech stack details}
+
+## Constraints
+
+- Must integrate with existing {framework/platform} codebase
+- Database: {existing DB type and version}
+- {Any other constraints from analysis}
+
+## Integration Requirements
+
+- Existing API contracts must be preserved
+- {Extract integration points from analysis}
+```
+
+**File: `docs/prd/epic-list.md`**
+
+```markdown
+# Epic List
+
+(No epics yet — will be created during this iteration planning session)
+```
+
+**File: `docs/prd/epics.md`**
+
+```markdown
+# Epics
+
+(No epics yet — will be created during this iteration planning session)
+```
+
+**File: `docs/prd/next-steps.md`**
+
+```markdown
+# Next Steps
+
+(Will be generated after iteration planning is complete)
+```
+
+**1.B.4 Generate Architecture Scaffold**
+
+Create `docs/architecture/` directory and populate files from analysis:
+
+```bash
+mkdir -p docs/architecture
+```
+
+**File: `docs/architecture/tech-stack.md`**
+
+```markdown
+# Tech Stack
+
+{Extract COMPLETE tech stack section from existing-system-analysis.md, including:
+  - Languages and versions
+  - Frameworks and versions
+  - Database and versions
+  - Key dependencies
+  - Build tools
+  - Runtime environment}
+```
+
+**File: `docs/architecture/components.md`**
+
+```markdown
+# Components
+
+{Extract from existing-system-analysis.md:
+  - Module/service list with descriptions
+  - Directory structure mapping
+  - Key classes/files per component
+  - Component relationships}
+
+{IF analysis lacks component detail, generate from project structure:
+  Scan src/ or app/ or lib/ directories and list top-level modules}
+```
+
+**File: `docs/architecture/database-schema.md`** (only if DB info exists in analysis)
+
+```markdown
+# Database Schema
+
+{Extract from existing-system-analysis.md:
+  - Table names and descriptions
+  - Key fields and relationships
+  - Migration status}
+```
+
+**File: `docs/architecture/rest-api-spec.md`** (only if API info exists in analysis)
+
+```markdown
+# REST API Specification
+
+{Extract from existing-system-analysis.md:
+  - Endpoint list with methods
+  - Request/response formats
+  - Authentication requirements}
+```
+
+**1.B.5 Update Configuration**
+
+Update `core-config.yaml`:
+
+```yaml
+prd:
+  prdSharded: true
+  prdShardedLocation: docs/prd
+```
+
+If `architecture` section doesn't have sharded location, also add:
+
+```yaml
+architecture:
+  architectureSharded: true
+  architectureShardedLocation: docs/architecture
+```
+
+**1.B.6 Bootstrap Summary**
+
+```
+═══════════════════════════════════════════════════════
+✅ BROWNFIELD BOOTSTRAP COMPLETE
+═══════════════════════════════════════════════════════
+
+📁 Created docs/prd/:
+   ✓ goals-context.md (from system analysis)
+   ✓ requirements.md (scaffold)
+   ✓ technical-assumptions.md (from system analysis)
+   ✓ epic-list.md (empty)
+   ✓ epics.md (empty)
+   ✓ next-steps.md (empty)
+
+📁 Created docs/architecture/:
+   ✓ tech-stack.md (from system analysis)
+   ✓ components.md (from system analysis)
+   {✓ database-schema.md (from system analysis) — if applicable}
+   {✓ rest-api-spec.md (from system analysis) — if applicable}
+
+⚙️ Updated core-config.yaml:
+   ✓ prdSharded: true
+
+Now proceeding to standard iteration planning flow...
+═══════════════════════════════════════════════════════
+```
+
+**Continue to Step 2** with `next_epic_id = 1` (no existing epics).
 
 ### Step 2: Load Product Context
 
@@ -46,7 +350,7 @@ Read in the following order (filenames may vary slightly, use Glob to match):
 
 1. `*goals*.md` → Product goals and background
 2. `*requirements*.md` → Functional and non-functional requirements
-3. `*user-interface*.md` or `*ui-goals*.md` → UI design goals
+3. `*user-interface*.md` or `*ui-goals*.md` → UI design goals (if exists)
 4. `*technical-assumptions*.md` → Technical assumptions
 5. `*epic-list*.md` → Epic summary list
 6. `*epics*.md` → Epic detailed definitions (contains YAML blocks)
@@ -54,8 +358,8 @@ Read in the following order (filenames may vary slightly, use Glob to match):
 **2.2 Read Existing Epic Files**
 
 ```bash
-# Read all Epic YAML files
-ls docs/prd/epic-*.yaml
+# Read all Epic YAML files (may be empty for brownfield bootstrap)
+ls docs/prd/epic-*.yaml 2>/dev/null
 ```
 
 Parse each Epic file to extract:
@@ -63,10 +367,14 @@ Parse each Epic file to extract:
 - `title` value
 - Story count
 
+**IF no epic files found** (brownfield bootstrap or first iteration):
+- This is expected for brownfield projects entering their first iteration
+- Set `current_max_epic_id = 0`
+
 **2.3 Determine Next Epic ID**
 
 ```
-current_max_epic_id = MAX(all epic_id values)
+current_max_epic_id = MAX(all epic_id values) OR 0 if no epics exist
 next_epic_id = current_max_epic_id + 1
 ```
 
@@ -80,10 +388,14 @@ Present current product state to user:
 
 Product Goals: {goals summary}
 
+{IF existing epics:}
 Existing Epics:
   - Epic 1: {title} ({story_count} stories)
   - Epic 2: {title} ({story_count} stories)
   ...
+{ELSE:}
+Existing Epics: None (first iteration)
+{ENDIF}
 
 Next Available Epic ID: {next_epic_id}
 
@@ -142,9 +454,14 @@ docs/architecture/9-rest-api-spec.md   → Current API endpoints
 ```
 
 **IF cumulative registries do not exist:**
-- First iteration or first use of enhanced flow
+- First iteration, brownfield bootstrap, or first use of enhanced flow
 - Output: "No implementation data yet. Architecture documents available for reference."
 - Continue execution
+
+**IF architecture files are minimal** (brownfield bootstrap):
+- Architecture files were auto-generated from `existing-system-analysis.md`
+- They contain current system state, not planned architecture
+- This is expected — the iteration planning will define new requirements, and the Architect handoff (Step 8) will expand these files
 
 ### Step 3: Requirements Discussion
 
