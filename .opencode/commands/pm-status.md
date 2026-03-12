@@ -51,10 +51,10 @@ HALT
 
 **IF prdSharded = true:**
 
-- Read `{prdShardedLocation}/1-*.md` → Product goals
-- Read `{prdShardedLocation}/2-*.md` → Requirements
-- Read `{prdShardedLocation}/5-epic-list.md` → Epic summary
-- Read `{prdShardedLocation}/8-next-steps.md` → Pending actions
+- Read `{prdShardedLocation}/*goals-context.md` → Product goals (glob: matches with or without numeric prefix)
+- Read `{prdShardedLocation}/*requirements.md` → Requirements
+- Read `{prdShardedLocation}/*epic-list.md` → Epic summary
+- Read `{prdShardedLocation}/*next-steps.md` → Pending actions
 
 **ELSE:**
 

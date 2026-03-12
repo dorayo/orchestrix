@@ -151,7 +151,7 @@ commands:
       context:
         - "Requires PRD to be sharded first (prdSharded: true in core-config.yaml)"
         - "Automatically determines next Epic ID from existing epic-*.yaml files"
-        - "Updates 5-epic-list.md, 6-epics.md, 8-next-steps.md"
+        - "Updates 5-epic-list.md, 6-epics.md, *next-steps.md"
         - "Creates new epic-{n}-{title-slug}.yaml files"
         - "Generates prompts for Architect (and UX-Expert if UI involved)"
   - explain:

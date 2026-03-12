@@ -123,7 +123,7 @@ commands:
       context:
         - "需要先分片 PRD（core-config.yaml 中 prdSharded: true）"
         - "从现有 epic-*.yaml 文件自动确定下一个 Epic ID"
-        - "更新 5-epic-list.md, 6-epics.md, 8-next-steps.md"
+        - "更新 *epic-list.md, *epics.md, *next-steps.md（glob 匹配，兼容有无数字前缀）"
         - "创建新的 epic-{n}-{title-slug}.yaml 文件"
         - "为架构师生成提示（如涉及 UI 则包含 UX-Expert）"
 

@@ -118,10 +118,11 @@ RENAME PROCEDURE:
 1. List all .md files in docs/prd/ (excluding index.md and epic-*.yaml files)
 2. For each file:
    a. Read the first heading line (# ...) to get the section title
-   b. If the filename (without .md) already matches a known English section ID → skip
-   c. Match the heading text against the appropriate mapping table using case-insensitive keyword matching
-   d. If match found and differs from current filename → rename: mv "{old}.md" "{new_section_id}.md"
-   e. If no match → keep original filename, log warning
+   b. Strip any numeric prefix from the filename: remove leading `\d+-` pattern (e.g., `8-next-steps.md` → `next-steps`, `3-Goals-Context.md` → `Goals-Context`). Then lowercase the result for comparison.
+   c. If the stripped, lowercased filename already matches a known English section ID → skip
+   d. Match the heading text against the appropriate mapping table using case-insensitive keyword matching
+   e. If match found and differs from current filename → rename: mv "{old}.md" "{new_section_id}.md"
+   f. If no match → keep original filename, log warning
 3. After all renames, update index.md:
    a. Read index.md content
    b. For each renamed file, replace old filename references with new filename in markdown links
@@ -352,10 +353,11 @@ RENAME PROCEDURE:
 1. List all .md files in {ARCH_DIR}/ (excluding index.md)
 2. For each file:
    a. Read the first heading line (# ...) to get the section title
-   b. If the filename (without .md) already matches a known English section ID → skip
-   c. Match the heading text against the detected architecture type's mapping table using case-insensitive keyword matching
-   d. If match found and differs from current filename → rename: mv "{old}.md" "{new_section_id}.md"
-   e. If no match → keep original filename, log warning
+   b. Strip any numeric prefix from the filename: remove leading `\d+-` pattern (e.g., `12-coding-standards.md` → `coding-standards`, `3-Tech-Stack.md` → `Tech-Stack`). Then lowercase the result for comparison.
+   c. If the stripped, lowercased filename already matches a known English section ID → skip
+   d. Match the heading text against the detected architecture type's mapping table using case-insensitive keyword matching
+   e. If match found and differs from current filename → rename: mv "{old}.md" "{new_section_id}.md"
+   f. If no match → keep original filename, log warning
 3. After all renames, update index.md:
    a. Read index.md content
    b. For each renamed file, replace old filename references with new filename in markdown links

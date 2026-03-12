@@ -426,10 +426,10 @@ Extract key information:
 Read architecture documents for system capabilities:
 
 ```
-docs/architecture/3-tech-stack.md      → Available technologies
-docs/architecture/5-components.md      → Existing modules/services
-docs/architecture/8-database-schema.md → Current database structure
-docs/architecture/9-rest-api-spec.md   → Current API endpoints
+docs/architecture/*tech-stack.md      → Available technologies (glob: matches with or without numeric prefix)
+docs/architecture/*components.md      → Existing modules/services
+docs/architecture/*database-schema.md → Current database structure
+docs/architecture/*rest-api-spec.md   → Current API endpoints
 ```
 
 **2.5.3 Output Technical Overview**
@@ -535,10 +535,10 @@ Ask user if existing sections need updates:
 ```
 📋 Do any of the following sections need updates?
 
-[1] Goals and Background Context (1-goals-and-background-context.md)
-[2] Requirements (2-requirements.md)
-[3] UI Design Goals (3-user-interface-design-goals.md)
-[4] Technical Assumptions (4-technical-assumptions.md)
+[1] Goals and Background Context (*goals*context.md)
+[2] Requirements (*requirements.md)
+[3] UI Design Goals (*ui-goals.md)
+[4] Technical Assumptions (*technical-assumptions.md)
 
 Enter section numbers to update (e.g., 1,2) or "none" to skip:
 ```
@@ -714,9 +714,9 @@ Based on Step 3 and Step 4 results, generate affected files list:
 ```yaml
 files_to_update:
   required:  # Must update
-    - "5-epic-list.md"      # Append new Epic summary
-    - "6-epics.md"          # Append new Epic YAML blocks
-    - "8-next-steps.md"     # Complete replacement
+    - "*epic-list.md"       # Append new Epic summary (glob: matches with or without numeric prefix)
+    - "*epics.md"           # Append new Epic YAML blocks
+    - "*next-steps.md"     # Complete replacement (find existing: next-steps.md or 8-next-steps.md)
 
   new_files:  # Need to create
     - "epic-{n}-{title-slug}.yaml"  # One file per new Epic
@@ -725,10 +725,10 @@ files_to_update:
     - "docs/front-end-spec/"  # For epic-specific front-end specs
 
   optional:  # Based on user selection
-    - "1-goals-and-background-context.md"  # If selected [1]
-    - "2-requirements.md"                   # If selected [2]
-    - "3-user-interface-design-goals.md"   # If selected [3]
-    - "4-technical-assumptions.md"         # If selected [4]
+    - "*goals*context.md"                  # If selected [1] (glob: matches with or without numeric prefix)
+    - "*requirements.md"                   # If selected [2]
+    - "*ui-goals.md"                       # If selected [3]
+    - "*technical-assumptions.md"          # If selected [4]
 ```
 
 Confirm impact scope with user:
@@ -737,9 +737,9 @@ Confirm impact scope with user:
 📁 This iteration will update the following files:
 
 Required Updates:
-  ✓ docs/prd/5-epic-list.md
-  ✓ docs/prd/6-epics.md
-  ✓ docs/prd/8-next-steps.md (complete replacement)
+  ✓ docs/prd/*epic-list.md
+  ✓ docs/prd/*epics.md
+  ✓ docs/prd/*next-steps.md (complete replacement)
 
 New Files:
   ✓ docs/prd/epic-{n}-{title}.yaml
@@ -927,7 +927,7 @@ Please confirm or suggest modifications:
 
 Execute file update operations.
 
-**7.1 Update 5-epic-list.md**
+**7.1 Update *epic-list.md** (find via glob)
 
 Append new Epic summary at end of file:
 
@@ -935,7 +935,7 @@ Append new Epic summary at end of file:
 - **Epic {n}: {title}** - {one sentence goal description}
 ```
 
-**7.2 Update 6-epics.md**
+**7.2 Update *epics.md** (find via glob)
 
 Append complete Epic definition at end of file (with YAML fence):
 
@@ -982,7 +982,7 @@ Based on optional updates list from Step 5:
 
 ### Step 8: Generate next-steps.md
 
-**Completely replace** the `8-next-steps.md` file with enhanced handoff instructions.
+**Completely replace** the existing `*next-steps.md` file (may be `next-steps.md` or `8-next-steps.md`) with enhanced handoff instructions.
 
 **8.1 Determine UI Involvement**
 
@@ -999,7 +999,7 @@ For each new Epic, analyze Stories to determine:
 
 **8.3 Write next-steps.md**
 
-Generate `8-next-steps.md` as executable prompts for downstream agents. Each `🎯 HANDOFF TO {agent}:` section is a complete prompt that the target agent will execute directly—replace all placeholders with actual values from this iteration.
+Generate `next-steps.md` (write to the existing next-steps file, preserving its current filename) as executable prompts for downstream agents. Each `🎯 HANDOFF TO {agent}:` section is a complete prompt that the target agent will execute directly—replace all placeholders with actual values from this iteration.
 
 **Structure**:
 
@@ -1049,7 +1049,7 @@ Each spec MUST use this structure for SM traceability:
 ```
 
 **Files to Read:**
-- `docs/prd/3-user-interface-design-goals.md`
+- `docs/prd/*ui-goals.md` (glob: matches with or without numeric prefix)
 {for each new Epic:}
 - `docs/prd/epic-{N}-{title-slug}.yaml`
 
@@ -1088,7 +1088,7 @@ sm_hints:
 ## Part 1: Update Architecture Documents
 
 **Files to Read:**
-- `docs/prd/4-technical-assumptions.md`
+- `docs/prd/*technical-assumptions.md` (glob: matches with or without numeric prefix)
 {for each new Epic:}
 - `docs/prd/epic-{N}-{title-slug}.yaml`
 {if UI involved:}
@@ -1143,10 +1143,10 @@ sm_hints:
 
 | Story Type | Architecture References |
 |------------|------------------------|
-| Backend API | `9-rest-api-spec.md#endpoint-name`, `5-components.md#ServiceName` |
-| Database ops | `8-database-schema.md#table-name`, `5-components.md#RepositoryName` |
-| Frontend | `5-components.md#ComponentName`, `9-rest-api-spec.md#consumed-endpoints` |
-| Auth-related | `14-security.md#auth-section`, `5-components.md#AuthService` |
+| Backend API | `*rest-api-spec.md#endpoint-name`, `*components.md#ServiceName` |
+| Database ops | `*database-schema.md#table-name`, `*components.md#RepositoryName` |
+| Frontend | `*components.md#ComponentName`, `*rest-api-spec.md#consumed-endpoints` |
+| Auth-related | `*security.md#auth-section`, `*components.md#AuthService` |
 
 ---
 
@@ -1202,9 +1202,9 @@ Output completion report:
    - New Implementations: {count} features
 
 📁 Files Updated:
-   - docs/prd/5-epic-list.md (appended)
-   - docs/prd/6-epics.md (appended)
-   - docs/prd/8-next-steps.md (complete replacement)
+   - docs/prd/*epic-list.md (appended)
+   - docs/prd/*epics.md (appended)
+   - docs/prd/*next-steps.md (complete replacement)
 {for each new Epic:}
    - docs/prd/epic-{n}-{title-slug}.yaml (new)
 {if other sections updated:}
@@ -1214,7 +1214,7 @@ Output completion report:
 🎯 NEXT STEPS
 ═══════════════════════════════════════════════════════
 
-Please review docs/prd/8-next-steps.md for detailed guidance.
+Please review docs/prd/*next-steps.md for detailed guidance.
 
 {IF UI involved:}
 1. First: @ux-expert - Create epic front-end specs and update Epic YAML
@@ -1234,7 +1234,7 @@ SM → Dev → QA
 **On Success:**
 - Updated PRD shard files
 - Newly created Epic YAML files with `sm_hints` placeholders
-- Completely replaced 8-next-steps.md with enhanced handoff instructions
+- Completely replaced *next-steps.md with enhanced handoff instructions
 
 **On Failure:**
 - Error reason

@@ -547,7 +547,7 @@ docs/prd/
 ├── 5-epic-list.md
 ├── 6-epics.md                         # 原始 Epics 章节
 ├── 7-acceptance-criteria.md
-├── 8-next-steps.md
+├── next-steps.md                      # 可能带数字前缀如 8-next-steps.md
 ├── epic-1-user-authentication.yaml    # 提取的 Epic YAML
 ├── epic-2-product-catalog.yaml
 └── ...

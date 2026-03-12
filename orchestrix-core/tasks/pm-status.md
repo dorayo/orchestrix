@@ -42,10 +42,10 @@ HALT
 **2.1 Read PRD Content**
 
 **IF prdSharded = true:**
-- Read `{prdShardedLocation}/1-*.md` → Product goals
-- Read `{prdShardedLocation}/2-*.md` → Requirements
-- Read `{prdShardedLocation}/5-epic-list.md` → Epic summary
-- Read `{prdShardedLocation}/8-next-steps.md` → Pending actions
+- Read `{prdShardedLocation}/*goals*context.md` → Product goals (glob: matches goals-context.md, 1-goals-context.md, 1-goals-and-background-context.md)
+- Read `{prdShardedLocation}/*requirements.md` → Requirements
+- Read `{prdShardedLocation}/*epic-list.md` → Epic summary
+- Read `{prdShardedLocation}/*next-steps.md` → Pending actions
 
 **ELSE:**
 - Read `docs/prd.md` or equivalent PRD file

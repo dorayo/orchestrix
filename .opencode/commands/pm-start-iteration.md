@@ -418,7 +418,7 @@ files_to_update:
   required: # Must update
     - "5-epic-list.md" # Append new Epic summary
     - "6-epics.md" # Append new Epic YAML blocks
-    - "8-next-steps.md" # Complete replacement
+    - "*next-steps.md" # Complete replacement (find existing: next-steps.md or 8-next-steps.md)
 
   new_files: # Need to create
     - "epic-{n}-{title-slug}.yaml" # One file per new Epic
@@ -441,7 +441,7 @@ Confirm impact scope with user:
 Required Updates:
   ✓ docs/prd/5-epic-list.md
   ✓ docs/prd/6-epics.md
-  ✓ docs/prd/8-next-steps.md (complete replacement)
+  ✓ docs/prd/next-steps.md (complete replacement)
 
 New Files:
   ✓ docs/prd/epic-{n}-{title}.yaml
@@ -688,7 +688,7 @@ Based on optional updates list from Step 5:
 
 ### Step 8: Generate next-steps.md
 
-**Completely replace** the `8-next-steps.md` file with enhanced handoff instructions.
+**Completely replace** the existing `*next-steps.md` file (may be `next-steps.md` or `8-next-steps.md`) with enhanced handoff instructions.
 
 **8.1 Determine UI Involvement**
 
@@ -707,7 +707,7 @@ For each new Epic, analyze Stories to determine:
 
 **8.3 Write next-steps.md**
 
-Generate `8-next-steps.md` as executable prompts for downstream agents. Each `🎯 HANDOFF TO {agent}:` section is a complete prompt that the target agent will execute directly—replace all placeholders with actual values from this iteration.
+Generate `next-steps.md` (write to the existing next-steps file, preserving its current filename) as executable prompts for downstream agents. Each `🎯 HANDOFF TO {agent}:` section is a complete prompt that the target agent will execute directly—replace all placeholders with actual values from this iteration.
 
 **Structure**:
 
@@ -929,7 +929,7 @@ Output completion report:
 
 - docs/prd/5-epic-list.md (appended)
 - docs/prd/6-epics.md (appended)
-- docs/prd/8-next-steps.md (complete replacement)
+- docs/prd/\*next-steps.md (complete replacement)
   {for each new Epic:}
 - docs/prd/epic-{n}-{title-slug}.yaml (new)
   {if other sections updated:}
@@ -939,7 +939,7 @@ Output completion report:
 🎯 NEXT STEPS
 ═══════════════════════════════════════════════════════
 
-Please review docs/prd/8-next-steps.md for detailed guidance.
+Please review docs/prd/next-steps.md for detailed guidance.
 
 {IF UI involved:}
 
@@ -961,7 +961,7 @@ SM → Dev → QA
 **On Success:**
 - Updated PRD shard files
 - Newly created Epic YAML files with `sm_hints` placeholders
-- Completely replaced 8-next-steps.md with enhanced handoff instructions
+- Completely replaced next-steps.md with enhanced handoff instructions
 
 **On Failure:**
 - Error reason
