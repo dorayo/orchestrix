@@ -188,55 +188,154 @@ sections:
 
   - id: branding-style
     title: Branding & Style Guide
-    instruction: Link to existing style guide or define key brand elements. Ensure consistency with company brand guidelines if they exist.
+    instruction: |
+      CRITICAL: This section must produce CONCRETE design tokens, not placeholders.
+
+      Before filling in values, commit to an aesthetic direction. Ask: "What is the ONE
+      unforgettable visual element of this product?" Then build the system around it.
+
+      Anti-convergence check — REJECT these defaults:
+      - Inter/Roboto/Arial as display fonts
+      - Purple gradients on white backgrounds
+      - Timid, evenly-distributed color palettes
+      - Generic card-grid layouts
+
+      If existing brand guidelines exist, link and extend them.
+      If starting fresh, build a distinctive system using these rules:
+      - Color: Apply 60-30-10 rule. Enforce WCAG AA (4.5:1 normal, 3:1 large text).
+      - Typography: Choose distinctive fonts. Create weight contrast (100 vs 900) and size hierarchy (3x+ jumps).
+      - Spacing: Use a 4px base unit system.
+      - Every value must be a CSS variable for theming consistency.
     elicit: true
     sections:
+      - id: aesthetic-direction
+        title: Aesthetic Direction
+        instruction: |
+          Commit to ONE bold direction BEFORE defining tokens. Safe middle-ground produces forgettable interfaces.
+          Options include (but are not limited to): brutally minimal, maximalist chaos, retro-futuristic,
+          organic/natural, luxury/refined, editorial, neo-brutalist, glassmorphic, dark-mode-first,
+          data-dense/dashboard, playful/illustration-heavy.
+        template: |
+          **Chosen Direction:** {{aesthetic_direction}}
+
+          **Unforgettable Element:** {{signature_element}}
+
+          **Inspiration References:** {{mood_references}}
       - id: visual-identity
         title: Visual Identity
         template: "**Brand Guidelines:** {{brand_guidelines_link}}"
       - id: color-palette
         title: Color Palette
+        instruction: |
+          Define colors as CSS custom properties. Apply the 60-30-10 rule:
+          60% dominant (backgrounds, large areas), 30% secondary (cards, sections), 10% accent (CTAs, highlights).
+          All color pairs must pass WCAG AA contrast ratios.
         type: table
-        columns: ["Color Type", "Hex Code", "Usage"]
+        columns: ["CSS Variable", "Hex Code", "Role (60/30/10)", "Contrast Ratio", "Usage"]
         rows:
-          - ["Primary", "{{primary_color}}", "{{primary_usage}}"]
-          - ["Secondary", "{{secondary_color}}", "{{secondary_usage}}"]
-          - ["Accent", "{{accent_color}}", "{{accent_usage}}"]
-          - ["Success", "{{success_color}}", "Positive feedback, confirmations"]
-          - ["Warning", "{{warning_color}}", "Cautions, important notices"]
-          - ["Error", "{{error_color}}", "Errors, destructive actions"]
-          - ["Neutral", "{{neutral_colors}}", "Text, borders, backgrounds"]
+          - ["--color-primary", "{{primary_color}}", "{{primary_ratio}}", "{{primary_contrast}}", "{{primary_usage}}"]
+          - ["--color-secondary", "{{secondary_color}}", "{{secondary_ratio}}", "{{secondary_contrast}}", "{{secondary_usage}}"]
+          - ["--color-accent", "{{accent_color}}", "10% accent", "{{accent_contrast}}", "{{accent_usage}}"]
+          - ["--color-background", "{{bg_color}}", "60% dominant", "-", "{{bg_usage}}"]
+          - ["--color-surface", "{{surface_color}}", "30% secondary", "-", "{{surface_usage}}"]
+          - ["--color-text", "{{text_color}}", "-", "{{text_contrast}}", "Primary text on background"]
+          - ["--color-text-muted", "{{muted_color}}", "-", "{{muted_contrast}}", "Secondary/helper text"]
+          - ["--color-success", "{{success_color}}", "-", "{{success_contrast}}", "Positive feedback, confirmations"]
+          - ["--color-warning", "{{warning_color}}", "-", "{{warning_contrast}}", "Cautions, important notices"]
+          - ["--color-error", "{{error_color}}", "-", "{{error_contrast}}", "Errors, destructive actions"]
+          - ["--color-border", "{{border_color}}", "-", "-", "Dividers, input borders"]
+      - id: background-atmosphere
+        title: Background & Atmosphere
+        instruction: |
+          Backgrounds set mood — they are NOT an afterthought.
+          AVOID: flat solid white or #f5f5f5 with zero atmosphere.
+          CONSIDER: gradient meshes, noise/grain textures, geometric patterns,
+          layered transparencies, subtle dot grids, dramatic shadows.
+        template: |
+          **Background Strategy:** {{background_strategy}}
+
+          **Texture/Pattern:** {{texture_details}}
+
+          **Dark Mode Approach:** {{dark_mode_strategy}}
       - id: typography
         title: Typography
+        instruction: |
+          Choose distinctive fonts — NEVER default to Inter/Roboto/Arial for display text.
+          Create meaningful contrast: weight jumps (300 vs 800), size jumps (3x between levels).
+          All sizes should sit on a 4px baseline grid.
         sections:
           - id: font-families
             title: Font Families
             template: |
-              - **Primary:** {{primary_font}}
-              - **Secondary:** {{secondary_font}}
-              - **Monospace:** {{mono_font}}
+              - **Display/Heading:** {{display_font}} — {{display_font_rationale}}
+              - **Body:** {{body_font}} — {{body_font_rationale}}
+              - **Monospace:** {{mono_font}} — {{mono_font_rationale}}
+              - **Font Loading Strategy:** {{font_loading}}
           - id: type-scale
             title: Type Scale
             type: table
-            columns: ["Element", "Size", "Weight", "Line Height"]
+            columns: ["Element", "CSS Variable", "Size", "Weight", "Line Height", "Letter Spacing"]
             rows:
-              - ["H1", "{{h1_size}}", "{{h1_weight}}", "{{h1_line}}"]
-              - ["H2", "{{h2_size}}", "{{h2_weight}}", "{{h2_line}}"]
-              - ["H3", "{{h3_size}}", "{{h3_weight}}", "{{h3_line}}"]
-              - ["Body", "{{body_size}}", "{{body_weight}}", "{{body_line}}"]
-              - ["Small", "{{small_size}}", "{{small_weight}}", "{{small_line}}"]
+              - ["Display", "--text-display", "{{display_size}}", "{{display_weight}}", "{{display_line}}", "{{display_tracking}}"]
+              - ["H1", "--text-h1", "{{h1_size}}", "{{h1_weight}}", "{{h1_line}}", "{{h1_tracking}}"]
+              - ["H2", "--text-h2", "{{h2_size}}", "{{h2_weight}}", "{{h2_line}}", "{{h2_tracking}}"]
+              - ["H3", "--text-h3", "{{h3_size}}", "{{h3_weight}}", "{{h3_line}}", "{{h3_tracking}}"]
+              - ["Body", "--text-body", "{{body_size}}", "{{body_weight}}", "{{body_line}}", "normal"]
+              - ["Small", "--text-small", "{{small_size}}", "{{small_weight}}", "{{small_line}}", "normal"]
+              - ["Caption", "--text-caption", "{{caption_size}}", "{{caption_weight}}", "{{caption_line}}", "{{caption_tracking}}"]
       - id: iconography
         title: Iconography
         template: |
           **Icon Library:** {{icon_library}}
-          
+
+          **Icon Size Scale:** {{icon_sizes}}
+
           **Usage Guidelines:** {{icon_guidelines}}
       - id: spacing-layout
         title: Spacing & Layout
+        instruction: |
+          Use a 4px base unit system. All spacing values must be multiples of 4.
+          Define a grid system (12-column recommended). Consider the Müller-Brockmann
+          principle: 95% grid adherence + 5% intentional breakage for emphasis.
         template: |
+          **Base Unit:** 4px
+
+          **Spacing Scale:**
+          | Token | Value | Usage |
+          |-------|-------|-------|
+          | --space-1 | 4px | Tight inline gaps |
+          | --space-2 | 8px | Related element spacing |
+          | --space-3 | 12px | Form field gaps |
+          | --space-4 | 16px | Default component padding |
+          | --space-6 | 24px | Section internal padding |
+          | --space-8 | 32px | Card padding, component gaps |
+          | --space-12 | 48px | Section separation |
+          | --space-16 | 64px | Major section breaks |
+
           **Grid System:** {{grid_system}}
-          
-          **Spacing Scale:** {{spacing_scale}}
+
+          **Max Content Width:** {{max_width}}
+      - id: shadows-depth
+        title: Shadows & Depth
+        instruction: Define a consistent shadow system for elevation hierarchy.
+        template: |
+          | Level | CSS Variable | Value | Usage |
+          |-------|-------------|-------|-------|
+          | Subtle | --shadow-sm | {{shadow_sm}} | Cards at rest |
+          | Default | --shadow-md | {{shadow_md}} | Dropdowns, popovers |
+          | Medium | --shadow-lg | {{shadow_lg}} | Modals, dialogs |
+          | Large | --shadow-xl | {{shadow_xl}} | Floating elements |
+          | Prominent | --shadow-2xl | {{shadow_2xl}} | Hero cards, feature highlights |
+      - id: border-radius
+        title: Border Radius
+        template: |
+          | Token | Value | Usage |
+          |-------|-------|-------|
+          | --radius-none | 0 | Sharp edges |
+          | --radius-sm | {{radius_sm}} | Buttons, inputs |
+          | --radius-md | {{radius_md}} | Cards, containers |
+          | --radius-lg | {{radius_lg}} | Modals, large panels |
+          | --radius-full | 9999px | Avatars, pills, badges |
 
   - id: accessibility
     title: Accessibility Requirements
@@ -293,17 +392,44 @@ sections:
           **Interaction Changes:** {{interaction_adaptations}}
 
   - id: animation
-    title: Animation & Micro-interactions
-    instruction: Define motion design principles and key interactions. Keep performance and accessibility in mind.
+    title: Animation & Motion Choreography
+    instruction: |
+      Motion is storytelling, not decoration. Define a cohesive motion system.
+
+      Core principle: One well-orchestrated page load with staggered reveals
+      (animation-delay) creates more delight than scattered micro-interactions.
+
+      Prefer CSS-only solutions for HTML. Use Framer Motion for React.
+      ALWAYS respect prefers-reduced-motion.
     elicit: true
     sections:
       - id: motion-principles
         title: Motion Principles
-        template: "{{motion_principles}}"
-      - id: key-animations
-        title: Key Animations
+        template: |
+          **Philosophy:** {{motion_philosophy}}
+
+          **Default Timing:**
+          | Interaction Type | Duration | Easing |
+          |-----------------|----------|--------|
+          | Micro-interaction (hover, focus) | 150-200ms | ease-out |
+          | Layout transition | 300-500ms | cubic-bezier(0.33, 1, 0.68, 1) |
+          | Page enter/exit | 400-600ms | cubic-bezier(0.16, 1, 0.3, 1) |
+          | Stagger delay per item | 50-80ms | - |
+
+          **Reduced Motion Fallback:** {{reduced_motion_strategy}}
+      - id: choreography-moments
+        title: Key Choreography Moments
+        instruction: |
+          Identify the 3-5 highest-impact moments where motion creates delight.
+          Focus on: page load, first meaningful interaction, success confirmation,
+          navigation transitions, data visualization entry.
         repeatable: true
-        template: "- **{{animation_name}}:** {{animation_description}} (Duration: {{duration}}, Easing: {{easing}})"
+        template: |
+          - **{{moment_name}}:** {{moment_description}}
+            - Trigger: {{trigger}}
+            - Duration: {{duration}} | Easing: {{easing}}
+            - Stagger: {{stagger_detail}}
+            - Reduced motion alternative: {{fallback}}
 
   - id: performance
     title: Performance Considerations
