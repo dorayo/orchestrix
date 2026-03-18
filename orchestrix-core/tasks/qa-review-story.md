@@ -4,15 +4,20 @@
 
 The following rules MUST survive context compression:
 
-1. HANDOFF message is MANDATORY - task is INVALID without it
-2. Last line of output MUST be: 🎯 HANDOFF TO {agent}: *{command} {args}
-3. If you are unsure whether you already output HANDOFF → output it again
-4. Before ending response, self-check: "Did I output 🎯 HANDOFF TO?"
-5. After EVERY "Store result" in Steps 1-6, IMMEDIATELY write results to checkpoint file on disk. Context memory is volatile; disk is permanent.
-6. Checkpoint path: `{qa.qaLocation}/checkpoints/{story_id}/step-{N}.yaml` — one file per step.
+1. **SEQUENTIAL EXECUTION**: Follow Steps 0 → 0.2 → 0.3 → 0.1 → 0.5 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 IN ORDER. Do NOT skip steps. Do NOT freestyle or combine steps. Do NOT stop after Gate Decision — Steps 8-9 are MANDATORY.
+2. HANDOFF message is MANDATORY - task is INVALID without it
+3. Last line of output MUST be: 🎯 HANDOFF TO {agent}: *{command} {args}
+4. If you are unsure whether you already output HANDOFF → output it again
+5. Before ending response, self-check: "Did I output 🎯 HANDOFF TO?"
+6. After EVERY "Store result" in Steps 1-6, IMMEDIATELY write results to checkpoint file on disk. Context memory is volatile; disk is permanent.
+7. Checkpoint path: `{qa.qaLocation}/checkpoints/{story_id}/step-{N}.yaml` — one file per step.
 
-Violation of rules 1-4 = broken automation pipeline. There is no valid completion without HANDOFF.
-Violation of rules 5-6 = wasted tokens on self-retry (all test work must be re-executed).
+**Gate Decision is NOT the end of this task.** After Gate Decision (Step 7), you MUST continue:
+- Step 8: Environment Cleanup
+- Step 9: Story updates, git commit, and HANDOFF output
+
+Violation of rules 1-5 = broken automation pipeline. There is no valid completion without HANDOFF.
+Violation of rules 6-7 = wasted tokens on self-retry (all test work must be re-executed).
 
 ---
 
