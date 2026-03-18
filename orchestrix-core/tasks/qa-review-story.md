@@ -4,7 +4,7 @@
 
 The following rules MUST survive context compression:
 
-1. **SEQUENTIAL EXECUTION**: Follow Steps 0 → 0.2 → 0.3 → 0.1 → 0.5 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 IN ORDER. Do NOT skip steps. Do NOT freestyle or combine steps. Do NOT stop after Gate Decision — Steps 8-9 are MANDATORY.
+1. **SEQUENTIAL EXECUTION**: Follow Steps 0 → 0.1 → 0.2 → 0.3 → 0.4 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 IN ORDER. Do NOT skip steps. Do NOT freestyle or combine steps. Do NOT stop after Gate Decision — Steps 8-9 are MANDATORY.
 2. HANDOFF message is MANDATORY - task is INVALID without it
 3. Last line of output MUST be: 🎯 HANDOFF TO {agent}: *{command} {args}
 4. If you are unsure whether you already output HANDOFF → output it again
@@ -70,7 +70,7 @@ checkpoint_dir: '{qa.qaLocation}/checkpoints/{story_id}'
 Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
 - **If status = "Done"**: Output `already_done` message -> **HALT**
-- **If status = "Approved"**: Execute **Status Auto-Recovery** (see Step 0.5)
+- **If status = "Approved"**: Execute **Status Auto-Recovery** (see Step 0.4)
   - If recovery succeeds: Continue to Validation
   - If recovery fails: Output `not_started` message -> **HALT**
 - **If status = "AwaitingTestDesign"**: Output `needs_test_design` message -> **HALT**
@@ -86,7 +86,7 @@ Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
 ---
 
-## Step 0.2: Pre-Register Pending HANDOFF (Anti-Compression Safety Net)
+## Step 0.1: Pre-Register Pending HANDOFF (Anti-Compression Safety Net)
 
 **Purpose**: Register pending-handoff early so fallback exists even if later steps are compressed away.
 
@@ -94,7 +94,7 @@ Use template: `{root}/templates/qa-idempotency-messages.yaml`
 
 Glob: `{root}/runtime/tmux-automation-active`
 
-**If file NOT FOUND** → **Skip to Step 0.1**
+**If file NOT FOUND** → **Skip to Step 0.2**
 
 **If file EXISTS**:
 
@@ -126,13 +126,13 @@ Log: `[PRE-REGISTERED] pending-handoff.json with safe defaults (qa/review retry,
 
 ---
 
-## Step 0.3: Checkpoint Resume Detection (Anti-Compression Recovery)
+## Step 0.2: Checkpoint Resume Detection (Anti-Compression Recovery)
 
 **Purpose**: If this is a self-retry after compression failure, detect persisted checkpoint data and skip directly to Gate Decision (Step 7), avoiding re-execution of all expensive test steps.
 
 **Check**: Glob `{qa.qaLocation}/checkpoints/{story_id}/step-*.yaml`
 
-**If NO checkpoint files found** → Continue to Step 0.1
+**If NO checkpoint files found** → Continue to Step 0.3
 
 **If checkpoint files found**:
 
@@ -169,18 +169,18 @@ evidence: { files_collected: 0, issues_with_evidence: [] }
 
 ---
 
-## Step 0.1: Review Mode Detection (CRITICAL - Token Optimization)
+## Step 0.3: Review Mode Detection (CRITICAL - Token Optimization)
 
 **Purpose**: Detect if this is a re-review (Round >= 2) and switch to incremental mode to save tokens.
 
-### 0.1.1 Load Previous Gate File
+### 0.3.1 Load Previous Gate File
 
 **Glob**: `{qa.qaLocation}/gates/{story_id}-*.yml`
 
 **If Gate file NOT found**:
 - Set `review_mode_type: full`
 - Set `review_round: 1`
-- Continue to Step 0.5
+- Continue to Step 0.4
 
 **If Gate file found**, extract:
 ```yaml
@@ -198,7 +198,7 @@ previous_gate:
     failed_scenarios: [{scenario_name, failure_reason}]
 ```
 
-### 0.1.2 Determine Review Mode Type
+### 0.3.2 Determine Review Mode Type
 
 | Condition | Mode | Behavior |
 |-----------|------|----------|
@@ -218,7 +218,7 @@ previous_context: {extracted from gate file}
 
 ---
 
-## Step 0.5: Status Auto-Recovery (Conditional)
+## Step 0.4: Status Auto-Recovery (Conditional)
 
 **Purpose**: Recover from context compression scenarios where Dev completed work but forgot to update story status.
 
@@ -228,7 +228,7 @@ previous_context: {extracted from gate file}
 - "InProgress" = Dev started but forgot to update to Review
 - "Approved" = Dev completed but forgot to update from start (extreme case)
 
-### 0.5.1 Check Dev Completion Indicators
+### 0.4.1 Check Dev Completion Indicators
 
 Look for evidence that Dev work is actually complete:
 
@@ -244,7 +244,7 @@ Look for evidence that Dev work is actually complete:
    - Exists and status = "pending"?
    - source_agent = "dev" and target_agent = "qa"?
 
-### 0.5.2 Recovery Decision
+### 0.4.2 Recovery Decision
 
 **If ANY of the following is true**:
 - Dev Agent Record has Final Summary
@@ -298,7 +298,7 @@ action: review
   risk_level: {previous_context.risk_level}
   review_mode: {previous_context.review_mode}
   ```
-- Set `review_round: {current_round}` (already incremented in Step 0.1)
+- Set `review_round: {current_round}` (already incremented in Step 0.3)
 - Log: "⏭️ SKIP: Risk Assessment (using cached: {risk_level}, {review_mode})"
 - **Jump to Step 2**
 
@@ -1662,10 +1662,10 @@ The `🎯 HANDOFF TO` line must be your FINAL output. Do NOT output anything aft
 | Step | Name | Full Mode | Incremental Mode (Round 2+) | Checkpoint Resume |
 |------|------|-----------|----------------------------|-------------------|
 | 0 | Idempotency Check | Execute | Execute | Execute |
-| 0.2 | Pre-Register HANDOFF | Execute (tmux only) | Execute (tmux only) | Execute (tmux only) |
-| 0.3 | **Checkpoint Detection** | No checkpoint → continue | No checkpoint → continue | ✅ **Load checkpoint → Jump to Step 7** |
-| 0.1 | **Mode Detection** | Set `full` | Set `incremental`, load previous context | ⏭️ SKIP |
-| 0.5 | Status Auto-Recovery | Execute | Execute | ⏭️ SKIP |
+| 0.1 | Pre-Register HANDOFF | Execute (tmux only) | Execute (tmux only) | Execute (tmux only) |
+| 0.2 | **Checkpoint Detection** | No checkpoint → continue | No checkpoint → continue | ✅ **Load checkpoint → Jump to Step 7** |
+| 0.3 | **Mode Detection** | Set `full` | Set `incremental`, load previous context | ⏭️ SKIP |
+| 0.4 | Status Auto-Recovery | Execute | Execute | ⏭️ SKIP |
 | 1 | Risk Assessment + 📎 | Calculate | ⏭️ **SKIP** (use cached) | ⏭️ SKIP (from checkpoint) |
 | 2 | Project Type Detection + 📎 | Detect | ⏭️ **SKIP** (use cached) | ⏭️ SKIP (from checkpoint) |
 | 3 | Environment Setup | Start | Execute | ⏭️ SKIP (not needed) |
