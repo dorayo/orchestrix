@@ -283,9 +283,63 @@ if [[ -z "$TARGET_WIN" ]]; then
     exit 0
 fi
 
+# Define lock early (needed by both normal path and self-retry)
+LOCK="/tmp/${SESSION_NAME}-${SOURCE_WIN}.lock"
+LOCK_TIMEOUT=60
+
 if [[ "$TARGET_WIN" == "$SOURCE_WIN" ]]; then
-    log "ERROR: Source and target are same window"
-    exit 0
+    # Allow self-retry ONLY from fallback (pre-registered pending-handoff with PENDING gate_result)
+    GATE_RESULT=""
+    if [[ -n "$FALLBACK_FILE" ]]; then
+        if command -v jq &>/dev/null; then
+            GATE_RESULT=$(jq -r '.gate_result // ""' "$FALLBACK_FILE" 2>/dev/null)
+        else
+            GATE_RESULT=$(grep -o '"gate_result"[[:space:]]*:[[:space:]]*"[^"]*"' "$FALLBACK_FILE" | sed 's/.*"\([^"]*\)"$/\1/')
+        fi
+    fi
+
+    if [[ "$GATE_RESULT" == "PENDING" ]]; then
+        log "[SELF-RETRY] Fallback self-retry detected ($SOURCE_AGENT -> $TARGET). gate_result=PENDING, allowing."
+
+        # Acquire lock for self-retry
+        if ! mkdir "$LOCK" 2>/dev/null; then
+            log "SKIP: Window $SOURCE_WIN locked (self-retry)"
+            exit 0
+        fi
+        date +%s > "$LOCK/ts"
+
+        # Self-retry: clear context, reload agent, then send command
+        RELOAD_CMD=$(get_agent_command "$SOURCE_AGENT")
+        (
+            log "[SELF-RETRY] Clearing and reloading $SOURCE_AGENT (window $SOURCE_WIN)"
+            tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" "/clear" 2>/dev/null
+            sleep 0.5
+            tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" Enter
+            sleep 5
+
+            if [[ -n "$RELOAD_CMD" ]]; then
+                tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" "$RELOAD_CMD" 2>/dev/null
+                sleep 0.5
+                tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" Enter
+                sleep 15
+            fi
+
+            tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" "$CMD" 2>/dev/null
+            sleep 0.5
+            tmux send-keys -t "$SESSION_NAME:$SOURCE_WIN" Enter
+            log "[SELF-RETRY] Command '$CMD' sent to $SOURCE_AGENT"
+
+            # Release lock
+            rm -rf "$LOCK"
+            log "[SELF-RETRY] Complete, lock released"
+        ) >> "$LOG_FILE" 2>&1 &
+        log "Self-retry background process started (PID $!)"
+        log "========== Hook complete (self-retry) =========="
+        exit 0
+    else
+        log "ERROR: Source and target are same window (not a fallback self-retry)"
+        exit 0
+    fi
 fi
 
 log "HANDOFF: $SOURCE_AGENT (win $SOURCE_WIN) -> $TARGET (win $TARGET_WIN)"
@@ -294,9 +348,6 @@ log "Command: $CMD"
 # ============================================
 # Atomic Lock
 # ============================================
-LOCK="/tmp/${SESSION_NAME}-${SOURCE_WIN}.lock"
-LOCK_TIMEOUT=60
-
 if ! mkdir "$LOCK" 2>/dev/null; then
     if [[ -f "$LOCK/ts" ]]; then
         ts=$(cat "$LOCK/ts" 2>/dev/null || echo 0)

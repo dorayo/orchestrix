@@ -1,5 +1,21 @@
 # qa-review-story
 
+## CRITICAL EXECUTION CONTRACT - DO NOT COMPRESS
+
+The following rules MUST survive context compression:
+
+1. HANDOFF message is MANDATORY - task is INVALID without it
+2. Last line of output MUST be: 🎯 HANDOFF TO {agent}: *{command} {args}
+3. If you are unsure whether you already output HANDOFF → output it again
+4. Before ending response, self-check: "Did I output 🎯 HANDOFF TO?"
+5. After EVERY "Store result" in Steps 1-6, IMMEDIATELY write results to checkpoint file on disk. Context memory is volatile; disk is permanent.
+6. Checkpoint path: `{qa.qaLocation}/checkpoints/{story_id}/step-{N}.yaml` — one file per step.
+
+Violation of rules 1-4 = broken automation pipeline. There is no valid completion without HANDOFF.
+Violation of rules 5-6 = wasted tokens on self-retry (all test work must be re-executed).
+
+---
+
 Test-based quality review with risk-aware E2E testing and evidence collection.
 
 ## Purpose
@@ -15,6 +31,17 @@ required:
   - story_id: '{epic}.{story}'
   - story_path: '{devStoryLocation}/{epic}.{story}.*.md'
 ```
+
+## Checkpoint Configuration
+
+```yaml
+checkpoint_dir: '{qa.qaLocation}/checkpoints/{story_id}'
+# Each step writes its results to: {checkpoint_dir}/step-{N}.yaml
+# On self-retry resume, checkpoint files are loaded and execution skips to Step 7
+# Cleaned up after successful HANDOFF in Step 9.7
+```
+
+**Dual-Write Rule**: After EVERY `**Store result**` block in Steps 1-6, IMMEDIATELY execute a Write tool call to persist that result to `{checkpoint_dir}/step-{step_number}.yaml`. This is non-negotiable — each step's write instruction is co-located with its Store result so it cannot be separated by compression.
 
 ---
 
@@ -51,6 +78,89 @@ Use template: `{root}/templates/qa-idempotency-messages.yaml`
 **If status = "Review"**:
 - Log: "Idempotency check passed - proceeding with QA review"
 - Continue to Validation
+
+---
+
+## Step 0.2: Pre-Register Pending HANDOFF (Anti-Compression Safety Net)
+
+**Purpose**: Register pending-handoff early so fallback exists even if later steps are compressed away.
+
+**Check for tmux automation marker**:
+
+Glob: `{root}/runtime/tmux-automation-active`
+
+**If file NOT FOUND** → **Skip to Step 0.1**
+
+**If file EXISTS**:
+
+Write `{root}/runtime/pending-handoff.json` with **safe default values** (qa + review = retry self):
+
+```json
+{
+  "source_agent": "qa",
+  "target_agent": "qa",
+  "command": "*review {story_id}",
+  "story_id": "{story_id}",
+  "task_description": "QA review for Story {story_id} (fallback retry)",
+  "gate_result": "PENDING",
+  "registered_at": "{current_ISO_timestamp}",
+  "status": "pending"
+}
+```
+
+Log: `[PRE-REGISTERED] pending-handoff.json with safe defaults (qa/review retry, will be updated in Step 7.3)`
+
+> **Why QA self-retry as default?**
+> If compression kills Steps 7-9, the gate decision was never made — we don't know PASS or FAIL.
+> - Cannot route to dev: Story status is still `Review`, Dev cannot modify `Review` stories (permission denied → HALT → pipeline stuck).
+> - Cannot route to sm: May skip a failing story into the next draft (dangerous).
+> - Route to QA self: Story stays in `Review` (valid for QA), QA re-executes review from scratch.
+>   Step 0 idempotency check will NOT block because status is still `Review`.
+>   Worst case: one redundant review cycle. Best case: review completes normally this time.
+> Step 7.3 will overwrite this with the actual gate_result and correct target_agent.
+
+---
+
+## Step 0.3: Checkpoint Resume Detection (Anti-Compression Recovery)
+
+**Purpose**: If this is a self-retry after compression failure, detect persisted checkpoint data and skip directly to Gate Decision (Step 7), avoiding re-execution of all expensive test steps.
+
+**Check**: Glob `{qa.qaLocation}/checkpoints/{story_id}/step-*.yaml`
+
+**If NO checkpoint files found** → Continue to Step 0.1
+
+**If checkpoint files found**:
+
+1. Log: `⚡ [CHECKPOINT-RESUME] Found {N} checkpoint files. Loading and skipping to Step 7.`
+2. Read each checkpoint file and restore context variables:
+
+| File | Restores |
+|------|----------|
+| `step-1.yaml` | risk_level, review_mode, skip_e2e, review_round |
+| `step-2.yaml` | project_type, test_strategy |
+| `step-4.yaml` | automated_tests |
+| `step-4.5.yaml` | task_checkbox_verification |
+| `step-4.6.yaml` | ac_coverage |
+| `step-4.7.yaml` | regression |
+| `step-5.yaml` | e2e_tests |
+| `step-5.5.yaml` | blind_spot_verification |
+| `step-6.yaml` | evidence |
+
+3. For any missing checkpoint file, use safe defaults:
+```yaml
+# Missing test step defaults (assume not executed)
+regression: { executed: false, passed: true, tests_total: 0, tests_failed: 0, issues: [] }
+e2e_tests: { executed: false, skipped: true, issues: [] }
+blind_spot_verification: { total_scenarios: 0, covered: 0, coverage_rate: 0, issues: [] }
+evidence: { files_collected: 0, issues_with_evidence: [] }
+```
+
+4. Set `review_mode_type: checkpoint_resume`
+5. **Jump directly to Step 7** (Gate Decision)
+
+> **Why this works**: Each test step writes its checkpoint immediately after execution.
+> If compression kills Steps 7-9, all test data from Steps 1-6 is already on disk.
+> Self-retry loads the data and goes straight to the gate decision — zero wasted work.
 
 ---
 
@@ -223,6 +333,8 @@ review_mode: automated_only | automated_plus_spot_check | full_testing
 skip_e2e: true | false
 ```
 
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-1.yaml`
+
 ### 1.3 Initialize Review Round
 
 1. Read/update `review_round` in Story `QA Review Metadata`:
@@ -259,6 +371,8 @@ test_strategy:
   startup_command: "npm run dev"
   expected_port: 3000
 ```
+
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-2.yaml`
 
 ---
 
@@ -445,6 +559,8 @@ automated_tests:
   issues: []
 ```
 
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-4.yaml`
+
 ---
 
 ## Step 4.5: Task Checkbox Verification
@@ -545,6 +661,8 @@ task_checkbox_verification:
 | All checkboxes complete AND consistent | Continue to Step 5 |
 
 **Note**: Task checkbox issues are aggregated into Step 7 Gate Decision. They do not independently block review but heavily weight FAIL outcome.
+
+📎 **CHECKPOINT**: Write `task_checkbox_verification` result to `{checkpoint_dir}/step-4.5.yaml`
 
 ---
 
@@ -786,6 +904,8 @@ ac_coverage:
   issues: [{ac_id, severity, issue, evidence}]
 ```
 
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-4.6.yaml`
+
 ---
 
 ## Step 4.7: Regression Test Execution (Conditional)
@@ -833,6 +953,8 @@ regression:
   tests_failed: {count}
   issues: [{severity: CRITICAL, finding, evidence}]
 ```
+
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-4.7.yaml`
 
 ---
 
@@ -888,6 +1010,8 @@ e2e_tests:
   network_errors_found: false
   issues: [{id, severity, finding, evidence}]
 ```
+
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-5.yaml`
 
 ---
 
@@ -1000,6 +1124,8 @@ blind_spot_verification:
   issues: [{severity, category, description, recommendation}]
 ```
 
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-5.5.yaml`
+
 ---
 
 ## Step 6: Evidence Collection
@@ -1023,6 +1149,8 @@ evidence:
   files_collected: 5
   issues_with_evidence: [{issue_id, screenshots, logs, reproduction_steps}]
 ```
+
+📎 **CHECKPOINT**: Write above result to `{checkpoint_dir}/step-6.yaml`
 
 ---
 
@@ -1134,6 +1262,8 @@ Glob: `{root}/runtime/tmux-automation-active`
 
 ⛔ **HALT if** file creation failed (tmux mode requires fallback).
 
+⚠️ REMINDER: After gate decision, you MUST still output 🎯 HANDOFF in Step 9.7. Do NOT end your response here.
+
 ---
 
 ## Step 8: Environment Cleanup
@@ -1150,6 +1280,8 @@ story_id: {story_id}
 ```
 
 Log result. Do not block on failures.
+
+⚠️ REMINDER: Cleanup done. Proceed to Step 9 for MANDATORY HANDOFF output. Do NOT end your response without 🎯 HANDOFF.
 
 ---
 
@@ -1354,6 +1486,8 @@ story_root: '{devStoryLocation}'
   - Record integration issues in gate file under `epic_integration` section
   - Add WARNING to handoff message: "Warning: Epic integration issues detected - see gate file"
 
+⚠️ NEXT: Step 9.7 HANDOFF output is REQUIRED. Do NOT end your response before outputting 🎯 HANDOFF.
+
 ---
 
 ### 9.6 Final Test Process Cleanup (MANDATORY - Post-Commit)
@@ -1441,7 +1575,7 @@ Do not block on failures. Proceed to Step 9.7.
 
 ---
 
-### 9.7 OUTPUT HANDOFF MESSAGE (REQUIRED)
+### 9.7 SELF-CHECK AND HANDOFF (MANDATORY FINAL STEP)
 
 ---
 
@@ -1452,21 +1586,17 @@ The hook script will automatically detect it and route to the target agent.
 
 ---
 
-### Pre-Handoff Verification
+### Self-Check Verification
 
-Before proceeding, verify Step 9.5.2 and Step 9.6 were executed:
+Before finishing, verify ALL of the following:
 
-1. **Check commit_result exists** (not empty)
-   - If `commit_result` is empty/missing:
-     - ERROR: Step 9.5.2 was not executed
-     - Go back to Step 9.5.2 and execute finalize-story-commit.md
-     - Do NOT proceed until commit_result is populated
+- [ ] Gate file created? (Step 7) — If NO → go back and execute Step 7
+- [ ] Story status updated? (Step 9.3) — If NO → go back and execute Step 9.3
+- [ ] Git commit attempted? (Step 9.5.2) — If NO → go back and execute Step 9.5.2
+- [ ] Cleanup executed? (Step 9.6) — If NO → go back and execute Step 9.6
+- [ ] Checkpoint cleaned up? — If `{checkpoint_dir}/` exists → delete directory via `rm -rf {checkpoint_dir}`
 
-2. **Check final_cleanup.executed == true**
-   - If missing or false:
-     - ERROR: Step 9.6 was not executed
-     - Go back to Step 9.6 and execute cleanup
-     - Do NOT proceed until cleanup is complete
+If ANY check fails (except checkpoint cleanup) → go back and execute the missing step before proceeding.
 
 ---
 
@@ -1517,36 +1647,43 @@ Gate: PASS | Tests: {pass_rate}%
 🎯 HANDOFF TO sm: *draft {next_story_id}
 ```
 
-**STOP**: The `🎯 HANDOFF TO` line must be your FINAL output. Hook handles the rest.
+**FINAL SELF-CHECK**: Did you output a line starting with `🎯 HANDOFF TO`? If not → output it NOW.
+The `🎯 HANDOFF TO` line must be your FINAL output. Do NOT output anything after it. Hook handles the rest.
 
 ---
 
 ## Summary of Workflow
 
-| Step | Name | Full Mode | Incremental Mode (Round 2+) |
-|------|------|-----------|----------------------------|
-| 0 | Idempotency Check | Execute | Execute |
-| 0.1 | **Mode Detection** | Set `full` | Set `incremental`, load previous context |
-| 0.5 | Status Auto-Recovery | Execute | Execute |
-| 1 | Risk Assessment | Calculate | ⏭️ **SKIP** (use cached) |
-| 2 | Project Type Detection | Detect | ⏭️ **SKIP** (use cached) |
-| 3 | Environment Setup | Start | Execute |
-| 3.5 | Migration Verification | Verify | Execute |
-| 4 | Automated Test Evidence | Verify | Execute |
-| 4.5 | Task Checkbox Verification | Full scan | ⚡ **FOCUS**: Previous failures only |
-| 4.6 | AC Coverage Verification | Full scan | ⚡ **FOCUS**: Failed ACs only |
-| 4.7 | **Regression Testing** | Execute all | ⏭️ **SKIP** if previous round passed |
-| 5 | E2E Testing | Full scenarios | ⚡ **FOCUS**: Failed scenarios only |
-| 5.5 | Blind Spot Verification | Full scan | ⚡ **FOCUS**: Missing spots only |
-| 6 | Evidence Collection | All issues | New issues only |
-| 7 | Gate Decision | Full context | Full context + populate incremental_context |
-| 8 | Environment Cleanup | Execute | Execute |
-| 9.5.3 | **Determine Next Story ID** | Check epic YAML → `N.(M+1)` or `(N+1).1` | Check epic YAML → `N.(M+1)` or `(N+1).1` |
-| 9.5.5 | **Persist E2E Tests** | Execute | Execute |
-| 9.5.6 | **Epic Integration Test** | Execute | Execute |
-| 9.x | Output & Handoff | Execute | Execute |
+| Step | Name | Full Mode | Incremental Mode (Round 2+) | Checkpoint Resume |
+|------|------|-----------|----------------------------|-------------------|
+| 0 | Idempotency Check | Execute | Execute | Execute |
+| 0.2 | Pre-Register HANDOFF | Execute (tmux only) | Execute (tmux only) | Execute (tmux only) |
+| 0.3 | **Checkpoint Detection** | No checkpoint → continue | No checkpoint → continue | ✅ **Load checkpoint → Jump to Step 7** |
+| 0.1 | **Mode Detection** | Set `full` | Set `incremental`, load previous context | ⏭️ SKIP |
+| 0.5 | Status Auto-Recovery | Execute | Execute | ⏭️ SKIP |
+| 1 | Risk Assessment + 📎 | Calculate | ⏭️ **SKIP** (use cached) | ⏭️ SKIP (from checkpoint) |
+| 2 | Project Type Detection + 📎 | Detect | ⏭️ **SKIP** (use cached) | ⏭️ SKIP (from checkpoint) |
+| 3 | Environment Setup | Start | Execute | ⏭️ SKIP (not needed) |
+| 3.5 | Migration Verification | Verify | Execute | ⏭️ SKIP |
+| 4 | Automated Test Evidence + 📎 | Verify | Execute | ⏭️ SKIP (from checkpoint) |
+| 4.5 | Task Checkbox Verification + 📎 | Full scan | ⚡ **FOCUS**: Previous failures only | ⏭️ SKIP (from checkpoint) |
+| 4.6 | AC Coverage Verification + 📎 | Full scan | ⚡ **FOCUS**: Failed ACs only | ⏭️ SKIP (from checkpoint) |
+| 4.7 | **Regression Testing** + 📎 | Execute all | ⏭️ **SKIP** if previous round passed | ⏭️ SKIP (from checkpoint) |
+| 5 | E2E Testing + 📎 | Full scenarios | ⚡ **FOCUS**: Failed scenarios only | ⏭️ SKIP (from checkpoint) |
+| 5.5 | Blind Spot Verification + 📎 | Full scan | ⚡ **FOCUS**: Missing spots only | ⏭️ SKIP (from checkpoint) |
+| 6 | Evidence Collection + 📎 | All issues | New issues only | ⏭️ SKIP (from checkpoint) |
+| 7 | Gate Decision | Full context | Full context + populate incremental_context | Execute with loaded data |
+| 8 | Environment Cleanup | Execute | Execute | No-op (env not started) |
+| 9.5.3 | **Determine Next Story ID** | Check epic YAML → `N.(M+1)` or `(N+1).1` | Check epic YAML → `N.(M+1)` or `(N+1).1` | Execute |
+| 9.5.5 | **Persist E2E Tests** | Execute | Execute | Execute |
+| 9.5.6 | **Epic Integration Test** | Execute | Execute | Execute |
+| 9.7 | Self-Check + HANDOFF + 🗑️ | Execute + cleanup checkpoint | Execute + cleanup checkpoint | Execute + cleanup checkpoint |
 
-**Token Savings**: Incremental mode saves ~50-70% execution time by skipping stable checks.
+📎 = writes checkpoint file after Store result. 🗑️ = deletes checkpoint directory.
+
+**Token Savings**:
+- Incremental mode saves ~50-70% execution time by skipping stable checks.
+- Checkpoint resume saves ~80-90% by skipping all test execution (Steps 1-6).
 
 ## Key Principles
 
@@ -1559,3 +1696,4 @@ Gate: PASS | Tests: {pass_rate}%
 7. **User perspective**: E2E tests verify real user journeys
 8. **Clean environment**: Always cleanup, even on failure
 9. **Incremental optimization**: Round 2+ uses cached context, focuses only on previous failures
+10. **Checkpoint resilience**: Every test step dual-writes to disk; self-retry loads checkpoint and skips to gate decision

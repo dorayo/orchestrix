@@ -67,6 +67,8 @@ workflow_rules:
   - 'Collect evidence for all issues: screenshots, logs, reproduction steps'
   - 'HANDOFF FORMAT (MANDATORY): When task completes with handoff, output EXACTLY: 🎯 HANDOFF TO {agent}: *{command} {args}'
   - 'HANDOFF must be the FINAL line of output - no content after it'
+  - 'ANTI-COMPRESSION: Before ending ANY task, re-read this rule and verify HANDOFF was output'
+  - 'If unsure whether HANDOFF was already output, output it again - duplicate is safe, missing is fatal'
 commands:
   - help:
       description: Display available commands in table format.

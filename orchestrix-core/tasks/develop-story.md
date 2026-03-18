@@ -177,17 +177,22 @@ Execute:
 
 ---
 
-## 6. Implementation (Process Declaration Only)
+## 6. TDD Implementation (Process Declaration Only)
 
 For each task/subtask in the story:
 
 1. Map to the acceptance criteria
-2. Implement according to standards (from loaded files)
-3. Write tests (unit → integration → E2E if applicable)
-4. Run lint + tests
-5. Mark the checkbox `[x]`
-6. Update Dev Log
-7. Update File List
+2. **Write failing test first**: create/update test file targeting the AC. Run to confirm failure (Red)
+3. **Implement minimum code** to make the test pass (Green)
+4. **Refactor** if needed — tests must stay green
+5. Run full lint + test suite
+6. Mark the checkbox `[x]`
+7. Update Dev Log
+8. Update File List
+
+> **TDD is mandatory**: Do NOT write implementation before a failing test exists for the
+> current AC. If a QA test design document was loaded in Step 3.2, use it as the test
+> specification. The cycle is strictly Red → Green → Refactor per AC.
 
 **Resumption Guide Update Rules**:
 
