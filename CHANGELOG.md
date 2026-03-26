@@ -1,3 +1,15 @@
+# [15.18.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.17.0...v15.18.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* **tmux:** replace fixed wait with readiness detection for Claude Code startup ([d02cff9](https://github.com/dorayo/ORCHESTRIX/commit/d02cff9c7259b4c6173405ba3fd0ca3aadb7114a))
+
+
+### Features
+
+* **installer:** add start-orchestrix.sh shortcut during tmux setup ([8e215ea](https://github.com/dorayo/ORCHESTRIX/commit/8e215ea508d5c1fe26a8ea412a02f4f2a599dc88))
+
 # [15.17.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.16.0...v15.17.0) (2026-03-26)
 
 
