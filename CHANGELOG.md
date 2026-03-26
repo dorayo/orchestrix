@@ -1,3 +1,10 @@
+# [15.17.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.16.0...v15.17.0) (2026-03-26)
+
+
+### Features
+
+* **tmux:** update agent commands to installed format and add hook safety net ([6eb7a9b](https://github.com/dorayo/ORCHESTRIX/commit/6eb7a9b3f51d23cb633ea72811c62521eaa96411))
+
 # [15.16.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.15.0...v15.16.0) (2026-03-26)
 
 
