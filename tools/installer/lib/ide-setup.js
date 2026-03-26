@@ -455,6 +455,12 @@ class IdeSetup {
         console.error(chalk.red(`   ❌ Error: Could not set executable permission on tmux launcher: ${error.message}`));
         throw error;
       }
+
+      // Create shortcut at .orchestrix-core/start-orchestrix.sh
+      const shortcutPath = path.join(installDir, ".orchestrix-core", "start-orchestrix.sh");
+      await fs.writeFile(shortcutPath, scriptContent, 'utf8');
+      await fs.chmod(shortcutPath, 0o755);
+      this._log(console.log, chalk.green(`   ✅ TMUX Shortcut: .orchestrix-core/start-orchestrix.sh`));
     } else {
       console.error(chalk.red(`   ❌ Error: TMUX launcher script not found at ${sourceTmuxScript}`));
       throw new Error(`Missing required file: ${sourceTmuxScript}`);
@@ -464,7 +470,7 @@ class IdeSetup {
     // Hook script detects HANDOFF messages and routes automatically
 
     this._log(console.log, chalk.cyan(`\n   💡 TMUX自动化已安装！使用方法：`));
-    this._log(console.log, chalk.dim(`      1. 启动会话: ./.orchestrix-core/utils/start-tmux-session.sh`));
+    this._log(console.log, chalk.dim(`      1. 启动会话: ./.orchestrix-core/start-orchestrix.sh`));
     this._log(console.log, chalk.dim(`      2. 在SM窗口输入 1 开始工作流`));
     this._log(console.log, chalk.dim(`      3. 观察agents自动协作`));
   }
