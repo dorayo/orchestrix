@@ -2,6 +2,9 @@
 # Orchestrix tmux Multi-Agent Session Starter
 # Purpose: Create 4 separate windows, each running a Claude Code agent
 # Supports multi-repo: Each repo gets its own tmux session based on repository_id
+#
+# Usage: After installing Orchestrix via `npx orchestrix install -i claude-code`,
+# run this script from the target project to start the multi-agent automation session.
 
 set -e
 
@@ -74,6 +77,81 @@ fi
 # Create new session with first window (Architect)
 echo "🚀 Creating tmux session: $SESSION_NAME"
 tmux new-session -d -s "$SESSION_NAME" -n "Arch" -c "$WORK_DIR"
+
+# ============================================
+# Verify & inject handoff-detector hook (safety net)
+# ============================================
+# NOTE: `orchestrix install` already sets up these files during installation.
+# This section acts as a safety net for cases where:
+#   - install was done without claude-code IDE flag
+#   - settings.local.json was deleted or modified
+#   - handoff-detector.sh was removed
+#
+# Path convention (must match installer in ide-setup.js):
+#   Hook script:  .claude/hooks/handoff-detector.sh
+#   Settings cmd: .claude/hooks/handoff-detector.sh
+SETTINGS_LOCAL="$WORK_DIR/.claude/settings.local.json"
+HANDOFF_HOOK_CMD=".claude/hooks/handoff-detector.sh"
+
+# Ensure .claude/hooks directory exists
+mkdir -p "$WORK_DIR/.claude/hooks"
+
+# Ensure handoff-detector.sh exists in target project
+HANDOFF_SCRIPT="$WORK_DIR/.claude/hooks/handoff-detector.sh"
+if [ ! -f "$HANDOFF_SCRIPT" ]; then
+    # Try to find source: installed layout (.orchestrix-core/common/hooks/)
+    HOOK_SRC="$WORK_DIR/.orchestrix-core/common/hooks/handoff-detector.sh"
+    if [ ! -f "$HOOK_SRC" ]; then
+        # Fallback: source repo layout (common/hooks/)
+        HOOK_SRC="$(cd "$SCRIPT_DIR/../.." && pwd)/common/hooks/handoff-detector.sh"
+    fi
+    if [ -f "$HOOK_SRC" ]; then
+        cp "$HOOK_SRC" "$HANDOFF_SCRIPT"
+        chmod +x "$HANDOFF_SCRIPT"
+        echo "✅ Copied handoff-detector.sh to .claude/hooks/"
+    else
+        echo "⚠️  handoff-detector.sh source not found, handoff automation may not work"
+    fi
+else
+    echo "✅ Handoff hook script exists: .claude/hooks/handoff-detector.sh"
+fi
+
+# Check if settings.local.json already has handoff-detector configured
+if [ -f "$SETTINGS_LOCAL" ]; then
+    if grep -q "handoff-detector" "$SETTINGS_LOCAL" 2>/dev/null; then
+        echo "✅ Handoff hook already configured in settings.local.json"
+    else
+        echo "⚠️  settings.local.json exists but missing handoff hook, injecting..."
+        if command -v jq &>/dev/null; then
+            EXISTING=$(cat "$SETTINGS_LOCAL")
+            echo "$EXISTING" | jq --arg cmd "$HANDOFF_HOOK_CMD" \
+                '.hooks.Stop = (.hooks.Stop // []) + [{"hooks": [{"type": "command", "command": $cmd}]}]' \
+                > "$SETTINGS_LOCAL.tmp" && mv "$SETTINGS_LOCAL.tmp" "$SETTINGS_LOCAL"
+            echo "✅ Handoff hook injected into existing settings.local.json"
+        else
+            echo "⚠️  jq not found, cannot safely merge. Please add handoff hook manually."
+        fi
+    fi
+else
+    # Create new settings.local.json with handoff hook
+    cat > "$SETTINGS_LOCAL" << SETTINGS_EOF
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HANDOFF_HOOK_CMD"
+          }
+        ]
+      }
+    ]
+  }
+}
+SETTINGS_EOF
+    echo "✅ Created settings.local.json with handoff hook"
+fi
 
 # ============================================
 # Create tmux automation marker
@@ -163,12 +241,12 @@ AGENT_LOAD_WAIT=15
 # Auto-start workflow command (sent to SM window)
 AUTO_START_COMMAND="1"
 
-# Agent activation commands (mapping window → command)
+# Agent activation commands (Orchestrix installed format: /Orchestrix:agents:{name})
 declare -a AGENT_COMMANDS=(
-    "/o architect"   # Window 0 - Architect
-    "/o sm"          # Window 1 - SM
-    "/o dev"         # Window 2 - Dev
-    "/o qa"          # Window 3 - QA
+    "/Orchestrix:agents:architect"   # Window 0 - Architect
+    "/Orchestrix:agents:sm"          # Window 1 - SM
+    "/Orchestrix:agents:dev"         # Window 2 - Dev
+    "/Orchestrix:agents:qa"          # Window 3 - QA
 )
 
 declare -a AGENT_NAMES=(

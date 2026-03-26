@@ -37,12 +37,13 @@ get_window_num() {
     esac
 }
 
+# Orchestrix installed format: /Orchestrix:agents:{name}
 get_agent_command() {
     case "$1" in
-        architect) echo "/o architect" ;;
-        sm) echo "/o sm" ;;
-        dev) echo "/o dev" ;;
-        qa) echo "/o qa" ;;
+        architect) echo "/Orchestrix:agents:architect" ;;
+        sm) echo "/Orchestrix:agents:sm" ;;
+        dev) echo "/Orchestrix:agents:dev" ;;
+        qa) echo "/Orchestrix:agents:qa" ;;
         *) echo "" ;;
     esac
 }
