@@ -1,3 +1,23 @@
+# [15.16.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.15.0...v15.16.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* **qa:** enforce sequential step execution in CRITICAL CONTRACT ([d0a011d](https://github.com/dorayo/ORCHESTRIX/commit/d0a011d74726f8ebd98932ff4eb44b179097ca5d)), closes [#1](https://github.com/dorayo/ORCHESTRIX/issues/1)
+* **shard:** use glob patterns for shard file matching instead of hardcoded numeric prefixes ([c7a4264](https://github.com/dorayo/ORCHESTRIX/commit/c7a4264b436c9df5878e38753416652733acfa7b))
+* **workflow:** add quick-mode transitions and handoff scenarios for Dev/QA ([d22851b](https://github.com/dorayo/ORCHESTRIX/commit/d22851b6dc8166869b6789a48689175897982aab))
+* **workflow:** standardize all Step 0 status outputs to HANDOFF format ([d650dee](https://github.com/dorayo/ORCHESTRIX/commit/d650dee086dea9551457301f37ef5417a438cac5))
+
+
+### Features
+
+* **pm:** add brownfield bootstrap to start-iteration for projects without PRD/architecture ([b45e9af](https://github.com/dorayo/ORCHESTRIX/commit/b45e9af9265a3fbd54121164b70c42a30873c793))
+* **qa:** add anti-compression checkpoint system for reliable HANDOFF delivery ([5f3b2c3](https://github.com/dorayo/ORCHESTRIX/commit/5f3b2c3b73187922f8b56a0969de924d772df33c))
+* **qa:** add explicit next story ID to PASS handoff command ([4302ff3](https://github.com/dorayo/ORCHESTRIX/commit/4302ff30231b43c5c837410242c280542b4a2f60))
+* **qa:** enforce mandatory smoke test report generation on every outcome ([0c2c02c](https://github.com/dorayo/ORCHESTRIX/commit/0c2c02c341cb9f824de12a03ac269cf704ad1b36))
+* **template:** add brainstorming-session-results as higher-priority PRD input ([3096b70](https://github.com/dorayo/ORCHESTRIX/commit/3096b7051df643e7aa263836d68f1c25b529fd55))
+* **ux-expert:** add anti-convergence design system for world-class visual output ([1699e0c](https://github.com/dorayo/ORCHESTRIX/commit/1699e0c4a3fe7cb316d61a22cbf2580b7b467352))
+
 # [15.15.0](https://github.com/dorayo/ORCHESTRIX/compare/v15.14.0...v15.15.0) (2026-03-01)
 
 
