@@ -226,17 +226,17 @@ tmux send-keys -t "$SESSION_NAME:3" "echo ''" C-m
 # Configuration
 # ============================================
 
-# Wait time for Claude Code to start (seconds)
-CC_STARTUP_WAIT=12
+# Max wait time for Claude Code to become ready (seconds)
+CC_STARTUP_TIMEOUT=60
 
 # Wait time between command text and Enter key (seconds)
 COMMAND_ENTER_DELAY=1
 
 # Wait time between activating agents (seconds)
-AGENT_ACTIVATION_DELAY=2
+AGENT_ACTIVATION_DELAY=3
 
 # Wait time for agents to fully load before starting workflow (seconds)
-AGENT_LOAD_WAIT=15
+AGENT_LOAD_WAIT=20
 
 # Auto-start workflow command (sent to SM window)
 AUTO_START_COMMAND="1"
@@ -275,6 +275,35 @@ send_command_with_delay() {
 }
 
 # ============================================
+# Function: Wait for Claude Code to be ready in a window
+# Checks tmux pane output for ready indicators
+# Usage: wait_for_cc_ready <window> <timeout>
+# ============================================
+wait_for_cc_ready() {
+    local window="$1"
+    local timeout="$2"
+    local elapsed=0
+
+    while [ "$elapsed" -lt "$timeout" ]; do
+        # Capture last 5 lines of the pane
+        local output
+        output=$(tmux capture-pane -t "$SESSION_NAME:$window" -p -S -5 2>/dev/null)
+
+        # Claude Code shows ">" prompt or "tips" or "help" when ready
+        if echo "$output" | grep -qE '(^>|^❯|Tips for|/help|How can I)'; then
+            return 0
+        fi
+
+        sleep 2
+        elapsed=$((elapsed + 2))
+        printf "\r   ⏳ Window %d: waiting... (%ds/%ds)" "$window" "$elapsed" "$timeout"
+    done
+
+    # Timeout - continue anyway
+    return 1
+}
+
+# ============================================
 # Start Claude Code in all windows
 # ============================================
 
@@ -297,15 +326,27 @@ tmux send-keys -t "$SESSION_NAME:3" "cc" C-m
 # ============================================
 
 echo ""
-echo "⏳ Waiting ${CC_STARTUP_WAIT}s for Claude Code to start..."
+echo "⏳ Waiting for Claude Code to be ready (timeout: ${CC_STARTUP_TIMEOUT}s)..."
 echo ""
 
-# Show countdown
-for i in $(seq "$CC_STARTUP_WAIT" -1 1); do
-    printf "\r   %2d seconds remaining..." "$i"
-    sleep 1
+# Wait for at least window 0 and 1 (Architect + SM) to be ready
+ALL_READY=true
+for win in 0 1 2 3; do
+    agent_name="${AGENT_NAMES[$win]}"
+    if wait_for_cc_ready "$win" "$CC_STARTUP_TIMEOUT"; then
+        printf "\r   ✅ Window %d (%s) is ready!                    \n" "$win" "$agent_name"
+    else
+        printf "\r   ⚠️  Window %d (%s) timeout, continuing anyway  \n" "$win" "$agent_name"
+        ALL_READY=false
+    fi
 done
-printf "\r   ✓ Claude Code should be ready now!      \n"
+
+echo ""
+if [ "$ALL_READY" = true ]; then
+    echo "✅ All Claude Code instances are ready!"
+else
+    echo "⚠️  Some instances timed out, proceeding with activation..."
+fi
 echo ""
 
 # ============================================
