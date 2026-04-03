@@ -67,6 +67,33 @@ describe('mergeMcpJson', () => {
     assert.equal(action, 'skip');
   });
 
+  it('updates headers when orchestrix has hardcoded key instead of env ref', () => {
+    const existing = {
+      mcpServers: {
+        orchestrix: {
+          type: 'http',
+          url: 'https://orchestrix-mcp.youlidao.ai/api/mcp',
+          headers: { Authorization: 'Bearer ORCH-TEAM-SOME-HARDCODED-KEY' },
+        },
+        'sequential-thinking': {
+          command: 'npx',
+          args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
+        },
+      },
+    };
+    fs.writeFileSync(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
+
+    const action = mergeMcpJson(tmpDir);
+    assert.equal(action, 'update');
+
+    const content = JSON.parse(fs.readFileSync(path.join(tmpDir, '.mcp.json'), 'utf-8'));
+    assert.equal(
+      content.mcpServers.orchestrix.headers.Authorization,
+      'Bearer {{env:ORCHESTRIX_LICENSE_KEY}}',
+      'headers updated to env var reference'
+    );
+  });
+
   it('does not overwrite existing sequential-thinking config', () => {
     const existing = {
       mcpServers: {
