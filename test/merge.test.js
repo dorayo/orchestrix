@@ -19,15 +19,15 @@ afterEach(() => {
 });
 
 describe('mergeMcpJson', () => {
-  it('creates .mcp.json when none exists', () => {
-    const action = mergeMcpJson(tmpDir);
+  it('creates .mcp.json with actual key', () => {
+    const action = mergeMcpJson(tmpDir, 'orch_live_test_key_123');
     assert.equal(action, 'create');
 
     const content = JSON.parse(fs.readFileSync(path.join(tmpDir, '.mcp.json'), 'utf-8'));
     assert.ok(content.mcpServers.orchestrix);
     assert.ok(content.mcpServers['sequential-thinking']);
     assert.equal(content.mcpServers.orchestrix.type, 'http');
-    assert.ok(content.mcpServers.orchestrix.headers.Authorization.includes('ORCHESTRIX_LICENSE_KEY'));
+    assert.equal(content.mcpServers.orchestrix.headers.Authorization, 'Bearer orch_live_test_key_123');
   });
 
   it('merges into existing .mcp.json preserving other entries', () => {
@@ -38,7 +38,7 @@ describe('mergeMcpJson', () => {
     };
     fs.writeFileSync(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
 
-    const action = mergeMcpJson(tmpDir);
+    const action = mergeMcpJson(tmpDir, 'orch_live_test_key_123');
     assert.equal(action, 'update');
 
     const content = JSON.parse(fs.readFileSync(path.join(tmpDir, '.mcp.json'), 'utf-8'));
@@ -47,13 +47,13 @@ describe('mergeMcpJson', () => {
     assert.ok(content.mcpServers['sequential-thinking'], 'sequential-thinking added');
   });
 
-  it('skips when orchestrix already configured correctly', () => {
+  it('skips when orchestrix already has same key', () => {
     const existing = {
       mcpServers: {
         orchestrix: {
           type: 'http',
           url: 'https://orchestrix-mcp.youlidao.ai/api/mcp',
-          headers: { Authorization: 'Bearer ${ORCHESTRIX_LICENSE_KEY}' },
+          headers: { Authorization: 'Bearer orch_live_test_key_123' },
         },
         'sequential-thinking': {
           command: 'npx',
@@ -63,11 +63,11 @@ describe('mergeMcpJson', () => {
     };
     fs.writeFileSync(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
 
-    const action = mergeMcpJson(tmpDir);
+    const action = mergeMcpJson(tmpDir, 'orch_live_test_key_123');
     assert.equal(action, 'skip');
   });
 
-  it('updates headers when orchestrix has hardcoded key instead of env ref', () => {
+  it('updates headers when key changes', () => {
     const existing = {
       mcpServers: {
         orchestrix: {
@@ -83,14 +83,14 @@ describe('mergeMcpJson', () => {
     };
     fs.writeFileSync(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
 
-    const action = mergeMcpJson(tmpDir);
+    const action = mergeMcpJson(tmpDir, 'orch_live_new_key');
     assert.equal(action, 'update');
 
     const content = JSON.parse(fs.readFileSync(path.join(tmpDir, '.mcp.json'), 'utf-8'));
     assert.equal(
       content.mcpServers.orchestrix.headers.Authorization,
-      'Bearer ${ORCHESTRIX_LICENSE_KEY}',
-      'headers updated to env var reference'
+      'Bearer orch_live_new_key',
+      'headers updated to new key'
     );
   });
 
