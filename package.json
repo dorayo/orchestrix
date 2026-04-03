@@ -1,6 +1,6 @@
 {
   "name": "orchestrix",
-  "version": "16.0.4",
+  "version": "16.0.5",
   "description": "Install Orchestrix multi-agent infrastructure into any project. One command: npx orchestrix install",
   "bin": {
     "orchestrix": "bin/o8x.js"

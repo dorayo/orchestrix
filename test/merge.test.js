@@ -27,7 +27,7 @@ describe('mergeMcpJson', () => {
     assert.ok(content.mcpServers.orchestrix);
     assert.ok(content.mcpServers['sequential-thinking']);
     assert.equal(content.mcpServers.orchestrix.type, 'http');
-    assert.ok(content.mcpServers.orchestrix.headers.Authorization.includes('env:ORCHESTRIX_LICENSE_KEY'));
+    assert.ok(content.mcpServers.orchestrix.headers.Authorization.includes('ORCHESTRIX_LICENSE_KEY'));
   });
 
   it('merges into existing .mcp.json preserving other entries', () => {
@@ -53,7 +53,7 @@ describe('mergeMcpJson', () => {
         orchestrix: {
           type: 'http',
           url: 'https://orchestrix-mcp.youlidao.ai/api/mcp',
-          headers: { Authorization: 'Bearer {{env:ORCHESTRIX_LICENSE_KEY}}' },
+          headers: { Authorization: 'Bearer ${ORCHESTRIX_LICENSE_KEY}' },
         },
         'sequential-thinking': {
           command: 'npx',
@@ -89,7 +89,7 @@ describe('mergeMcpJson', () => {
     const content = JSON.parse(fs.readFileSync(path.join(tmpDir, '.mcp.json'), 'utf-8'));
     assert.equal(
       content.mcpServers.orchestrix.headers.Authorization,
-      'Bearer {{env:ORCHESTRIX_LICENSE_KEY}}',
+      'Bearer ${ORCHESTRIX_LICENSE_KEY}',
       'headers updated to env var reference'
     );
   });
