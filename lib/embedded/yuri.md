@@ -1,5 +1,5 @@
 ---
-description: "Yuri — Orchestrix multi-agent workflow coordinator. Manages the full project lifecycle: Planning (PM, Architect, PO) → Development (tmux multi-agent HANDOFF) → Testing (smoke test cycles). Type /yuri to get started."
+description: "Yuri — Orchestrix multi-agent workflow coordinator. Manages the full project lifecycle: Planning (Analyst, PM, UX-expert, Architect, PO) → Development (tmux multi-agent HANDOFF) → Testing (smoke test cycles). Type /yuri to get started."
 ---
 
 # Yuri — Orchestrix Multi-Agent Workflow Coordinator
@@ -253,17 +253,175 @@ For each epic, run smoke test → fix → retest (max 3 rounds):
 /o qa → *review {story_id}
 ```
 
-### New Iteration
+### New Iteration (Post-MVP)
+
+> MVP or previous iteration complete. User has feedback, new requirements, or wants to enhance the product.
+
+**Full Flow — 5 Steps:**
+
+#### Step 1: PM generates next-steps
+
 ```bash
-/o pm → *start-iteration
-# → produces docs/prd/*next-steps.md with HANDOFF instructions
-# Follow the HANDOFF chain, then restart Phase B
+/o pm
+*start-iteration
 ```
 
-### Change Management
+PM reads user feedback and existing docs, produces:
+- `docs/prd/epic-*.yaml` — new epic definitions
+- `docs/prd/*next-steps.md` — execution plan with `🎯 HANDOFF TO {agent}:` markers
+
+**Wait for PM to complete** (detect completion message or output file).
+
+#### Step 2: Parse next-steps.md
+
+Read the generated `next-steps.md`. It contains ordered `🎯 HANDOFF TO {agent}:` sections. Build an execution queue:
+
+```
+[
+  { agent: "ux-expert", content: "Update wireframes for new checkout flow..." },
+  { agent: "architect", content: "Review data model changes for payments..." },
+  { agent: "sm", content: "*draft" }   ← always last
+]
+```
+
+**The PM decides which agents need to act — you don't need to assess scope yourself.**
+
+#### Step 3: Execute each HANDOFF section (STOP before SM)
+
+For each section where agent != "sm", in a **planning session** (single tmux window):
+
 ```bash
-/o po → *route-change
-# PO routes to: PM (*revise-prd) or Architect (*resolve-change)
+# For each agent in the queue (except sm):
+/clear           # Clear previous agent context
+/o {agent}       # Activate target agent
+# Paste the section content as instructions
+# Wait for completion (P1: completion message, P2: output file)
+```
+
+Typical sequence: `ux-expert` → `architect` (each produces updated docs).
+
+#### Step 4: SM handoff → transition to dev automation
+
+When reaching the `🎯 HANDOFF TO sm:` section:
+
+1. Kill the planning session (it's done)
+2. Launch multi-agent dev session:
+   ```bash
+   bash .orchestrix-core/scripts/start-orchestrix.sh
+   ```
+3. SM automatically starts with `*draft`, creating the first story from the new epics
+4. HANDOFF chain auto-starts: SM → Architect → Dev → QA → SM → ...
+
+#### Step 5: Resume standard Phase B → C cycle
+
+- Monitor development via HANDOFF log
+- When all new stories complete → Phase C smoke testing
+- When all epics pass → iteration complete
+
+```
+Summary:
+PM *start-iteration → next-steps.md (with HANDOFF chain)
+  → Execute HANDOFF sections: ux-expert → architect → ...
+  → SM *draft (transition to dev session)
+  → HANDOFF auto-loop: SM → Arch → Dev → QA
+  → Smoke test → Done
+```
+
+---
+
+### Change Management
+
+> Handle requirement changes mid-project. The approach depends on the **current phase** and **change size**.
+
+#### Scope Assessment Matrix
+
+| Current Phase | Change Size | Action | Needs Planning? |
+|---------------|-------------|--------|-----------------|
+| Planning (Phase A) | Any | Modify current/subsequent planning step inputs | Already in planning |
+| Development (Phase B) | Small (≤5 files) | Dev `*solo "{description}"` directly | No |
+| Development (Phase B) | Medium | PO `*route-change` → standard workflow | **Yes** |
+| Development (Phase B) | Large (cross-module/DB/security) | Pause dev → partial Phase A re-plan | **Yes** |
+| Testing (Phase C) | Any | Queue for next iteration | No (record only) |
+| Post-MVP | New iteration | PM `*start-iteration` (see above) | **Yes** |
+
+#### Small Change (During Development, ≤5 files)
+
+No planning needed. Send directly to Dev:
+
+```bash
+# In dev session, Dev window (window 2):
+/o dev
+*solo "Add rate limiting to the /api/checkout endpoint"
+```
+
+After Dev completes, resume normal development monitoring.
+
+#### Medium Change (During Development)
+
+Requires PO routing through a planning session:
+
+```bash
+# Step 1: PO assesses and routes the change
+/o po
+*route-change "Add payment refund support"
+```
+
+PO analyzes the change and routes to the appropriate agent:
+
+- **Routes to Architect** (technical/architecture change):
+  ```bash
+  /o architect
+  *resolve-change
+  ```
+  Architect produces a Technical Change Proposal (TCP).
+
+- **Routes to PM** (requirements/scope change):
+  ```bash
+  /o pm
+  *revise-prd
+  ```
+  PM produces a Product Change Proposal (PCP).
+
+After the proposal is generated:
+
+```bash
+# In dev session, SM window (window 1):
+/o sm
+*apply-proposal {proposal_id}
+```
+
+SM creates stories from the proposal → HANDOFF chain auto-starts (SM → Architect → Dev → QA).
+
+#### Large Change (During Development, cross-module/DB/security)
+
+Same flow as medium change, but with explicit pause:
+
+1. Notify user: "Large change detected. Pausing development for re-planning..."
+2. Follow medium change flow (PO → Architect/PM → SM)
+3. Resume development monitoring after stories are created
+
+#### Change During Testing (Phase C)
+
+Do NOT execute during testing. Record for next iteration:
+
+```
+📝 Change recorded for next iteration: {description}
+Testing continues. This change will be addressed in the next development cycle.
+```
+
+#### Decision Flow Summary
+
+```
+Change Request
+    ↓
+What phase are we in?
+    ├── Planning → Adjust current planning step
+    ├── Development
+    │   ├── Small (≤5 files) → Dev *solo directly
+    │   ├── Medium → PO *route-change → Arch/PM → SM *apply-proposal
+    │   └── Large → Pause + Medium flow
+    ├── Testing → Queue for next iteration
+    └── Post-MVP → PM *start-iteration (full iteration flow)
 ```
 
 ### Brownfield (Existing Project Enhancement)
@@ -305,7 +463,7 @@ For unfamiliar projects, start with: `/o architect` → `*document-project`
 | Agent | ID | Commands |
 |-------|----|----------|
 | PO | `po` | `*route-change` |
-| Orchestrator | `orchestrix-orchestrator` | `*status`, `*workflow-guidance` |
+
 
 ---
 
