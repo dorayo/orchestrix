@@ -1,6 +1,6 @@
 {
   "name": "orchestrix",
-  "version": "16.0.1",
+  "version": "16.0.2",
   "description": "Install Orchestrix multi-agent infrastructure into any project. One command: npx orchestrix install",
   "bin": {
     "orchestrix": "bin/o8x.js"
@@ -24,6 +24,14 @@
   ],
   "author": "dorayo",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dorayo/orchestrix.git"
+  },
+  "homepage": "https://github.com/dorayo/orchestrix#readme",
+  "bugs": {
+    "url": "https://github.com/dorayo/orchestrix/issues"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
