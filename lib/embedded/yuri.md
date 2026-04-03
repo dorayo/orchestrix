@@ -189,18 +189,56 @@ This creates a tmux session with 4 windows:
 
 ### HANDOFF Auto-Collaboration Flow
 
+The HANDOFF chain depends on the story's **test_design_level** (set by SM based on complexity):
+
+#### Standard/Comprehensive Stories (most stories)
+
 ```
 SM (win 1) *draft → Create Story
     ↓ 🎯 HANDOFF TO architect: *review {story_id}
 Architect (win 0) → Technical review
+    ↓ 🎯 HANDOFF TO qa: *test-design {story_id}
+QA (win 3) → Design test scenarios & strategy BEFORE development
     ↓ 🎯 HANDOFF TO dev: *develop-story {story_id}
-Dev (win 2) → Code implementation
+Dev (win 2) → Code implementation (guided by QA's test design)
     ↓ 🎯 HANDOFF TO qa: *review {story_id}
-QA (win 3) → Code review
-    ↓ 🎯 HANDOFF TO sm: *draft (next Story)
+QA (win 3) → Review implementation against test design
+    ↓ pass → 🎯 HANDOFF TO sm: *draft (next Story)
+    ↓ fail → 🎯 HANDOFF TO dev: *apply-qa-fixes {story_id}
 SM (win 1) → Create next Story
     ↓ ... loop until all stories complete
 ```
+
+#### Simple Stories (low complexity, no security concerns)
+
+```
+SM (win 1) *draft → Create Story
+    ↓ 🎯 HANDOFF TO architect: *review {story_id}
+Architect (win 0) → Technical review
+    ↓ 🎯 HANDOFF TO dev: *develop-story {story_id}  (skip test-design)
+Dev (win 2) → Code implementation
+    ↓ 🎯 HANDOFF TO qa: *review {story_id}
+QA (win 3) → Review implementation
+    ↓ ... same as above
+```
+
+#### Quick Mode Stories (trivial, skip Architect + test-design)
+
+```
+SM (win 1) *draft → Create Story (mode=quick)
+    ↓ 🎯 HANDOFF TO dev: *quick-develop {story_id}
+Dev (win 2) → Quick implementation
+    ↓ 🎯 HANDOFF TO qa: *quick-verify {story_id}
+QA (win 3) → Lightweight verification
+    ↓ ... next story
+```
+
+#### QA Feedback Loops
+
+When QA finds issues:
+- **Code issues** → `🎯 HANDOFF TO dev: *apply-qa-fixes {story_id}` → Dev fixes → QA re-reviews
+- **Architecture concerns** → `🎯 HANDOFF TO architect: *review-escalation {story_id}` → Architect resolves → back to Dev
+- **Story issues** → `🎯 HANDOFF TO sm: *revise-story {story_id}` → SM revises → restart from Architect
 
 ### Monitoring
 
@@ -453,16 +491,16 @@ For unfamiliar projects, start with: `/o architect` → `*document-project`
 
 | Agent | ID | Commands | Output |
 |-------|----|----------|--------|
-| SM | `sm` | `*draft`, `*draft-bugfix {bug}` | `docs/stories/*.md` |
-| Architect | `architect` | `*review {story_id}` | Technical review |
-| Dev | `dev` | `*develop-story {id}`, `*solo "{desc}"`, `*quick-fix "{desc}"` | Code + git commit |
-| QA | `qa` | `*review {story_id}`, `*smoke-test {epic_id}` | Review report |
+| SM | `sm` | `*draft`, `*draft-bugfix {bug}`, `*revise-story {id}`, `*apply-proposal {id}` | `docs/stories/*.md` |
+| Architect | `architect` | `*review {id}`, `*review-escalation {id}` | Technical review |
+| QA | `qa` | `*test-design {id}`, `*review {id}`, `*quick-verify {id}`, `*smoke-test {epic}` | Test design / review report |
+| Dev | `dev` | `*develop-story {id}`, `*quick-develop {id}`, `*apply-qa-fixes {id}`, `*solo "{desc}"`, `*quick-fix "{desc}"` | Code + git commit |
 
 ### Management Agents
 
 | Agent | ID | Commands |
 |-------|----|----------|
-| PO | `po` | `*route-change` |
+| PO | `po` | `*route-change`, `*execute-checklist`, `*shard` |
 
 
 ---
