@@ -37,6 +37,52 @@ HANDOFF        → Auto-routing between agents
 
 ---
 
+## Environment Detection (Blueprint vs Standalone)
+
+> On startup, detect which mode you're running in. This determines how project creation and session management work.
+
+### Detection
+
+```bash
+# Check if running inside a youlidao.ai blueprint workspace
+test -f .youlidao/blueprint.json
+```
+
+| Condition | Mode | Workspace Path | Session Naming |
+|-----------|------|----------------|----------------|
+| `.youlidao/blueprint.json` exists | **Blueprint** | Current directory (already set up) | `op-{blueprint-name}` |
+| `.youlidao/blueprint.json` missing | **Standalone** | Create `~/Codes/{name}/` | `op-{project-name}` |
+
+### Blueprint Mode Behavior
+
+When running inside a blueprint workspace (e.g., activated by Gateway in a blueprint tmux session):
+
+1. **Skip project creation steps** — directory, git init, Orchestrix install all done by Gateway
+2. **Read project context from `.youlidao/blueprint.json`**:
+   ```bash
+   cat .youlidao/blueprint.json
+   # → { "blueprintId": "...", "blueprintName": "...", "createdAt": "..." }
+   ```
+3. **Initialize `.yuri/` memory** in the existing workspace (if not already present):
+   - Create `.yuri/identity.yaml` from blueprint metadata
+   - Create `.yuri/focus.yaml`, `.yuri/state/`, `.yuri/timeline/`
+   - Register in `~/.yuri/portfolio/registry.yaml`
+4. **Use current directory as `WORK_DIR`** for all op-session operations
+5. **Derive `OP_SESSION` name** from `blueprintName`:
+   ```bash
+   OP_SESSION="op-$(cat .youlidao/blueprint.json | jq -r '.blueprintName')"
+   ```
+
+### Standalone Mode Behavior
+
+When NOT in a blueprint workspace (standard Orchestrix usage):
+
+1. Follow the full `*create` flow (collect name, create `~/Codes/{name}/`, install Orchestrix)
+2. Use `~/Codes/{name}/` as `WORK_DIR`
+3. Session name: `op-{project-dir-name}`
+
+---
+
 ## tmux Protocol (Mandatory 3-Step Pattern)
 
 > **When sending any content to Claude Code via tmux, strictly follow three steps. Violating this causes content to get stuck in the input box.**
@@ -73,6 +119,153 @@ tmux send-keys -t $WIN Enter
 | **P2** | Expected output file exists | `test -f "$file"` | High |
 | **P3** | Approval prompt `◐` → auto `y` | Permission requests | High |
 | **P4** | Content hash stability (3x30s) | Fallback | Medium |
+
+---
+
+## Remote Orchestration Mode (op-session)
+
+> When Yuri runs as a **resident coordinator** (e.g., in a blueprint session), agents work in a **separate tmux session** named `op-{project-name}`. Yuri manages the full lifecycle of this session remotely.
+
+### Architecture
+
+```
+Yuri's window (resident, never cleared)
+    │
+    │ tmux send-keys / capture-pane
+    ↓
+op-{project-name}  ← separate tmux session
+    ├── Phase A: 1 window "planning", sequential agent switching
+    └── Phase B: 4 windows (start-orchestrix.sh), HANDOFF automation
+```
+
+**Key principle**: Yuri **never leaves its own window**. All agent operations happen in the `op-{name}` session via tmux commands.
+
+### Phase A: Remote Planning Pipeline
+
+#### Step 1: Create op-session
+
+```bash
+# Determine session name and workspace path
+# Blueprint mode: read from .youlidao/blueprint.json
+# Standalone mode: use project directory name
+if [ -f .youlidao/blueprint.json ]; then
+    BP_NAME=$(cat .youlidao/blueprint.json | jq -r '.blueprintName')
+    OP_SESSION="op-${BP_NAME}"
+    WORK_DIR="$(pwd)"
+else
+    OP_SESSION="op-{project-name}"
+    WORK_DIR="$HOME/Codes/{project-name}"
+fi
+
+# Create session with planning window
+tmux new-session -d -s "$OP_SESSION" -n "planning" -c "$WORK_DIR"
+
+# Start Claude Code in planning window
+tmux send-keys -t "$OP_SESSION:planning" "cc"
+sleep 1
+tmux send-keys -t "$OP_SESSION:planning" Enter
+
+# Wait for CC ready
+sleep 12
+```
+
+#### Step 2: Run planning agents sequentially
+
+```bash
+# Activate first agent
+tmux send-keys -t "$OP_SESSION:planning" "/o analyst"
+sleep 1
+tmux send-keys -t "$OP_SESSION:planning" Enter
+sleep 12  # Wait for agent load via MCP
+
+# Send command
+tmux send-keys -t "$OP_SESSION:planning" "*create-doc project-brief"
+sleep 1
+tmux send-keys -t "$OP_SESSION:planning" Enter
+
+# Monitor completion (use detection methods from table above)
+# Poll output until completion detected:
+tmux capture-pane -t "$OP_SESSION:planning" -p | tail -20
+```
+
+#### Step 3: Switch to next agent (repeat for each)
+
+```bash
+# Clear previous agent
+tmux send-keys -t "$OP_SESSION:planning" "/clear"
+sleep 1
+tmux send-keys -t "$OP_SESSION:planning" Enter
+sleep 2
+
+# Activate next agent
+tmux send-keys -t "$OP_SESSION:planning" "/o pm"
+sleep 1
+tmux send-keys -t "$OP_SESSION:planning" Enter
+sleep 12
+
+# Send command
+tmux send-keys -t "$OP_SESSION:planning" "*create-doc prd"
+sleep 1
+tmux send-keys -t "$OP_SESSION:planning" Enter
+```
+
+**Planning agent sequence**: `analyst` → `pm` → `ux-expert` (optional) → `architect` → `po`
+
+#### Step 4: Report progress
+
+After each agent completes, output structured progress to your own window (visible to the user):
+
+```
+📋 Planning Progress [2/5]
+✅ Analyst — project-brief.md generated
+▶️ PM — generating PRD...
+⏳ UX Expert
+⏳ Architect
+⏳ PO
+```
+
+### Phase A → B Transition
+
+When PO completes (step 5):
+
+```bash
+# Kill planning session
+tmux kill-session -t "$OP_SESSION"
+
+# Launch dev session with same op-{name}
+# start-orchestrix.sh reads ORCHESTRIX_SESSION and uses it as the session name
+# instead of its default "orchestrix-{repo-id}" naming.
+ORCHESTRIX_SESSION="$OP_SESSION" bash "$WORK_DIR/.orchestrix-core/scripts/start-orchestrix.sh"
+```
+
+**Important**: Pass `ORCHESTRIX_SESSION` inline (not `export`) to avoid polluting Yuri's own shell environment. The script creates a new `op-{name}` session with 4 dev agent windows.
+
+### Phase B: Remote Development Monitoring
+
+After `start-orchestrix.sh` launches, HANDOFF automation runs autonomously. Yuri monitors:
+
+```bash
+# Watch HANDOFF log
+tail -f /tmp/${OP_SESSION}-handoff.log
+
+# Check specific agent output
+tmux capture-pane -t "$OP_SESSION:1" -p | tail -20  # SM
+tmux capture-pane -t "$OP_SESSION:2" -p | tail -20  # Dev
+
+# Check story completion
+ls "$WORK_DIR/docs/stories/"
+git -C "$WORK_DIR" log --oneline -5
+```
+
+### Session Lifecycle
+
+| Event | Action |
+|-------|--------|
+| User says "start planning" | Create `op-{name}`, begin agent sequence |
+| Planning complete | Kill `op-{name}`, launch `start-orchestrix.sh` |
+| Development complete | Report to user, ready for Phase C |
+| User says "stop" / "cancel" | `tmux kill-session -t "$OP_SESSION"` |
+| Reconnect / resume | Check `tmux has-session -t "$OP_SESSION"` to detect existing session |
 
 ---
 

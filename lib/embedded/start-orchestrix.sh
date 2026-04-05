@@ -45,11 +45,18 @@ if [ -z "$REPO_ID" ]; then
 fi
 
 # Generate dynamic session name and log file
-SESSION_NAME="orchestrix-${REPO_ID}"
+# If ORCHESTRIX_SESSION is pre-set (e.g., by Yuri remote orchestration), use it.
+# Otherwise, default to orchestrix-{REPO_ID}.
+if [ -n "$ORCHESTRIX_SESSION" ]; then
+    SESSION_NAME="$ORCHESTRIX_SESSION"
+    echo "🏷️  Using pre-set session name: $SESSION_NAME"
+else
+    SESSION_NAME="orchestrix-${REPO_ID}"
+    echo "🏷️  Repository ID: $REPO_ID"
+fi
 # IMPORTANT: Must match handoff-detector.sh pattern: /tmp/${SESSION_NAME}-handoff.log
 LOG_FILE="/tmp/${SESSION_NAME}-handoff.log"
 
-echo "🏷️  Repository ID: $REPO_ID"
 echo "📺 tmux Session: $SESSION_NAME"
 echo "📝 Log file: $LOG_FILE"
 
