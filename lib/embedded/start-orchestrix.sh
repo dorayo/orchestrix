@@ -107,7 +107,7 @@ if [ -f "$SETTINGS_LOCAL" ]; then
         if command -v jq &>/dev/null; then
             EXISTING=$(cat "$SETTINGS_LOCAL")
             echo "$EXISTING" | jq --arg cmd "$HANDOFF_HOOK_CMD" \
-                '.hooks.Stop = (.hooks.Stop // []) + [{"hooks": [{"type": "command", "command": $cmd}]}]' \
+                '.hooks.Stop = (.hooks.Stop // []) + [{"matcher": "", "hooks": [{"type": "command", "command": $cmd}]}]' \
                 > "$SETTINGS_LOCAL.tmp" && mv "$SETTINGS_LOCAL.tmp" "$SETTINGS_LOCAL"
             echo "✅ Handoff hook injected into existing settings.local.json"
         else
@@ -116,15 +116,18 @@ if [ -f "$SETTINGS_LOCAL" ]; then
     fi
 else
     # Create new settings.local.json with handoff hook
-    cat > "$SETTINGS_LOCAL" << SETTINGS_EOF
+    # IMPORTANT: Use quoted heredoc <<'EOF' to prevent $() execution and keep \" intact.
+    # The command string needs JSON-escaped quotes (\") around $(git rev-parse).
+    cat > "$SETTINGS_LOCAL" << 'SETTINGS_EOF'
 {
   "hooks": {
     "Stop": [
       {
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "$HANDOFF_HOOK_CMD"
+            "command": "bash -c 'cd \"$(git rev-parse --show-toplevel)\" && .orchestrix-core/scripts/handoff-detector.sh'"
           }
         ]
       }
