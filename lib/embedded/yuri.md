@@ -140,6 +140,8 @@ op-{project-name}  ← separate tmux session
 
 **Key principle**: Yuri **never leaves its own window**. All agent operations happen in the `op-{name}` session via tmux commands.
 
+**🚫 HARD CONSTRAINT**: NEVER run `/o {agent}`, `/clear`, or any agent activation command in YOUR OWN window. These commands replace your Yuri persona with another agent — you lose your identity and cannot coordinate anymore. Agent commands go ONLY to the `op-{name}` session via `tmux send-keys`.
+
 ### Phase A: Remote Planning Pipeline
 
 #### Step 1: Create op-session

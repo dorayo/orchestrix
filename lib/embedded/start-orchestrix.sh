@@ -45,11 +45,23 @@ if [ -z "$REPO_ID" ]; then
 fi
 
 # Generate dynamic session name and log file
-# If ORCHESTRIX_SESSION is pre-set (e.g., by Yuri remote orchestration), use it.
-# Otherwise, default to orchestrix-{REPO_ID}.
+# Priority:
+#   1. $ORCHESTRIX_SESSION env var (explicit override by Yuri)
+#   2. .youlidao/blueprint.json → op-{blueprintName} (Blueprint mode)
+#   3. orchestrix-{REPO_ID} (standalone fallback)
 if [ -n "$ORCHESTRIX_SESSION" ]; then
     SESSION_NAME="$ORCHESTRIX_SESSION"
     echo "🏷️  Using pre-set session name: $SESSION_NAME"
+elif [ -f "$WORK_DIR/.youlidao/blueprint.json" ]; then
+    # Blueprint mode: auto-derive op-{name} from blueprint metadata
+    BP_NAME=$(cat "$WORK_DIR/.youlidao/blueprint.json" 2>/dev/null | grep -o '"blueprintName"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//;s/"$//')
+    if [ -n "$BP_NAME" ]; then
+        SESSION_NAME="op-${BP_NAME}"
+        echo "🏷️  Blueprint detected: $BP_NAME → session: $SESSION_NAME"
+    else
+        SESSION_NAME="orchestrix-${REPO_ID}"
+        echo "🏷️  Blueprint file found but no name, fallback: $SESSION_NAME"
+    fi
 else
     SESSION_NAME="orchestrix-${REPO_ID}"
     echo "🏷️  Repository ID: $REPO_ID"
