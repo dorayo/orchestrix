@@ -254,10 +254,10 @@ tmux kill-session -t "$OP_SESSION"
 # Launch dev session with same op-{name}
 # start-orchestrix.sh reads ORCHESTRIX_SESSION and uses it as the session name
 # instead of its default "orchestrix-{repo-id}" naming.
-ORCHESTRIX_SESSION="$OP_SESSION" bash "$WORK_DIR/.orchestrix-core/scripts/start-orchestrix.sh"
+ORCHESTRIX_SESSION="$OP_SESSION" ORCHESTRIX_LANG="$LANG" bash "$WORK_DIR/.orchestrix-core/scripts/start-orchestrix.sh"
 ```
 
-**Important**: Pass `ORCHESTRIX_SESSION` inline (not `export`) to avoid polluting Yuri's own shell environment. The script creates a new `op-{name}` session with 4 dev agent windows.
+**Important**: Pass `ORCHESTRIX_SESSION` and `ORCHESTRIX_LANG` inline (not `export`) to avoid polluting Yuri's own shell environment. `$LANG` is `zh` or `en` based on your `--lang` activation parameter. The script creates a new `op-{name}` session with 4 dev agent windows, all using the same language.
 
 ### Phase B: Remote Development Monitoring
 

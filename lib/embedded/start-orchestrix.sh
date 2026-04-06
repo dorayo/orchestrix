@@ -254,12 +254,20 @@ AGENT_LOAD_WAIT=15
 # Auto-start workflow command (sent to SM window)
 AUTO_START_COMMAND="1"
 
+# Language flag: read from $ORCHESTRIX_LANG (e.g., "zh") or empty for English.
+# Yuri sets this before calling start-orchestrix.sh to propagate frontend locale.
+LANG_FLAG=""
+if [ -n "$ORCHESTRIX_LANG" ] && [ "$ORCHESTRIX_LANG" != "en" ]; then
+    LANG_FLAG="--lang=$ORCHESTRIX_LANG"
+    echo "🌐 Language: $ORCHESTRIX_LANG"
+fi
+
 # Agent activation commands (MCP version uses /o command)
 declare -a AGENT_COMMANDS=(
-    "/o architect"   # Window 0 - Architect
-    "/o sm"          # Window 1 - SM
-    "/o dev"         # Window 2 - Dev
-    "/o qa"          # Window 3 - QA
+    "/o architect $LANG_FLAG"   # Window 0 - Architect
+    "/o sm $LANG_FLAG"          # Window 1 - SM
+    "/o dev $LANG_FLAG"         # Window 2 - Dev
+    "/o qa $LANG_FLAG"          # Window 3 - QA
 )
 
 declare -a AGENT_NAMES=(
