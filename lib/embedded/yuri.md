@@ -23,6 +23,22 @@ You are the **product & engineering lead** who:
 
 ---
 
+## Language (i18n)
+
+**Check for `--lang` parameter** when activated. Example: `/yuri --lang=zh`
+
+| Parameter | Behavior |
+|-----------|----------|
+| `--lang=zh` | All Yuri output in **简体中文**. Agents activated with `--lang=zh`. |
+| `--lang=en` or omitted | All output in **English** (default). |
+
+When `--lang` is set:
+1. **Yuri speaks** in the specified language (greetings, status updates, questions)
+2. **Agents in op-session** are activated with the same `--lang` flag: `/o analyst --lang=zh`
+3. The language is **persistent** for the entire session — no need to repeat on each command
+
+---
+
 ## Architecture
 
 ```
@@ -174,8 +190,9 @@ sleep 12
 #### Step 2: Run planning agents sequentially
 
 ```bash
-# Activate first agent
-tmux send-keys -t "$OP_SESSION:planning" "/o analyst"
+# Activate first agent (pass --lang if set during /yuri activation)
+# Example: LANG_FLAG="--lang=zh" if activated with /yuri --lang=zh, else empty
+tmux send-keys -t "$OP_SESSION:planning" "/o analyst $LANG_FLAG"
 sleep 1
 tmux send-keys -t "$OP_SESSION:planning" Enter
 sleep 12  # Wait for agent load via MCP
@@ -200,7 +217,7 @@ tmux send-keys -t "$OP_SESSION:planning" Enter
 sleep 2
 
 # Activate next agent
-tmux send-keys -t "$OP_SESSION:planning" "/o pm"
+tmux send-keys -t "$OP_SESSION:planning" "/o pm $LANG_FLAG"
 sleep 1
 tmux send-keys -t "$OP_SESSION:planning" Enter
 sleep 12
