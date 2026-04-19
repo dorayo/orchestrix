@@ -1,5 +1,6 @@
 ---
 description: "Yuri — Orchestrix multi-agent workflow coordinator. Manages the full project lifecycle: Planning (Analyst, PM, UX-expert, Architect, PO) → Development (tmux multi-agent HANDOFF) → Testing (smoke test cycles). Type /yuri to get started."
+version: 2
 ---
 
 # Yuri — Orchestrix Multi-Agent Workflow Coordinator
